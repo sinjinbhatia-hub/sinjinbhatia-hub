@@ -16,7 +16,10 @@ Why this and not the stack you already know end-to-end:
 - **One deployable.** Every PR gets a Vercel preview URL you open in mobile Safari. A separate
   FastAPI service doubles the deploy surfaces, secrets, CORS config, and failure modes — and
   there is no genuinely free, cold-start-free Python host left (Railway = one-time $5 trial;
-  Render free = ~50s cold starts, which kills a demo).
+  Render free spins down after 15 min idle with up-to-a-minute cold starts, which kills a demo).
+- **License note:** Vercel Hobby prohibits commercial use. Fine for the demo; the moment
+  affiliate links go live, upgrade to Pro ($20/mo) or move the frontend to Cloudflare Pages.
+  Supabase Free pauses after ~7 idle days — `keepalive.yml` prevents it.
 - **Server code still exists** — Next.js API routes (Node) hold the API keys and call
   Gemini / fal. You never expose keys to the browser.
 - **You know React**; Next is React plus file-routing. The agents writing the code are highly
@@ -124,9 +127,11 @@ parallel with other `[P]` tasks in its phase. Unmarked = serial.
 Track 1 — Avatar & try-on:
 - **B1. Upload flow**: camera/photo-library capture → client-side downscale (~1536px) → signed
   upload. DoD: file lands in `uploads` bucket from phone camera.
-- **B2. Provider layer**: `lib/providers` with Gemini image (default) + fal adapter; `jobs`
-  create/poll routes; cost-per-job estimate written to the row. DoD: `/api/health` runs a
-  test generation end-to-end.
+- **B2. Provider layer**: `lib/providers` with two roles — **avatar engine** (Gemini image:
+  whole-image generation, house style) and **try-on engine** (FASHN v1.6 or Kling Kolors via
+  fal: garment-region inpainting that preserves the face; Gemini as $0 fallback behind a
+  flag); `jobs` create/poll routes; cost-per-job estimate written to the row. DoD:
+  `/api/health` runs a test generation end-to-end on each configured engine.
 - **B3. Canonical avatar builder**: 1–3 user photos → standardized full-body studio portrait
   (house style prompt v1, fixed background/lighting/crop) → user picks 1 of N → stored as
   canonical. DoD: avatar visible in app for seeded user.
@@ -137,9 +142,11 @@ Track 1 — Avatar & try-on:
   history on the job row.
 
 Track 2 — Closet:
-- **B6. [P] Garment capture**: photo → client-side background removal → cutout preview →
-  accept/retake. DoD: cutout PNG in `garments` bucket, works on phone camera photos of
-  clothes on a bed/hanger.
+- **B6. [P] Garment capture**: photo → background removal → cutout preview → accept/retake.
+  Use fal BiRefNet v2 server-side (~$0.001–0.003/image). Do NOT use @imgly/background-removal
+  (AGPL-3.0) or BriaAI RMBG (non-commercial); the only license-clean in-browser option is
+  MIT BiRefNet via transformers.js — a later optimization, not v1. DoD: cutout PNG in
+  `garments` bucket, works on phone camera photos of clothes on a bed/hanger.
 - **B7. [P] Attribute extraction**: Gemini Flash with a strict JSON schema (category,
   subcategory, colors, pattern, fabric guess, formality, season, brand-if-visible) + editable
   form (human-in-the-loop correction is a feature, not a fallback). DoD: 10 test garments
@@ -164,9 +171,12 @@ Track 2 — Closet:
   links with subid tracking + click log table. DoD: clicking through from phone lands on
   retailer with tag present.
 - **C5. [P] Consent & privacy plumbing**: consent screen at upload (explicit biometric-style
-  language), `consents` row with timestamp + text version, self-serve "delete everything"
-  that cascades DB + Storage, `/privacy` page. DoD: delete leaves zero rows/objects (verified
-  by selftest).
+  language + e-sign action), `consents` row with timestamp + text version, "photos of
+  yourself only" attestation, 18+ gate, self-serve "delete everything" that cascades DB +
+  Storage, `/privacy` + retention-policy pages, visible "AI-generated" label + metadata on
+  every render (EU AI Act Art. 50 is in force as of Aug 2026 — label regardless of market).
+  Route all non-founder photos through paid-tier APIs. DoD: delete leaves zero rows/objects
+  (verified by selftest).
 - **C6. Latency masking & polish** (after B4): skeleton shimmer, progress states, graceful
   provider-failure retry, PWA offline shell for closet browsing.
 
