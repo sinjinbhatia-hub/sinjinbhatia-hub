@@ -328,7 +328,9 @@ ax1.semilogy(np.arange(1, 257), s_noisy, "C0", alpha=.8, label="σ_i of image + 
 ax1.axhline(0.05 * np.sqrt(256) * 2, color="C3", ls=":", label="≈ 2·τ√N: top of the noise floor")
 ax1.set_xlabel("i"); ax1.set_ylabel("σ_i"); ax1.set_title("scree plot: signal decays, noise is flat"); ax1.legend(); ax1.grid(alpha=.3)
 fig.tight_layout(); fig.savefig(FIG / "eckart_young_curve.png", dpi=120); plt.close(fig)
-assert s_noisy[100] > 5 * s[100], "the noise floor dominates the tail"
+s_pure = np.linalg.svd(0.05 * rng.standard_normal(img.shape), compute_uv=False)
+assert s_noisy[100] > 2 * s[100], "the noise floor lifts the tail"
+assert s[0] / s[100] > 50 * s_pure[0] / s_pure[100], "image spectrum decays ~280x by i=100; pure noise only ~2x (flat floor)"
 print(f"Part 3: Eckart–Young equality verified for k = 0..255; rank-20 relative error {errs[20]/np.linalg.norm(img):.4f}.")
 
 # %% [markdown]

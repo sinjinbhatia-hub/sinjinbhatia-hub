@@ -445,7 +445,13 @@ b = np.sqrt(b_min**2 + rng.uniform(size=N_mc) * (b_max**2 - b_min**2))
 R_start = 300.0
 E_mc = 0.5
 v_inf = np.sqrt(2 * E_mc / mu)
-Y0 = np.concatenate([-R_start * np.ones(N_mc), b, v_inf * np.ones(N_mc), np.zeros(N_mc)])
+# Launch at x = -R with the speed that makes the total energy exactly E (the particle
+# has already climbed part of the Coulomb hill) and with the transverse offset that
+# makes ell = mu v_inf b exactly. Then E and ell, hence theta, are exact; the only
+# error is that the velocity at R is not quite parallel to the asymptote, ~ b/(2R^2).
+v_R = np.sqrt(2 * (E_mc - k / np.hypot(R_start, b)) / mu)
+b_R = b * v_inf / v_R
+Y0 = np.concatenate([-R_start * np.ones(N_mc), b_R, v_R, np.zeros(N_mc)])
 
 
 def coulomb_rhs(t, Y):
@@ -461,7 +467,7 @@ assert np.all(np.hypot(xf, yf) > 0.8 * R_start), "all particles must be far away
 theta_mc = np.arccos(vxf / np.hypot(vxf, vyf))                       # deflection from the +x direction
 theta_th = 2 * np.arctan(k / (2 * E_mc * b))                         # eq. (3.26)
 err_theta = np.max(np.abs(theta_mc - theta_th))
-assert err_theta < 2e-3, err_theta                                   # finite start distance ~ b/(2R^2)
+assert err_theta < 5e-4, err_theta                                   # finite start distance ~ b/(2R^2)
 # energy conservation per particle
 E_final = 0.5 * mu * (vxf**2 + vyf**2) + k / np.hypot(xf, yf)
 assert np.max(np.abs(E_final - E_mc)) < 1e-8

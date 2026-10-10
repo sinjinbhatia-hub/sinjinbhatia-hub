@@ -131,6 +131,12 @@ for p_, q_ in [(4, 0), (3, 1), (2, 2), (2, 1), (1, 1), (0, 3)]:
         # Orthogonal P: the two laws coincide.
         Q, _ = np.linalg.qr(P)
         assert np.allclose(change_basis_operator(D, Q), change_basis_form(D, Q))
+# Exercise B4: q = x^2 + 4xy + 2xz + 2y^2 + z^2 has signature (2, 1, 0); the P from completing squares diagonalizes it.
+B4 = np.array([[1, 2, 1], [2, 2, 0], [1, 0, 1.]])
+r2_ = np.sqrt(2)
+P4 = np.array([[1, -r2_, 1 / r2_], [0, 1 / r2_, -1 / r2_], [0, 0, 1 / r2_]])
+assert np.allclose(change_basis_form(B4, P4), np.diag([1, -1, 1])) and signature(B4) == (2, 1, 0)
+assert np.isclose(np.linalg.det(B4), -4)
 print("Part 2 passed: congruence keeps only the signature; similarity keeps the spectrum; they agree for orthogonal P.")
 
 # %% [markdown]
