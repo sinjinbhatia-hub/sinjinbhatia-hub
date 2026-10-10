@@ -353,7 +353,7 @@ $$
 
 *Check on the Gaussian.* Take $a=1$: $f = 2^{1/4}e^{-\pi x^2}$. Then $\sigma_x^2 = \sqrt2\int x^2e^{-2\pi x^2}dx = \sqrt2\cdot\frac{\sqrt\pi}{2}(2\pi)^{-3/2} = \frac{1}{4\pi}$. By (3.11) $\hat f = 2^{1/4}e^{-\pi\xi^2}$ has the same shape, so $\sigma_\xi^2 = \frac{1}{4\pi}$ and $\sigma_x\sigma_\xi = \frac{1}{4\pi}$ exactly. The project reproduces $0.0795775$.
 
-*Two more cases.* For $f = \sqrt a\,e^{-a|x|}$ (normalized two-sided exponential), exercise B3 computes $\sigma_x = 1/(a\sqrt2)$, $\sigma_\xi = a/(2\pi)$, product $\sqrt2/(4\pi)\approx0.1125$: $41\%$ above the minimum. For the rect $f = \Pi$, $\sigma_x^2 = 1/12$ but $\sigma_\xi^2 = \int\xi^2\operatorname{sinc}^2\xi\,d\xi = \int\frac{\sin^2\pi\xi}{\pi^2}d\xi = \infty$: a jump has infinite frequency spread (its derivative is a pair of deltas, $\|f'\| = \infty$ in step 1). On a finite frequency grid $|\xi|<L$ you get $\sigma_\xi^2\approx L/\pi^2$, growing without bound; the project shows it.
+*Two more cases.* For $f = \sqrt a\,e^{-a|x|}$ (normalized two-sided exponential), exercise B2 computes $\sigma_x = 1/(a\sqrt2)$, $\sigma_\xi = a/(2\pi)$, product $\sqrt2/(4\pi)\approx0.1125$: $41\%$ above the minimum. For the rect $f = \Pi$, $\sigma_x^2 = 1/12$ but $\sigma_\xi^2 = \int\xi^2\operatorname{sinc}^2\xi\,d\xi = \int\frac{\sin^2\pi\xi}{\pi^2}d\xi = \infty$: a jump has infinite frequency spread (its derivative is a pair of deltas, $\|f'\| = \infty$ in step 1). On a finite frequency grid $|\xi|<L$ you get $\sigma_\xi^2\approx L/\pi^2$, growing without bound; the project shows it.
 
 **QM-2 in one line.** A wavefunction $\psi(x)$ with $\|\psi\|=1$ has momentum-space wavefunction proportional to $\hat\psi$ with $p = \hbar k = 2\pi\hbar\xi$. So $\sigma_p = 2\pi\hbar\sigma_\xi$, and (3.16) reads $\sigma_x\sigma_p\ge2\pi\hbar/(4\pi) = \hbar/2$. **The Heisenberg uncertainty principle is Theorem 3.11.** There is no additional physics in it; the physics is in the claim that momentum is the Fourier variable of position.
 
@@ -712,7 +712,7 @@ $f = (1,2,3,4,0,0,0,0)$: the sequence $(1,2,3,4)$ zero-padded to $N=8$. $\omega_
 - $k=2$: $\omega_8^2O[2] = (-i)(-2) = 2i$. $F[2] = -2+2i$; $F[6] = -2-2i$.
 - $k=3$: $\omega_8^3O[3] = \frac{(-1-i)(2+4i)}{\sqrt2} = \frac{-2-4i-2i-4i^2}{\sqrt2} = \frac{2-6i}{\sqrt2} = \sqrt2-3\sqrt2\,i$. $F[3] = (1+3i)+(\sqrt2-3\sqrt2i) = (1+\sqrt2)+(3-3\sqrt2)i\approx2.414-1.243i$. $F[7] = (1+3i)-(\sqrt2-3\sqrt2i) = (1-\sqrt2)+(3+3\sqrt2)i\approx-0.414+7.243i$.
 
-Checks: $F[0] = 10 = \sum f$ ✓ ($\hat f(0) = \int f$, discrete form). Hermitian symmetry for real input: $F[7] = \overline{F[1]}$, $F[6] = \overline{F[2]}$, $F[5] = \overline{F[3]}$ ✓. Operation count: $\frac N2\log_2N = 12$ twiddle multiplications, of which only $4$ (the $k=1,3$ ones at the top level) were non-trivial. The project asserts these eight values against `np.fft.fft`.
+Checks: $F[0] = 10 = \sum f$ ✓ ($\hat f(0) = \int f$, discrete form). Hermitian symmetry for real input: $F[7] = \overline{F[1]}$, $F[6] = \overline{F[2]}$, $F[5] = \overline{F[3]}$ ✓. Operation count: $\frac N2\log_2N = 12$ twiddle multiplications, of which only $2$ (the $k=1,3$ twiddles at the top level) were non-trivial; the rest were $\pm1$ or $\pm i$. The project asserts these eight values against `np.fft.fft`.
 
 ### Example 4.7: Aliasing by the numbers
 

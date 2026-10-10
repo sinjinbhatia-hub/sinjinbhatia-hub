@@ -323,3 +323,215 @@ and the *weights* $P(L \mid A) = 263/350 = 0.75$ versus $P(L \mid B) = 80/350 = 
 **Trap 5: The prosecutor's fallacy.** A forensic match has probability one in a million for a random innocent person. The prosecutor says: "the probability the defendant is innocent is one in a million." That confuses $P(\text{match} \mid \text{innocent}) = 10^{-6}$ with $P(\text{innocent} \mid \text{match})$. If the defendant was found by searching a database of a city of 10 million with no other evidence, the prior is $P(\text{guilty}) = 10^{-7}$ and Bayes gives
 $$P(\text{guilty} \mid \text{match}) = \frac{1 \cdot 10^{-7}}{1\cdot 10^{-7} + 10^{-6}(1 - 10^{-7})} \approx \frac{10^{-7}}{10^{-7} + 10^{-6}} = \frac{1}{11}.$$
 About ten innocent people in the city also match. The 1999 conviction of Sally Clark in England rested partly on a 1-in-73-million figure for two infant deaths in one family being presented as the probability of her innocence (the figure also wrongly assumed independence of the deaths); the Royal Statistical Society protested publicly in 2001 and the conviction was quashed in 2003. The fix is the same as Trap 2: the likelihood is not the posterior.
+
+### 3.8 Random variables, PMF, CDF
+
+**Definition 3.8.** A **random variable** is a function $X : \Omega \to \mathbb{R}$. It is **discrete** if it takes values in a finite or countably infinite set. The event $\{X = x\}$ means $\{\omega \in \Omega : X(\omega) = x\}$.
+
+**Definition 3.9.** The **probability mass function (PMF)** of a discrete $X$ is $p_X(x) = P(X = x)$. The **support** of $X$ is $\{x : p_X(x) > 0\}$. The **cumulative distribution function (CDF)** of any random variable is
+$$F_X(x) = P(X \le x), \qquad x \in \mathbb{R}. \tag{3.15}$$
+
+A function is a valid PMF iff $p(x) \ge 0$ for all $x$ and $\sum_x p(x) = 1$; the sum is over the support. Both conditions are (K1) and (K2) applied to the partition $\{X = x\}$. The PMF of a discrete $X$ determines its CDF ($F(x) = \sum_{t \le x} p(t)$, a staircase that jumps by $p(x)$ at each support point) and the CDF determines the PMF (the jump sizes).
+
+**Properties of any CDF.** (i) $F$ is nondecreasing, because $x \le y$ gives $\{X \le x\} \subseteq \{X \le y\}$ and Theorem 3.4(3) applies. (ii) $F(x) \to 0$ as $x \to -\infty$ and $F(x) \to 1$ as $x \to +\infty$. (iii) $F$ is right-continuous: $F(x_n) \to F(x)$ as $x_n \downarrow x$. (The last two use the continuity of $P$ along monotone sequences of events, which follows from (K3); Blitzstein §3.6.) And $P(a < X \le b) = F(b) - F(a)$, since $\{X \le b\} = \{X \le a\} \cup \{a < X \le b\}$ disjointly.
+
+**Blueprint versus house.** Let $X$ be the indicator of heads on one fair toss and $Y = 1 - X$ the indicator of tails. Both have PMF $p(0) = p(1) = 1/2$: the same distribution. But $X + Y = 1$ always and $X - Y = \pm 1$ always, so $X$ and $Y$ are different functions. A distribution (the blueprint) tells you the probabilities of the values. A random variable (the house) is the specific function on $\Omega$. Questions about one variable are answered by its distribution. Questions about two or more variables together need the joint distribution, which is F5's subject; in this module we only use the joint structure through independence.
+
+### 3.9 Expectation
+
+Throughout this subsection $\Omega$ is finite or countable and $X$, $Y$ are random variables on it; all sums are assumed to converge absolutely, so they may be rearranged. (For a random variable with countable range on an arbitrary $\Omega$, every argument below goes through verbatim with "$\sum_{\omega : X(\omega) = x} P(\{\omega\})$" replaced by "$P(X = x)$"; for continuous variables see §3.11.)
+
+**Definition 3.10.** The **expectation** of $X$ is
+$$\mathbb{E}[X] = \sum_{\omega \in \Omega} X(\omega)\,P(\{\omega\}) = \sum_{x} x\,P(X = x). \tag{3.16}$$
+
+The two expressions are equal by **grouping**: collect the pebbles $\omega$ by their label $x$. Formally, $\sum_\omega X(\omega)P(\{\omega\}) = \sum_x \sum_{\omega : X(\omega) = x} x\,P(\{\omega\}) = \sum_x x \sum_{\omega : X(\omega) = x} P(\{\omega\}) = \sum_x x\,P(X = x)$, using (K3) for the inner sum. The first form (sum over pebbles) is the one that makes proofs easy. The second (sum over values) is the one you compute with. It is the center of mass of §2.
+
+**Theorem 3.8 (Linearity of expectation).** For random variables $X, Y$ and constants $a, b$:
+$$\mathbb{E}[X + Y] = \mathbb{E}[X] + \mathbb{E}[Y], \qquad \mathbb{E}[aX + b] = a\,\mathbb{E}[X] + b.$$
+**No assumption of independence is made.**
+
+▶ **Try it first.** Use the pebble form of (3.16). $X + Y$ is the function $\omega \mapsto X(\omega) + Y(\omega)$.
+
+*Proof.* $\mathbb{E}[X + Y] = \sum_\omega \big(X(\omega) + Y(\omega)\big)P(\{\omega\}) = \sum_\omega X(\omega)P(\{\omega\}) + \sum_\omega Y(\omega)P(\{\omega\}) = \mathbb{E}[X] + \mathbb{E}[Y]$. Likewise $\sum_\omega (aX(\omega) + b)P(\{\omega\}) = a\sum_\omega X(\omega)P(\{\omega\}) + b\sum_\omega P(\{\omega\}) = a\mathbb{E}[X] + b$. ∎
+
+■ **What just happened.** A sum of sums is a sum. The proof never mentioned how $X$ and $Y$ relate because it worked pebble by pebble, where $X$ and $Y$ are both fixed numbers. This is the single most-used theorem in the module: every "expected number of ..." in §3.9–3.10 is linearity plus indicators. Students who try to prove it from the value form (3.16) get tangled in joint PMFs and start believing independence is needed. It isn't.
+
+**Theorem 3.9 (The fundamental bridge).** For any event $A$, $\mathbb{E}[I_A] = P(A)$.
+
+*Proof.* $I_A$ takes the value 1 with probability $P(A)$ and 0 with probability $1 - P(A)$. By (3.16), $\mathbb{E}[I_A] = 1\cdot P(A) + 0\cdot(1 - P(A)) = P(A)$. ∎
+
+Combined with linearity, this converts "the expected number of things that happen" into "the sum of the probabilities that each thing happens," whether or not the things are independent. Useful algebra: $I_A^2 = I_A$, $I_{A \cap B} = I_A I_B$, $I_{A^c} = 1 - I_A$, $I_{A \cup B} = 1 - (1 - I_A)(1 - I_B)$. (Expanding the last for $n$ events and taking expectations proves (3.7) in one line; Exercise B1 asks you to do it for $n = 3$.)
+
+**Theorem 3.10 (LOTUS: Law of the Unconscious Statistician).** For any function $g : \mathbb{R} \to \mathbb{R}$,
+$$\mathbb{E}[g(X)] = \sum_x g(x)\,P(X = x).$$
+
+*Proof.* $g(X)$ is the random variable $\omega \mapsto g(X(\omega))$. By the pebble form, $\mathbb{E}[g(X)] = \sum_\omega g(X(\omega))P(\{\omega\})$. Group the pebbles by the value of $X$: $= \sum_x g(x)\sum_{\omega : X(\omega) = x} P(\{\omega\}) = \sum_x g(x) P(X = x)$. ∎ The same grouping argument gives the two-variable version $\mathbb{E}[g(X, Y)] = \sum_{x, y} g(x, y)\,P(X = x, Y = y)$.
+
+■ **What just happened.** You do not need the distribution of $g(X)$ to compute its expectation. You weight $g(x)$ by the probabilities of $x$. The name is a joke about people who do this without noticing it needs proof. It needed proof, and the proof was grouping. The roadmap flags LOTUS as a skill to drill; the exercises do.
+
+**Definition 3.11.** The **variance** of $X$ with mean $\mu = \mathbb{E}[X]$ is $\operatorname{Var}(X) = \mathbb{E}[(X - \mu)^2]$. The **standard deviation** is $\sigma_X = \sqrt{\operatorname{Var}(X)}$.
+
+Variance has the units of $X^2$; standard deviation has the units of $X$. If $X$ is a length in meters, $\operatorname{Var}(X)$ is in $\mathrm{m}^2$ and reporting it as a spread is a units error. Always report $\sigma$.
+
+**Theorem 3.11.**
+$$\operatorname{Var}(X) = \mathbb{E}[X^2] - (\mathbb{E}X)^2. \tag{3.17}$$
+
+▶ **Try it first.** Expand $(X - \mu)^2$ and apply linearity, remembering that $\mu$ is a constant.
+
+*Proof.* $(X - \mu)^2 = X^2 - 2\mu X + \mu^2$. By linearity, $\mathbb{E}[(X-\mu)^2] = \mathbb{E}[X^2] - 2\mu\,\mathbb{E}[X] + \mu^2 = \mathbb{E}[X^2] - 2\mu^2 + \mu^2 = \mathbb{E}[X^2] - \mu^2$. ∎
+
+■ **What just happened.** This is the parallel axis theorem of §2: the second moment about the origin, $\mathbb{E}[X^2]$, equals the second moment about the centroid, $\operatorname{Var}(X)$, plus (mass 1)$\times$(distance from origin to centroid)$^2$. In practice you compute $\mathbb{E}[X^2]$ by LOTUS and subtract $\mu^2$.
+
+**Theorem 3.12.** $\operatorname{Var}(aX + b) = a^2\operatorname{Var}(X)$. In particular $\operatorname{Var}(X + b) = \operatorname{Var}(X)$ and $\operatorname{Var}(c) = 0$ for a constant $c$.
+
+*Proof.* $\mathbb{E}[aX + b] = a\mu + b$, so $(aX + b) - (a\mu + b) = a(X - \mu)$ and $\operatorname{Var}(aX + b) = \mathbb{E}[a^2(X - \mu)^2] = a^2\operatorname{Var}(X)$. ∎
+
+Also $\operatorname{Var}(X) \ge 0$ always, with equality iff $X$ equals $\mu$ with probability 1 (a sum of non-negative terms is zero iff each term is zero).
+
+**Theorem 3.13 (Products of independent variables).** If $X \perp Y$ then $\mathbb{E}[XY] = \mathbb{E}[X]\,\mathbb{E}[Y]$, and more generally $\mathbb{E}[g(X)h(Y)] = \mathbb{E}[g(X)]\,\mathbb{E}[h(Y)]$.
+
+*Proof.* By two-variable LOTUS and Definition 3.7, $\mathbb{E}[g(X)h(Y)] = \sum_{x,y} g(x)h(y)P(X = x, Y = y) = \sum_{x,y} g(x)h(y)P(X = x)P(Y = y) = \Big(\sum_x g(x)P(X = x)\Big)\Big(\sum_y h(y)P(Y = y)\Big)$. ∎
+
+**Definition 3.12 (Covariance, minimally).** $\operatorname{Cov}(X, Y) = \mathbb{E}[(X - \mu_X)(Y - \mu_Y)]$. Expanding exactly as in Theorem 3.11,
+$$\operatorname{Cov}(X, Y) = \mathbb{E}[XY] - \mathbb{E}[X]\,\mathbb{E}[Y]. \tag{3.18}$$
+By Theorem 3.13, **independent variables have covariance zero.** (The converse is false: Part 10 of the project has $X$ uniform on $\{-1, 0, 1\}$ and $Y = X^2$, dependent with $\operatorname{Cov} = 0$. F5 treats covariance properly.)
+
+**Theorem 3.14 (Variance of a sum).**
+$$\operatorname{Var}(X + Y) = \operatorname{Var}(X) + \operatorname{Var}(Y) + 2\operatorname{Cov}(X, Y), \tag{3.19}$$
+and if $X_1, \dots, X_n$ are pairwise independent, $\operatorname{Var}(X_1 + \cdots + X_n) = \operatorname{Var}(X_1) + \cdots + \operatorname{Var}(X_n)$.
+
+▶ **Try it first.** Write $X + Y - (\mu_X + \mu_Y) = (X - \mu_X) + (Y - \mu_Y)$ and square.
+
+*Proof.* $\operatorname{Var}(X+Y) = \mathbb{E}\big[((X - \mu_X) + (Y - \mu_Y))^2\big] = \mathbb{E}[(X-\mu_X)^2] + \mathbb{E}[(Y - \mu_Y)^2] + 2\mathbb{E}[(X-\mu_X)(Y-\mu_Y)]$ by linearity, which is (3.19). For $n$ variables the same expansion produces every $\operatorname{Var}(X_i)$ once and every $\operatorname{Cov}(X_i, X_j)$, $i \ne j$, twice; pairwise independence kills the covariances. ∎
+
+■ **What just happened.** Expectations add always; variances add only when the cross terms vanish. In the moment-of-inertia picture: the second moment of a combined body is not the sum of the parts' second moments unless the parts are arranged symmetrically about the center. Exercise B8 has a pair with $\operatorname{Var}(X + Y) = 0$ although each variance is positive.
+
+**The indicator trick: three applications.** Write the count as a sum of indicators, take expectations, use the bridge.
+
+*(1) Fixed points of a random permutation.* Shuffle $n$ cards (de Montmort again). Let $X$ be the number of matches and $I_j$ the indicator that card $j$ is in position $j$. Then $X = \sum_{j=1}^n I_j$ and
+$$\mathbb{E}[X] = \sum_{j=1}^n P(\text{card } j \text{ in position } j) = n \cdot \frac1n = 1 \quad \text{for every } n.$$
+The $I_j$ are dependent (if $n - 1$ cards are in place, so is the last), and it does not matter.
+
+*(2) Birthday matches.* With $k$ people, let $X$ be the number of pairs sharing a birthday and $I_{ij}$ the indicator that persons $i$ and $j$ share one. $P(I_{ij} = 1) = 1/365$ (whatever $i$'s birthday is, $j$ matches it with probability $1/365$). There are $\binom{k}{2}$ pairs, so $\mathbb{E}[X] = \binom{k}{2}/365$. For $k = 23$: $253/365 = 0.693$. This is the exponent in (3.3).
+
+*(3) The Binomial mean.* $n$ independent trials each succeeding with probability $p$; $X = \sum_{j=1}^n I_j$ with $I_j$ the indicator of success on trial $j$. $\mathbb{E}[X] = \sum_j p = np$. No PMF needed. §3.10 derives it from the PMF too, so you can see how much work the bridge saves.
+
+**The St. Petersburg paradox (Nicolas Bernoulli, 1713; Daniel Bernoulli, 1738).** Toss a fair coin until the first head. If it appears on toss $n$, you win $2^n$ dollars. The fair price of the game is its expectation:
+$$\mathbb{E}[\text{payout}] = \sum_{n=1}^\infty 2^n \cdot \frac{1}{2^n} = \sum_{n=1}^\infty 1 = \infty.$$
+Nobody would pay more than a few dollars to play. The resolution is not that the mathematics is wrong: the center of mass of this distribution really is at infinity, because the arm extends forever with masses that decay exactly as fast as the lever lengthens. The resolutions are (a) utility is not linear in money (Daniel Bernoulli proposed $\log$), and (b) any real casino has finite reserves: if the payout is capped at $2^{40}$ dollars (about a trillion), the expectation drops to $40$. Expectation is a tool, and this is the example to remember when someone reports a mean of a heavy-tailed quantity as if it summarized anything. The Cauchy distribution in the project (Part 9) has no mean at all, and its running average never settles.
+
+### 3.10 The named discrete distributions
+
+Each distribution below comes with a **story**: an experiment that produces it. Learn the story first. The PMF, mean, and variance follow from the story, and so does the recognition of the distribution when it appears in SM-3 or ST-1 under a different name. A summary table closes the subsection.
+
+#### Bernoulli
+
+**Story.** One trial that succeeds with probability $p$. $X = 1$ on success, $0$ on failure. Written $X \sim \mathrm{Bern}(p)$. Every indicator $I_A$ is $\mathrm{Bern}(P(A))$.
+
+**PMF.** $P(X = 1) = p$, $P(X = 0) = q = 1 - p$.
+
+**Mean and variance.** $\mathbb{E}[X] = p$ (the bridge). $X^2 = X$, so $\mathbb{E}[X^2] = p$ and by (3.17) $\operatorname{Var}(X) = p - p^2 = pq$. Maximum variance $1/4$ at $p = 1/2$: a fair coin is the most unpredictable.
+
+#### Binomial
+
+**Story.** $n$ independent $\mathrm{Bern}(p)$ trials; $X$ = number of successes. $X \sim \mathrm{Bin}(n, p)$.
+
+▶ **Try it first.** What is the probability of one *specific* sequence with $k$ successes and $n - k$ failures? How many such sequences are there?
+
+**PMF derived.** A specific sequence of outcomes with $k$ successes and $n-k$ failures has probability $p^k q^{n-k}$ by independence (Definition 3.5, applied $n$-fold). The number of such sequences is the number of ways to choose which $k$ of the $n$ positions hold the successes, $\binom{n}{k}$. These sequences are disjoint events, so
+$$P(X = k) = \binom{n}{k} p^k q^{n-k}, \qquad k = 0, 1, \dots, n. \tag{3.20}$$
+It sums to 1 by the binomial theorem (3.2) with $x = p$, $y = q$: $(p + q)^n = 1$.
+
+**Mean, two ways.** *Via indicators:* $\mathbb{E}[X] = np$ (indicator trick, application 3). *Via the PMF:* using the identity $k\binom{n}{k} = n\binom{n-1}{k-1}$ (story: choose a $k$-person committee and its chair; either pick the committee then the chair, $\binom{n}{k}k$ ways, or the chair then the other $k-1$ members, $n\binom{n-1}{k-1}$ ways),
+$$\mathbb{E}[X] = \sum_{k=0}^n k\binom{n}{k}p^k q^{n-k} = \sum_{k=1}^n n\binom{n-1}{k-1}p^k q^{n-k} = np\sum_{j=0}^{n-1}\binom{n-1}{j}p^j q^{(n-1)-j} = np\,(p + q)^{n-1} = np,$$
+where $j = k - 1$ and the last sum is (3.2) again. Same answer, five times the work. That is the lesson.
+
+**Variance via independence.** $X = \sum_{j=1}^n I_j$ with independent $I_j \sim \mathrm{Bern}(p)$, so by Theorem 3.14, $\operatorname{Var}(X) = \sum_j pq = npq$.
+
+**Facts you should be able to prove from the story.** If $X \sim \mathrm{Bin}(n, p)$ then $n - X \sim \mathrm{Bin}(n, q)$ (relabel success and failure). If $X \sim \mathrm{Bin}(n, p)$ and $Y \sim \mathrm{Bin}(m, p)$ are independent then $X + Y \sim \mathrm{Bin}(n + m, p)$ (concatenate the trials; §3.14 proves it again with MGFs).
+
+#### Geometric
+
+**Story.** Independent $\mathrm{Bern}(p)$ trials, $0 < p \le 1$, repeated until the first success; $X$ = number of *failures* before it. $X \sim \mathrm{Geom}(p)$, support $\{0, 1, 2, \dots\}$. (The number of *trials* including the success is $X + 1$, sometimes called the First Success distribution; it has mean $1/p$ and the same variance.)
+
+**PMF derived.** $X = k$ means $k$ failures then a success, one specific sequence: $P(X = k) = q^k p$. It sums to 1 by the geometric series: $\sum_{k\ge0} q^k p = p/(1 - q) = 1$. $\tag{3.21}$
+
+**Mean, two ways.** *Via the series.* Differentiate $\sum_{k \ge 0} q^k = \frac{1}{1-q}$ with respect to $q$ (allowed inside the radius of convergence): $\sum_{k\ge1} kq^{k-1} = \frac{1}{(1-q)^2}$. Then
+$$\mathbb{E}[X] = \sum_{k \ge 0} k q^k p = pq\sum_{k\ge1} k q^{k-1} = \frac{pq}{(1-q)^2} = \frac{pq}{p^2} = \frac{q}{p}.$$
+*Via first-step conditioning.* Condition on the first trial (LOTP for expectations, which is linearity applied to $X = X I_{S} + X I_{S^c}$ with $S$ = first trial succeeds). If it succeeds, $X = 0$. If it fails, we have used one failure and the remaining trials are a fresh sequence of independent $\mathrm{Bern}(p)$ trials, so the number of *further* failures is again $\mathrm{Geom}(p)$ and $X = 1 + X'$ with $X' \sim \mathrm{Geom}(p)$. Therefore
+$$\mathbb{E}[X] = p\cdot 0 + q\,(1 + \mathbb{E}[X]) \;\Longrightarrow\; \mathbb{E}[X](1 - q) = q \;\Longrightarrow\; \mathbb{E}[X] = \frac{q}{p}.$$
+The series proof is calculus. The first-step proof is one line of algebra once you see that the process restarts. First-step analysis is how Pascal solved the problem of points, how F5 computes hitting times of Markov chains, and how Exercise C2 finds the expected wait for $HH$.
+
+**Variance.** Same first-step trick on $X^2$: $\mathbb{E}[X^2] = p\cdot 0 + q\,\mathbb{E}[(1 + X')^2] = q\,(1 + 2\mathbb{E}[X] + \mathbb{E}[X^2])$, so $\mathbb{E}[X^2](1 - q) = q + 2q^2/p$, giving $\mathbb{E}[X^2] = \frac{q}{p} + \frac{2q^2}{p^2} = \frac{pq + 2q^2}{p^2}$. By (3.17),
+$$\operatorname{Var}(X) = \frac{pq + 2q^2}{p^2} - \frac{q^2}{p^2} = \frac{pq + q^2}{p^2} = \frac{q(p + q)}{p^2} = \frac{q}{p^2}.$$
+
+#### Negative Binomial
+
+**Story.** Independent $\mathrm{Bern}(p)$ trials until the $r$-th success; $X$ = number of failures before it. $X \sim \mathrm{NBin}(r, p)$. $\mathrm{NBin}(1, p) = \mathrm{Geom}(p)$.
+
+**PMF derived.** $X = n$ means the $(n + r)$-th trial is a success and exactly $r - 1$ of the first $n + r - 1$ trials are successes. There are $\binom{n + r - 1}{r - 1}$ ways to place those $r-1$ successes, each full sequence having probability $p^r q^n$:
+$$P(X = n) = \binom{n + r - 1}{r - 1} p^r q^n, \qquad n = 0, 1, 2, \dots \tag{3.22}$$
+
+**Mean and variance.** Let $G_i$ be the number of failures between the $(i-1)$-th and $i$-th success. By the fresh-start argument each $G_i \sim \mathrm{Geom}(p)$, and they are independent (they depend on disjoint blocks of trials). $X = G_1 + \cdots + G_r$, so by linearity and Theorem 3.14,
+$$\mathbb{E}[X] = \frac{rq}{p}, \qquad \operatorname{Var}(X) = \frac{rq}{p^2}.$$
+Deriving these from (3.22) directly is miserable. The story makes them two lines.
+
+#### Hypergeometric
+
+**Story.** An urn holds $w$ white and $b$ black balls, $N = w + b$. Draw $n$ **without replacement**; $X$ = number of white balls drawn. $X \sim \mathrm{HGeom}(w, b, n)$. Quality control: $w$ defective parts in a batch of $N$, inspect $n$ (Example 4.9). Ecology: tag $w$ fish, recapture $n$.
+
+**PMF derived.** All $\binom{N}{n}$ unordered samples are equally likely. The samples with exactly $k$ white balls are formed by choosing $k$ of the $w$ white and $n - k$ of the $b$ black:
+$$P(X = k) = \frac{\binom{w}{k}\binom{b}{n-k}}{\binom{N}{n}}, \qquad \max(0, n - b) \le k \le \min(w, n). \tag{3.23}$$
+It sums to 1 by Vandermonde's identity, Theorem 3.2(b), with $m = w$, $r = n$.
+
+**Mean via indicators.** Let $I_j$ be the indicator that the $j$-th ball drawn is white. By symmetry the $j$-th ball drawn is equally likely to be any of the $N$ balls (imagine drawing all $N$ in a random order and reading off position $j$), so $P(I_j = 1) = w/N$. Then $\mathbb{E}[X] = \sum_{j=1}^n w/N = n\,\frac{w}{N}$. The indicators are dependent (drawing a white ball first makes a white second ball less likely), and linearity does not care.
+
+**Variance and the finite-population correction.** Write $p = w/N$. By Theorem 3.14 with covariances kept,
+$$\operatorname{Var}(X) = \sum_j \operatorname{Var}(I_j) + \sum_{i \ne j}\operatorname{Cov}(I_i, I_j) = n\,pq + n(n-1)\operatorname{Cov}(I_1, I_2),$$
+since all pairs have the same covariance by symmetry. Now $\mathbb{E}[I_1 I_2] = P(\text{first two both white}) = \frac{w}{N}\cdot\frac{w - 1}{N - 1}$ (chain rule), so by (3.18)
+$$\operatorname{Cov}(I_1, I_2) = \frac{w(w-1)}{N(N-1)} - \frac{w^2}{N^2} = \frac{w(w-1)N - w^2(N-1)}{N^2(N-1)} = \frac{w^2 - wN}{N^2(N-1)} = -\frac{w(N - w)}{N^2(N-1)} = -\frac{pq}{N - 1}.$$
+Negative, as expected. Hence
+$$\operatorname{Var}(X) = npq - \frac{n(n-1)pq}{N-1} = npq\,\frac{N - n}{N - 1}.$$
+The factor $\frac{N-n}{N-1}$ is the **finite-population correction**. It is 1 when $n = 1$, it is 0 when $n = N$ (you drew everything; no randomness), and it tends to 1 as $N \to \infty$ with $n$ fixed. In that limit sampling without replacement is indistinguishable from sampling with replacement and $\mathrm{HGeom}(w, b, n) \to \mathrm{Bin}(n, p)$: each draw barely changes the urn. Example 4.9 compares the two for a batch of 50 parts, where the correction is far from 1.
+
+#### Poisson
+
+**Story.** Count the number of events when there are *many* opportunities, each with *small* probability, roughly independent. Raindrops on a tile in a second; typos on a page; radioactive decays in a minute; birthday-sharing pairs in a room. The parameter $\lambda$ is the expected count.
+
+▶ **Try it first.** Take $X_n \sim \mathrm{Bin}(n, \lambda/n)$ and compute $\lim_{n\to\infty} P(X_n = k)$ for fixed $k$. You will need $\lim (1 - \lambda/n)^n = e^{-\lambda}$.
+
+**PMF derived as a limit.** Fix $k$ and $\lambda > 0$. From (3.20) with $p = \lambda/n$,
+$$P(X_n = k) = \binom{n}{k}\left(\frac{\lambda}{n}\right)^k\left(1 - \frac{\lambda}{n}\right)^{n-k} = \underbrace{\frac{n(n-1)\cdots(n-k+1)}{n^k}}_{\to\ 1}\cdot\frac{\lambda^k}{k!}\cdot\underbrace{\left(1 - \frac{\lambda}{n}\right)^n}_{\to\ e^{-\lambda}}\cdot\underbrace{\left(1 - \frac{\lambda}{n}\right)^{-k}}_{\to\ 1}.$$
+The first factor is a product of $k$ terms $(n - j)/n \to 1$. The third is the definition of $e^{-\lambda}$. The fourth has a fixed number of factors each tending to 1. Hence
+$$P(X = k) = \frac{e^{-\lambda}\lambda^k}{k!}, \qquad k = 0, 1, 2, \dots \tag{3.24}$$
+It sums to 1 because $\sum_k \lambda^k/k! = e^\lambda$. We write $X \sim \mathrm{Pois}(\lambda)$. Example 4.6 checks the limit numerically for $n = 1000$, $p = 0.003$.
+
+**Mean and variance.**
+$$\mathbb{E}[X] = \sum_{k\ge0} k\,\frac{e^{-\lambda}\lambda^k}{k!} = e^{-\lambda}\lambda\sum_{k \ge 1}\frac{\lambda^{k-1}}{(k-1)!} = e^{-\lambda}\lambda e^{\lambda} = \lambda.$$
+For the variance, compute the *factorial moment* $\mathbb{E}[X(X-1)]$ instead of $\mathbb{E}[X^2]$, because $k(k-1)/k! = 1/(k-2)!$ cancels cleanly:
+$$\mathbb{E}[X(X-1)] = \sum_{k \ge 2} k(k-1)\frac{e^{-\lambda}\lambda^k}{k!} = e^{-\lambda}\lambda^2\sum_{k\ge2}\frac{\lambda^{k-2}}{(k-2)!} = \lambda^2.$$
+Then $\mathbb{E}[X^2] = \mathbb{E}[X(X-1)] + \mathbb{E}[X] = \lambda^2 + \lambda$ and $\operatorname{Var}(X) = \lambda^2 + \lambda - \lambda^2 = \lambda$. Mean equals variance: a diagnostic. Count data with variance much larger than the mean is *overdispersed* and not Poisson (ST-4).
+
+**The Poisson paradigm.** If $A_1, \dots, A_n$ are events with small probabilities $p_j$, and they are independent or only weakly dependent, then the number that occur is approximately $\mathrm{Pois}(\lambda)$ with $\lambda = \sum_j p_j$. The derivation above is the independent, equal-$p_j$ case; F5 sketches the general one. Applied to birthdays: $\binom{k}{2}$ pair-events each with probability $1/365$, weakly dependent, so the number of matching pairs is approximately $\mathrm{Pois}\big(\binom{k}{2}/365\big)$ and $P(\text{no match}) \approx e^{-\binom{k}{2}/365}$, which is (3.3) again, now with a reason.
+
+#### Discrete Uniform
+
+**Story.** $X$ is equally likely to be any of $1, 2, \dots, n$. One fair die is $n = 6$.
+
+**PMF.** $P(X = k) = 1/n$.
+
+**Mean and variance.** $\mathbb{E}[X] = \frac1n\sum_{k=1}^n k = \frac{n+1}{2}$. By LOTUS and $\sum_{k=1}^n k^2 = \frac{n(n+1)(2n+1)}{6}$, $\mathbb{E}[X^2] = \frac{(n+1)(2n+1)}{6}$, so
+$$\operatorname{Var}(X) = \frac{(n+1)(2n+1)}{6} - \frac{(n+1)^2}{4} = \frac{(n+1)\big[2(2n+1) - 3(n+1)\big]}{12} = \frac{(n+1)(n-1)}{12} = \frac{n^2 - 1}{12}.$$
+For a die: mean $3.5$, variance $35/12 \approx 2.917$, standard deviation $1.708$.
+
+#### Summary
+
+| Distribution | Story | PMF $P(X = k)$ | $\mathbb{E}[X]$ | $\operatorname{Var}(X)$ |
+|---|---|---|---|---|
+| $\mathrm{Bern}(p)$ | one trial | $p^k q^{1-k}$, $k \in \{0, 1\}$ | $p$ | $pq$ |
+| $\mathrm{Bin}(n, p)$ | successes in $n$ trials | $\binom{n}{k}p^k q^{n-k}$ | $np$ | $npq$ |
+| $\mathrm{Geom}(p)$ | failures before 1st success | $q^k p$ | $q/p$ | $q/p^2$ |
+| $\mathrm{NBin}(r, p)$ | failures before $r$-th success | $\binom{k+r-1}{r-1}p^r q^k$ | $rq/p$ | $rq/p^2$ |
+| $\mathrm{HGeom}(w, b, n)$ | white in $n$ draws, no replacement | $\binom{w}{k}\binom{b}{n-k}/\binom{w+b}{n}$ | $nw/N$ | $npq\frac{N-n}{N-1}$ |
+| $\mathrm{Pois}(\lambda)$ | count of rare events | $e^{-\lambda}\lambda^k/k!$ | $\lambda$ | $\lambda$ |
+| $\mathrm{DUnif}\{1..n\}$ | fair $n$-sided die | $1/n$ | $(n+1)/2$ | $(n^2-1)/12$ |

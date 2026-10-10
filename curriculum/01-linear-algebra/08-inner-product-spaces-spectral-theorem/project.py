@@ -622,6 +622,47 @@ fig.tight_layout(); fig.savefig(FIG / "mohr_circle.png", dpi=120); plt.close(fig
 print(f"Example 4.5: principal stresses {w_s.round(2)} MPa at θ_p = {theta_p:.1f}°, max shear {r:.2f} MPa")
 
 # %% [markdown]
+# ## Exercise checks
+#
+# Numbers that appear in the solutions to A3, A4, C1, C2, C3, verified here.
+
+
+# %%
+# A3: sqrt(A), A^{-1}, e^A for [[2,1],[1,2]] via (3.11).
+A3m = np.array([[2, 1], [1, 2.]])
+r3 = np.sqrt(3)
+assert np.allclose(matrix_function(A3m, np.sqrt), 0.5 * np.array([[r3 + 1, r3 - 1], [r3 - 1, r3 + 1]]))
+assert np.allclose(matrix_function(A3m, lambda t: 1 / t), np.array([[2 / 3, -1 / 3], [-1 / 3, 2 / 3]]))
+assert np.allclose(matrix_function(A3m, np.exp), 0.5 * np.array([[np.e**3 + np.e, np.e**3 - np.e], [np.e**3 - np.e, np.e**3 + np.e]]))
+# A4: eigenvalues decide the classification.
+assert np.allclose(eigh_desc(np.array([[2, -1], [-1, 2.]]))[0], [3, 1])          # PD
+assert np.allclose(eigh_desc(np.array([[1, 2], [2, 1.]]))[0], [3, -1])           # indefinite
+assert np.allclose(eigh_desc(np.array([[1, 1], [1, 1.]]))[0], [2, 0])            # PSD
+assert np.allclose(eigh_desc(np.array([[-1, 2], [2, -5.]]))[0], [-3 + 2 * np.sqrt(2), -3 - 2 * np.sqrt(2)])  # ND
+# C1: Cauchy interlacing on Example 4.2 and on random symmetric 6x6 matrices.
+lam = eigh_desc(A42)[0]; mu = eigh_desc(A42[:2, :2])[0]
+assert np.allclose(mu, [3, 1]) and np.all(lam[:2] >= mu - 1e-12) and np.all(mu >= lam[1:] - 1e-12)
+for _ in range(20):
+    M = rng.standard_normal((6, 6)); M = M + M.T
+    lam = eigh_desc(M)[0]; mu = eigh_desc(M[:5, :5])[0]
+    assert np.all(lam[:5] >= mu - 1e-10) and np.all(mu >= lam[1:] - 1e-10)
+# C2: polarization identity in our convention, on random complex vectors.
+for _ in range(20):
+    u = rng.standard_normal(4) + 1j * rng.standard_normal(4); v = rng.standard_normal(4) + 1j * rng.standard_normal(4)
+    nrm2 = lambda z: np.real(inner(z, z))
+    polar = 0.25 * (nrm2(u + v) - nrm2(u - v)) + 0.25j * (nrm2(u - 1j * v) - nrm2(u + 1j * v))
+    assert np.isclose(polar, inner(u, v))
+# C3: generalized eigenproblem K v = λ M v with M = diag(1, 2), K = [[2,-1],[-1,2]].
+Kc = np.array([[2, -1], [-1, 2.]]); Mc = np.diag([1, 2.])
+lam_g, V_g = sla.eigh(Kc, Mc)
+assert np.allclose(lam_g, [(3 - np.sqrt(3)) / 2, (3 + np.sqrt(3)) / 2])
+assert np.allclose(V_g.T @ Mc @ V_g, np.eye(2))                      # M-orthonormal
+v1 = np.array([1, (1 - np.sqrt(3)) / 2]); v2 = np.array([1, (1 + np.sqrt(3)) / 2])
+assert np.isclose(v1 @ Mc @ v2, 0) and np.isclose(v1 @ v2, 0.5)      # M-orthogonal, not Euclidean-orthogonal
+assert np.allclose(Kc @ v1, lam_g[1] * Mc @ v1) and np.allclose(Kc @ v2, lam_g[0] * Mc @ v2)
+print("Exercise checks passed (A3, A4, C1, C2, C3).")
+
+# %% [markdown]
 # ## Your turn
 #
 # 1. **Symmetric ⟂ antisymmetric.** Using the Frobenius inner product (3.3), show numerically

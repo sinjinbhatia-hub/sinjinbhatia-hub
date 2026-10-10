@@ -220,20 +220,29 @@ assert abs(two_a_shoot - 2 * a_cyc) < 1e-9, (two_a_shoot, 2 * a_cyc)
 print(f"Part 3: shooting gives 2a = {two_a_shoot:.9f}; cycloid 2a = {2 * a_cyc:.9f}")
 
 
-def beltrami_H(x_nodes, y_nodes):
-    """H = L − y' L_y' for L = sqrt(1+y'^2)/sqrt(2 g y), with y' by central differences, at interior nodes."""
-    yp = (y_nodes[2:] - y_nodes[:-2]) / (x_nodes[2:] - x_nodes[:-2])
-    return 1 / np.sqrt(2 * g * y_nodes[1:-1] * (1 + yp**2))
+def beltrami_H(y_nodes, yp_nodes):
+    """H = L − y' L_y' for L = sqrt(1+y'^2)/sqrt(2 g y): H = 1/sqrt(2 g y (1+y'^2)), constant on solutions (Example 4.2)."""
+    return 1 / np.sqrt(2 * g * y_nodes * (1 + yp_nodes**2))
 
 
-th = np.linspace(0.3, th1, 400)   # parametrize by θ so the vertical start does not spoil the differences
-H_cyc = beltrami_H(a_cyc * (th - np.sin(th)), a_cyc * (1 - np.cos(th)))
+def central_slope(x_nodes, y_nodes):
+    """y' at interior nodes by central differences."""
+    return (y_nodes[2:] - y_nodes[:-2]) / (x_nodes[2:] - x_nodes[:-2])
+
+
+th = np.linspace(0.3, th1, 400)
+H_cyc = beltrami_H(a_cyc * (1 - np.cos(th)), np.sin(th) / (1 - np.cos(th)))       # exact slope cot(θ/2)
+H_exact = 1 / np.sqrt(2 * g * 2 * a_cyc)
+assert np.ptp(H_cyc) / H_cyc.mean() < 1e-12 and np.isclose(H_cyc.mean(), H_exact, rtol=1e-12)
+y_num = with_ends(res_br.x, 0.0, y1)                                               # the L-BFGS-B polygon of Part 2
+H_num = beltrami_H(y_num[1:-1], central_slope(xb, y_num))[10:]                     # skip the first nodes near the vertical start
+assert np.ptp(H_num) / H_num.mean() < 2e-3 and abs(H_num.mean() - H_exact) / H_exact < 2e-3
 xs_line = np.linspace(0.01, 1, 400)
-H_line = beltrami_H(xs_line, xs_line)
-assert np.ptp(H_cyc) / H_cyc.mean() < 1e-6 and np.isclose(H_cyc.mean(), 1 / np.sqrt(2 * g * 2 * a_cyc), rtol=1e-6)
+H_line = beltrami_H(xs_line[1:-1], central_slope(xs_line, xs_line))                # the straight wire y = x
 assert H_line.max() / H_line.min() > 5
-print(f"        Beltrami H along cycloid: spread/mean = {np.ptp(H_cyc) / H_cyc.mean():.1e} "
-      f"(= 1/sqrt(4ga) = {1 / np.sqrt(4 * g * a_cyc):.5f}); along the line: max/min = {H_line.max() / H_line.min():.1f}")
+print(f"        Beltrami H = 1/sqrt(4ga) = {H_exact:.5f}: along the cycloid spread/mean = {np.ptp(H_cyc) / H_cyc.mean():.1e}; "
+      f"along the numerical polygon {np.ptp(H_num) / H_num.mean():.1e} (mean {H_num.mean():.5f}); "
+      f"along the line max/min = {H_line.max() / H_line.min():.1f}")
 
 # %% [markdown]
 # ## Part 4: The catenary with a length constraint (Example 4.4)

@@ -93,7 +93,7 @@ These are exactly the three dot-product properties listed after LA-1 Definition 
 2. (linear in the **second** slot) $\langle u, cv + w\rangle = c\langle u, v\rangle + \langle u, w\rangle$;
 3. (positive definite) $\langle v, v\rangle \ge 0$ (it is real by axiom 1), with equality only when $v = 0$.
 
-Axioms 1 and 2 force the first slot to be **conjugate-linear**: $\langle cu, v\rangle = \overline{\langle v, cu\rangle} = \overline{c\langle v, u\rangle} = \bar c\,\langle u, v\rangle$. This is the convention flagged in the box: conjugate the first slot. The reason a conjugate is needed at all: with $\langle \mathbf{u}, \mathbf{v}\rangle = \sum u_i v_i$ and no conjugate, $\mathbf{v} = (1, i)^\top$ would have $\langle\mathbf{v},\mathbf{v}\rangle = 1 + i^2 = 0$, so axiom 3 would fail. The reason to put the conjugate on the *first* slot rather than the second is purely conventional, and we follow physics so that Dirac's $\langle\phi|\psi\rangle$ (§3.12) means $\langle\phi, \psi\rangle$ with no translation. Axler conjugates the second slot. Both are inner products; just don't mix them in one computation.
+Axioms 1 and 2 force the first slot to be **conjugate-linear**: $\langle cu, v\rangle = \overline{\langle v, cu\rangle} = \overline{c\langle v, u\rangle} = \bar c\,\langle u, v\rangle$. This is the convention flagged in the box: conjugate the first slot. The reason a conjugate is needed at all: with $\langle \mathbf{u}, \mathbf{v}\rangle = \sum u_i v_i$ and no conjugate, $\mathbf{v} = (1, i)^\top$ would have $\langle\mathbf{v},\mathbf{v}\rangle = 1 + i^2 = 0$, so axiom 3 would fail. The reason to put the conjugate on the *first* slot rather than the second is purely conventional, and we follow physics so that Dirac's $\langle\phi|\psi\rangle$ (§3.12) means $\langle\phi, \psi\rangle$ with no translation. Axler conjugates the second slot. Both are inner products; do not mix them in one computation.
 
 **Examples.** Each is an inner product; checking the axioms is a short exercise in each case.
 
@@ -106,11 +106,13 @@ $$\langle f, g\rangle = \int_a^b \overline{f(x)}\,g(x)\,dx. \tag{3.2}$$
 Axiom 3 needs continuity: a continuous $f$ with $\int|f|^2 = 0$ is identically zero, because if $|f(x_0)| > 0$ at one point then $|f|^2$ exceeds half that value on a small interval around $x_0$, making the integral positive. F2 uses (3.2) on $[-\pi,\pi]$; Example 4.1 uses the real version on $[-1,1]$.
 - *Matrices (Frobenius).* On $m\times n$ complex matrices:
 $$\langle A, B\rangle_F = \operatorname{tr}(A^\dagger B) = \sum_{i,j} \bar a_{ij} b_{ij}. \tag{3.3}$$
-The second equality: $(A^\dagger B)_{jj} = \sum_i (A^\dagger)_{ji} b_{ij} = \sum_i \bar a_{ij} b_{ij}$, then sum over $j$. So (3.3) is just (3.1) applied to the matrix flattened into a vector of length $mn$, and the axioms follow. The norm it induces is $\|A\|_F = \sqrt{\sum|a_{ij}|^2}$, the Frobenius norm of LA-1 Exercise C3.
+The second equality: $(A^\dagger B)_{jj} = \sum_i (A^\dagger)_{ji} b_{ij} = \sum_i \bar a_{ij} b_{ij}$, then sum over $j$. So (3.3) is (3.1) applied to the matrix flattened into a vector of length $mn$, and the axioms follow. The norm it induces is $\|A\|_F = \sqrt{\sum|a_{ij}|^2}$, the Frobenius norm of LA-1 Exercise C3.
 
 **Definition 3.3 (Induced norm, orthogonality).** $\|v\| = \sqrt{\langle v, v\rangle}$. Vectors $u, v$ are *orthogonal*, written $u \perp v$, if $\langle u, v\rangle = 0$. A set is *orthonormal* if its members are pairwise orthogonal and each has norm 1.
 
-**Theorem 3.4 (Cauchy–Schwarz).** In any inner product space, $|\langle u, v\rangle| \le \|u\|\,\|v\|$, with equality if and only if one of $u, v$ is a scalar multiple of the other.
+**Theorem 3.4 (Cauchy–Schwarz).** In any inner product space,
+$$|\langle u, v\rangle| \le \|u\|\,\|v\|, \tag{3.4}$$
+with equality if and only if one of $u, v$ is a scalar multiple of the other.
 
 ▶ **Try it first.** Reread the LA-1 proof of Theorem 3.11. Replace every dot with $\langle\cdot,\cdot\rangle$. Does any step use a coordinate, a geometric fact, or anything beyond the three axioms?
 
@@ -202,8 +204,8 @@ Equivalently: the columns $\mathbf{q}_1, \dots, \mathbf{q}_n$ of $Q$ form an ort
 The proof has two parts. Part I finds *one* eigenvector by maximizing a function on the sphere. Part II shows that the directions perpendicular to it form a smaller problem of the same type, and inducts. Part II is where people stop understanding; take it slowly.
 
 **Part I: a largest eigenvalue exists.** Define the **Rayleigh quotient**
-$$R(\mathbf{x}) = \frac{\mathbf{x}^\top A\mathbf{x}}{\mathbf{x}^\top\mathbf{x}}, \qquad \mathbf{x}\ne\mathbf{0}. \tag{3.13}$$
-Since $R(c\mathbf{x}) = R(\mathbf{x})$ for $c\ne 0$, it is enough to study $g(\mathbf{x}) = \mathbf{x}^\top A\mathbf{x}$ on the unit sphere $S = \{\mathbf{x} : \|\mathbf{x}\| = 1\}$.
+$$R(\mathbf{x}) = \frac{\mathbf{x}^\top A\mathbf{x}}{\mathbf{x}^\top\mathbf{x}}, \qquad \mathbf{x}\ne\mathbf{0}$$
+(it gets its equation number, (3.13), when §3.9 studies it in its own right). Since $R(c\mathbf{x}) = R(\mathbf{x})$ for $c\ne 0$, it is enough to study $g(\mathbf{x}) = \mathbf{x}^\top A\mathbf{x}$ on the unit sphere $S = \{\mathbf{x} : \|\mathbf{x}\| = 1\}$.
 
 ▶ **Try it first.** $g$ is continuous and $S$ is closed and bounded, so $g$ has a maximum on $S$ at some $\mathbf{q}$. Set $\lambda = g(\mathbf{q})$. You want to show $A\mathbf{q} = \lambda\mathbf{q}$. Take any $\mathbf{w}\perp\mathbf{q}$ and look at $R(\mathbf{q} + t\mathbf{w})$ as a function of $t$ near $0$. What must its derivative at $t = 0$ be?
 
@@ -305,7 +307,9 @@ The Gram matrix is where the SVD starts: LA-9 applies Theorem 3.11 to $A^\top A$
 
 ### 3.9 The Rayleigh quotient, Courant–Fischer, and the second-derivative test
 
-**Theorem 3.17 (Rayleigh quotient bounds).** For symmetric $A$ with eigenvalues $\lambda_1\ge\cdots\ge\lambda_n$ and $R$ as in (3.13),
+**Theorem 3.17 (Rayleigh quotient bounds).** For symmetric $A$ with eigenvalues $\lambda_1\ge\cdots\ge\lambda_n$ and the Rayleigh quotient of §3.5,
+$$R(\mathbf{x}) = \frac{\mathbf{x}^\top A\mathbf{x}}{\mathbf{x}^\top\mathbf{x}} \qquad(\mathbf{x}\ne\mathbf{0};\ \mathbf{x}^\dagger \text{ in the complex case}), \tag{3.13}$$
+we have
 $$\lambda_n \le R(\mathbf{x}) \le \lambda_1 \qquad\text{for all } \mathbf{x}\ne\mathbf{0},$$
 with $R(\mathbf{x}) = \lambda_1$ exactly when $\mathbf{x}$ is an eigenvector for $\lambda_1$, and $R(\mathbf{x}) = \lambda_n$ exactly when $\mathbf{x}$ is an eigenvector for $\lambda_n$.
 
@@ -484,7 +488,7 @@ Both tensile. Radius $r = \sqrt{d^2 + \tau_{xy}^2} = \sqrt{900 + 900} = 30\sqrt2
 *Mohr's circle is the spectral theorem.* With $\mathbf{n} = (\cos\theta, \sin\theta)^\top$ and $\mathbf{t} = (-\sin\theta, \cos\theta)^\top$, expand:
 $$\sigma_n = \sigma_{xx}\cos^2\theta + \sigma_{yy}\sin^2\theta + 2\tau_{xy}\sin\theta\cos\theta = m + d\cos2\theta + \tau_{xy}\sin2\theta,$$
 $$\tau_n = -d\sin2\theta + \tau_{xy}\cos2\theta,$$
-using $\cos^2\theta = \tfrac12(1 + \cos2\theta)$, $\sin^2\theta = \tfrac12(1 - \cos2\theta)$, $2\sin\theta\cos\theta = \sin2\theta$. Then $(\sigma_n - m)^2 + \tau_n^2 = d^2 + \tau_{xy}^2 = r^2$. As $\theta$ runs over all planes, $(\sigma_n, \tau_n)$ traces a circle centered at $(m, 0) = (50, 0)$ with radius $r = 42.43$: **Mohr's circle**. Its rightmost and leftmost points are $m\pm r = \sigma_1, \sigma_2$, the eigenvalues; those are exactly the bounds $\lambda_{\min}\le R(\mathbf{n})\le\lambda_{\max}$ of Theorem 3.17. The top of the circle is the maximum shear $\tau_{\max} = r = 42.43$ MPa, on planes at $45°$ to the principal directions, i.e. $\theta = 22.5°\pm45°$. In the eigenbasis the circle is simply $\sigma_n = m + r\cos2\theta'$, $\tau_n = -r\sin2\theta'$ with $\theta'$ measured from $\mathbf{q}_1$: (3.12) in polar form. The project draws it from the eigen decomposition. In 3D the stress tensor is a symmetric $3\times3$ matrix, Theorem 3.11 gives three perpendicular principal directions, and the same construction gives three Mohr circles.
+using $\cos^2\theta = \tfrac12(1 + \cos2\theta)$, $\sin^2\theta = \tfrac12(1 - \cos2\theta)$, $2\sin\theta\cos\theta = \sin2\theta$. Then $(\sigma_n - m)^2 + \tau_n^2 = d^2 + \tau_{xy}^2 = r^2$. As $\theta$ runs over all planes, $(\sigma_n, \tau_n)$ traces a circle centered at $(m, 0) = (50, 0)$ with radius $r = 42.43$: **Mohr's circle**. Its rightmost and leftmost points are $m\pm r = \sigma_1, \sigma_2$, the eigenvalues; those are exactly the bounds $\lambda_{\min}\le R(\mathbf{n})\le\lambda_{\max}$ of Theorem 3.17. The top of the circle is the maximum shear $\tau_{\max} = r = 42.43$ MPa, on planes at $45°$ to the principal directions, i.e. $\theta = 22.5°\pm45°$. In the eigenbasis the circle is $\sigma_n = m + r\cos2\theta'$, $\tau_n = -r\sin2\theta'$ with $\theta'$ measured from $\mathbf{q}_1$: (3.12) in polar form. The project draws it from the eigen decomposition. In 3D the stress tensor is a symmetric $3\times3$ matrix, Theorem 3.11 gives three perpendicular principal directions, and the same construction gives three Mohr circles.
 
 ### Example 4.6: Four tests for positive definiteness on one matrix
 

@@ -244,7 +244,7 @@ where $M_{ij}$ is the minor (the determinant of $A$ with row $i$ and column $j$ 
 The signs $(-1)^{i+j}$ form a checkerboard starting with $+$ in the top-left corner:
 $$\begin{pmatrix} + & - & + & - \\ - & + & - & + \\ + & - & + & - \\ - & + & - & + \end{pmatrix}.$$
 
-■ **What just happened.** The $n\times n$ determinant is a combination of $n$ determinants of size $n - 1$. Recursing all the way down costs about $e \cdot n!$ multiplications (Exercise A-level arithmetic: $T(n) = nT(n-1) + n$, so $T(n)/n! \to e$). Cofactor expansion is the right tool when a row has many zeros, when the matrix has symbolic entries, and for proofs (§3.6, §3.7, §3.12). It is the wrong tool for a numerical $10\times 10$ matrix; use (3.2).
+■ **What just happened.** The $n\times n$ determinant is a combination of $n$ determinants of size $n - 1$. Recursing all the way down costs about $e \cdot n!$ multiplications (a short calculation: $T(n) = nT(n-1) + n$ gives $T(n)/n! \to e$). Cofactor expansion is the right tool when a row has many zeros, when the matrix has symbolic entries, and for proofs (§3.6, §3.7, §3.12). It is the wrong tool for a numerical $10\times 10$ matrix; use (3.2).
 
 ### 3.6 Cramer's rule
 
@@ -397,7 +397,7 @@ In particular $\det V \neq 0$ iff the $x_i$ are distinct, and then the interpola
 
 **It is a polynomial.** From (3.3), $\det A$ is a homogeneous polynomial of degree $n$ in the $n^2$ entries. Consequences: it is continuous (used in §3.10 for orientation and in LA-7 for the continuity of eigenvalues); it is differentiable (Exercise C1 computes the derivative); and $\det(cA) = c^n\det A$.
 
-**Cost.** Cofactor recursion: $T(n) = nT(n-1) + O(n)$, so $T(n) \approx e\cdot n!$. For $n = 20$ that is about $6.6 \times 10^{18}$ multiplications, centuries on a laptop. Elimination: about $\tfrac23 n^3$ flops, $5{,}300$ for $n = 20$. The project measures both; the cofactor curve goes vertical at $n \approx 9$. Every library computes determinants by LU factorization, which is (3.2) with partial pivoting.
+**Cost.** Cofactor recursion: $T(n) = nT(n-1) + O(n)$, so $T(n) \approx e\cdot n!$. For $n = 20$ that is about $6.6 \times 10^{18}$ multiplications, centuries on a laptop. Elimination: about $\tfrac23 n^3$ flops, $5{,}300$ for $n = 20$. The project measures both; cofactor time multiplies by roughly $n$ at every step while elimination barely moves. Every library computes determinants by LU factorization, which is (3.2) with partial pivoting.
 
 **Scale.** Because $\det(cA) = c^n\det A$, the determinant says nothing about how close $A$ is to singular. The matrix $\tfrac{1}{10}I_{100}$ has determinant $10^{-100}$ and is as far from singular as a matrix can be: its inverse is $10 I$, perfectly behaved. The matrix $\operatorname{diag}(10^6, 10^{-6})$ has determinant $1$ and is numerically treacherous: perturbing its $(2,2)$ entry by $10^{-6}$ makes it singular. The right measure of "how singular" is the condition number $\kappa(A) = \sigma_{\max}/\sigma_{\min}$, the ratio of the largest to smallest singular values, defined in LA-9 and used throughout LA-13. The determinant is $\pm\prod_i\sigma_i$, a product that one tiny factor can dominate or a hundred moderate factors can shrink to nothing, and neither tells you about the ratio.
 
@@ -491,7 +491,7 @@ See [exercises.md](exercises.md). A1–A5 drill the three ways to compute, the r
 
 1. **Three algorithms.** `det_elimination` (partial pivoting, counts swaps, applies (3.2)), `det_leibniz` (all $n!$ permutations with signs from inversion counts, (3.3)), and `det_cofactor` (recursive (3.4)). All three are asserted against `np.linalg.det` on random matrices, and all four computations of Example 4.1 are reproduced, including the six Leibniz terms and the pivots $1, 2, -\tfrac72$.
 2. **Cost.** Times cofactor against elimination for $n = 2, \dots, 9$ and plots both on a log axis. You will watch factorial growth happen.
-3. **Volume.** Maps $100{,}000$ uniform points in the unit square and unit cube through random matrices and estimates the image's volume two ways (bounding-box rejection with the inverse map, and `scipy.spatial.ConvexHull`), checking against $|\det A|$ to within $1\%$ (Theorem 3.17).
+3. **Volume.** Maps $100{,}000$ uniform points in the unit square and unit cube through random matrices and estimates the image's volume two ways (bounding-box rejection with the inverse map, and `scipy.spatial.ConvexHull`), checking against $|\det A|$ to within $1\%$ for the hull and $2\%$ for the rejection estimate (Theorem 3.17).
 4. **Pictures.** The unit square and its images under Example 4.2's shear, rotation, and reflection, with orientation shown by the order of the edge vectors.
 5. **Identities.** $\det(AB) = \det A\det B$, $\det A^\top = \det A$, $\det A^{-1} = 1/\det A$, $\det(cA) = c^n\det A$, the adjugate identity (3.6), Cramer's rule, and the Vandermonde formula (3.11), numerically on random matrices and symbolically in SymPy. The polar and spherical Jacobians are computed symbolically and the quarter-annulus area $3\pi/4$ is recovered by Monte Carlo with the factor $r$ (Example 4.4).
 6. **Scale.** `diag(1e6, 1e-6)` has determinant $1$ and condition number $10^{12}$; $0.1 I_{100}$ has determinant $10^{-100}$ and condition number $1$.

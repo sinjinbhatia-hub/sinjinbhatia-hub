@@ -529,9 +529,10 @@ fig.tight_layout(); fig.savefig(FIG / "fourier_preview.png", dpi=120); plt.close
 #    AᵀA becomes diagonal. Why? Which theorem in the notes says the fitted line
 #    cannot change? (Exercise B5.)
 # 5. **Hilbert, again.** Re-run Part 5 with `gram_schmidt_classical` applied
-#    twice ("CGS2": orthogonalize, then orthogonalize the result again). It
-#    recovers orthogonality to machine precision. Why does the second pass work
-#    when the first did not?
+#    to its own output ("reorthogonalization"). Print ‖QᵀQ − I‖ after one, two,
+#    and three passes. On H_10 the second pass recovers most of the lost
+#    orthogonality and the third finishes the job. Why does a repeated pass
+#    work when the first did not? (Exercise C4(c).)
 
 
 # %%

@@ -1,0 +1,45 @@
+# F3 Exercises
+
+Conventions as in the notes: $\hat f(\xi) = \int f(x)e^{-2\pi i x\xi}dx$, $\xi$ in cycles per unit; $\operatorname{sinc}\xi = \sin(\pi\xi)/(\pi\xi)$; DFT $F[k] = \sum_n f[n]e^{-2\pi i kn/N}$ with no normalization; $\langle f,g\rangle = \int\bar fg$; distribution pairing $\langle T,\varphi\rangle$ bilinear. Always check $\hat f(0) = \int f$.
+
+## A. Warm-up (do all; 5–10 minutes each)
+
+**A1.** Compute the transform of $f(x) = e^{-3x}u(x)$ from the definition. Verify $\hat f(0) = \int f$. Evaluate $|\hat f(\xi)|$ at $\xi = 1/(2\pi)$.
+
+**A2.** Using only (3.3), the shift rule (3.6), and the stretch rule (3.7), find the transform of $g(x) = \Pi\!\left(\frac{x-2}{4}\right)$ (a box of width $4$ centered at $2$). Check $\hat g(0)$ against $\int g$. Where is the first zero of $|\hat g|$?
+
+**A3.** An engineering text defines $F(\omega) = \int f(t)e^{-i\omega t}dt$ and states that $e^{-|t|}$ has $F(\omega) = 2/(1+\omega^2)$. (a) Translate this into our convention and confirm it agrees with (3.5). (b) Write the same transform in the symmetric $1/\sqrt{2\pi}$ convention of QM-2. (c) In each of the three conventions, what is the value of the forward transform at zero frequency, in terms of $\int f$?
+
+**A4.** Compute by hand, from (3.26) with $\omega = -i$, the DFTs of $f = (1,-1,1,-1)$ and $g = (0,1,0,-1)$. Identify each as a sampled tone and explain the location and value of the nonzero entries.
+
+**A5.** Give the apparent (aliased) frequency when: (a) $60$ Hz mains hum is sampled at $50$ Hz; (b) at $100$ Hz; (c) at $130$ Hz; (d) a wheel turning at $13$ rev/s is filmed at $12$ frames/s (state the apparent direction too); (e) a $5$ Hz sine is sampled at $10$ Hz (what do the samples look like?).
+
+**A6.** (a) Using the definitions (3.17) and $\langle m T,\varphi\rangle = \langle T, m\varphi\rangle$, compute $\langle x\,\delta',\varphi\rangle$ and conclude $x\,\delta' = -\delta$. (b) Using (3.5) with a suitable $a$ and the duality rule (3.10), show that $\widehat{1/(1+x^2)}(\xi) = \pi e^{-2\pi|\xi|}$. Check at $\xi = 0$.
+
+## B. Core (do all; these are the module)
+
+**B1.** (Modulation and the windowed tone.) (a) Derive the modulation rule $\widehat{e^{2\pi i\nu x}f(x)} = \hat f(\xi-\nu)$ and its cosine form. (b) Apply it to $f(x) = \cos(2\pi\nu_0x)\,\Pi(x/\tau)$, a tone observed for a time $\tau$, and write $\hat f$ explicitly. (c) Sketch $|\hat f|$ for $\nu_0\tau = 10$. What is the width of each main lobe and the height of the peak? (d) Suppose this record is sampled and DFT'd with the frequency grid $k/\tau$. Show that the DFT has exactly two nonzero bins if and only if $\nu_0\tau$ is an integer, and explain what happens otherwise in terms of the zeros of the sinc. (This is Example 4.5 explained.)
+
+**B2.** (Uncertainty product of the two-sided exponential.) Let $f(x) = \sqrt a\,e^{-a|x|}$, $a>0$. (a) Verify $\|f\| = 1$. (b) Compute $\sigma_x^2 = \int x^2|f|^2dx$. (c) Compute $\sigma_\xi^2$ two ways: directly from $\int\xi^2|\hat f(\xi)|^2d\xi$ using (3.5) and the substitution $\xi = (a/2\pi)t$; and via step 1 of Theorem 3.11, $\sigma_\xi = \|f'\|/(2\pi)$. (d) Show $\sigma_x\sigma_\xi = \sqrt2/(4\pi)$ and compare with the Gaussian minimum. (e) Explain in one paragraph why the rect $\Pi$ has $\sigma_\xi = \infty$ and what that says about the hypotheses of Theorem 3.11.
+
+**B3.** (The discrete Laplacian is a circulant.) Let $N = 4$ and $c = (2,-1,0,-1)$. (a) Write out the circulant $C$ with first column $c$ and show $(Cx)[n] = 2x[n]-x[n-1]-x[n+1]$ (indices mod $4$): the negative second difference on a ring. (b) Compute its eigenvalues as $\mathrm{DFT}(c)[k]$ and simplify to $2-2\cos(2\pi k/4)$. (c) Verify directly that $e_1 = (1, i, -1, -i)$ is an eigenvector with the eigenvalue you found. (d) The heat equation on a ring of $4$ cells with spacing $h$ is $\dot{\mathbf u} = -(\kappa/h^2)C\mathbf u$. Using (3.30), write the general solution and say which mode decays fastest and which never decays. (e) Compare with the second-difference matrix for a bar with fixed ends (LA-7): why are its eigenvectors sines rather than complex exponentials?
+
+**B4.** (Operation counts.) (a) Solve $M(N) = 2M(N/2)+N/2$, $M(1) = 0$, for $N = 2^m$ by unrolling, and $A(N) = 2A(N/2)+N$, $A(1)=0$ (additions). (b) For $N = 2^{20}$, compute $M(N)$, $N^2$, and their ratio. (c) In Example 4.6, count the twiddle multiplications at each of the three levels, and how many were non-trivial (not $\pm1$, $\pm i$). (d) Why does zero-padding $(1,2,3,4)$ to length $8$ not add information, and what *does* it do to the frequency grid?
+
+**B5.** (Poisson summation and the F2 link.) (a) Prove the periodization formula: for a test function $f$ and period $T>0$, $\sum_n f(x+nT) = \frac1T\sum_k\hat f(k/T)\,e^{2\pi i kx/T}$, by computing the Fourier coefficients of the left side. (b) Set $x = 0$, $T = 1$, $f(x) = e^{-\pi tx^2}$ to obtain the theta identity of Example 4.8, and evaluate both sides numerically at $t = 1/2$ to six digits. (c) State in one sentence what (a) says about the Fourier series coefficients of a periodized function, and why that is Theorem 3.27 in disguise.
+
+**B6.** (Steady-state response of the oscillator.) (a) Show from $y = h*x$ that $x(t) = e^{2\pi i\nu t}$ gives $y(t) = H(\nu)e^{2\pi i\nu t}$, and deduce that for a real system ($h$ real) the input $\cos(\omega t)$ gives the steady-state output $|H(\omega)|\cos(\omega t+\arg H(\omega))$. (b) For $m=1$, $c=0.2$, $k=4$, compute the amplitude and phase lag of the steady-state response to $\cos(\omega t)$ at $\omega = 1, 2, 3$ rad/s, to four significant figures. (c) Explain physically why the phase passes through $-90°$ at $\omega_0$ and approaches $-180°$ above it.
+
+**B7.** (Code.) In `project.py`: (a) implement `ifft_via_conjugation(X)` using only `fft_recursive` and complex conjugation, from the identity $\mathbf F^{-1} = \overline{\mathbf F}/N$, and assert it inverts `np.fft.fft` to $10^{-10}$. (b) Verify the discrete Parseval identity $\sum|f[n]|^2 = \frac1N\sum|F[k]|^2$ on random vectors. (c) Build a signal $x(t) = \sin(2\pi\cdot2t)+0.5\sin(2\pi\cdot5t)+\text{noise}$ sampled at $100$ Hz for $4$ s, zero every DFT coefficient with $|\xi|>3$ Hz, inverse-transform, and show that the $5$ Hz component is gone and the $2$ Hz component survives. Explain in a comment what the filter does at the two ends of the record and why (hint: Theorem 3.22).
+
+**B8.** (Sampling theorem corner cases.) (a) Show that the samples of $\cos(2\pi(f_s/2)t+\phi)$ at rate $f_s$ are $(-1)^n\cos\phi$. What information is lost? (b) Show the interpolation formula (3.34) reproduces the samples exactly: evaluate the right side at $x = m\Delta$. (c) Derive the folding formula $\nu_{\text{alias}} = |\nu - \tfrac1\Delta\operatorname{round}(\nu\Delta)|$ from (3.35), and apply it to $\nu = 9$ Hz, $1/\Delta = 8$ Hz. (d) A signal has spectrum supported in $|\xi|<B$ and is sampled at exactly $1/\Delta = 2B$. Does the theorem apply? Use (a) to say what can go wrong at the edge.
+
+## C. Challenge (do at least one)
+
+**C1.** (Sinc orthogonality and the sharpness of Nyquist.) (a) Using Plancherel (3.15), show $\int\operatorname{sinc}\!\left(\frac{x-n\Delta}\Delta\right)\operatorname{sinc}\!\left(\frac{x-m\Delta}\Delta\right)dx = \Delta\,\delta_{nm}$. (b) Conclude that for $f$ band-limited to $B\le1/(2\Delta)$, (3.34) is an orthogonal expansion and $\int|f|^2dx = \Delta\sum_n|f(n\Delta)|^2$. (c) Show that $\sin(\pi x/\Delta)$ has transform supported at $|\xi| = 1/(2\Delta)$ and all its samples are zero. Why does this not contradict Theorem 3.28?
+
+**C2.** ($\mathbf F^2 = NP$ and the Hermite function $h_2$.) (a) Prove $(\mathbf F^2)_{kn} = N$ if $k+n\equiv0\pmod N$ and $0$ otherwise; conclude $\mathbf F^4 = N^2I$ and that every eigenvalue of $\mathbf F/\sqrt N$ is in $\{1,-1,i,-i\}$. (b) With $g = e^{-\pi x^2}$ and $R = 2\pi X - D$, compute $h_2 = R^2g$ explicitly. (c) Using (3.9) twice, compute $\widehat{x^2g}$ and verify by direct substitution that $\hat h_2 = (-i)^2h_2 = -h_2$.
+
+**C3.** (Code: windows and leakage.) Implement the Hann window $w[n] = \sin^2(\pi n/N)$. For $N = 4096$ zero-padded by a factor of $64$, compute $|\hat w|$ and $|\hat\Pi|$ in dB relative to their peaks, and measure the first sidelobe level of each (expect about $-13$ dB and $-31$ dB) and the main-lobe width at the first zero. Then apply both windows to the $2.5$-cycle cosine of Example 4.5 at $N=64$ and compare the leakage into bins far from the tone. State the trade-off in one sentence.
+
+**C4.** (The Heaviside transform.) (a) Compute $\widehat{\operatorname{sgn}(x)e^{-a|x|}}$ and take $a\to0^+$ pointwise for $\xi\ne0$. (b) Show that for a test function $\varphi$, $\mathrm{PV}\!\int\frac{\varphi(\xi)}{\xi}d\xi := \lim_{\epsilon\to0}\int_{|\xi|>\epsilon}\frac{\varphi(\xi)}{\xi}d\xi$ exists, by writing $\varphi(\xi) = \varphi(0)+\xi\psi(\xi)$ with $\psi$ bounded. (c) Conclude $\hat u = \frac12\delta+\mathrm{PV}\frac{1}{2\pi i\xi}$. (d) Consistency check: apply the derivative rule (3.8) to $u' = \delta$ and verify, using $\xi\delta = 0$, that $2\pi i\xi\,\hat u = 1 = \hat\delta$.

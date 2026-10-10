@@ -325,3 +325,136 @@ Here is the method, boxed. Every worked example in §4 follows it in this order,
 > 6. **Form $L = T - V$.** If there are non-conservative forces, compute $Q_i^{\text{nc}}$ from (3.6) or $\mathcal{F}$ from (3.22). If you want a constraint force, keep the corresponding coordinate and add $\lambda\,\partial f/\partial q_i$.
 > 7. **Write the Euler–Lagrange equations**, one per coordinate. Expand $\frac{d}{dt}\frac{\partial L}{\partial\dot q_i}$ fully (watch for $q$-dependence inside $M$: it produces $\dot q^2$ terms).
 > 8. **Check limits.** Set masses to zero or infinity, angles to zero, $\omega$ to zero; each should reduce to something you already know. Check that cyclic coordinates give conserved momenta. Check units. Then check the whole thing with SymPy.
+
+## 4. Worked examples
+
+Eight systems, each run through the procedure of §3.10 with every step shown. The project (`project.py`) derives each Lagrangian's equations of motion symbolically and checks every number quoted here.
+
+### Example 4.1: Simple pendulum (calibration)
+
+Bob of mass $m$ on a massless rod of length $\ell$, pivot fixed. **DOF:** $2 - 1 = 1$. **Coordinate:** $\theta$ from the downward vertical. **Position:** $\mathbf{r} = (\ell\sin\theta, -\ell\cos\theta)$. **Velocity:** $\dot{\mathbf{r}} = \ell\dot\theta(\cos\theta, \sin\theta)$, so $T = \frac12 m\ell^2\dot\theta^2$ and $M = m\ell^2$ (the moment of inertia). **Potential:** $V = mgy = -mg\ell\cos\theta$.
+$$
+L = \tfrac12 m\ell^2\dot\theta^2 + mg\ell\cos\theta, \qquad \frac{d}{dt}(m\ell^2\dot\theta) = -mg\ell\sin\theta \quad\Longrightarrow\quad \ddot\theta = -\frac{g}{\ell}\sin\theta. \tag{4.1}
+$$
+The rod tension never appeared. **Limits:** small $\theta$ gives $\ddot\theta = -(g/\ell)\theta$, frequency $\omega_0 = \sqrt{g/\ell}$. One line, as promised. Everything else in this section is this line with more coordinates.
+
+### Example 4.2: The Atwood machine, with and without the tension
+
+Masses $m_1$ and $m_2$ hang from a massless, inextensible string of length $\ell$ over a massless frictionless pulley. Measure $x_1$ and $x_2$ **downward** from the pulley axle to each mass.
+
+**Without multipliers.** **DOF:** 1 (the string length ties $x_1 + x_2 = \ell$, up to the constant half-circumference, which we absorb into $\ell$). **Coordinate:** $x := x_1$, so $x_2 = \ell - x$. **Velocities:** $\dot x_1 = \dot x$, $\dot x_2 = -\dot x$. $T = \frac12(m_1 + m_2)\dot x^2$. $V = -m_1 g x_1 - m_2 g x_2 = -m_1 g x - m_2 g(\ell - x) = -(m_1 - m_2)gx + \text{const}$.
+$$
+L = \tfrac12(m_1 + m_2)\dot x^2 + (m_1 - m_2)gx, \qquad (m_1 + m_2)\ddot x = (m_1 - m_2)g, \qquad \ddot x = \frac{m_1 - m_2}{m_1 + m_2}\,g. \tag{4.2}
+$$
+**Limits:** $m_1 = m_2$ gives no acceleration; $m_2 = 0$ gives free fall. The tension is invisible.
+
+**With multipliers.** Keep both coordinates $x_1, x_2$ and the constraint $f(x_1, x_2) = x_1 + x_2 - \ell = 0$, so $\partial f/\partial x_1 = \partial f/\partial x_2 = 1$. The unconstrained Lagrangian is
+$$
+L = \tfrac12 m_1\dot x_1^2 + \tfrac12 m_2\dot x_2^2 + m_1 g x_1 + m_2 g x_2.
+$$
+Equations (3.18):
+$$
+m_1\ddot x_1 - m_1 g = \lambda, \qquad m_2\ddot x_2 - m_2 g = \lambda, \qquad x_1 + x_2 = \ell. \tag{4.3}
+$$
+Differentiate the constraint twice: $\ddot x_2 = -\ddot x_1$. Then from the two Lagrange equations, $\ddot x_1 = g + \lambda/m_1$ and $-\ddot x_1 = g + \lambda/m_2$. Add: $0 = 2g + \lambda(1/m_1 + 1/m_2)$, so
+$$
+\lambda = -\frac{2m_1 m_2}{m_1 + m_2}\,g, \qquad \ddot x_1 = g + \frac{\lambda}{m_1} = g - \frac{2m_2 g}{m_1 + m_2} = \frac{m_1 - m_2}{m_1 + m_2}\,g. \tag{4.4}
+$$
+Same acceleration as (4.2), and now a value for $\lambda$. **Interpretation via (3.20):** the constraint force on $m_1$ is $\lambda\,\partial f/\partial x_1 = \lambda$ in the $+x_1$ direction, which is downward. Since $\lambda < 0$, the string pulls *up* on $m_1$ with magnitude
+$$
+T_{\text{string}} = -\lambda = \frac{2m_1m_2}{m_1 + m_2}\,g.
+$$
+Check against Newton: $m_1\ddot x_1 = m_1 g - T$ gives $T = m_1(g - \ddot x_1) = m_1 g\cdot\frac{2m_2}{m_1 + m_2}$. ✓ **Numbers:** $m_1 = 3$ kg, $m_2 = 2$ kg: $\ddot x_1 = 9.81/5 = 1.962\ \mathrm{m/s^2}$, $T = 2\cdot3\cdot2\cdot9.81/5 = 23.544$ N, $\lambda = -23.544$ N. The project integrates (4.3) as the DAE (3.21) and asserts that the computed $\lambda$ equals $-23.544$ N at every step.
+
+**The sign lesson.** $\lambda$ is negative because $f$ was written so that $\nabla f$ points along increasing $x_1, x_2$ (downward on both masses) and the string pulls the other way. Write $f = \ell - x_1 - x_2$ and $\lambda = +T$. Decide which way $\nabla f$ points *before* you interpret $\lambda$.
+
+### Example 4.3: Bead on a rotating hoop (the showpiece)
+
+A bead of mass $m$ slides without friction on a circular hoop of radius $R$ in a vertical plane. The hoop is driven to rotate about its vertical diameter at constant angular speed $\omega$. **DOF:** the bead is on a curve: $1$. **Coordinate:** $\theta$, the angle from the bottom of the hoop. **Position** (the hoop's plane makes azimuth $\phi = \omega t$ with the $x$-axis; this is the imposed time dependence):
+$$
+\mathbf{r} = \big(R\sin\theta\cos\omega t,\; R\sin\theta\sin\omega t,\; -R\cos\theta\big).
+$$
+**Velocity.** $\dot{\mathbf{r}} = R\dot\theta\,(\cos\theta\cos\omega t, \cos\theta\sin\omega t, \sin\theta) + R\omega\sin\theta\,(-\sin\omega t, \cos\omega t, 0)$. The two vectors are orthogonal (first is tangent to the hoop, second is azimuthal), with lengths $R\dot\theta$ and $R\omega\sin\theta$. So
+$$
+T = \tfrac12 mR^2\dot\theta^2 + \tfrac12 mR^2\omega^2\sin^2\theta, \qquad T_2 = \tfrac12 mR^2\dot\theta^2,\ T_1 = 0,\ T_0 = \tfrac12 mR^2\omega^2\sin^2\theta.
+$$
+**Potential:** $V = mgz = -mgR\cos\theta$.
+$$
+L = \tfrac12 mR^2\dot\theta^2 + \tfrac12 mR^2\omega^2\sin^2\theta + mgR\cos\theta. \tag{4.5}
+$$
+**Euler–Lagrange.** $\partial L/\partial\dot\theta = mR^2\dot\theta$; $\partial L/\partial\theta = mR^2\omega^2\sin\theta\cos\theta - mgR\sin\theta$. So
+$$
+\ddot\theta = \sin\theta\left(\omega^2\cos\theta - \frac{g}{R}\right). \tag{4.6}
+$$
+**Limits:** $\omega = 0$ gives the pendulum (4.1) with $\ell = R$. ✓
+
+**Effective potential.** (4.6) has the form $mR^2\ddot\theta = -dV_{\text{eff}}/d\theta$ with
+$$
+V_{\text{eff}}(\theta) = -mgR\cos\theta - \tfrac12 mR^2\omega^2\sin^2\theta = V - T_0. \tag{4.7}
+$$
+Check: $-V_{\text{eff}}' = -mgR\sin\theta + mR^2\omega^2\sin\theta\cos\theta$. ✓ The $-T_0$ term is the centrifugal potential: the hoop's rotation acts on the bead's $\theta$-motion like an extra potential energy pulling it toward the rim ($\theta = \pi/2$). The conserved energy function (3.15) is $h = T_2 + V_{\text{eff}}$, **not** $T + V$. $L$ has no explicit $t$, so $h$ is conserved; $T + V = h + 2T_0$ is not, because the motor driving the hoop does real work on the bead. The project integrates (4.6) and checks: $h$ constant to $10^{-9}$, $T + V$ not constant.
+
+**Equilibria.** $V_{\text{eff}}'(\theta) = \sin\theta\,(mgR - mR^2\omega^2\cos\theta) = 0$:
+- $\sin\theta = 0$: $\theta = 0$ (bottom) and $\theta = \pi$ (top), for every $\omega$.
+- $\cos\theta^* = \dfrac{g}{R\omega^2} = \dfrac{\omega_0^2}{\omega^2}$ with $\omega_0 := \sqrt{g/R}$. This requires $\omega_0^2/\omega^2 \le 1$, i.e. $\omega \ge \omega_0$. For $\omega > \omega_0$ there are two such points, $\pm\theta^*$, symmetric about the bottom.
+
+**Stability.** $V_{\text{eff}}'' = mgR\cos\theta - mR^2\omega^2\cos 2\theta$. A stable equilibrium has $V_{\text{eff}}'' > 0$, and the frequency of small oscillations about it is $\Omega^2 = V_{\text{eff}}''/(mR^2)$ (since $mR^2\ddot{\epsilon} = -V_{\text{eff}}''\epsilon$ for $\theta = \theta_{\text{eq}} + \epsilon$).
+
+1. **Bottom, $\theta = 0$:** $V_{\text{eff}}'' = mgR - mR^2\omega^2 = mR^2(\omega_0^2 - \omega^2)$. Stable iff $\omega < \omega_0$, with $\Omega^2 = \omega_0^2 - \omega^2$. The rotation *softens* the pendulum; at $\omega = \omega_0$ the restoring force vanishes and above it the bottom is a hilltop.
+2. **Top, $\theta = \pi$:** $V_{\text{eff}}'' = -mgR - mR^2\omega^2 < 0$. Unstable for every $\omega$.
+3. **Off-axis, $\cos\theta^* = \omega_0^2/\omega^2$:** use $\cos 2\theta = 2\cos^2\theta - 1$:
+   $$V_{\text{eff}}''(\theta^*) = mgR\cos\theta^* - mR^2\omega^2(2\cos^2\theta^* - 1) = mR^2\omega^2\cos^2\theta^* - 2mR^2\omega^2\cos^2\theta^* + mR^2\omega^2 = mR^2\omega^2\sin^2\theta^* > 0,$$
+   where $mgR\cos\theta^* = mR^2\omega^2\cos^2\theta^*$ by the equilibrium condition. Stable whenever it exists, with
+   $$\Omega^2 = \omega^2\sin^2\theta^* = \omega^2\left(1 - \frac{\omega_0^4}{\omega^4}\right) = \omega^2 - \frac{\omega_0^4}{\omega^2}. \tag{4.8}$$
+
+**The pitchfork.** Plot the equilibria against $\omega$: for $\omega < \omega_0$ one stable branch at $\theta = 0$; at $\omega = \omega_0$ it loses stability and two stable branches $\pm\arccos(\omega_0^2/\omega^2)$ grow out of it, approaching $\pm\pi/2$ as $\omega\to\infty$. The picture is a fork with a handle, hence the name **supercritical pitchfork bifurcation**. The symmetry $\theta\to-\theta$ of $L$ is what makes the two new branches appear as a pair; a system without that symmetry would bifurcate differently. The project draws the diagram from these formulas and confirms stability on each branch by integration.
+
+**Numerical example.** Take $R = 0.5$ m, $g = 9.81\ \mathrm{m/s^2}$, so $\omega_0 = \sqrt{19.62} = 4.4294$ rad/s, and spin at $\omega = 2\omega_0 = 8.8589$ rad/s. Then $\cos\theta^* = 1/4$, $\theta^* = \arccos(0.25) = 1.3181$ rad $= 75.52°$, $\sin\theta^* = \sqrt{15}/4 = 0.96825$, and
+$$
+\Omega = \omega\sin\theta^* = \frac{\sqrt{15}}{2}\,\omega_0 = 1.9365\times4.4294 = 8.5776\ \mathrm{rad/s}, \qquad \text{period } \frac{2\pi}{\Omega} = 0.7325\ \text{s}.
+$$
+For comparison, the stationary hoop's pendulum period is $2\pi/\omega_0 = 1.4185$ s. The project perturbs the bead by $0.02$ rad from $\theta^*$, integrates (4.6), measures the period from zero crossings of $\theta - \theta^*$, and asserts agreement with $0.7325$ s to better than $0.5\%$ (the residual is the amplitude dependence of a nonlinear oscillator).
+
+**Where d'Alembert is slippery here.** The hoop exerts a normal force on the bead with a component along $\hat{\boldsymbol\phi}$ (that is what drags the bead around). Under a *real* displacement $d\mathbf{r}$, which includes $R\omega\sin\theta\,dt\,\hat{\boldsymbol\phi}$, this force does work: the bead's $T + V$ changes. Under a *virtual* displacement, $\delta\mathbf{r} = (\partial\mathbf{r}/\partial\theta)\delta\theta$ at frozen $t$, the displacement is tangent to the hoop and the normal force does no work. Principle 3.5 holds, the derivation goes through, and (4.6) is correct. If you let "virtual" slide into "real," you will think d'Alembert fails for moving constraints. It does not; the frozen time is the whole point.
+
+### Example 4.4: The double pendulum
+
+Bob 1 (mass $m_1$) hangs from a fixed pivot on a rod of length $\ell_1$; bob 2 (mass $m_2$) hangs from bob 1 on a rod of length $\ell_2$. Planar motion. **DOF:** $2\cdot2 - 2 = 2$. **Coordinates:** $\theta_1, \theta_2$, each from the downward vertical. **Positions:**
+$$
+x_1 = \ell_1\sin\theta_1,\quad y_1 = -\ell_1\cos\theta_1,\qquad x_2 = x_1 + \ell_2\sin\theta_2,\quad y_2 = y_1 - \ell_2\cos\theta_2.
+$$
+**Velocities:** $\dot x_1 = \ell_1\dot\theta_1\cos\theta_1$, $\dot y_1 = \ell_1\dot\theta_1\sin\theta_1$; $\dot x_2 = \dot x_1 + \ell_2\dot\theta_2\cos\theta_2$, $\dot y_2 = \dot y_1 + \ell_2\dot\theta_2\sin\theta_2$. Then $|\dot{\mathbf{r}}_1|^2 = \ell_1^2\dot\theta_1^2$ and
+$$
+|\dot{\mathbf{r}}_2|^2 = \ell_1^2\dot\theta_1^2 + \ell_2^2\dot\theta_2^2 + 2\ell_1\ell_2\dot\theta_1\dot\theta_2(\cos\theta_1\cos\theta_2 + \sin\theta_1\sin\theta_2) = \ell_1^2\dot\theta_1^2 + \ell_2^2\dot\theta_2^2 + 2\ell_1\ell_2\dot\theta_1\dot\theta_2\cos(\theta_1 - \theta_2).
+$$
+**Kinetic and potential energy.** Writing $\Delta := \theta_1 - \theta_2$,
+$$
+T = \tfrac12(m_1 + m_2)\ell_1^2\dot\theta_1^2 + \tfrac12 m_2\ell_2^2\dot\theta_2^2 + m_2\ell_1\ell_2\dot\theta_1\dot\theta_2\cos\Delta, \qquad V = -(m_1 + m_2)g\ell_1\cos\theta_1 - m_2 g\ell_2\cos\theta_2. \tag{4.9}
+$$
+**Mass matrix:** $M = \begin{pmatrix}(m_1 + m_2)\ell_1^2 & m_2\ell_1\ell_2\cos\Delta\\ m_2\ell_1\ell_2\cos\Delta & m_2\ell_2^2\end{pmatrix}$, with $\det M = m_2\ell_1^2\ell_2^2\left[(m_1 + m_2) - m_2\cos^2\Delta\right] = m_2\ell_1^2\ell_2^2(m_1 + m_2\sin^2\Delta) > 0$. Positive definite everywhere, as §3.6 promised: these are good coordinates.
+
+**Euler–Lagrange for $\theta_1$.** $\partial L/\partial\dot\theta_1 = (m_1 + m_2)\ell_1^2\dot\theta_1 + m_2\ell_1\ell_2\dot\theta_2\cos\Delta$. Its time derivative (note $\dot\Delta = \dot\theta_1 - \dot\theta_2$):
+$$
+(m_1 + m_2)\ell_1^2\ddot\theta_1 + m_2\ell_1\ell_2\ddot\theta_2\cos\Delta - m_2\ell_1\ell_2\dot\theta_2(\dot\theta_1 - \dot\theta_2)\sin\Delta.
+$$
+$\partial L/\partial\theta_1 = -m_2\ell_1\ell_2\dot\theta_1\dot\theta_2\sin\Delta - (m_1 + m_2)g\ell_1\sin\theta_1$. Subtracting, the $\dot\theta_1\dot\theta_2\sin\Delta$ terms cancel ($-m_2\ell_1\ell_2\dot\theta_1\dot\theta_2\sin\Delta$ from the first, $+m_2\ell_1\ell_2\dot\theta_1\dot\theta_2\sin\Delta$ from the second), leaving, after dividing by $\ell_1$,
+$$
+(m_1 + m_2)\ell_1\ddot\theta_1 + m_2\ell_2\ddot\theta_2\cos\Delta + m_2\ell_2\dot\theta_2^2\sin\Delta + (m_1 + m_2)g\sin\theta_1 = 0. \tag{4.10a}
+$$
+**Euler–Lagrange for $\theta_2$.** $\partial L/\partial\dot\theta_2 = m_2\ell_2^2\dot\theta_2 + m_2\ell_1\ell_2\dot\theta_1\cos\Delta$; time derivative $m_2\ell_2^2\ddot\theta_2 + m_2\ell_1\ell_2\ddot\theta_1\cos\Delta - m_2\ell_1\ell_2\dot\theta_1(\dot\theta_1 - \dot\theta_2)\sin\Delta$. $\partial L/\partial\theta_2 = +m_2\ell_1\ell_2\dot\theta_1\dot\theta_2\sin\Delta - m_2 g\ell_2\sin\theta_2$ (the sign flips because $\partial\Delta/\partial\theta_2 = -1$). Again the $\dot\theta_1\dot\theta_2$ terms cancel; divide by $m_2\ell_2$:
+$$
+\ell_2\ddot\theta_2 + \ell_1\ddot\theta_1\cos\Delta - \ell_1\dot\theta_1^2\sin\Delta + g\sin\theta_2 = 0. \tag{4.10b}
+$$
+(4.10) is a linear system for $(\ddot\theta_1, \ddot\theta_2)$ with matrix $M$ (divided through by $\ell_1$ and $m_2\ell_2$); solving it by hand produces half a page of trigonometry. The project lets SymPy do that and asserts the result agrees with (4.10) symbolically. **Limits:** $m_2 \to 0$ in (4.10a) gives the simple pendulum. $\theta_1 = \theta_2$ identically gives a rigid rod of length $\ell_1 + \ell_2$ with two masses, and (4.10) collapses correctly (check it).
+
+**Small oscillations (CM-6 preview).** Take $m_1 = m_2 = m$, $\ell_1 = \ell_2 = \ell$, and linearize about $\theta_1 = \theta_2 = 0$: $\cos\Delta\to1$, $\sin\theta_i\to\theta_i$, and the $\dot\theta^2\sin\Delta$ terms are second order and drop. (4.10) becomes
+$$
+M_0\begin{pmatrix}\ddot\theta_1\\\ddot\theta_2\end{pmatrix} + K\begin{pmatrix}\theta_1\\\theta_2\end{pmatrix} = 0, \qquad M_0 = m\ell^2\begin{pmatrix}2 & 1\\1 & 1\end{pmatrix}, \quad K = mg\ell\begin{pmatrix}2 & 0\\0 & 1\end{pmatrix}.
+$$
+($M_0$ is the mass matrix at equilibrium and $K_{ij} = \partial^2V/\partial\theta_i\partial\theta_j$ at equilibrium.) Try $\boldsymbol\theta = \mathbf{a}\cos\Omega t$: $(K - \Omega^2M_0)\mathbf{a} = 0$, the **generalized eigenproblem** of CM-6. With $\mu := \Omega^2\ell/g$,
+$$
+\det\begin{pmatrix}2 - 2\mu & -\mu\\ -\mu & 1 - \mu\end{pmatrix} = (2 - 2\mu)(1 - \mu) - \mu^2 = \mu^2 - 4\mu + 2 = 0 \quad\Longrightarrow\quad \mu = 2 \mp \sqrt2.
+$$
+So $\Omega_\pm^2 = (2\mp\sqrt2)\,g/\ell$. The mode shapes come from the first row, $a_2/a_1 = (2 - 2\mu)/\mu$: for $\mu = 2 - \sqrt2$, $a_2/a_1 = (2\sqrt2 - 2)/(2 - \sqrt2) = \sqrt2$ (both bobs swing the same way, the lower one $\sqrt2$ times further); for $\mu = 2 + \sqrt2$, $a_2/a_1 = -\sqrt2$ (opposite directions). **Numbers** ($m = 1$, $\ell = 1$, $g = 9.81$): $\Omega_-^2 = 0.585786\times9.81 = 5.7466$, $\Omega_- = 2.3972$ rad/s; $\Omega_+^2 = 3.414214\times9.81 = 33.4934$, $\Omega_+ = 5.7874$ rad/s. The project computes $M_0$ and $K$ as SymPy Hessians and solves the eigenproblem with `scipy.linalg.eigh(K, M0)`.
+
+**Chaos.** At large amplitude the double pendulum is chaotic: two trajectories that start $10^{-8}$ rad apart separate exponentially, $\delta(t)\sim\delta_0 e^{\lambda_L t}$, until the separation saturates at the size of the accessible region. The exponent $\lambda_L$ is the **Lyapunov exponent**. There is no closed-form solution to find; the statement is numerical. The project integrates two such trajectories from $\theta_1 = \theta_2 = 2$ rad at rest, plots $\log\delta$ against $t$, and fits the slope: the estimate is about $1.2\ \mathrm{s^{-1}}$ for $m = \ell = 1$, meaning the trajectories lose one decimal digit of agreement every $\ln 10/1.2 \approx 1.9$ s. After 30 s, $10^{-8}$ has become order 1. A snapshot grid in the project shows the two pendulums agreeing, then not.

@@ -93,8 +93,11 @@ def energy_and_ell(x, y, vx, vy, mu, k):
 
 
 def ecc_from_E_ell(E, ell, mu, k):
-    """Energy–eccentricity relation (3.14): e = sqrt(1 + 2 E ell^2 / (mu k^2))."""
-    return np.sqrt(1.0 + 2.0 * E * ell**2 / (mu * k**2))
+    """Energy–eccentricity relation (3.14): e = sqrt(1 + 2 E ell^2 / (mu k^2)).
+
+    For an exactly circular orbit the radicand is 0 up to roundoff; clip it.
+    """
+    return np.sqrt(np.maximum(0.0, 1.0 + 2.0 * E * ell**2 / (mu * k**2)))
 
 
 def fit_conic(x, y):
@@ -425,7 +428,7 @@ dphi_orbit = 6 * np.pi * GM_sun / (c_light**2 * a_merc * (1 - e_merc**2))
 orbits_per_century = 36525.0 / T_merc_days
 arcsec = dphi_orbit * orbits_per_century * (180 / np.pi) * 3600
 assert 42.8 < arcsec < 43.2, arcsec
-print(f"        GR: Mercury perihelion shift {dphi_orbit:.3e} rad/orbit = {arcsec:.2f} arcsec/century (observed 43.0 +- 0.1 beyond Newtonian perturbations)")
+print(f"        GR: Mercury perihelion shift {dphi_orbit:.3e} rad/orbit = {arcsec:.2f} arcsec/century (observed anomalous shift about 43 arcsec/century)")
 
 # %% [markdown]
 # ## Part 6: Rutherford scattering by Monte Carlo
@@ -439,8 +442,8 @@ print(f"        GR: Mercury perihelion shift {dphi_orbit:.3e} rad/orbit = {arcse
 # (3.27), which in these units is $1/(4\sin^4(\theta/2))$.
 
 # %%
-N_mc = 4000
-b_min, b_max = 0.1, 8.0
+N_mc = 12000
+b_min, b_max = 0.1, 6.0
 b = np.sqrt(b_min**2 + rng.uniform(size=N_mc) * (b_max**2 - b_min**2))
 R_start = 300.0
 E_mc = 0.5
@@ -473,13 +476,13 @@ E_final = 0.5 * mu * (vxf**2 + vyf**2) + k / np.hypot(xf, yf)
 assert np.max(np.abs(E_final - E_mc)) < 1e-8
 
 sigma_disk = np.pi * (b_max**2 - b_min**2)
-edges = np.linspace(theta_th.min(), theta_th.max(), 19)
+edges = np.linspace(theta_th.min(), np.radians(160), 15)
 counts, _ = np.histogram(theta_mc, bins=edges)
 mid = 0.5 * (edges[1:] + edges[:-1]); dth = np.diff(edges)
 dsdo_mc = (counts / N_mc) * sigma_disk / (2 * np.pi * np.sin(mid) * dth)
 dsdo_err = (np.sqrt(np.maximum(counts, 1)) / N_mc) * sigma_disk / (2 * np.pi * np.sin(mid) * dth)
 rutherford = (k / (4 * E_mc))**2 / np.sin(mid / 2)**4
-good = counts >= 60
+good = counts >= 50
 rel = np.abs(dsdo_mc[good] - rutherford[good]) / rutherford[good]
 assert np.all(rel < 0.35), rel
 assert np.median(rel) < 0.12, np.median(rel)
@@ -627,7 +630,7 @@ n_Au = rho_Au / A_Au * N_A                              # atoms / cm^3
 t_foil = 0.4e-4                                         # 0.4 micrometre in cm
 frac_gt90 = n_Au * t_foil * sigma_gt90 * 1e-26          # 1 fm^2 = 1e-26 cm^2
 R_Au = 1.2 * A_Au ** (1 / 3)
-ratio_15 = (np.sin(np.radians(15 / 2)) / np.sin(np.radians(150 / 2)))**-4
+ratio_15 = (np.sin(np.radians(15 / 2)) / np.sin(np.radians(150 / 2)))**4   # dsigma(150)/dsigma(15)
 assert abs(sigma_gt90 - np.pi * (k_coul / (2 * E_alpha))**2) < 1e-9
 print(f"Part 9, Ex 4.6 Rutherford: k = {k_coul:.1f} MeV fm, head-on r_min = k/E = {r_min_headon:.1f} fm (gold nuclear radius ~ {R_Au:.1f} fm)")
 print(f"        k/4E = {k_over_4E:.2f} fm, (k/4E)^2 = {k_over_4E**2:.1f} fm^2/sr = {k_over_4E**2/100:.2f} b/sr; d sigma/d Omega(90 deg) = {dsdo_90:.0f} fm^2/sr = {dsdo_90/100:.2f} b/sr")

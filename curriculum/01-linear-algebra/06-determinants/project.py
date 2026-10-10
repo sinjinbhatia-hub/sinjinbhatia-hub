@@ -66,7 +66,7 @@ def leibniz_terms(A):
         term = float(sign(perm))
         for i, j in enumerate(perm):
             term *= A[i, j]
-        terms[perm] = term
+        terms[perm] = float(term)
     return terms
 
 
@@ -121,14 +121,14 @@ def det_elimination(A, pivoting="partial"):
             nz = np.flatnonzero(np.abs(col) > 1e-14)
             p = k + int(nz[0]) if nz.size else k
         if abs(U[p, k]) < 1e-14:
-            return 0.0, pivots + [0.0] * (n - k), swaps      # no pivot: singular
+            return 0.0, [float(x) for x in pivots] + [0.0] * (n - k), swaps   # no pivot: singular
         if p != k:
             U[[k, p]] = U[[p, k]]
             swaps += 1
         pivots.append(U[k, k])
         for i in range(k + 1, n):
             U[i, k:] -= (U[i, k] / U[k, k]) * U[k, k:]
-    return float((-1) ** swaps * np.prod(pivots)), pivots, swaps
+    return float((-1) ** swaps * np.prod(pivots)), [float(x) for x in pivots], swaps
 
 
 def cofactor(A, i, j):
@@ -456,7 +456,7 @@ def draw_image_of_square(ax, A, title):
         ax.spines[s].set_visible(False)
 
 
-fig, axes = plt.subplots(1, 4, figsize=(14, 4.2))
+fig, axes = plt.subplots(1, 4, figsize=(14, 4.8))
 draw_image_of_square(axes[0], np.eye(2), "unit square")
 draw_image_of_square(axes[1], S, "shear S")
 draw_image_of_square(axes[2], RS, "rotate after shear: RS")
@@ -507,7 +507,9 @@ for rv in rg:
     ax1.axvline(rv, color=MUTED, lw=.8); ax2.plot(rv * np.cos(np.linspace(0, np.pi / 2, 100)), rv * np.sin(np.linspace(0, np.pi / 2, 100)), color=MUTED, lw=.8)
 for tv in tg:
     ax1.axhline(tv, color=MUTED, lw=.8); ax2.plot([np.cos(tv), 2 * np.cos(tv)], [np.sin(tv), 2 * np.sin(tv)], color=MUTED, lw=.8)
-# Shade one cell near r = 1 and one near r = 2 to show the area ratio.
+# Shade one cell near r = 1 and one near r = 2 to show the area ratio (r1^2 - r0^2)/2 * dθ.
+cell_ratio = (rg[5] ** 2 - rg[4] ** 2) / (rg[1] ** 2 - rg[0] ** 2)
+assert np.isclose(cell_ratio, 0.76 / 0.44)
 for (i, col) in ((0, BLUE), (4, ORANGE)):
     r0, r1 = rg[i], rg[i + 1]; t0, t1 = tg[2], tg[3]
     ax1.fill([r0, r1, r1, r0], [t0, t0, t1, t1], color=col, alpha=.5)
@@ -516,7 +518,7 @@ for (i, col) in ((0, BLUE), (4, ORANGE)):
     ax2.fill(xs, ys, color=col, alpha=.5)
 ax1.set_xlabel("r"); ax1.set_ylabel("θ"); ax1.set_title("(r, θ) rectangle: all cells have equal area dr dθ")
 ax2.set_aspect("equal"); ax2.set_xlabel("x"); ax2.set_ylabel("y")
-ax2.set_title("image in the plane: cell area ≈ r dr dθ (orange ≈ 1.8 × blue)")
+ax2.set_title(f"image: cell area ≈ r dr dθ (orange/blue = {cell_ratio:.2f})")
 for ax in (ax1, ax2):
     ax.grid(alpha=.15)
     for s in ("top", "right"):
@@ -542,6 +544,23 @@ print(f"diag(1e6, 1e-6): det = {np.linalg.det(bad):.1f}, cond = {np.linalg.cond(
 print(f"0.1 * I_100:     det = 10^{logdet_g / np.log(10):.0f}, cond = {np.linalg.cond(good):.1f}  (perfectly conditioned, det is tiny)")
 Ar = rng.standard_normal((5, 5))
 print(f"random 5x5: det = {np.linalg.det(Ar):+.3f}, det(2A) = {np.linalg.det(2 * Ar):+.3f} = 32 * det(A), cond = {np.linalg.cond(Ar):.1f}")
+
+# %% [markdown]
+# ## Part 11: Numbers from the exercises (A1, A3, A4, B3(c), C1(a), C2(c))
+
+# %%
+assert np.isclose(det_elimination([[2, 1, 0], [4, 3, 1], [-2, 0, 5]])[0], 8)                        # A1
+assert [sign(p) for p in ((2, 0, 1), (1, 0, 3, 2), (3, 2, 0, 1), (2, 0, 3, 1))] == [1, 1, -1, -1]   # A3, 0-based
+assert sum(sign(p) == 1 for p in itertools.permutations(range(4))) == 12                             # A3
+assert np.allclose(cramer([[3, 1], [4, 2]], [5, 8]), [1, 2])                                        # A4
+assert np.allclose(adjugate([[3, 1], [4, 2]]), [[2, -1], [-4, 3]])                                   # A4
+assert np.isclose(-2 * np.linalg.det(np.array([[3, 0], [0, 2]], float)), -12)                       # B3(c)
+t, lam = sp.symbols("t lamda")
+Bs = sp.Matrix(3, 3, sp.symbols("b11 b12 b13 b21 b22 b23 b31 b32 b33"))
+assert sp.expand(sp.diff((sp.eye(3) + t * Bs).det(), t).subs(t, 0) - Bs.trace()) == 0              # C1(a)
+p2 = (sp.Matrix([[2, 1], [1, 2]]) - lam * sp.eye(2)).det()
+assert sp.expand(p2 - (lam ** 2 - 4 * lam + 3)) == 0 and sorted(sp.solve(p2, lam)) == [1, 3]        # C2(c)
+print("Part 11: exercise numbers A1, A3, A4, B3(c), C1(a), C2(c) verified.")
 
 # %% [markdown]
 # ## Your turn

@@ -322,3 +322,178 @@ What people do instead:
 
 The Jordan form is a theorem about what $A$ *is*: it tells you which $t^ke^{\lambda t}$ can appear, when two matrices are similar, what the minimal polynomial is. It is not a thing you compute from measured data.
 
+## 4. Worked examples
+
+### Example 4.1: $y'' - 2y' + y = 0$, start to finish
+
+$A = \begin{pmatrix}0&1\\-1&2\end{pmatrix}$, $p_A(x) = x(x-2)+1 = (x-1)^2$. Eigenvalue $\lambda = 1$, $a_1 = 2$.
+
+*Kernel dimensions.* $A - I = \begin{pmatrix}-1&1\\-1&1\end{pmatrix}$ has rank $1$, so $d_1 = 1$. $(A-I)^2 = \begin{pmatrix}1-1 & -1+1\\ 1-1 & -1+1\end{pmatrix} = 0$, so $d_2 = 2$. By (3.4): blocks of size $\ge1$: $d_1 - d_0 = 1$; of size $\ge2$: $d_2 - d_1 = 1$. One block, $J_2(1)$.
+
+*Chain.* Pick the top $\mathbf{v}_2\notin\ker(A-I)$; $\mathbf{e}_2 = (0,1)^\top$ works since $(A-I)\mathbf{e}_2 = (1,1)^\top\ne\mathbf{0}$. Bottom: $\mathbf{v}_1 = (A-I)\mathbf{v}_2 = (1,1)^\top$, the eigenvector. Bottom first:
+$$P = \begin{pmatrix}1&0\\1&1\end{pmatrix}, \qquad P^{-1} = \begin{pmatrix}1&0\\-1&1\end{pmatrix}, \qquad AP = \begin{pmatrix}1&1\\1&2\end{pmatrix}, \qquad P^{-1}AP = \begin{pmatrix}1&0\\-1&1\end{pmatrix}\begin{pmatrix}1&1\\1&2\end{pmatrix} = \begin{pmatrix}1&1\\0&1\end{pmatrix} = J_2(1).$$
+(Read $AP$ column by column: $A\mathbf{v}_1 = (1,1)^\top = \mathbf{v}_1$ and $A\mathbf{v}_2 = (1,2)^\top = \mathbf{v}_2 + \mathbf{v}_1$, the chain relations.)
+
+*Exponential.* By (3.8) and (3.10),
+$$e^{At} = Pe^{Jt}P^{-1} = e^t\begin{pmatrix}1&0\\1&1\end{pmatrix}\begin{pmatrix}1&t\\0&1\end{pmatrix}\begin{pmatrix}1&0\\-1&1\end{pmatrix} = e^t\begin{pmatrix}1&0\\1&1\end{pmatrix}\begin{pmatrix}1-t&t\\-1&1\end{pmatrix} = e^t\begin{pmatrix}1-t & t\\ -t & 1+t\end{pmatrix}.$$
+Checks: $t = 0$ gives $I$; $\frac{d}{dt}$ at $t=0$ gives $I + \begin{pmatrix}-1&1\\-1&1\end{pmatrix} = A$. ✓
+
+*The ODE.* With $\mathbf{x}_0 = (y_0, y_0')^\top$, the first component of $e^{At}\mathbf{x}_0$ is
+$$y(t) = e^t\big[(1-t)y_0 + ty_0'\big] = e^t\big[y_0 + (y_0' - y_0)\,t\big] = c_1e^t + c_2\,te^t.$$
+There is the $te^t$. It is the entry $t$ in $e^{Jt}$, which is $f'(\lambda)$ for $f(x) = e^{tx}$, which is present because $N\ne0$. For $y_0 = 1$, $y_0' = 0$: $y = e^t(1-t)$, which the project checks against `expm` and against a black-box ODE solver.
+
+### Example 4.2: one $3\times3$ block, and finding the chain
+
+$$A = \begin{pmatrix}1&1&0\\-1&2&1\\-1&0&3\end{pmatrix}.$$
+Expand $\det(xI - A)$ along the first row:
+$$(x-1)\big[(x-2)(x-3) - 0\big] + 1\cdot\big[1\cdot(x-3) + 1\big] + 0 = (x-1)(x-2)(x-3) + (x-2) = (x-2)\big[(x-1)(x-3)+1\big] = (x-2)^3.$$
+(Sanity: $\operatorname{tr}A = 6 = 3\cdot2$, $\det A = 8 = 2^3$.) Eigenvalue $2$, $a_2 = 3$.
+
+*Kernel dimensions.* $N = A - 2I = \begin{pmatrix}-1&1&0\\-1&0&1\\-1&0&1\end{pmatrix}$. Rows 2 and 3 are equal and row 1 is not a multiple of them, so rank $2$ and $d_1 = 1$: geometric multiplicity $1$.
+$N^2$: row $1$ of $N$ times $N$ is $-(-1,1,0) + (-1,0,1) = (0,-1,1)$; rows $2$ and $3$ of $N$ times $N$ are $-(-1,1,0) + (-1,0,1) = (0,-1,1)$ as well. So $N^2 = \begin{pmatrix}0&-1&1\\0&-1&1\\0&-1&1\end{pmatrix}$, rank $1$, $d_2 = 2$.
+$N^3$: $(0,-1,1)N = -(-1,0,1) + (-1,0,1) = \mathbf{0}$, so $N^3 = 0$, $d_3 = 3$.
+Blocks: $\ge1$: $1$; $\ge2$: $1$; $\ge3$: $1$. One block of size $3$.
+
+*Chain (top-down).* We need a top $\mathbf{v}_3\in\ker N^3 = \mathbb{C}^3$ outside $\ker N^2 = \{y = z\}$. $\mathbf{e}_3 = (0,0,1)^\top$ has $y = 0\ne z = 1$. ✓ Then
+$$\mathbf{v}_3 = \begin{pmatrix}0\\0\\1\end{pmatrix},\quad \mathbf{v}_2 = N\mathbf{v}_3 = \begin{pmatrix}0\\1\\1\end{pmatrix},\quad \mathbf{v}_1 = N\mathbf{v}_2 = \begin{pmatrix}1\\1\\1\end{pmatrix},\quad N\mathbf{v}_1 = \begin{pmatrix}-1+1\\-1+1\\-1+1\end{pmatrix} = \mathbf{0}. \ ✓$$
+Bottom first: $P = \begin{pmatrix}1&0&0\\1&1&0\\1&1&1\end{pmatrix}$ and $P^{-1}AP = J_3(2)$. By hand, check the chain relations: $A\mathbf{v}_1 = (2,2,2)^\top = 2\mathbf{v}_1$; $A\mathbf{v}_2 = (1,3,3)^\top = 2(0,1,1)^\top + (1,1,1)^\top = 2\mathbf{v}_2 + \mathbf{v}_1$; $A\mathbf{v}_3 = (0,1,3)^\top = 2(0,0,1)^\top + (0,1,1)^\top = 2\mathbf{v}_3 + \mathbf{v}_2$. ✓
+
+*Consequences.* $m_A = p_A = (x-2)^3$. By (3.9), $e^{At} = P\,e^{2t}\begin{pmatrix}1&t&t^2/2\\0&1&t\\0&0&1\end{pmatrix}P^{-1}$: solutions of $\mathbf{x}' = A\mathbf{x}$ involve $e^{2t}$, $te^{2t}$ and $t^2e^{2t}$.
+
+### Example 4.3: a $4\times4$ nilpotent matrix with blocks $3 + 1$, the full algorithm
+
+$$A = \begin{pmatrix}0&1&0&0\\-1&0&1&1\\1&1&-1&-1\\-1&0&1&1\end{pmatrix}.$$
+
+*Powers.* Columns of $A$: $\mathbf{c}_1 = (0,-1,1,-1)^\top$, $\mathbf{c}_2 = (1,0,1,0)^\top$, $\mathbf{c}_3 = \mathbf{c}_4 = (0,1,-1,1)^\top$. Column $j$ of $A^2$ is $A\mathbf{c}_j$, a combination of the columns with coefficients from $\mathbf{c}_j$ (LA-1, column picture):
+$A\mathbf{c}_1 = -\mathbf{c}_2 + \mathbf{c}_3 - \mathbf{c}_4 = -\mathbf{c}_2 = (-1,0,-1,0)^\top$; $A\mathbf{c}_2 = \mathbf{c}_1 + \mathbf{c}_3 = \mathbf{0}$; $A\mathbf{c}_3 = \mathbf{c}_2 - \mathbf{c}_3 + \mathbf{c}_4 = \mathbf{c}_2 = (1,0,1,0)^\top$; $A\mathbf{c}_4 = A\mathbf{c}_3$. So
+$$A^2 = \begin{pmatrix}-1&0&1&1\\0&0&0&0\\-1&0&1&1\\0&0&0&0\end{pmatrix}.$$
+$A^3 = A\cdot A^2$ has columns $A(-1,0,-1,0)^\top = -\mathbf{c}_1 - \mathbf{c}_3 = \mathbf{0}$, $\mathbf{0}$, $A(1,0,1,0)^\top = \mathbf{c}_1 + \mathbf{c}_3 = \mathbf{0}$, and the same again: $A^3 = 0$.
+
+*Kernel dimensions.* Rows of $A$: $\mathbf{r}_1 = (0,1,0,0)$, $\mathbf{r}_2 = (-1,0,1,1)$, $\mathbf{r}_3 = (1,1,-1,-1) = \mathbf{r}_1 - \mathbf{r}_2$, $\mathbf{r}_4 = \mathbf{r}_2$. Rank $2$, so $d_1 = 2$. $A^2$ has rank $1$ (one nonzero row repeated), so $d_2 = 3$. $A^3 = 0$, so $d_3 = 4$. The sequence is $d = (0, 2, 3, 4)$.
+
+*Blocks by (3.4).* Size $\ge1$: $2 - 0 = 2$. Size $\ge2$: $3-2 = 1$. Size $\ge3$: $4 - 3 = 1$. Size $\ge4$: $0$. So exactly one block of size $3$ and $2 - 1 = 1$ block of size $1$: $J_3(0)\oplus J_1(0)$. (A common guess from "two eigenvectors in dimension $4$" is $2+2$. The jump $d_2 - d_1 = 1$ rules it out; two 2-blocks would give $d = (0,2,4)$.)
+
+*Chain basis, top-down.* Level $3$: we need $d_3 - d_2 = 1$ vector in $\ker A^3 = \mathbb{C}^4$ outside $\ker A^2$. From the rows of $A^2$, $\ker A^2 = \{-x_1 + x_3 + x_4 = 0\}$. $\mathbf{e}_3$ has $-0+1+0 = 1\ne0$. ✓ Top of the 3-chain: $\mathbf{u}_3 = \mathbf{e}_3$. Then
+$$\mathbf{u}_2 = A\mathbf{e}_3 = \mathbf{c}_3 = \begin{pmatrix}0\\1\\-1\\1\end{pmatrix}, \qquad \mathbf{u}_1 = A\mathbf{u}_2 = \mathbf{c}_2 - \mathbf{c}_3 + \mathbf{c}_4 = \mathbf{c}_2 = \begin{pmatrix}1\\0\\1\\0\end{pmatrix}, \qquad A\mathbf{u}_1 = \mathbf{c}_1 + \mathbf{c}_3 = \mathbf{0}. \ ✓$$
+Level $2$: we already hold $\mathbf{u}_2$ there, and $d_2 - d_1 = 1$ says that is all there is; no new chain of length $2$. Level $1$: we hold $\mathbf{u}_1\in\ker A$, and $d_1 = 2$ says we need one more kernel vector, independent of $\mathbf{u}_1$. From the rows: $\mathbf{r}_1$ gives $x_2 = 0$, $\mathbf{r}_2$ gives $x_1 = x_3 + x_4$, so $\ker A = \operatorname{span}\{(1,0,1,0)^\top, (1,0,0,1)^\top\}$. The first is $\mathbf{u}_1$; take $\mathbf{w} = (1,0,0,1)^\top$ as the 1-chain.
+
+*Result.* Bottom first,
+$$P = \begin{pmatrix}\mathbf{u}_1 & \mathbf{u}_2 & \mathbf{u}_3 & \mathbf{w}\end{pmatrix} = \begin{pmatrix}1&0&0&1\\0&1&0&0\\1&-1&1&0\\0&1&0&1\end{pmatrix}, \qquad P^{-1}AP = \begin{pmatrix}0&1&0&0\\0&0&1&0\\0&0&0&0\\0&0&0&0\end{pmatrix} = J_3(0)\oplus J_1(0),$$
+with $\det P = 1$; the project verifies the conjugation. (Check the chain relations by reading $AP$: $A\mathbf{u}_1 = \mathbf{0}$, $A\mathbf{u}_2 = \mathbf{u}_1$, $A\mathbf{u}_3 = \mathbf{u}_2$, $A\mathbf{w} = \mathbf{0}$, which are exactly the columns of $PJ$.) The matrix $A$ was built as $PJP^{-1}$ from a *different* $P$, with columns $(1,0,1,0)$, $(1,1,0,1)$, $(0,1,1,0)$, $(1,0,0,1)$; the Jordan form is the same, the basis is not.
+
+*Picture.*
+```
+   e_3 ──A──► (0,1,-1,1) ──A──► (1,0,1,0) ──A──► 0
+                                 (1,0,0,1) ──A──► 0
+```
+$d_k$ counts the vectors in the $k$ columns nearest the zero: $2, 3, 4$.
+
+### Example 4.4: Cayley–Hamilton at work
+
+$$A = \begin{pmatrix}2&1&0\\1&1&0\\0&1&1\end{pmatrix}.$$
+For a $3\times3$ matrix, $p_A(x) = x^3 - (\operatorname{tr}A)x^2 + (\text{sum of principal }2\times2\text{ minors})\,x - \det A$ (LA-6). $\operatorname{tr}A = 4$. Principal minors: $\begin{vmatrix}2&1\\1&1\end{vmatrix} = 1$, $\begin{vmatrix}2&0\\0&1\end{vmatrix} = 2$, $\begin{vmatrix}1&0\\1&1\end{vmatrix} = 1$, sum $4$. $\det A = 2\cdot1 - 1\cdot1 + 0 = 1$. So
+$$p_A(x) = x^3 - 4x^2 + 4x - 1 = (x-1)(x^2 - 3x + 1),$$
+three distinct eigenvalues ($1$ and $\tfrac{3\pm\sqrt5}{2}$), so $A$ is diagonalizable. Cayley–Hamilton doesn't care either way.
+
+*Inverse.* $A^3 - 4A^2 + 4A - I = 0 \Rightarrow A(A^2 - 4A + 4I) = I \Rightarrow A^{-1} = A^2 - 4A + 4I$. Compute $A^2$ row by row (row $i$ of $A^2$ is row $i$ of $A$ times $A$): row $1 = 2(2,1,0) + 1(1,1,0) = (5,3,0)$; row $2 = (2,1,0)+(1,1,0) = (3,2,0)$; row $3 = (1,1,0) + (0,1,1) = (1,2,1)$. So
+$$A^{-1} = \begin{pmatrix}5&3&0\\3&2&0\\1&2&1\end{pmatrix} - \begin{pmatrix}8&4&0\\4&4&0\\0&4&4\end{pmatrix} + \begin{pmatrix}4&0&0\\0&4&0\\0&0&4\end{pmatrix} = \begin{pmatrix}1&-1&0\\-1&2&0\\1&-2&1\end{pmatrix}.$$
+Check row $1$ of $A$ against the columns of $A^{-1}$: $(2,1,0)\cdot(1,-1,1) = 1$, $(2,1,0)\cdot(-1,2,-2) = 0$, $(2,1,0)\cdot(0,0,1) = 0$. ✓
+
+*$A^5$ as a quadratic.* Reduce $x^5$ modulo $p_A$ using $x^3 \equiv 4x^2 - 4x + 1$:
+$x^4 \equiv 4x^3 - 4x^2 + x \equiv 4(4x^2-4x+1) - 4x^2 + x = 12x^2 - 15x + 4$;
+$x^5 \equiv 12x^3 - 15x^2 + 4x \equiv 12(4x^2 - 4x + 1) - 15x^2 + 4x = 33x^2 - 44x + 12$.
+So $A^5 = 33A^2 - 44A + 12I$:
+$$A^5 = \begin{pmatrix}165&99&0\\99&66&0\\33&66&33\end{pmatrix} - \begin{pmatrix}88&44&0\\44&44&0\\0&44&44\end{pmatrix} + \begin{pmatrix}12&0&0\\0&12&0\\0&0&12\end{pmatrix} = \begin{pmatrix}89&55&0\\55&34&0\\33&22&1\end{pmatrix}.$$
+Four matrix multiplications became one polynomial reduction and two scalar-times-matrix sums. (The Fibonacci numbers in the top-left block are not a coincidence: $\begin{pmatrix}2&1\\1&1\end{pmatrix}$ is the square of the Fibonacci matrix $\begin{pmatrix}1&1\\1&0\end{pmatrix}$, and $A$ is block lower triangular.)
+
+### Example 4.5: minimal versus characteristic polynomial
+
+$$A = J_2(1)\oplus J_1(1)\oplus J_1(3) = \begin{pmatrix}1&1&0&0\\0&1&0&0\\0&0&1&0\\0&0&0&3\end{pmatrix}.$$
+Characteristic polynomial: $(x-1)^3(x-3)$, total block size per eigenvalue. Minimal polynomial by (3.5): the largest block for $1$ has size $2$, for $3$ size $1$, so $m_A = (x-1)^2(x-3)$.
+
+Check that it annihilates: $(A - I)^2(A-3I)$ is block diagonal; on $J_2(1)$ it is $N_2^2\,(N_2 - 2I) = 0$; on $J_1(1)$ the factor $(A-I)$ is $0$; on $J_1(3)$ the factor $(A - 3I)$ is $0$. ✓ Check nothing smaller works: $(A-I)(A-3I)$ on the $J_2(1)$ block is $N_2(N_2 - 2I) = N_2^2 - 2N_2 = -2N_2 = \begin{pmatrix}0&-2\\0&0\end{pmatrix}\ne0$. ✓ And $(x-1)^2$ alone misses the eigenvalue $3$ (Theorem 3.14(c)).
+
+Kernel dimensions confirm the structure without looking at the blocks: for $\lambda = 1$, $d_1 = 2$ (two blocks), $d_2 = 3 = a_1$ (largest block has size $2$). For $\lambda = 3$, $d_1 = 1 = a_3$.
+
+The project conjugates this $A$ by a dense integer matrix so the blocks are invisible, recovers $p$, $m$ and the block structure by rank computations, and computes $m_A$ a second way: as the first linear dependence among $I, A, A^2, \dots$ (Definition 3.13 taken literally). Degree $3$ both ways, and $\|m_A(A)\|\approx 4\times10^{-15}$ in floating point.
+
+### Example 4.6 (mechanics): the critically damped oscillator
+
+The damped oscillator of CM-6 is $\ddot x + 2\zeta\omega\dot x + \omega^2x = 0$. Critical damping is $\zeta = 1$:
+$$\ddot x + 2\omega\dot x + \omega^2x = 0, \qquad \mathbf{z} = \begin{pmatrix}x\\ \dot x\end{pmatrix},\quad A = \begin{pmatrix}0&1\\-\omega^2&-2\omega\end{pmatrix}, \quad p_A(\lambda) = \lambda^2 + 2\omega\lambda + \omega^2 = (\lambda+\omega)^2.$$
+For $\zeta<1$ the eigenvalues are a complex pair, for $\zeta>1$ two distinct negative reals; at $\zeta = 1$ they merge. $A + \omega I = \begin{pmatrix}\omega&1\\-\omega^2&-\omega\end{pmatrix}$ has rank $1$ (row $2$ is $-\omega$ times row $1$), so one eigenvector, $(1, -\omega)^\top$, and the Jordan form is $J_2(-\omega)$.
+
+*Chain.* Top $\mathbf{v}_2 = \mathbf{e}_2$: $(A+\omega I)\mathbf{e}_2 = (1, -\omega)^\top = \mathbf{v}_1$. $P = \begin{pmatrix}1&0\\-\omega&1\end{pmatrix}$, $P^{-1} = \begin{pmatrix}1&0\\ \omega&1\end{pmatrix}$.
+
+*Exponential.* By (3.8),
+$$e^{At} = e^{-\omega t}\begin{pmatrix}1&0\\-\omega&1\end{pmatrix}\begin{pmatrix}1&t\\0&1\end{pmatrix}\begin{pmatrix}1&0\\ \omega&1\end{pmatrix} = e^{-\omega t}\begin{pmatrix}1&0\\-\omega&1\end{pmatrix}\begin{pmatrix}1+\omega t & t\\ \omega & 1\end{pmatrix} = e^{-\omega t}\begin{pmatrix}1+\omega t & t\\ -\omega^2t & 1-\omega t\end{pmatrix}.$$
+(Check: $t=0$ gives $I$; the derivative at $0$ is $\begin{pmatrix}\omega&1\\-\omega^2&-\omega\end{pmatrix} - \omega I = A$. ✓)
+
+*Solution.* $x(t) = e^{-\omega t}\big[(1+\omega t)x_0 + t\dot x_0\big]$. The $te^{-\omega t}$ term is the Jordan block. Released from rest at $x_0 = 1$: $x = (1+\omega t)e^{-\omega t}$, no overshoot, no oscillation. Kicked from the origin with $\dot x_0 = 1$: $x = te^{-\omega t}$, which rises to $1/(e\omega)$ at $t = 1/\omega$ and decays. The project plots both with $\omega = 2$, together with the pieces $e^{-\omega t}$ and $te^{-\omega t}$, and cross-checks against `expm` and a numerical integrator.
+
+Contrast with CM-6's *undamped* normal modes: there the matrices are symmetric, repeated frequencies produce two-dimensional eigenspaces, and Proposition 3.12 forbids any $t\cos\omega t$ terms. The Jordan block needs the damping, which breaks the symmetry. (Exercise B6(c) finds the one Jordan block an undamped system *can* have: free translation, $x = a + bt$.)
+
+## 5. Why it matters and where it connects
+
+- **LA-7** promised $e^{At}$ for every $A$ and delivered it only for diagonalizable $A$. Theorems 3.10 and 3.17 finish the job: solutions of $\mathbf{x}' = A\mathbf{x}$ are exactly combinations of $t^ke^{\lambda t}$ with $k < s_{\max}(\lambda)$. The "multiply by $t$ for a repeated root" rule of your ODE course is (3.8).
+- **LA-8** proved the spectral theorem: symmetric and normal matrices diagonalize. Proposition 3.12 is the two-line reason there are no Jordan blocks there, and it isolates what is special: $\ker S^2 = \ker S$ for normal $S$.
+- **LA-10** gave you Schur's form. Here it carried two proofs (Theorems 3.9(c) and 3.16), and it is what you compute instead of the Jordan form.
+- **LA-13** returns to §3.11 with tools: backward error, the $\varepsilon^{1/s}$ sensitivity of eigenvalues of defective matrices, the QR algorithm for the Schur form, and the Schur–Parlett method for $f(A)$.
+- **LA-12** (indirectly): the Kronecker sum $A\otimes I + I\otimes B$ inherits its eigenvalues $\lambda_i + \mu_j$ from $A$ and $B$; whether it inherits Jordan blocks is a question answered by the kernel-dimension formula (3.4), and the change-of-basis bookkeeping $P^{-1}AP$ is the same with more indices.
+- **CM-6**: Example 4.6. Also: the generalized eigenproblem $K\mathbf{v} = \omega^2M\mathbf{v}$ with symmetric $K$ and positive definite $M$ is diagonalizable even with repeated frequencies (it is similar to the symmetric $M^{-1/2}KM^{-1/2}$, then Proposition 3.12), so normal modes never need generalized eigenvectors.
+- **QM-8** (degenerate perturbation theory): the eigenvectors of a matrix are not a continuous function of its entries at a repeated eigenvalue. For a Hermitian $H_0$ with a degenerate eigenvalue, the perturbation $\varepsilon V$ picks a basis inside the degenerate eigenspace, and which basis depends on the *direction* $V$, not the size $\varepsilon$; that is why QM-8 tells you to diagonalize $V$ within the degenerate subspace first. §3.11's $A_\varepsilon$ is the non-Hermitian caricature, where the eigenvectors don't just rotate but collapse onto one line.
+- **ML-2**: heavy-ball momentum at its optimal parameter has, in each eigen-direction of the Hessian, a $2\times2$ iteration matrix with a repeated eigenvalue and a single eigenvector: a Jordan block, the discrete-time analogue of critical damping. Theorem 3.17 with $f(x) = x^k$ says the error then decays like $k\rho^{k-1}$, not $\rho^k$.
+- **ST-7**: companion matrices of AR processes are nonderogatory (Exercise B5(d)), so a repeated root of the characteristic equation always produces $t^k\rho^t$ terms; a double unit root is where $I(2)$ processes get their polynomial trends. **F5**: transition matrices with chains of transient states can be defective, and then $P^k$ has $k\rho^{k-1}$ terms.
+- **QC-7, QM-4**: $e^{-iHt}$ for Hermitian $H$ is computed by diagonalization (Proposition 3.12 says that is safe) or by Padé/Krylov methods (LA-13); for non-Hermitian generators (open systems, QC-7's Lindblad operators) the Jordan form can be nontrivial and the Schur-based methods of §3.11 are what is used.
+
+## 6. Exercises
+
+See [exercises.md](exercises.md). A1–A6 are drills: a $2\times2$ chain and its exponential, powers of a strictly triangular matrix, reading block sizes from kernel dimensions, $m_A$ versus $p_A$ for a given block structure, $e^{tJ_3}$, and Cayley–Hamilton for $2\times 2$. B1–B7 are the module: B1 (the kernel/image splitting $V = \ker T^n\oplus\operatorname{im}T^n$), B2 (a $3\times3$ with blocks $2+1$), B3 (exact block sizes and which $d_k$ sequences can occur), B4 (diagonalizable iff distinct roots, without Jordan form), B5 (companion matrices, $A^{10}$, $t^2e^t$, and why $m = p$), B6 (symmetric matrices have no blocks; the three-mass ring and its one honest Jordan block), B7 (code: the minimal polynomial by linear dependence). B2, B4, B5 and B7 are essential. C1–C4: triangularization by induction, the exact condition number in the $\varepsilon$-demo, the adjugate proof of Cayley–Hamilton, and "every matrix function is a polynomial in $A$."
+
+## 7. Coding project
+
+`project.py` builds the module in exact arithmetic and tests it against floating-point references:
+
+1. **Kernel dimensions and block counting.** `kernel_dims(A, lam)` computes $d_k$ with exact ranks; `jordan_block_sizes(A, lam)` applies (3.4). Checked on direct sums of blocks and against `sympy.Matrix.jordan_form()`.
+2. **The chain construction.** `nilpotent_chains(N, dim)` is the top-down algorithm of §3.6 with an assertion at every level that the counts predicted by Theorem 3.6 hold. `jordan_basis(A)` glues chains across generalized eigenspaces and asserts $P^{-1}AP = J$.
+3. **Example 4.1**: the ODE, $e^{At}$ symbolically, `scipy.linalg.expm`, `solve_ivp`, and the $te^t$ plot.
+4. **Examples 4.2 and 4.3** with every intermediate matrix asserted, and a plot of the staircase $d_k$.
+5. **Cayley–Hamilton**: Example 4.4 exactly, random matrices numerically, and the mechanism of the proof ($M_k$ kills $V_k$ on a Schur form).
+6. **Minimal polynomial** two ways (from blocks, and as the first linear dependence among powers); Example 4.5 conjugated into a dense matrix; the $7\times7$ pair with equal $p$, $m$, rank and different Jordan forms; the three-mass ring.
+7. **Functions of matrices**: `f_jordan_block` implements (3.7), `expm_jordan` uses SymPy's Jordan form and is compared with `expm` on four matrices; the critically damped oscillator (Example 4.6) solved three ways and plotted.
+8. **The discontinuity**: angle between eigenvectors and $\operatorname{cond}(V)$ for $A_\varepsilon$ on log scales, against the exact $2\arctan\sqrt\varepsilon$ and $1/\sqrt\varepsilon$; SymPy's exact Jordan form switching at $\varepsilon = 10^{-16}$; NumPy returning a condition number of $10^{16}$ for the eigenvectors of an exact $J_2(1)$.
+
+**Build it yourself:** before reading Part 2, write `nilpotent_chains` from the description in §3.6. The hard part is the test "independent modulo $\ker N^{k-1}$ and modulo what you already hold at level $k$"; a rank check on a stacked matrix does it. Before reading Part 6, write `minimal_polynomial_by_dependence` (Exercise B7). Then do the "Your turn" items at the end: the three-mass ring, a nilpotent $3\times3$ of index 2, $\cos(A)$ for a $2\times2$ block, and deliberately feeding a float matrix to the exact code to watch §3.11 happen.
+
+## 8. Where you'll struggle
+
+- **You will learn this twice.** Nearly everyone does. The first time through, the chain construction (Theorem 3.6 and the top-down algorithm) feels like bookkeeping with no landmarks. The fix is to separate the two halves. The kernel-dimension formula (3.4) is the easy half, and you should be able to use it half-asleep: ranks of powers, take differences, read off block sizes. Learn it cold now. The construction of the basis is the hard half; understand it once, well, on Example 4.3, and accept that you will re-derive it from scratch the next time you need it. You will rarely need it: the *structure* is what matters for ODEs, similarity and the minimal polynomial, and the structure comes from (3.4).
+- **"Generalized eigenvector" is a bad name.** It suggests a vector with some eigen-property of its own. What it actually is: a vector that reaches an eigenvector after finitely many applications of $A - \lambda I$. Think "chain vector." The chain picture ($\mathbf{v}_3\to\mathbf{v}_2\to\mathbf{v}_1\to\mathbf{0}$) is the only one that makes the construction, the superdiagonal ones, and the $t^k$ terms all obvious at once. If you find yourself reasoning about $G_\lambda$ as a set, go back to chains.
+- **Which end of the chain is which.** The eigenvector is the *bottom* ($\ker N$); the top is the vector that takes longest to die; the basis is written bottom first so the ones go above the diagonal. Pick the top first when computing (it must be outside $\ker N^{s-1}$), then generate downward. If you pick an eigenvector first and try to solve $(A-\lambda I)\mathbf{v}_2 = \mathbf{v}_1$ upward, you will sometimes find the system inconsistent: not every eigenvector is the bottom of a long chain (in Example 4.3, $(1,0,0,1)^\top$ is the bottom of a 1-chain only).
+- **The Cayley–Hamilton one-liner.** "$\det(A - AI) = 0$" is wrong and you will see it in print. If you can explain to someone else why it is wrong (the polynomial is not the determinant; a scalar is not a matrix), you understand the theorem. The real proof pushes basis vectors down a flag one factor at a time.
+- **Expecting $p_A$ and $m_A$ to determine the Jordan form.** They don't (§3.10's $7\times7$ example). Only the full sequence of $d_k$ does. "The Jordan form is determined by the algebraic and geometric multiplicities" is true only when $a_\lambda\le3$ for every $\lambda$ (with $a_\lambda = 4$ and $g_\lambda = 2$ you can't tell $3+1$ from $2+2$).
+- **Trying to compute a Jordan form from floating-point data.** You will be tempted exactly once, in a project where the ODE matrix came from measurements. §3.11 is the reason you shouldn't: the eigenvector matrix you get will have condition number $10^{8}$ and the result will be noise. Use Schur. If a defective matrix is really what the physics says (critical damping *by design*), build it in exact arithmetic or write the Jordan form down by hand from the known structure. The whole topic is theory, not computation, and that is not a weakness of the theory.
+- **Exercise B1** is shorter than it looks; **Exercise B4** is harder than it looks, because you must resist using the Jordan form; **C3** is long but mechanical.
+
+## 9. Check yourself
+
+1. Define a nilpotent operator and prove in two lines that its only eigenvalue is $0$.
+2. Why is $\dim\ker N^k$ strictly increasing up to the index of a nilpotent $N$? Why does this force $N^n = 0$?
+3. State the block-counting formula (3.4). If $d = (0, 3, 5, 6, 6)$, what are the block sizes?
+4. What is $G_\lambda$? Why is $A - \mu I$ injective on $G_\lambda$ for $\mu\ne\lambda$?
+5. In the proof that the generalized eigenspaces are independent, which operator did you apply, and why does it isolate one summand?
+6. Write down the chain relations $A\mathbf{v}_j = \ ?$ encoded by $AP = PJ$ for a single block, and say which end is the eigenvector.
+7. Define the minimal polynomial. How is the exponent of $(x-\lambda)$ in $m_A$ read off the Jordan form? When is $m_A = p_A$?
+8. Give a matrix that is not diagonalizable and whose minimal polynomial you can state without computing anything.
+9. Why is "$p_A(A) = \det(A - AI) = 0$" not a proof? Outline the real proof in three sentences.
+10. Write $e^{tJ_3(\lambda)}$. Where does the $t^2/2$ come from in the Taylor picture?
+11. Two $4\times 4$ nilpotent matrices both have rank $2$. Are they similar? What else do you need to know?
+12. What happens to the eigenvectors of $\begin{pmatrix}\lambda&1\\ \varepsilon&\lambda\end{pmatrix}$ as $\varepsilon\to0$? Name what you compute instead of a Jordan form in floating point.
+
+## 10. Pair with
+
+- **Axler, *Linear Algebra Done Right*, ch. 8** (4th ed., open access). The same route as these notes, basis-free and careful: generalized eigenvectors and nilpotent operators (8A), the generalized eigenspace decomposition (8B), the minimal polynomial and a determinant-free Cayley–Hamilton (8C), Jordan form (8D). Better than these notes at stating everything at the level of operators, and the place to see $V = \ker T^n\oplus\operatorname{im}T^n$ (Exercise B1) used as the engine of the decomposition instead of Schur.
+- **Horn & Johnson, *Matrix Analysis*, ch. 3.** The matrix theorist's version: Jordan form with uniqueness done carefully through the kernel-dimension sequence ("Weyr characteristic"), the real Jordan form (§3.4), and a thorough account of the minimal polynomial (§3.3). Better than these notes on uniqueness and on what you can say about $A$ from $p_A$ and $m_A$ alone.
+- **Strang, *Introduction to Linear Algebra*, §6.2 and the short appendix on the Jordan form.** Computational and honest about the algorithm; Strang's staircase proof sketch is a good second pass after Theorem 3.6, and his remark that the Jordan form "is not a computational tool" is §3.11 in one sentence.
+- **Golub & Wilkinson, "Ill-conditioned eigensystems and the computation of the Jordan canonical form," *SIAM Review* 18 (1976).** The paper behind §3.11. Read the introduction to see the problem stated by the people who tried hardest to solve it.
+- **Higham, *Functions of Matrices* (SIAM, 2008), ch. 1 and 9.** The definitions of $f(A)$ (Jordan, polynomial interpolation, Cauchy integral; all equivalent) and the Schur–Parlett algorithm. The reference for what `scipy.linalg.funm` and `expm` actually do.
