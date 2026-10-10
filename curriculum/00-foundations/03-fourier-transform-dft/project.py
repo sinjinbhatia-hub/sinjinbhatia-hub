@@ -7,7 +7,8 @@
 # (2) timing N^2 vs N log N; (3) circular convolution and circulant
 # diagonalization; (4) continuous transforms of rect, Gaussians, exponentials,
 # triangle by the Riemann-sum relation (3.29), overlaid on the analytic formulas,
-# and the convolution theorem; (5) the uncertainty product; (6) the damped
+# the Example 4.1-4.3 numbers by quadrature and by FFT, and the convolution
+# theorem; (5) the uncertainty product; (6) the damped
 # oscillator: impulse response, |H|, resonance, chirp response; (7) aliasing and
 # sinc interpolation; (8) Poisson summation and the comb; (9) a spectrogram.
 # "Your turn" reference solutions (B7, C3) are at the end.
@@ -281,11 +282,48 @@ for ax, (name, (fx, analytic, tol)) in zip(axes.ravel(), cases.items()):
     ax.set_title(f"{name}\nmax err {err:.1e}", fontsize=9); ax.grid(alpha=.3); ax.legend(fontsize=7)
     ax.set_xlabel("xi")
 fig.tight_layout(); fig.savefig(FIG / "transforms_overlay.png", dpi=120); plt.close(fig)
-# Example 4.2 numbers.
-_, Fg = ft_numeric(np.exp(-x**2 / 2), -L, dx)
-for xi0, val in ((0.0, 2.50663), (0.1, 2.05761), (0.25, 0.72996)):
-    assert np.isclose(Fg[np.argmin(np.abs(xi - xi0))].real, val, atol=2e-5)
 print("Part 4: rect, Gaussians, exponentials, triangle: DFT via (3.29) matches the analytic transforms.")
+
+
+def ft_quadrature(samples, x0, dx, xi0):
+    """f^(xi0) at one arbitrary frequency by the Riemann sum dx * sum_n f(x_n) exp(-2 pi i x_n xi0),
+    x_n = x0 + n dx: the sum behind (3.29), evaluated OFF the DFT grid. O(N) per frequency."""
+    xn = x0 + dx * np.arange(len(samples))
+    return dx * np.sum(samples * np.exp(-2j * np.pi * xn * xi0))
+
+
+# Example 4.2 numbers (sigma = 1). The DFT grid here is k/(N dx) = k/32, spacing 0.03125, so
+# xi = 0.1 is NOT a grid point: the nearest bin (0.09375) holds f^(0.09375) = 2.1074, not f^(0.1).
+# Read f^ at exactly 0.1 by quadrature (the Riemann sum at that xi), which is what the notes claim.
+gauss1 = np.exp(-x**2 / 2)
+_, Fg = ft_numeric(gauss1, -L, dx)
+for xi0, val in ((0.0, 2.50663), (0.1, 2.05761), (0.25, 0.72996)):
+    num = ft_quadrature(gauss1, -L, dx, xi0).real
+    assert abs(num - val) < 1e-5, (xi0, num, val)
+    assert abs(num - np.sqrt(2 * np.pi) * np.exp(-2 * np.pi**2 * xi0**2)) < 1e-10   # Poisson summation makes it exact
+i_near = np.argmin(np.abs(xi - 0.1))
+print(f"  Example 4.2 (quadrature): f^(0) = {ft_quadrature(gauss1, -L, dx, 0.0).real:.5f}, "
+      f"f^(0.1) = {ft_quadrature(gauss1, -L, dx, 0.1).real:.5f}, f^(0.25) = {ft_quadrature(gauss1, -L, dx, 0.25).real:.5f}; "
+      f"nearest DFT bin to 0.1 is xi = {xi[i_near]:.5f} with value {Fg[i_near].real:.4f} (grid spacing {xi[1] - xi[0]:.5f})")
+
+# Example 4.1: the triangle at xi = 0.3, and a 2 ms pulse: f^(0) = 0.002, nulls at 500 and 1000 Hz.
+assert np.isclose(sinc(0.3) ** 2, 0.73684, atol=5e-6)
+assert np.isclose((1 - np.cos(0.6 * np.pi)) / (2 * np.pi**2 * 0.09), 0.73684, atol=5e-6)
+tau_p, t0_p, dt_p = 2e-3, 3e-3, 1e-5                                   # width 2 ms, centre 3 ms, sampled at 10 us
+tp = np.arange(2000) * dt_p                                            # 20 ms record starting at 0: frequency grid 50 Hz
+d = np.abs(tp - t0_p)
+pulse = np.where(d < tau_p / 2 - 1e-9, 1.0, np.where(d < tau_p / 2 + 1e-9, 0.5, 0.0))   # 1/2 at the two jumps
+Gp = dt_p * np.fft.rfft(pulse)                                         # (3.29); record starts at 0, no phase correction
+xi_p = np.fft.rfftfreq(len(tp), d=dt_p)
+kp = lambda nu: int(np.argmin(np.abs(xi_p - nu)))
+assert np.isclose(abs(Gp[0]), 0.002) and abs(Gp[kp(500)]) < 1e-9 and abs(Gp[kp(1000)]) < 1e-9
+# Example 4.3: the delay leaves |G| = tau |sinc(tau xi)| alone and makes the phase -2 pi t0 xi.
+sel_p = xi_p <= 2000
+assert np.allclose(Gp[sel_p], np.exp(-2j * np.pi * t0_p * xi_p[sel_p]) * tau_p * sinc(tau_p * xi_p[sel_p]), atol=1e-8)
+assert np.isclose(abs(Gp[kp(100)]), 1.871e-3, atol=1e-6) and np.isclose(abs(Gp[kp(100)]), 0.002 * sinc(0.2), atol=1e-8)
+assert np.isclose(np.degrees(np.angle(Gp[kp(100)])), -108.0, atol=1e-6)
+print(f"  Example 4.1/4.3: sinc^2(0.3) = {sinc(0.3)**2:.5f}; 2 ms pulse delayed 3 ms, from the FFT at 100 Hz: "
+      f"|G| = {abs(Gp[kp(100)]):.3e}, phase = {np.degrees(np.angle(Gp[kp(100)])):.1f} deg; nulls at 500, 1000 Hz.")
 
 # Convolution theorem: Pi * Pi = triangle, transform = sinc^2 (Theorem 3.7).
 tri_num = np.convolve(rect(x), rect(x), mode="same") * dx
@@ -358,7 +396,13 @@ assert np.isclose(abs(H(3)), 0.19858, atol=1e-5) and np.isclose(np.degrees(np.an
 assert np.isclose(np.degrees(np.angle(H(2))), -90.0)
 ws = np.linspace(1.5, 2.5, 200001); hp = ws[np.abs(H(ws)) >= H_max / np.sqrt(2)]
 assert np.isclose(hp[-1] - hp[0], 0.2005, atol=5e-4)
-print(f"Part 6: oscillator w_peak = {w_peak:.5f}, |H|max = {H_max:.5f}, half-power width = {hp[-1]-hp[0]:.4f} rad/s")
+assert np.isclose(hp[0], 1.892, atol=1e-3) and np.isclose(hp[-1], 2.093, atol=1e-3)   # half-power edges, Example 4.4
+assert np.isclose(abs(H(10)), 0.0104, atol=5e-5) and np.isclose(abs(H(10)), 1 / 96, rtol=3e-4)   # 1/(m w^2) roll-off
+assert np.isclose(wd, 1.99750, atol=1e-5) and np.isclose(1 / (m * wd), 0.50063, atol=1e-5)       # (3.25) amplitude
+assert np.isclose(H_max / abs(H(0)), 10.0, atol=0.02)                                           # Q ~ w0 m / c = 10
+assert np.isclose(np.angle(H(1)), -0.0666, atol=5e-5) and np.isclose(np.angle(H(3)), -3.0222, atol=5e-5)   # B6(b), radians
+print(f"Part 6: oscillator w_peak = {w_peak:.5f}, |H|max = {H_max:.5f}, half-power edges {hp[0]:.3f}, {hp[-1]:.3f} "
+      f"(width {hp[-1]-hp[0]:.4f} rad/s); |H(10)| = {abs(H(10)):.4f}; w_d = {wd:.5f}, 1/(m w_d) = {1/(m*wd):.5f}")
 
 # Impulse response by solve_ivp: x(0) = 0, x'(0+) = 1/m, then free motion.
 dt, T_rec = 0.02, 80.0
@@ -598,8 +642,43 @@ assert abs(sl_rect - (-13.26)) < 0.05 and abs(sl_hann - (-31.47)) < 0.05
 n64 = np.arange(64); tone = np.cos(2 * np.pi * 2.5 * n64 / 64)
 leak_rect = np.abs(np.fft.fft(tone)); leak_hann = np.abs(np.fft.fft(tone * hann(64)))
 far_rect = leak_rect[10:32].max() / leak_rect.max(); far_hann = leak_hann[10:32].max() / leak_hann.max()
-assert far_hann < 1e-3 and far_rect > 1e-2
-print(f"Your turn (C3): first sidelobe rect {sl_rect:.2f} dB, Hann {sl_hann:.2f} dB; leakage beyond bin 10: rect {far_rect:.1e}, Hann {far_hann:.1e}")
+bin30_rect = leak_rect[30] / leak_rect.max(); bin30_hann = leak_hann[30] / leak_hann.max()
+assert far_rect > 0.05 and far_hann < 2e-3            # past bin 10: rect still leaks ~10% of the peak, Hann ~0.1%
+assert bin30_rect > 0.04 and bin30_hann < 1e-4        # at bin 30: rect ~4.5% (1/|k| tails from +-2.5 add), Hann < 1e-5
+print(f"Your turn (C3): first sidelobe rect {sl_rect:.2f} dB, Hann {sl_hann:.2f} dB; leakage beyond bin 10: "
+      f"rect {far_rect:.1e}, Hann {far_hann:.1e}; at bin 30: rect {bin30_rect:.1e}, Hann {bin30_hann:.1e}")
+
+# Your turn 3 (reference): the 2D convolution theorem, Section 3.17. A Gaussian blur is a low-pass filter.
+img = np.zeros((64, 64)); img[24:40, 24:40] = 1.0                            # a bright square on a dark background
+yy, xx = np.meshgrid(np.arange(64) - 32, np.arange(64) - 32, indexing="ij")
+ker = np.exp(-(xx**2 + yy**2) / (2 * 2.0**2)); ker /= ker.sum()
+ker = np.roll(ker, (-32, -32), axis=(0, 1))                                   # kernel centred at index (0, 0): no shift
+blur_fft = np.fft.ifft2(np.fft.fft2(img) * np.fft.fft2(ker)).real            # (3.13) in 2D, circular
+blur_direct = sum(ker[a, b] * np.roll(img, (a, b), axis=(0, 1))             # (ker (*) img)[i,j] = sum ker[a,b] img[i-a,j-b]
+                  for a in range(64) for b in range(64) if ker[a, b] > 1e-12)
+assert np.allclose(blur_fft, blur_direct, atol=1e-12)
+K2 = np.fft.fft2(ker)
+assert np.isclose(K2[0, 0].real, 1.0) and abs(K2[32, 32]) < 1e-3            # passes DC untouched, kills the Nyquist corner
+assert np.isclose(blur_fft.sum(), img.sum())                                 # total brightness preserved (K2[0,0] = 1)
+fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+axes[0].imshow(img, cmap="gray"); axes[0].set_title("image")
+axes[1].imshow(np.log10(np.abs(np.fft.fftshift(np.fft.fft2(img))) + 1e-3), cmap="magma"); axes[1].set_title("log|fft2| (fftshifted)")
+axes[2].imshow(blur_fft, cmap="gray"); axes[2].set_title("Gaussian blur via fft2")
+fig.tight_layout(); fig.savefig(FIG / "convolution_2d.png", dpi=120); plt.close(fig)
+print("Your turn (2D): ifft2(fft2(img) fft2(ker)) == direct circular convolution; the blur's spectrum is 1 at DC and < 1e-3 at Nyquist.")
+
+# %% [markdown]
+# ## Numbers quoted in solutions.md that are not checked above (A1, A3, A5d, B4b, B5b)
+
+# %%
+assert np.isclose(1 / np.sqrt(10), 0.3162, atol=5e-5)                                                   # A1
+assert np.isclose(2 / np.sqrt(2 * np.pi), 0.7979, atol=5e-5)                                            # A3(c)
+assert fold(13, 12) == 1 and 13 - 12 * np.round(13 / 12) == 1                                           # A5(d): +1 rev/s, forward
+assert 2**19 * 20 == 10_485_760 and 2**40 == 1_099_511_627_776 and 2**40 / (2**19 * 20) == 104857.6    # B4(b)
+assert np.isclose(2 * np.exp(-np.pi / 2), 0.415759, atol=5e-7) and np.isclose(2 * np.exp(-2 * np.pi), 0.003735, atol=5e-7)   # B5(b)
+assert np.isclose(np.exp(-np.pi / 2), 0.2078796, atol=5e-8) and np.isclose(np.exp(-2 * np.pi), 0.0018674, atol=5e-8)        # Example 4.8
+assert np.isclose(np.sqrt(2) * (1 + 2 * np.exp(-2 * np.pi)), 1.419495, atol=5e-7)
+print("Solutions numbers (A1, A3, A5d, B4b, B5b) verified.")
 
 # %%
 if __name__ == "__main__":
