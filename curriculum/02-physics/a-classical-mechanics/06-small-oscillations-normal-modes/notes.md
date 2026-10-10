@@ -205,7 +205,7 @@ Completeness with degeneracies is the part Theorem 3.2 could not give you. Theor
 $$\mathbf{v}^\top K\mathbf{v} = \sum_{i,j}c_ic_j\,\mathbf{a}_i^\top K\mathbf{a}_j = \sum_{i,j}c_ic_j\,\omega_j^2\,\mathbf{a}_i^\top M\mathbf{a}_j = \sum_j\omega_j^2c_j^2,$$
 which is $\ge 0$ if all $\omega_j^2 \ge 0$, and $> 0$ if all $\omega_j^2 > 0$. ∎
 
-When some $\omega_j^2 < 0$, write $\omega_j^2 = -\gamma_j^2$; the ansatz $q = \mathbf{a}_je^{st}$ gives $s^2 = -\gamma_j^2\cdot(-1)$, i.e. $q = \mathbf{a}_j(c_1e^{\gamma_jt} + c_2e^{-\gamma_jt})$, and almost every initial condition grows. That is the linear-theory statement that a saddle of $V$ is unstable.
+When some $\omega_j^2 < 0$, write $\omega_j^2 = -\gamma_j^2$ with $\gamma_j > 0$. The ansatz $q = \mathbf{a}_je^{st}$ in (3.3) gives $s^2M\mathbf{a}_j = -K\mathbf{a}_j = \gamma_j^2M\mathbf{a}_j$, so $s = \pm\gamma_j$ and $q = \mathbf{a}_j(c_1e^{\gamma_jt} + c_2e^{-\gamma_jt})$: almost every initial condition grows exponentially. That is the linear-theory statement that a saddle of $V$ is unstable.
 
 ### 3.4 Normal coordinates and the general solution
 

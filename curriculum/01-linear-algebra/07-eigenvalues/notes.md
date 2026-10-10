@@ -56,7 +56,7 @@ Most directions get turned. Two do not: $(1, 1)$ is tripled and $(1, -1)$ is lef
                   |        \  (1,-1): A stretches by 1, no rotation
 ```
 
-The project (`figures/unit_vectors_and_images.png`) draws the full picture: a fan of unit vectors and where they land.
+The project draws the full picture, a fan of unit vectors and where they land, when you run it (Part 0 saves `unit_vectors_and_images.png` into `figures/`).
 
 ### Why these directions make dynamics one-dimensional
 

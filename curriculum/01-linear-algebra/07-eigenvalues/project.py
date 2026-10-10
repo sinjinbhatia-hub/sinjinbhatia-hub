@@ -660,9 +660,25 @@ assert np.allclose(Q6 @ np.diag(lam6) @ Q6.T, A6)             # A = Q Lambda Q^T
 print(f"Example 4.6: eigenvalues {lam6}; NumPy's eigenvectors are the hand ones up to sign/scale; "
       f"last column from eigh = {Q6[:, 2]} vs (1,1,-2)/sqrt6 = {np.array([1, 1, -2]) / np.sqrt(6)}.")
 
-# Exercise A1 numbers.
-lamA1, XA1 = eig_sorted(A1)
+# Numbers from the exercise solutions.
+lamA1, XA1 = eig_sorted(A1)                                                     # A1
 assert np.allclose(lamA1, [5, 2]) and same_direction(XA1[:, 0], [1, 1]) and same_direction(XA1[:, 1], [1, -2])
+U_a2 = np.array([[2.0, 7.0, -3.0], [0.0, -1.0, 4.0], [0.0, 0.0, 5.0]])           # A2
+assert np.allclose(U_a2 @ [7, -3, 0], -1 * np.array([7, -3, 0])) and np.allclose(U_a2 @ [5, 6, 9], 5 * np.array([5, 6, 9]))
+A_a3 = np.array([[0.8, 0.3], [0.2, 0.7]])                                      # A3
+assert np.allclose(np.linalg.matrix_power(A_a3, 2) @ [1, 0], [0.7, 0.3]) and np.allclose(A_a3 @ [0.6, 0.4], [0.6, 0.4])
+k5 = 5                                                                          # B3
+assert np.allclose(np.linalg.matrix_power(A_sec2, k5), 0.5 * np.array([[3**k5 + 1, 3**k5 - 1], [3**k5 - 1, 3**k5 + 1]]))
+assert np.allclose(np.linalg.matrix_power(A_sec2, 40) / 3.0**40, 0.5 * np.ones((2, 2)), atol=1e-12)
+A_b5 = np.array([[1.0, -1.0], [1.0, 1.0]])                                     # B5: e^{At}(1,0) = e^t (cos t, sin t)
+tb = 0.9
+assert np.allclose(expm(A_b5 * tb) @ [1, 0], np.exp(tb) * np.array([np.cos(tb), np.sin(tb)]))
+A_b7 = np.array([[3.0, 1.0], [0.0, 3.0]])                                      # B7: A^k and e^{At}
+for kk in (2, 7):
+    assert np.allclose(np.linalg.matrix_power(A_b7, kk), [[3**kk, kk * 3**(kk - 1)], [0, 3**kk]])
+assert np.allclose(expm(A_b7 * tb), np.exp(3 * tb) * np.array([[1, tb], [0, 1]]))
+assert abs(binet(10) - 55.0036) < 1e-4 and F[10] == 55                          # Example 4.2 check value
+print("Exercise numbers (A1, A2, A3, B3, B5, B7) verified.")
 
 # A^100 two ways (a preview of 'Your turn' 3): repeated multiplication vs X Lambda^100 X^{-1}.
 A_big = rng.standard_normal((60, 60)) / np.sqrt(60)

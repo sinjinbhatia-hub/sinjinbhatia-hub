@@ -629,7 +629,7 @@ S_num = sp.lambdify((q, t_s), S.subs({m_s: mv, w_s: wv, E_s: Ev}), "numpy")
 dSdq = sp.lambdify((q, t_s), sp.diff(S, q).subs({m_s: mv, w_s: wv, E_s: Ev}), "numpy")
 dSdE = sp.lambdify((q, t_s), sp.diff(S, E_s).subs({m_s: mv, w_s: wv, E_s: Ev}), "numpy")
 A_amp = np.sqrt(2 * Ev / (mv * wv**2)); beta = 0.3
-tt = np.linspace(-beta + 0.02, -beta + np.pi / (2 * wv) - 0.02, 50)        # quarter period, q: 0 -> A, p > 0
+tt = np.linspace(-beta + 0.02, -beta + np.pi / (2 * wv) - 0.02, 2000)      # quarter period, q: 0 -> A, p > 0
 q_t = A_amp * np.sin(wv * (tt + beta)); p_t = np.sqrt(2 * mv * Ev) * np.cos(wv * (tt + beta))
 assert np.allclose(dSdq(q_t, tt), p_t, rtol=1e-9), "dS/dq must equal p along the motion"
 Qc = dSdE(q_t, tt)
@@ -637,8 +637,8 @@ assert np.allclose(Qc, Qc[0], atol=1e-9) and np.isclose(Qc[0], beta, atol=1e-9),
 # S equals the action integral of L = p qdot - H along the path (up to a constant)
 Lag = p_t**2 / (2 * mv) - 0.5 * mv * wv**2 * q_t**2
 S_path = np.concatenate([[0], np.cumsum(0.5 * (Lag[1:] + Lag[:-1]) * np.diff(tt))])
-assert np.allclose(S_num(q_t, tt) - S_num(q_t[0], tt[0]), S_path, atol=2e-4)
-print(f"  along the trajectory: dS/dq = p to 1e-9, Q = dS/dE = beta = {Qc[0]:.6f} constant, and S - S(0) = ∫L dt to 2e-4.")
+assert np.allclose(S_num(q_t, tt) - S_num(q_t[0], tt[0]), S_path, atol=1e-5), np.max(np.abs(S_num(q_t, tt) - S_num(q_t[0], tt[0]) - S_path))
+print(f"  along the trajectory: dS/dq = p to 1e-9, Q = dS/dE = beta = {Qc[0]:.6f} constant, and S - S(0) = ∫L dt to 1e-5.")
 fig, ax = plt.subplots(figsize=(6, 4.5))
 qq = np.linspace(-A_amp * .999, A_amp * .999, 200)
 for tk in (0.0, 0.5, 1.0, 1.5):
@@ -662,11 +662,11 @@ xq = np.linspace(-9, 9, 6001)
 log_norm = -0.5 * (n_q * np.log(2) + gammaln(n_q + 1) + 0.5 * np.log(np.pi))
 psi = np.exp(log_norm) * eval_hermite(n_q, xq) * np.exp(-xq**2 / 2)
 rho_q = psi**2
-assert np.isclose(np.trapz(rho_q, xq), 1.0, atol=1e-8)
+assert np.isclose(np.trapezoid(rho_q, xq), 1.0, atol=1e-8)
 rho_cl = np.where(np.abs(xq) < A_q, 1 / (np.pi * np.sqrt(np.maximum(A_q**2 - xq**2, 1e-300))), 0.0)
 mask = np.abs(xq) < A_q / 2
 P_cl = 2 / np.pi * np.arcsin(0.5)                      # = 1/3 exactly
-P_q = np.trapz(rho_q[mask], xq[mask])
+P_q = np.trapezoid(rho_q[mask], xq[mask])
 assert np.isclose(P_cl, 1 / 3)
 assert abs(P_q - P_cl) < 0.02, (P_q, P_cl)
 print(f"Example 4.8 (WKB): P(|q| < A/2): classical 1/p density = {P_cl:.4f}, exact n = 20 state = {P_q:.4f}")
