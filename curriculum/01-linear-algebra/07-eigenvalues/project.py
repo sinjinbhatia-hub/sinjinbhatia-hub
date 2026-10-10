@@ -677,7 +677,7 @@ A_b7 = np.array([[3.0, 1.0], [0.0, 3.0]])                                      #
 for kk in (2, 7):
     assert np.allclose(np.linalg.matrix_power(A_b7, kk), [[3**kk, kk * 3**(kk - 1)], [0, 3**kk]])
 assert np.allclose(expm(A_b7 * tb), np.exp(3 * tb) * np.array([[1, tb], [0, 1]]))
-assert abs(binet(10) - 55.0036) < 1e-4 and F[10] == 55                          # Example 4.2 check value
+assert abs(phi**10 / np.sqrt(5) - 55.0036) < 1e-4 and round(binet(10)) == F[10] == 55   # Example 4.2 check value
 print("Exercise numbers (A1, A2, A3, B3, B5, B7) verified.")
 
 # A^100 two ways (a preview of 'Your turn' 3): repeated multiplication vs X Lambda^100 X^{-1}.

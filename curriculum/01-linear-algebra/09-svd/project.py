@@ -416,7 +416,7 @@ for kappa in kappas:
     Uk, Vk = random_orthogonal(n), random_orthogonal(n)
     sig = np.logspace(0, -np.log10(kappa), n)                 # σ_1 = 1, σ_n = 1/κ
     A = Uk @ np.diag(sig) @ Vk.T
-    assert np.isclose(np.linalg.cond(A), kappa, rtol=1e-6)
+    assert np.isclose(np.linalg.cond(A), kappa, rtol=1e-3)   # σ_n itself is only known to ~κ·ε relative accuracy
     # (i) worst case: b = u_1 (x = v_1/σ_1), δb = η u_n (δx = η v_n/σ_n)
     eta = 1e-6
     b = Uk[:, 0]; x = np.linalg.solve(A, b); dx = np.linalg.solve(A, b + eta * Uk[:, -1]) - x
