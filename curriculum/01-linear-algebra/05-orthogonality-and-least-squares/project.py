@@ -314,7 +314,7 @@ for _ in range(50):
     assert np.allclose(Qc, Qm) and np.allclose(Rc, Rm)
     assert np.allclose(Qm.T @ Qm, np.eye(nn)) and np.allclose(Qm @ Rm, A_rand)
     assert np.allclose(Rm, np.triu(Rm)) and np.all(np.diag(Rm) > 0)
-    # Theorem 3.16 / eq. (3.12): projection onto C(A) is Q Q^T, and it equals A (A^T A)^{-1} A^T.
+    # Theorem 3.17 / eq. (3.12): projection onto C(A) is Q Q^T, and it equals A (A^T A)^{-1} A^T.
     assert np.allclose(Qm @ Qm.T, project_onto_subspace(A_rand, np.zeros(mm))[3])
 
 # Loss of orthogonality on Hilbert matrices H_ij = 1/(i + j − 1): cond(H_10) ≈ 1.6e13.
@@ -353,7 +353,7 @@ fig.tight_layout(); fig.savefig(FIG / "gram_schmidt_loss.png", dpi=120); plt.clo
 # %%
 def qr_decompose(A):
     """Reduced QR factorization A = QR, eq. (3.15), by modified Gram–Schmidt.
-    Sign convention: diag(R) > 0 (Theorem 3.19 makes it unique). NumPy's may differ by signs."""
+    Sign convention: diag(R) > 0 (Theorem 3.20 makes it unique). NumPy's may differ by signs."""
     return gram_schmidt_modified(A)
 
 

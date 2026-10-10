@@ -134,7 +134,7 @@ for p_, q_ in [(4, 0), (3, 1), (2, 2), (2, 1), (1, 1), (0, 3)]:
 print("Part 2 passed: congruence keeps only the signature; similarity keeps the spectrum; they agree for orthogonal P.")
 
 # %% [markdown]
-# ## Part 3: Kronecker products (Theorem 3.16) and the vec trick (Theorem 3.17)
+# ## Part 3: Kronecker products (Theorem 3.17) and the vec trick (Theorem 3.18)
 #
 # (A kron B)_{(i,k),(j,l)} = A_ij B_kl with row-major pair ordering = np.kron.
 # Identities (a)-(f), Example 4.4, and vec(AXB) = (B^T kron A) vec(X) in
@@ -142,6 +142,19 @@ print("Part 2 passed: congruence keeps only the signature; similarity keeps the 
 
 
 # %%
+def same_multiset(x, y, tol=1e-7):
+    """True if the complex arrays x and y agree as multisets (greedy nearest matching, tolerance tol)."""
+    x = list(np.asarray(x, complex)); y = list(np.asarray(y, complex))
+    if len(x) != len(y):
+        return False
+    for a in x:
+        k = int(np.argmin(np.abs(np.array(y) - a)))
+        if abs(y[k] - a) > tol:
+            return False
+        y.pop(k)
+    return True
+
+
 def kron_by_hand(A, B):
     """Kronecker product from eq. (3.11): entry ((i,k),(j,l)) = A_ij B_kl, row-major pair ordering."""
     A = np.asarray(A); B = np.asarray(B)
@@ -205,7 +218,7 @@ assert np.allclose(np.kron(sx, sz) @ ket("00"), ket("10"))          # sigma_x ac
 CNOT = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0.]])
 assert np.allclose(CNOT @ ket("10"), ket("11")) and np.allclose(CNOT @ ket("01"), ket("01"))
 
-# Theorem 3.16 on random matrices.
+# Theorem 3.17 on random matrices.
 for _ in range(20):
     m, n, p, q, r, s = rng.integers(2, 5, size=6)
     A = rng.standard_normal((m, n)); C = rng.standard_normal((n, p))
@@ -217,8 +230,7 @@ for _ in range(20):
     assert np.allclose(np.linalg.inv(np.kron(A, B)), np.kron(np.linalg.inv(A), np.linalg.inv(B)))   # (c)
     assert np.isclose(np.trace(np.kron(A, B)), np.trace(A) * np.trace(B))                           # (d)
     lam = np.linalg.eigvals(A); mu = np.linalg.eigvals(B)
-    assert np.allclose(np.sort_complex(np.linalg.eigvals(np.kron(A, B))),
-                       np.sort_complex(np.outer(lam, mu).ravel()), atol=1e-8)                        # (e)
+    assert same_multiset(np.linalg.eigvals(np.kron(A, B)), np.outer(lam, mu).ravel())             # (e)
     assert np.isclose(np.linalg.det(np.kron(A, B)), np.linalg.det(A) ** 4 * np.linalg.det(B) ** 3)  # (f)
     # vec trick, column-major (3.13) and row-major variant.
     A = rng.standard_normal((3, 4)); X = rng.standard_normal((4, 2)); B = rng.standard_normal((2, 5))
@@ -232,12 +244,11 @@ X = solve_sylvester_vec(A, B, C)
 assert np.abs(A @ X + X @ B - C).max() < 1e-10
 assert np.allclose(X, solve_sylvester(A, B, C))
 Ksyl = np.kron(np.eye(2), A) + np.kron(B.T, np.eye(3))
-assert np.allclose(np.sort_complex(np.linalg.eigvals(Ksyl)),
-                   np.sort_complex(np.add.outer(np.linalg.eigvals(B), np.linalg.eigvals(A)).ravel()))  # B7(c)
+assert same_multiset(np.linalg.eigvals(Ksyl), np.add.outer(np.linalg.eigvals(B), np.linalg.eigvals(A)).ravel())  # B7(c)
 print("Part 3 passed: Kronecker identities (a)-(f), vec trick both orders, Sylvester equation solved via kron.")
 
 # %% [markdown]
-# ## Part 4: Schmidt decomposition (Theorem 3.15) and entanglement entropy
+# ## Part 4: Schmidt decomposition (Theorem 3.16) and entanglement entropy
 #
 # psi in V kron W with dims (n, m): the coefficient matrix is psi.reshape(n, m)
 # (row-major, qubit 0 = row index). Its SVD C = U S V^dagger gives

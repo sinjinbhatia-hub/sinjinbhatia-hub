@@ -630,3 +630,172 @@ For $f(x,y)$, $\hat f(\xi,\eta) = \iint f(x,y)e^{-2\pi i(x\xi+y\eta)}dx\,dy$: th
 ### 3.18 Time–frequency: the short-time Fourier transform
 
 To see how the frequency content of a signal changes with time, slide a window $w$ of length $T_w$ along it and transform each piece: $S(\tau,\xi) = \int f(x)\,w(x-\tau)\,e^{-2\pi i x\xi}dx$. The plot of $|S(\tau,\xi)|^2$ is the **spectrogram**. Each column is the spectrum of $f\cdot w(\cdot-\tau)$, which by (3.14) is $\hat f$ smeared by $\hat w$ (width $\sim1/T_w$). So a short window locates events in time to within $T_w$ but blurs frequencies by $1/T_w$; a long window does the reverse. You cannot win both, and the reason is Theorem 3.11 applied to the window: $\sigma_\tau\sigma_\xi\ge1/(4\pi)$, with the Gaussian window as the best compromise. The project builds a spectrogram of a chirp with two window lengths and you will see the trade-off directly.
+
+## 4. Worked examples
+
+### Example 4.1: Pulses by direct integration (rect of width $\tau$, then the triangle)
+
+*Rect.* A pulse of width $\tau$ centered at $0$ is $\Pi(t/\tau)$. Directly from (3.1):
+$$
+\hat f(\xi) = \int_{-\tau/2}^{\tau/2}e^{-2\pi i t\xi}dt = \frac{e^{-\pi i\tau\xi}-e^{\pi i\tau\xi}}{-2\pi i\xi} = \frac{-2i\sin(\pi\tau\xi)}{-2\pi i\xi} = \frac{\sin\pi\tau\xi}{\pi\xi} = \tau\operatorname{sinc}(\tau\xi).
+$$
+(Same as (3.3) with the stretch theorem, $a = 1/\tau$: $\frac{1}{|a|}\operatorname{sinc}(\xi/a) = \tau\operatorname{sinc}(\tau\xi)$.) Check $\hat f(0) = \tau = \int f$. ✓ For $\tau = 2$ ms: $\hat f(0) = 0.002$, zeros at $\xi = k/\tau = 500, 1000, 1500,\dots$ Hz. A $2$ ms pulse has its first spectral null at $500$ Hz; halve the pulse and the null moves to $1$ kHz. Shorter pulse, wider spectrum.
+
+*Triangle.* $\Lambda(x) = 1-|x|$ on $|x|\le1$ is even, so $\hat\Lambda(\xi) = 2\int_0^1(1-x)\cos(2\pi\xi x)\,dx$. Integrate by parts with $u = 1-x$, $dv = \cos(2\pi\xi x)dx$:
+$$
+\int_0^1(1-x)\cos(2\pi\xi x)dx = \left[(1-x)\frac{\sin2\pi\xi x}{2\pi\xi}\right]_0^1 + \int_0^1\frac{\sin2\pi\xi x}{2\pi\xi}dx = 0 + \left[-\frac{\cos2\pi\xi x}{4\pi^2\xi^2}\right]_0^1 = \frac{1-\cos2\pi\xi}{4\pi^2\xi^2}.
+$$
+Doubling and using $1-\cos2\theta = 2\sin^2\theta$: $\hat\Lambda(\xi) = \frac{2\sin^2\pi\xi}{4\pi^2\xi^2}\cdot2\cdot\frac12 = \frac{\sin^2\pi\xi}{\pi^2\xi^2} = \operatorname{sinc}^2\xi$. ✓ This matches $\Pi*\Pi = \Lambda$ and (3.13). Numerically at $\xi = 0.3$: $(1-\cos0.6\pi)/(2\pi^2\cdot0.09) = 0.73684 = \operatorname{sinc}^2(0.3)$. The project checks $\widehat{\Pi*\Pi} = \operatorname{sinc}^2$ on a grid.
+
+### Example 4.2: A Gaussian of width $\sigma$, by the ODE method
+
+$f(x) = e^{-x^2/(2\sigma^2)}$. Then $f'(x) = -\frac{x}{\sigma^2}f(x)$.
+
+1. Transform both sides. Left, by (3.8): $2\pi i\xi\hat f$. Right, by (3.9): $-\frac{1}{\sigma^2}\cdot\frac{i}{2\pi}\hat f'$.
+2. $2\pi i\xi\hat f = -\frac{i}{2\pi\sigma^2}\hat f'$. Multiply by $2\pi\sigma^2/(-i) = 2\pi i\sigma^2$: $\hat f' = -4\pi^2\sigma^2\xi\,\hat f$.
+3. Solve: $\hat f(\xi) = Ce^{-2\pi^2\sigma^2\xi^2}$, with $C = \hat f(0) = \int e^{-x^2/(2\sigma^2)}dx = \sigma\sqrt{2\pi}$ (from $\int e^{-\pi y^2}dy = 1$ with $x = \sigma\sqrt{2\pi}\,y$).
+
+$$
+\widehat{e^{-x^2/(2\sigma^2)}}(\xi) = \sigma\sqrt{2\pi}\;e^{-2\pi^2\sigma^2\xi^2}.
+$$
+The right side is a Gaussian in $\xi$ with standard deviation $1/(2\pi\sigma)$: for $\sigma = 1$ s, the spectrum has width $0.159$ Hz. Numbers for $\sigma = 1$, checked by the project against quadrature: $\hat f(0) = \sqrt{2\pi} = 2.50663$, $\hat f(0.1) = 2.05761$, $\hat f(0.25) = 0.72996$. (Agrees with (3.12) at $a = 1/(2\sigma^2)$: $\sqrt{\pi/a} = \sigma\sqrt{2\pi}$ and $\pi^2/a = 2\pi^2\sigma^2$. ✓)
+
+### Example 4.3: The shift theorem on a delayed pulse
+
+The pulse of Example 4.1 with $\tau = 2$ ms, delayed to be centered at $t_0 = 3$ ms: $g(t) = \Pi((t-t_0)/\tau)$. By (3.6),
+$$
+\hat g(\xi) = e^{-2\pi i t_0\xi}\,\tau\operatorname{sinc}(\tau\xi).
+$$
+The magnitude $|\hat g| = \tau|\operatorname{sinc}(\tau\xi)|$ is unchanged by the delay; the phase $-2\pi t_0\xi$ is linear in frequency with slope $-2\pi t_0$. At $\xi = 100$ Hz: $|\hat g| = 0.002\cdot\operatorname{sinc}(0.2) = 0.002\cdot\frac{\sin0.2\pi}{0.2\pi} = 0.002\cdot0.93549 = 1.871\times10^{-3}$, and the phase is $-2\pi\cdot0.003\cdot100 = -0.6\pi$ rad $= -108°$. The project samples this pulse at $10\,\mu$s and reads both numbers off the FFT (using (3.29) with the start-time phase correction). Conversely, if you measure a spectrum whose phase is linear in $\xi$, the slope tells you the delay: that is how pulse arrival times are measured in radar and sonar.
+
+### Example 4.4: The damped oscillator with $m=1$, $c=0.2$, $k=4$ (ME vibration analysis)
+
+From (3.23), $H(\omega) = 1/(4-\omega^2+0.2i\omega)$.
+
+- Natural frequency $\omega_0 = \sqrt{k/m} = 2$ rad/s. Static gain $|H(0)| = 1/k = 0.25$.
+- Peak, from (3.24): $\omega_{\text{peak}}^2 = 4 - 0.04/2 = 3.98$, $\omega_{\text{peak}} = 1.99499$ rad/s. Height $|H|_{\max} = 1/(0.2\sqrt{4-0.01}) = 1/(0.2\cdot1.99750) = 2.50313$. Ten times the static gain: the force is amplified by the factor $Q\approx\omega_0m/c = 10$.
+- At $\omega_0$ exactly: $H(2) = 1/(0.4i)$, $|H| = 2.5$, phase $-90°$. Slightly below the true peak, as (3.24) predicts.
+- Off resonance: $|H(1)| = 1/\sqrt{9+0.04} = 0.33260$ with phase $-\arctan(0.2/3) = -3.81°$ (nearly in phase); $|H(3)| = 1/\sqrt{25+0.36} = 0.19858$ with phase $-180°+\arctan(0.6/5) = -173.16°$ (nearly opposite). At $\omega = 10$: $|H|\approx1/96 \approx 0.0104$, the $1/(m\omega^2)$ roll-off.
+- Half-power bandwidth: $|H|^2$ falls to half its peak at $\omega\approx1.892$ and $2.093$; width $0.2005\approx c/m$ rad/s. Bandwidth $\times$ peak $\approx$ constant: sharper resonance, narrower band.
+- Impulse response, from (3.25): $\omega_d = \sqrt{4-0.01} = 1.99750$, $h(t) = 0.50063\,e^{-0.1t}\sin(1.99750\,t)$ for $t>0$. Decays with time constant $2m/c = 10$ s.
+
+The project solves the ODE numerically for $h$, FFTs it, and overlays $|\hat h|$ on $|H|$; it then drives the oscillator with a slow chirp and shows the response envelope tracing $|H(\omega(t))|$. The Bode plot's three regimes are all visible.
+
+### Example 4.5: Small DFTs by hand, and leakage
+
+$N=4$, $\omega = e^{-2\pi i/4} = -i$.
+
+- $f = (1,0,0,0)$: $F[k] = \sum_nf[n]\omega^{kn} = \omega^0 = 1$ for every $k$. $F = (1,1,1,1)$. A spike at $n=0$ contains all frequencies equally: the discrete $\hat\delta = 1$.
+- $f = (1,1,1,1)$: $F[k] = \sum_{n=0}^3\omega^{kn} = 4$ if $k=0$, else the geometric sum of a nontrivial root of unity $= 0$. $F = (4,0,0,0)$. A constant is pure frequency $0$: the discrete $\hat1 = \delta$. (Also the first column and first row of $\mathbf F$, respectively, by Theorem 3.5 of LA-1.)
+
+$N = 8$. A sampled cosine with an **integer** number of periods, $f[n] = \cos(2\pi\cdot2n/8) = (1,0,-1,0,1,0,-1,0)$: write it as $\frac12(e_2+e_{-2}) = \frac12(e_2+e_6)$. Since $\mathbf Fe_k = Ne_k^{\text{(spike at }k)}$ (columns of $\mathbf F$ are orthogonal with $\langle e_j, e_k\rangle = N\delta_{jk}$), $F[2] = F[6] = 8/2 = 4$ and all other $F[k] = 0$. One spike per tone.
+
+Now $2.5$ periods in the record, $f[n] = \cos(2\pi\cdot2.5n/8)$. The frequency $2.5$ cycles/record falls between bins $2$ and $3$, and the record is not periodic, so no basis tone matches. Every bin is nonzero:
+$$
+|F| = (1.000,\ 1.192,\ 2.798,\ 2.398,\ 1.000,\ 2.398,\ 2.798,\ 1.192).
+$$
+The energy is largest in bins $2$ and $3$ but leaks everywhere, including into bin $0$ (the "DC" bin reads $1$ even though the signal has no constant component in the continuous sense). This is §3.16: the record is a rect window and the spectrum is the sinc smear of two spikes at $\pm2.5$. The project computes both.
+
+### Example 4.6: A radix-2 FFT of length 8 by hand
+
+$f = (1,2,3,4,0,0,0,0)$: the sequence $(1,2,3,4)$ zero-padded to $N=8$. $\omega_8 = e^{-i\pi/4} = \frac{1-i}{\sqrt2}$, so $\omega_8^2 = -i$, $\omega_8^3 = \frac{-1-i}{\sqrt2}$.
+
+*Level 1: split.* Even samples $(f[0],f[2],f[4],f[6]) = (1,3,0,0)$; odd samples $(2,4,0,0)$.
+
+*Level 2: each length-4 DFT by splitting again* ($\omega_4 = -i$).
+- $E = \mathrm{DFT}_4(1,3,0,0)$: evens $(1,0)\to\mathrm{DFT}_2 = (1,1)$; odds $(3,0)\to(3,3)$. Butterflies with twiddles $\omega_4^0 = 1,\ \omega_4^1 = -i$: $E[0] = 1+3 = 4$, $E[1] = 1+(-i)3 = 1-3i$, $E[2] = 1-3 = -2$, $E[3] = 1-(-i)3 = 1+3i$.
+- $O = \mathrm{DFT}_4(2,4,0,0)$: evens $(2,0)\to(2,2)$; odds $(4,0)\to(4,4)$. $O[0] = 6$, $O[1] = 2-4i$, $O[2] = -2$, $O[3] = 2+4i$.
+
+*Level 3: combine with (3.31)*, twiddles $\omega_8^k$ for $k = 0,1,2,3$.
+- $k=0$: $F[0] = E[0]+O[0] = 10$; $F[4] = E[0]-O[0] = -2$.
+- $k=1$: $\omega_8O[1] = \frac{(1-i)(2-4i)}{\sqrt2} = \frac{2-4i-2i+4i^2}{\sqrt2} = \frac{-2-6i}{\sqrt2} = -\sqrt2-3\sqrt2\,i$. $F[1] = (1-3i)+(-\sqrt2-3\sqrt2i) = (1-\sqrt2) - (3+3\sqrt2)i\approx-0.414-7.243i$. $F[5] = (1-3i)-(-\sqrt2-3\sqrt2i) = (1+\sqrt2)-(3-3\sqrt2)i\approx2.414+1.243i$.
+- $k=2$: $\omega_8^2O[2] = (-i)(-2) = 2i$. $F[2] = -2+2i$; $F[6] = -2-2i$.
+- $k=3$: $\omega_8^3O[3] = \frac{(-1-i)(2+4i)}{\sqrt2} = \frac{-2-4i-2i-4i^2}{\sqrt2} = \frac{2-6i}{\sqrt2} = \sqrt2-3\sqrt2\,i$. $F[3] = (1+3i)+(\sqrt2-3\sqrt2i) = (1+\sqrt2)+(3-3\sqrt2)i\approx2.414-1.243i$. $F[7] = (1+3i)-(\sqrt2-3\sqrt2i) = (1-\sqrt2)+(3+3\sqrt2)i\approx-0.414+7.243i$.
+
+Checks: $F[0] = 10 = \sum f$ ✓ ($\hat f(0) = \int f$, discrete form). Hermitian symmetry for real input: $F[7] = \overline{F[1]}$, $F[6] = \overline{F[2]}$, $F[5] = \overline{F[3]}$ ✓. Operation count: $\frac N2\log_2N = 12$ twiddle multiplications, of which only $4$ (the $k=1,3$ ones at the top level) were non-trivial. The project asserts these eight values against `np.fft.fft`.
+
+### Example 4.7: Aliasing by the numbers
+
+Sample $\sin(2\pi\cdot7t)$ at $f_s = 10$ Hz: $t_n = n/10$, samples $\sin(2\pi\cdot7n/10) = \sin(2\pi\cdot7n/10 - 2\pi n) = \sin(2\pi(-3)n/10) = -\sin(2\pi\cdot3n/10)$. The samples of the $7$ Hz sine are **exactly** the samples of a $3$ Hz sine with the sign flipped. Folding formula: $\operatorname{round}(7/10) = 1$, $|7-10| = 3$ Hz. The DFT of $50$ samples (a $5$ s record) peaks at bin $k = 3\cdot5 = 15$ for both signals.
+
+More: $12$ Hz at $10$ Hz: $|12-10| = 2$ Hz. $60$ Hz mains hum at $50$ Hz: $10$ Hz. At $100$ Hz: $|60-100| = 40$ Hz. At $130$ Hz ($>120 = 2\cdot60$): $\operatorname{round}(60/130) = 0$, no alias, $60$ Hz. A wheel at $13$ rev/s filmed at $12$ fps appears to turn forward at $1$ rev/s; at $7$ rev/s filmed at $10$ fps, backward at $3$ rev/s (the $-3$ from the first line is the backward direction). A $5$ Hz sine at $10$ Hz is at the Nyquist frequency exactly: samples $\sin(\pi n)$ are all zero, and the signal is invisible. The theorem requires $B\le1/(2\Delta)$ with $\hat f$ vanishing *at* $B$; a tone sitting exactly on the edge is the boundary case where the two copies touch.
+
+### Example 4.8: Poisson summation in action
+
+Apply (3.20) to $\varphi(x) = e^{-\pi tx^2}$, $t>0$. By the stretch theorem and (3.11), $\hat\varphi(\xi) = t^{-1/2}e^{-\pi\xi^2/t}$. So
+$$
+\sum_{n\in\mathbb Z}e^{-\pi n^2t} = \frac{1}{\sqrt t}\sum_{k\in\mathbb Z}e^{-\pi k^2/t}
+$$
+(Jacobi's theta-function identity). At $t = 1/2$: left side $1+2(e^{-\pi/2}+e^{-2\pi}+e^{-9\pi/2}+\cdots) = 1+2(0.207880+0.001867+0.000001) = 1.419495$; right side $\sqrt2\,(1+2e^{-2\pi}+\cdots) = 1.414214\times1.003735 = 1.419495$. ✓ Note the exchange of rates: for small $t$ the left sum converges slowly and the right sum needs one term.
+
+The same identity is why the DFT of a sampled Gaussian is *exactly* (to machine precision) the periodized Gaussian spectrum (3.33), and why, when the sampling is fine enough that the copies do not overlap, $\Delta\cdot F[k]$ reproduces $\hat f(k/(N\Delta))$ to $10^{-15}$ rather than to the $O(\Delta^2)$ a Riemann sum normally gets. The project checks both statements.
+
+## 5. Why it matters and where it connects
+
+- **QM-2.** The momentum-space wavefunction is $\phi(p) = \frac{1}{\sqrt{2\pi\hbar}}\int\psi(x)e^{-ipx/\hbar}dx$, which is the symmetric convention of §3.1 with $k = p/\hbar$. Plancherel (3.15) is why $|\phi(p)|^2$ is a probability density when $|\psi|^2$ is. Theorem 3.11 with $p = 2\pi\hbar\xi$ is $\sigma_x\sigma_p\ge\hbar/2$. The plane wave $e^{ikx}$ has "norm" $\delta(0)$: Theorem 3.13 says that is not a number, and QM-2 handles it with the $\delta$-normalization $\langle k|k'\rangle = \delta(k-k')$, which is (3.19).
+- **QM-3.** The Hermite functions of Theorem 3.10 are the harmonic-oscillator eigenstates; $R$ is the raising operator (up to constants), and $\mathcal FR = -iR\mathcal F$ is why position- and momentum-space oscillator wavefunctions have the same shape.
+- **EM-1, EM-2.** The point charge's density is $q\,\delta^3(\mathbf r)$ and $\nabla^2(1/r) = -4\pi\delta^3(\mathbf r)$ are distribution identities in the sense of §3.10; Green's functions are impulse responses (Theorem 3.17 in space rather than time).
+- **EM-7.** Dispersion: a wave packet is $\int\hat f(k)e^{i(kx-\omega(k)t)}dk$, and the group velocity $d\omega/dk$ comes from the shift rule applied to a narrow $\hat f$. Fraunhofer diffraction is §3.17: the far field is the transform of the aperture.
+- **CM-6.** Normal-mode analysis of coupled oscillators is (3.23) with matrices: $\hat{\mathbf x} = (K - M\omega^2 + iC\omega)^{-1}\hat{\mathbf f}$, and resonance is a near-singular matrix.
+- **F4, F5.** The characteristic function $\mathbb E[e^{itX}]$ is the transform of the density (angular convention, sign flipped). Independent sum $\Rightarrow$ density convolves (Definition 3.6) $\Rightarrow$ characteristic functions multiply (3.13). The proof of the central limit theorem in F5 is: multiply $n$ characteristic functions, take logs, keep second order, recognize (3.12). The Lorentzian of (3.5) is the Cauchy distribution, whose characteristic function $e^{-a|t|}$ is not differentiable at $0$ because the Cauchy has no mean.
+- **ST-7, ST-8.** The periodogram is $|F[k]|^2/N$ (Theorem 3.20); the spectral density of a stationary process is the transform of its autocovariance (Theorem 3.8's proof with $g = f$ is the Wiener–Khinchin theorem in finite form); leakage and windowing (§3.16) are why ST-8 tapers; the ARMA spectral density is $|H(\omega)|^2$ of (3.23)'s discrete cousin.
+- **ML-8.** A convolution layer is the circulant (or Toeplitz) matrix of Theorem 3.24; FFT-based convolution is (3.30); pooling and strided convolution are sampling and are subject to aliasing (3.35), which is a real source of CNN failures on shifted inputs.
+- **QC-5.** The quantum Fourier transform on $n$ qubits is the unitary matrix $\mathbf F/\sqrt N$ with $N = 2^n$ (Theorem 3.19), implemented by a circuit that is literally the radix-2 butterfly of Theorem 3.26 with $O(n^2)$ gates; phase estimation reads the eigenvalue of a shift-like operator the way (3.30) reads $\hat c[k]$.
+- **LA-7, LA-8, LA-11.** Theorem 3.24 is the spectral theorem for a commuting family: all circulants share the eigenbasis $\{e_k\}$ because they are polynomials in the single normal matrix $S$. $\mathcal F^4 = I$ (Theorem 3.9) is a minimal-polynomial statement.
+- **LA-13.** The FFT is also numerically stable (errors grow like $\log N$, not $N$), which is one reason to prefer (3.30) over forming $C$ even when speed is not the issue.
+
+## 6. Exercises
+
+See [exercises.md](exercises.md). **A1–A6** are drills: transforms from the rules, a convention conversion, two $N=4$ DFTs by hand, alias arithmetic, and $\delta'$. **B1–B8** are the module: B1 (modulation and the windowed tone), B2 (uncertainty product of the two-sided exponential), B3 (the discrete Laplacian as a circulant), B4 (FFT operation count), B5 (theta identity and the F2 link), B6 (steady-state oscillator response), B7 (code: inverse FFT by conjugation, Parseval, low-pass filter), B8 (sampling theorem corner cases). Essential: B1, B2, B3, B7. **C1–C4** go further: sinc orthogonality and the sharpness of Nyquist, $\mathbf F^2 = NP$ and the Hermite function $h_2$, a Hann-window leakage measurement, and the Heaviside transform with principal values.
+
+## 7. Coding project
+
+`project.py` builds everything in this module and checks every number in §4:
+
+1. **DFT and FFT from scratch.** `dft_matrix(N)`, `dft(x)` by matrix multiplication, `fft_recursive(x)` implementing (3.31). All three agree with `np.fft.fft` to $10^{-10}$. $\mathbf F/\sqrt N$ is verified unitary; $\mathbf F^2 = NP$ and the eigenvalues in $\{\pm1,\pm i\}$ are checked. Examples 4.5 and 4.6 are asserted digit by digit.
+2. **Timing.** $O(N^2)$ versus $O(N\log N)$ for $N$ up to $2^{14}$, plotted log-log with reference slopes. The pure-Python recursive FFT beats the matrix method well before $N = 10^3$.
+3. **Circulants.** A random circulant's eigenvalues equal the DFT of its first column; $C = \mathbf F^{-1}\Lambda\mathbf F$ is checked; `circular_convolution` via FFT agrees with the direct $O(N^2)$ sum; zero-padded circular convolution agrees with `np.convolve`.
+4. **Continuous transforms numerically.** Rect, Gaussians, one- and two-sided exponentials, triangle: samples on a fine grid, transformed with the FFT via (3.29) and the start-point phase correction, overlaid on the analytic formulas (3.3), (3.4), (3.5), (3.11), Example 4.2. The convolution theorem is checked: $\Pi*\Pi$ computed by `np.convolve` transforms to $\operatorname{sinc}^2$.
+5. **Uncertainty.** $\sigma_x\sigma_\xi$ computed for the Gaussian ($=1/(4\pi)$ to $10^{-6}$), for $e^{-|x|}$ ($=\sqrt2/(4\pi)$), and for the rect on two frequency ranges (larger, and growing like $L/\pi^2$).
+6. **Oscillator.** Impulse response by `scipy.integrate.solve_ivp` versus (3.25); its zero-padded FFT versus $|H(\omega)|$ from (3.23); peak location and height versus (3.24); steady-state response to a slow chirp with the envelope (via an FFT-domain analytic signal) tracing $|H(\omega(t))|$.
+7. **Sampling.** The $7$ Hz / $3$ Hz alias of Example 4.7, with spectra; sinc interpolation (3.34) reconstructing a band-limited signal from samples above the Nyquist rate (error $<10^{-2}$) and failing below it.
+8. **Poisson summation.** The theta identity and the exactness of $\Delta F[k]$ for a sampled Gaussian.
+9. **Spectrogram.** An STFT loop (no `scipy.signal`) on a chirp with a click, Hann windows of two lengths; frequency resolution and time smearing are measured and compared.
+
+**Build it yourself first:** write `fft_recursive` from (3.31) (split even/odd, recurse, combine with twiddles), `circular_convolution(f, g)` via FFT, and `sinc_interpolate(samples, dt, t)` from (3.34) before reading the reference code. Then do the "Your turn" cells: inverse FFT via conjugation, a frequency-domain low-pass filter on a noisy signal, and the 2D convolution theorem on a small synthetic image.
+
+## 8. Where you'll struggle
+
+- **Where the $2\pi$ goes.** This is the single most common error in the module and in every book, including the ones in §10. Osgood has no constants and $\xi$ in hertz; Griffiths has $1/\sqrt{2\pi}$ and $k$ in radians per unit; your ODE text has $1/(2\pi)$ on the inverse only. The derivative rule, the convolution theorem, Parseval, the Gaussian pair, and the uncertainty constant all change by factors of $2\pi$ or $\sqrt{2\pi}$ between conventions. The fix: **always check $\hat f(0) = \int f$** (in ours), and when you read another book, write its forward transform at zero frequency and compare. Translate every formula you import with the table in §3.1 before using it.
+- **"$\delta$ is a function with $\delta(0)=\infty$."** It is not, and Theorem 3.13 proves it. Thinking of it as a function will mislead you in QM-2 when you meet $\langle k|k'\rangle = \delta(k-k')$ and $\delta(0)$ appears in a normalization: the resolution there is to work with wave packets or finite boxes, and you can only see that if you know $\delta$ is a functional. Fix: whenever you write $\delta$, ask "paired with which test function?" Every identity in §3.10 is a statement about $\langle\cdot,\varphi\rangle$.
+- **The DFT index is not a frequency in hertz.** $F[k]$ is at $k$ cycles per *record*. It becomes hertz only after you divide by the record length $N\Delta$ (3.28). People read a peak at $k=15$ and report "$15$ Hz" when the record was $5$ s and the true frequency is $3$ Hz. Fix: call `np.fft.fftfreq(N, d=Δ)` and plot against it, every time.
+- **Negative frequencies live in the second half.** `np.fft.fft` returns $k = 0,1,\dots,N/2-1$ then $-N/2,\dots,-1$. A plot of the raw output looks like a mirror image split down the middle. Fix: `np.fft.fftshift` on both the values and the `fftfreq` axis. For real signals use `np.fft.rfft`, which returns only $0\le k\le N/2$ because the rest is the conjugate (Hermitian symmetry, §3.4(g)).
+- **Aliasing is silent.** Nothing in the sampled data tells you it happened; the $7$ Hz samples *are* $3$ Hz samples (Example 4.7). Fix: know the bandwidth before you sample, or low-pass filter before sampling. When in doubt, sample at twice the rate and see whether the spectrum changes; if a peak moves, it was an alias.
+- **The uncertainty proof's boundary term.** Step 2 of Theorem 3.11 drops $[x|f|^2]_{-\infty}^\infty$. That is only legitimate for $f$ decaying faster than $1/\sqrt{|x|}$. For a function like $\sin(x)/x$, which is in $L^2$ but has $x|f|^2\not\to0$, the derivation does not apply as written (the theorem still holds, by approximation, but you have to prove the approximation). In QM-2 the physical wavefunctions decay, so this is fine; for plane waves, it is another symptom of their non-normalizability.
+- **Circulants are why convolution is fast, and almost nobody is told this.** Students learn "use the FFT for convolution" as a recipe. The reason is Theorem 3.24: the convolution operator is a matrix whose eigenvectors are known in advance (the tones), so applying it is change-basis, scale, change-back, and the FFT makes the change of basis cheap. If you understand this, ML-8's convolution layers, ST-8's spectral methods, and QC-5's period finding are the same idea three times.
+- **Leakage looks like signal.** Example 4.5's non-integer cosine puts energy in every bin. Beginners see sidelobes and report extra frequencies. Fix: before believing a small peak, change the record length or apply a Hann window and see whether it moves or vanishes.
+- **Exercise B2 is harder than it looks**: the frequency-domain integral for the exponential's $\sigma_\xi$ needs a substitution and a partial fraction; budget half an hour. **C4** (Heaviside) requires care with what "principal value" means; read Osgood ch. 4 §4.4 alongside it.
+
+## 9. Check yourself
+
+1. Write the transform pair (3.1)–(3.2) from memory, then state what $\hat f(0)$ equals. Convert $\hat f$ to the symmetric $1/\sqrt{2\pi}$ convention.
+2. Derive the transform of $e^{-ax}u(x)$ in three lines. What does its $1/|\xi|$ decay tell you about $f$?
+3. State the shift, scaling, and derivative rules with their exact constants. Which one is the uncertainty principle in embryo?
+4. Why is the Gaussian its own transform? (Answer with an ODE, not an integral.)
+5. State the convolution theorem and derive it in four lines. What single factorization makes it work?
+6. What is a unitary operator? In what sense is $\mathcal F$ one, and what are its possible eigenvalues?
+7. State the uncertainty principle with its constant. Where does the boundary term appear in the proof and why does it vanish?
+8. Define $\delta$ in one sentence without the word "infinity." Prove $\hat\delta = 1$ in one line.
+9. State Poisson summation. What F2 fact is it?
+10. Write the DFT, the inverse DFT, and the reason $\mathbf F/\sqrt N$ is unitary (one phrase about roots of unity).
+11. What are the eigenvectors and eigenvalues of a circulant matrix? Why does this make convolution $O(N\log N)$?
+12. Write the butterfly (3.31). Why is $F[k+N/2]$ a minus sign?
+13. A signal is band-limited to $B$ and sampled every $\Delta$. When is it recoverable, and by what formula? A $9$ Hz tone sampled at $8$ Hz appears at what frequency?
+
+## 10. Pair with
+
+- **Osgood, *Lectures on the Fourier Transform and Its Applications*, ch. 2–6** (free as the EE261 reader). Ch. 2–3: the transform and its properties, with the same convention as these notes. Ch. 4: distributions, done honestly and at length; better than these notes on the principal value and on why the Schwartz space is the right class. Ch. 5: convolution and sampling. Ch. 6: the DFT. Osgood is wordier than us and funnier; read him where §3.10 felt too fast.
+- **Stein & Shakarchi, *Fourier Analysis*, ch. 5** (the transform on $\mathbb R$). The inversion theorem and Plancherel are actually proved, via Gaussians; this is where the "we take as proved" of §3.1 and §3.7 is paid for. Ch. 5 §3 has the heat kernel and Poisson summation; exercise 7 is the Hermite functions.
+- **Stein & Shakarchi, ch. 7** (finite Fourier analysis). The DFT on $\mathbb Z_N$ as Fourier analysis on a finite group, cleanly. Good preparation for QC-5, where the group becomes $\mathbb Z_{2^n}$.
+- **Stanford EE261 (Osgood), lectures 5–20** on YouTube. Lectures 5–8: transform and properties; 9–13: distributions and $\delta$; 14–16: sampling and aliasing; 17–20: DFT and FFT. Osgood at the board does the $T\to\infty$ limit and the sampling picture better than any text.
+- **Strang, MIT 18.065, lectures 31–32.** The Fourier matrix, circulants, and the convolution rule from the matrix side, for an audience that has just done the SVD. Watch after §3.13; Strang's "eigenvectors of every circulant are the same" is the whole point in one sentence.
