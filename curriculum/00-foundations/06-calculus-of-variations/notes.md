@@ -498,7 +498,7 @@ Take $L = \tfrac12 y'^2 - y$ (unit mass, $g = 1$, $y$ up, independent variable $
 $$
 H := L - y'L_{y'} = \tfrac12 y'^2 - y - y'^2 = -\big(\tfrac12 y'^2 + y\big).
 $$
-Check (3.12) directly: $\frac{dH}{dx} = -(y'y'' + y') = -y'(y'' + 1)$, which is $-y'\cdot(\text{E–L expression})$ with the sign conventions of (3.12), and vanishes exactly when $y'' = -1$. So $\tfrac12 y'^2 + y$ is constant along solutions: kinetic plus potential energy. On the solution $y = -\tfrac12 x^2 + v_0 x + y_0$: $\tfrac12 y'^2 + y = \tfrac12(v_0 - x)^2 - \tfrac12 x^2 + v_0 x + y_0 = \tfrac12 v_0^2 + y_0$. Constant, as promised. On a non-solution such as $y = x^3$, $H = -(\tfrac92 x^4 + x^3)$ is not constant. The project verifies this symbolically.
+Check (3.12) directly: $\frac{dH}{dx} = -(y'y'' + y') = y'\,(-1 - y'')$, which is $y'$ times the E–L expression $L_y - \frac{d}{dx}L_{y'} = -1 - y''$, exactly as (3.12) says, and it vanishes exactly when $y'' = -1$. So $\tfrac12 y'^2 + y$ is constant along solutions: kinetic plus potential energy. On the solution $y = -\tfrac12 x^2 + v_0 x + y_0$: $\tfrac12 y'^2 + y = \tfrac12(v_0 - x)^2 - \tfrac12 x^2 + v_0 x + y_0 = \tfrac12 v_0^2 + y_0$. Constant, as promised. On a non-solution such as $y = x^3$, $H = -(\tfrac92 x^4 + x^3)$ is not constant. The project verifies this symbolically.
 
 ### Example 4.6: The catenoid, briefly
 

@@ -436,7 +436,7 @@ fig.tight_layout(); fig.savefig(FIG / "gradient_vs_EL.png", dpi=120); plt.close(
 # %%
 xs_ = sp.symbols("x"); yf = sp.Function("y")(xs_); yp_ = sp.diff(yf, xs_)
 EL_of = lambda L: sp.diff(L, yf) - sp.diff(sp.diff(L, yp_), xs_)
-beltrami_defect = lambda L: sp.simplify(sp.diff(L - yp_ * sp.diff(L, yp_), xs_) + yp_ * EL_of(L))   # (3.12) with L_x = 0
+beltrami_defect = lambda L: sp.simplify(sp.diff(L - yp_ * sp.diff(L, yp_), xs_) - yp_ * EL_of(L))   # (3.12) with L_x = 0: dH/dx = y' · EL
 for Lc in (sp.sqrt(1 + yp_**2), sp.sqrt((1 + yp_**2) / yf), yf * sp.sqrt(1 + yp_**2), yp_**2 / 2 - yf):
     assert beltrami_defect(Lc) == 0, Lc
 # Example 4.5: falling particle. H = −(y'^2/2 + y); dH/dx = −y'(y'' + 1); constant on the solution.

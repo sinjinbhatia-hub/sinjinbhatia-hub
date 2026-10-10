@@ -162,25 +162,40 @@ The output is $p_4 = x^4 - \tfrac67x^2 + \tfrac{3}{35}$, and $p_4(1) = \tfrac{8}
 (b)
 ```python
 A0, gamma, omega = 2.0, 0.15, 2 * np.pi
+T = 2 * np.pi / omega
 t = np.linspace(0, 20, 4001)
 for noise in (0.01, 0.1):
     rng_c3 = np.random.default_rng(1)
     y = A0 * np.exp(-gamma * t) * np.cos(omega * t) + noise * rng_c3.standard_normal(t.size)
-    T = 2 * np.pi / omega
     tp, yp = [], []
-    for k in range(int(t[-1] / T)):                  # the maximum in each period
+    for k in range(int(t[-1] / T)):                  # the largest sample in each period
         win = (t >= k * T) & (t < (k + 1) * T)
         i = np.argmax(y[win]); tp.append(t[win][i]); yp.append(y[win][i])
     tp, yp = np.array(tp), np.array(yp)
     Ad = np.c_[np.ones(tp.size), tp]
     lnA, slope = least_squares_qr(Ad, np.log(yp))[0]
-    s = yp                                           # sqrt(w_k) with w_k = y_k^2, part (c)
-    lnA_w, slope_w = least_squares_qr(s[:, None] * Ad, s * np.log(yp))[0]
-    print(noise, -slope, -slope_w, "true", gamma, " ln A' =", np.log(A0 * omega / np.hypot(omega, gamma)))
+    excess = np.mean(yp - A0 * np.exp(-gamma * tp) * np.cos(omega * tp))
+    print(f"noise {noise}: gamma_hat = {-slope:.3f} (true {gamma}); mean excess of picked peaks = {excess:.3f}")
 ```
-With seed 1 you should see: at noise $0.01$, $\hat\gamma \approx 0.151$ unweighted and $\approx 0.150$ weighted (true $0.15$); at noise $0.1$, the unweighted fit drifts to $\hat\gamma \approx 0.10$ because the late peaks (heights $\sim 0.1$, comparable to the noise) have wildly wrong logarithms, while the weighted fit gives $\approx 0.146$. The intercept should be near $\ln A' = \ln(2\cdot2\pi/\sqrt{4\pi^2 + 0.0225}) \approx 0.693$.
+With seed 1: $\hat\gamma = 0.145$ at $\sigma = 0.01$ and $\hat\gamma = 0.101$ at $\sigma = 0.1$. Both are low, the second badly.
 
-(c) If the measured peak is $y_k + \delta_k$ with $\delta_k$ of fixed size $\sigma$, then $\ln(y_k + \delta_k) = \ln y_k + \ln(1 + \delta_k/y_k) \approx \ln y_k + \delta_k/y_k$. The error in the fitted quantity has standard deviation $\sigma/y_k$: small peaks are noisy in log space. The right weight is the inverse variance (ST-3, Gauss–Markov with unequal variances), $w_k \propto y_k^2/\sigma^2$, i.e. $w_k = y_k^2$ up to a constant that does not change the minimizer. Scaling row $k$ by $\sqrt{w_k} = y_k$ is exactly B8.
+The bias: near a maximum the signal is flat over tens of samples, so the largest of them is the one where the *noise* happened to be largest. That is biased upward: the picked value exceeds the true peak by about one to two $\sigma$ (the printed mean excess is $0.013$ at $\sigma = 0.01$ and $0.21$ at $\sigma = 0.1$). The excess is roughly the same for every peak, but in log space it lifts a peak of height $0.1$ by far more than a peak of height $2$. The late points are raised, the fitted line flattens, and $\hat\gamma$ comes out too small. Weighting by $y_k^2$ (B8) attacks variance, not bias, and barely helps: $0.148$ and $0.111$.
+
+(c)
+```python
+    idx = np.round(np.arange(20) * T / (t[1] - t[0])).astype(int)   # samples at t_k = kT, where cos = 1
+    tk, yk = t[idx], y[idx]
+    keep = yk > 3 * noise                                            # drop peaks buried in the noise
+    tk, yk = tk[keep], yk[keep]
+    Ak = np.c_[np.ones(tk.size), tk]
+    lnA_u, slope_u = least_squares_qr(Ak, np.log(yk))[0]
+    lnA_w, slope_w = least_squares_weighted(Ak, np.log(yk), yk ** 2)
+    print(f"noise {noise}: kept {keep.sum()} peaks; unweighted gamma_hat = {-slope_u:.3f}, "
+          f"weighted gamma_hat = {-slope_w:.3f}, weighted intercept = {lnA_w:.3f} (ln A = {np.log(A0):.3f})")
+```
+(Indented to sit inside the loop of (b).) With seed 1: at $\sigma = 0.01$ all 20 samples are kept and $\hat\gamma = 0.152$ unweighted, $0.151$ weighted, intercept $0.695$ against $\ln A = 0.693$. At $\sigma = 0.1$ only 13 samples survive the $3\sigma$ cut; unweighted $\hat\gamma = 0.133$, weighted $\hat\gamma = 0.145$ with intercept $0.696$. Sampling at known times removes the bias; weighting then handles the unequal noise. (At $t_k = kT$ the intercept is $\ln A$, not $\ln A'$, because these are the cosine maxima rather than the true peaks; the difference is $\ln A' - \ln A = -0.0003$ here, invisible.)
+
+Why $w_k = y_k^2$: if the sample is $y_k + \delta_k$ with $\delta_k$ of fixed standard deviation $\sigma$, then $\ln(y_k + \delta_k) = \ln y_k + \ln(1 + \delta_k/y_k) \approx \ln y_k + \delta_k/y_k$. The error in the fitted quantity has standard deviation $\sigma/y_k$: small peaks are noisy in log space. The right weight is the inverse variance (ST-3, Gauss–Markov with unequal variances), $w_k \propto y_k^2/\sigma^2$, i.e. $w_k = y_k^2$ up to a constant that does not change the minimizer. Scaling row $k$ by $\sqrt{w_k} = y_k$ is exactly B8. The remaining gap at $\sigma = 0.1$ ($0.145$ versus $0.15$) is what thirteen noisy points can do; the full signal, fitted nonlinearly (ML-2's Gauss–Newton), would do better.
 
 **C4.** (a) Claim: in exact arithmetic, after subtracting the components along $\mathbf{q}_1, \dots, \mathbf{q}_{i-1}$, the current vector is $\mathbf{v}^{(i)} = \mathbf{a}_j - \sum_{l<i}r_{lj}\mathbf{q}_l$ with every $r_{lj} = \mathbf{q}_l^\top\mathbf{a}_j$. Base case $i = 1$: $\mathbf{v}^{(1)} = \mathbf{a}_j$ and $r_{1j} = \mathbf{q}_1^\top\mathbf{a}_j$ in both versions. Inductive step: assume it for $i$. Modified computes $r_{ij} = \mathbf{q}_i^\top\mathbf{v}^{(i)} = \mathbf{q}_i^\top\mathbf{a}_j - \sum_{l<i}r_{lj}\,\mathbf{q}_i^\top\mathbf{q}_l = \mathbf{q}_i^\top\mathbf{a}_j$, because $\mathbf{q}_i^\top\mathbf{q}_l = 0$ for $l < i$. So $r_{ij}$ agrees with classical, and $\mathbf{v}^{(i+1)} = \mathbf{v}^{(i)} - r_{ij}\mathbf{q}_i$ has the claimed form. ∎ The only thing the proof used is $\mathbf{q}_i^\top\mathbf{q}_l = 0$ *exactly*. In floating point that inner product is $\sim\varepsilon$, not $0$, and classical never gets to correct for it.
 
@@ -192,4 +207,13 @@ With seed 1 you should see: at noise $0.01$, $\hat\gamma \approx 0.151$ unweight
 
 The line where classical fails is $r_{23} = \mathbf{q}_2^\top\mathbf{a}_3 = 0$. In exact arithmetic $\mathbf{q}_2^\top\mathbf{a}_3 = \mathbf{q}_2^\top(\mathbf{a}_3 - r_{13}\mathbf{q}_1)$ because $\mathbf{q}_2 \perp \mathbf{q}_1$; but the computed $\mathbf{q}_1$ is not a unit vector to within $\varepsilon^2$ and the computed $\mathbf{q}_2$ is only orthogonal to it to within $\varepsilon$, so the two expressions differ by $\varepsilon/\sqrt2$, which is the *entire* size of the component that needed removing. Classical throws away the information that modified keeps. Numerically (`eps = 1e-8`, the matrix above): `gram_schmidt_classical` gives $\mathbf{q}_2^\top\mathbf{q}_3 = 0.5$ and `gram_schmidt_modified` gives $\mathbf{q}_2^\top\mathbf{q}_3 \approx 10^{-16}$.
 
-(c) Suppose the first pass returns $Q_1$ with $Q_1^\top Q_1 = I + E$, $\|E\|$ small but not tiny ($\sim\kappa^2\varepsilon$). The columns of $Q_1$ are nearly orthonormal, so $\kappa(Q_1) \approx 1$: the second pass runs classical Gram–Schmidt on a *well-conditioned* matrix, where its error $\sim\kappa(Q_1)^2\varepsilon \approx \varepsilon$. The second pass projects each column of $Q_1$ against the (already nearly orthogonal) earlier ones, removing exactly the small residual components $E$ that the first pass left behind, and nothing is lost because none of the subtractions involve nearly equal quantities. This is the "twice is enough" result (Kahan; Parlett's *The Symmetric Eigenvalue Problem*). On $H_{10}$: one classical pass gives $\|Q^\top Q - I\| \approx 3.5$; applying `gram_schmidt_classical` to that $Q$ gives $\approx 10^{-15}$. Note $A = (Q_1Q_2)(R_2R_1)$, so the product of the two $R$'s is the $R$ of $A$; the point of reorthogonalization is a good $Q$, not a cheap one (it doubles the cost, which is why Householder is the production method).
+(c) Suppose the first pass returns $Q_1$ with $Q_1^\top Q_1 = I + E$. The columns of $Q_1$ span $C(A)$ (each is a combination of the $\mathbf{a}$'s), so a second pass is Gram–Schmidt on a matrix with the *same* column space but a much better condition number: $\kappa(Q_1)$ is roughly $1 + \|E\|$ when $E$ is small, versus $\kappa(A) \approx 1.6\times10^{13}$ for $H_{10}$. The second pass subtracts from each column its components along the earlier, now nearly orthonormal, columns; those components are exactly the residual non-orthogonality $E$, and no subtraction involves nearly equal quantities, so nothing is lost. By the §3.8 estimate the second pass leaves $\|Q_2^\top Q_2 - I\| \approx \kappa(Q_1)^2\varepsilon$.
+
+For $H_{10}$ the first pass is so bad ($\|Q_1^\top Q_1 - I\| = 3.5$) that $Q_1$ is itself poorly conditioned: $\kappa(Q_1) \approx 2\times10^7$, so the estimate predicts at worst $\sim 10^{-2}$ after two passes; observed is $4.5\times10^{-5}$ (the bound is pessimistic). Now $\kappa(Q_2) \approx 1$, and the third pass gives $7\times10^{-16}$. So $H_{10}$ needs three passes, not two:
+```python
+Q, _ = gram_schmidt_classical(sla.hilbert(10))
+for k in range(1, 4):
+    print(k, np.linalg.norm(Q.T @ Q - np.eye(10)))    # 3.5e+00, 4.5e-05, 6.9e-16
+    Q, _ = gram_schmidt_classical(Q)
+```
+The folk theorem "twice is enough" (Kahan; Parlett, *The Symmetric Eigenvalue Problem*) assumes the first pass leaves $\kappa(Q_1) \lesssim 1/\sqrt\varepsilon \approx 10^8$, so that one more pass reaches $\varepsilon$. $H_{10}$ sits right at that edge; $H_{12}$ ($\kappa(Q_1) \approx 10^{11}$) is past it and goes $5.5 \to 1.4 \to 5\times10^{-13} \to 9\times10^{-16}$. Each pass costs as much as the first, which is why Householder, which never loses orthogonality in the first place, is the production method (LA-13). Note also $A = Q_1R_1 = (Q_2R_2)R_1$, so the product $R_2R_1$ of the passes is the $R$ of $A$: reorthogonalization buys a good $Q$, not a different factorization.
