@@ -394,7 +394,7 @@ Also $\operatorname{Var}(X) \ge 0$ always, with equality iff $X$ equals $\mu$ wi
 
 **Definition 3.12 (Covariance, minimally).** $\operatorname{Cov}(X, Y) = \mathbb{E}[(X - \mu_X)(Y - \mu_Y)]$. Expanding exactly as in Theorem 3.11,
 $$\operatorname{Cov}(X, Y) = \mathbb{E}[XY] - \mathbb{E}[X]\,\mathbb{E}[Y]. \tag{3.18}$$
-By Theorem 3.13, **independent variables have covariance zero.** (The converse is false: Part 10 of the project has $X$ uniform on $\{-1, 0, 1\}$ and $Y = X^2$, dependent with $\operatorname{Cov} = 0$. F5 treats covariance properly.)
+By Theorem 3.13, **independent variables have covariance zero.** (The converse is false: Part 9 of the project has $X$ uniform on $\{-1, 0, 1\}$ and $Y = X^2$, dependent with $\operatorname{Cov} = 0$. F5 treats covariance properly.)
 
 **Theorem 3.14 (Variance of a sum).**
 $$\operatorname{Var}(X + Y) = \operatorname{Var}(X) + \operatorname{Var}(Y) + 2\operatorname{Cov}(X, Y), \tag{3.19}$$
@@ -418,7 +418,7 @@ The $I_j$ are dependent (if $n - 1$ cards are in place, so is the last), and it 
 
 **The St. Petersburg paradox (Nicolas Bernoulli, 1713; Daniel Bernoulli, 1738).** Toss a fair coin until the first head. If it appears on toss $n$, you win $2^n$ dollars. The fair price of the game is its expectation:
 $$\mathbb{E}[\text{payout}] = \sum_{n=1}^\infty 2^n \cdot \frac{1}{2^n} = \sum_{n=1}^\infty 1 = \infty.$$
-Nobody would pay more than a few dollars to play. The resolution is not that the mathematics is wrong: the center of mass of this distribution really is at infinity, because the arm extends forever with masses that decay exactly as fast as the lever lengthens. The resolutions are (a) utility is not linear in money (Daniel Bernoulli proposed $\log$), and (b) any real casino has finite reserves: if the payout is capped at $2^{40}$ dollars (about a trillion), the expectation drops to $40$. Expectation is a tool, and this is the example to remember when someone reports a mean of a heavy-tailed quantity as if it summarized anything. The Cauchy distribution in the project (Part 9) has no mean at all, and its running average never settles.
+Nobody would pay more than a few dollars to play. The resolution is not that the mathematics is wrong: the center of mass of this distribution really is at infinity, because the arm extends forever with masses that decay exactly as fast as the lever lengthens. The resolutions are (a) utility is not linear in money (Daniel Bernoulli proposed $\log$), and (b) any real casino has finite reserves: if the payout is capped at $2^{40}$ dollars (about a trillion), the expectation drops to $40$. Expectation is a tool, and this is the example to remember when someone reports a mean of a heavy-tailed quantity as if it summarized anything. The Cauchy distribution in the project (Part 8) has no mean at all, and its running average never settles.
 
 ### 3.10 The named discrete distributions
 
@@ -725,3 +725,160 @@ using $(1 + c/n)^n \to e^c$. The MGFs converge to the Poisson MGF, which (by a c
 5. **Recognize a named distribution from its story**, then look up the mean and variance instead of recomputing.
 6. **Sanity-check.** Probabilities lie in $[0, 1]$. Take $p \to 0$, $p \to 1$, $n \to \infty$ and see if the answer does something sensible. Check units of any density. Check $\sum p(x) = 1$.
 7. **Simulate.** Ten lines of NumPy with $10^5$ trials settle most disputes to two decimals. The project is a template. If the simulation and the formula disagree, the formula is usually wrong, but check that the simulation implements the *same* conditioning (Monty Hall with a random host is a different simulation from Monty Hall with a knowing host).
+
+## 4. Worked examples
+
+Every number below is reproduced by an `assert` or a `print` in `project.py` (the part number is given in brackets).
+
+### Example 4.1: The birthday problem for 23 people [Part 1]
+
+*Exact.* From §3.3 step 3 with $k = 23$,
+$$P(\text{no match}) = \prod_{j=0}^{22}\left(1 - \frac{j}{365}\right) = \frac{365}{365}\cdot\frac{364}{365}\cdots\frac{343}{365} = 0.49270, \qquad P(\text{match}) = 0.50730.$$
+(Compute it as a running product; the project does. By hand, take logs: $\sum_{j=0}^{22}\ln(1 - j/365) = -0.7078$, $e^{-0.7078} = 0.4927$.)
+
+*Approximate.* From (3.3), $\binom{23}{2} = 253$ pairs, so $P(\text{no match}) \approx e^{-253/365} = e^{-0.69315} = 0.50000$, $P(\text{match}) \approx 0.5000$. The approximation is low by $0.007$ because $1 - x < e^{-x}$ strictly, so the product of the $(1 - j/365)$ is smaller than the product of the exponentials and the true no-match probability is *smaller*, the true match probability *larger*. For $k = 50$: exact $0.9704$, approximate $1 - e^{-1225/365} = 0.9651$. The number of pairs grows like $k^2$, which is why 23 people suffice: it is 253 chances at a 1-in-365 event, not 23.
+
+### Example 4.2: The medical test [Part 1]
+
+Prevalence $P(D) = 10^{-4}$; sensitivity $P(+\mid D) = 0.99$; specificity $P(-\mid D^c) = 0.99$.
+
+1. Denominator by LOTP: $P(+) = P(+\mid D)P(D) + P(+\mid D^c)P(D^c) = 0.99(0.0001) + 0.01(0.9999) = 0.000099 + 0.009999 = 0.010098$.
+2. Bayes: $P(D \mid +) = 0.000099 / 0.010098 = 0.009804$.
+
+Just under 1%. Now suppose a second, independent test (same accuracy) is also positive. Use extra conditioning (3.12) with the first result as $E$: the prior is now $0.0098$,
+$$P(D \mid ++) = \frac{0.99 \times 0.009804}{0.99\times0.009804 + 0.01\times0.990196} = \frac{0.009706}{0.009706 + 0.009902} = 0.4950.$$
+Two positives: a coin flip. Three: $0.990$. Each positive multiplies the odds $P(D)/P(D^c)$ by the likelihood ratio $0.99/0.01 = 99$; the prior odds are $1/9999$, so after one test $99/9999 \approx 1/101$, after two $\approx 0.98$, after three $\approx 97$. Odds and likelihood ratios are the right currency for sequential evidence; ST-5 uses them throughout.
+
+### Example 4.3: Monty Hall, two ways [Part 1]
+
+Worked in full in §3.7 (Trap 1): $P(\text{car behind door 2} \mid \text{host opens 3}) = 2/3$ by Bayes, and $P(\text{switching wins}) = 2/3$ by conditioning on the car's location. The project simulates $10^5$ games with a knowing host and asserts that the switch-win frequency is within $3\sigma$ of $2/3$, where $\sigma = \sqrt{(2/3)(1/3)/10^5} = 0.00149$ is the standard deviation of a $\mathrm{Bin}(10^5, 2/3)$ proportion, and the stay-win frequency within $3\sigma$ of $1/3$. It also simulates the random-host variant, conditions on "a goat was revealed," and gets $1/2$. Same observation, different mechanism, different answer.
+
+### Example 4.4: The matching problem for $n = 4$ and $n = 10$ [Part 1]
+
+From (3.8): $n = 4$: $1 - \frac12 + \frac16 - \frac1{24} = \frac{24 - 12 + 4 - 1}{24} = \frac{15}{24} = 0.625$. $n = 10$: $0.632121$, versus $1 - 1/e = 0.632121$; they agree to six decimals because the omitted tail of the series is less than $1/11! = 2.5 \times 10^{-8}$. The project shuffles $10^5$ decks of 10 and finds the fraction with at least one match within $3\sigma$ of $0.6321$, and the mean number of matches within $3\sigma$ of 1.
+
+Check the $n = 4$ value by brute force: of the $24$ permutations of $\{1, 2, 3, 4\}$, the derangements (no fixed point) number $9$, so $P(\text{at least one}) = 15/24$. ✓
+
+### Example 4.5: Expected fixed points via indicators [Part 1]
+
+$\mathbb{E}[X] = \sum_{j=1}^n P(\sigma(j) = j) = n\cdot\frac1n = 1$, for $n = 1, 2, 3, \dots$. Compare with the work of doing it from the distribution: $P(X = k) = \frac{1}{k!}\sum_{i=0}^{n-k}\frac{(-1)^i}{i!}$ (choose the $k$ fixed points, derange the rest), then $\sum_k k\,P(X = k)$. The indicator argument is one line and does not need the distribution at all. Exercise C4 pushes it to $\operatorname{Var}(X) = 1$ for $n \ge 2$, and the pair (mean 1, variance 1) is the fingerprint of $\mathrm{Pois}(1)$, which is in fact the limiting distribution of $X$.
+
+### Example 4.6: The Poisson limit, numerically [Part 3]
+
+$n = 1000$, $p = 0.003$, $\lambda = np = 3$.
+
+| $k$ | $\mathrm{Bin}(1000, 0.003)$ | $\mathrm{Pois}(3)$ | difference |
+|---|---|---|---|
+| 0 | $0.049563$ | $0.049787$ | $-0.000224$ |
+| 1 | $0.149137$ | $0.149361$ | $-0.000224$ |
+| 2 | $0.224154$ | $0.224042$ | $+0.000112$ |
+| 3 | $0.224379$ | $0.224042$ | $+0.000337$ |
+| 4 | $0.168284$ | $0.168031$ | $+0.000253$ |
+| 5 | $0.100869$ | $0.100819$ | $+0.000050$ |
+
+Hand check of $k = 0$: $(0.997)^{1000} = e^{1000\ln 0.997} = e^{1000(-0.0030045)} = e^{-3.0045} = 0.04956$, versus $e^{-3} = 0.04979$. The exponent $1000\ln(1 - 0.003) = -3 - 0.0045 - \cdots$ is the whole error: $\ln(1 - p) = -p - p^2/2 - \cdots$, so $(1-p)^n = e^{-\lambda}e^{-np^2/2}\cdots = e^{-\lambda}(1 - \lambda p/2 + \cdots)$, and the relative error at $k = 0$ is about $\lambda p/2 = 0.0045$. The project plots the total variation distance $\tfrac12\sum_k |P_{\mathrm{Bin}}(k) - P_{\mathrm{Pois}}(k)|$ against $n$ for fixed $\lambda = 3$ and finds it decreasing like $1/n$.
+
+### Example 4.7: Inverse-CDF sampling for the Exponential [Part 4]
+
+$F(x) = 1 - e^{-\lambda x}$ on $x > 0$. Solve $u = F(x)$: $e^{-\lambda x} = 1 - u$, so $x = -\ln(1 - u)/\lambda$. By Theorem 3.15(a), if $U \sim \mathrm{Unif}(0,1)$ then
+$$X = -\frac{\ln(1 - U)}{\lambda} \sim \mathrm{Expo}(\lambda).$$
+Since $1 - U \sim \mathrm{Unif}(0, 1)$ too (its CDF is $P(1 - U \le u) = P(U \ge 1 - u) = u$), $X = -\ln(U)/\lambda$ works equally well and saves a subtraction. Direct check without the theorem: $P(X > x) = P(-\ln U > \lambda x) = P(U < e^{-\lambda x}) = e^{-\lambda x}$. ✓ The project draws $10^5$ samples with $\lambda = 2$, overlays the empirical CDF on $F$, checks the sample mean against $1/\lambda = 0.5$, and runs a Kolmogorov–Smirnov test (ST-2 explains the test; here it is a sanity check, asserted at the loose level $p > 0.001$). Then the same for a custom piecewise CDF, $F(x) = x/2$ on $[0, 1]$ and $\tfrac12 + (x-1)/4$ on $[1, 3]$, whose inverse is $F^{-1}(u) = 2u$ for $u < \tfrac12$ and $1 + 4(u - \tfrac12)$ for $u \ge \tfrac12$.
+
+### Example 4.8: The Gaussian integral, numerically [Part 5]
+
+Theorem 3.18 says $\int_{-\infty}^\infty e^{-z^2/2}dz = \sqrt{2\pi} = 2.506628$. The project computes the one-dimensional integral with `scipy.integrate.quad` (agreement to $10^{-10}$), computes the two-dimensional integral $\iint e^{-(x^2+y^2)/2}$ in Cartesian coordinates with `dblquad` and gets $2\pi = 6.283185$, and computes the polar form $\int_0^{2\pi}\int_0^\infty e^{-r^2/2}r\,dr\,d\theta$ to confirm step 2 of the proof. It then checks $\int \varphi = 1$, $\int z^2\varphi = 1$, $\int z^4\varphi = 3$, and $\Gamma(\tfrac12) = \sqrt\pi = 1.772454$ via `scipy.special.gamma`.
+
+### Example 4.9: Defective parts in a batch (Hypergeometric vs Binomial) [Part 2]
+
+A batch of $N = 50$ machined parts contains $w = 5$ out of tolerance. You inspect $n = 10$ chosen at random without replacement. Let $X$ be the number of defective parts in the sample.
+
+*Exact (Hypergeometric).* $X \sim \mathrm{HGeom}(5, 45, 10)$.
+$$P(X = 0) = \frac{\binom{5}{0}\binom{45}{10}}{\binom{50}{10}} = \prod_{i=0}^{9}\frac{45 - i}{50 - i} = \frac{40\cdot39\cdot38\cdot37\cdot36}{50\cdot49\cdot48\cdot47\cdot46} = \frac{78{,}960{,}960}{254{,}251{,}200} = 0.31056,$$
+after cancelling the common factors $45, 44, 43, 42, 41$. So $P(\text{at least one defect found}) = 0.6894$. $\mathbb{E}[X] = nw/N = 10\cdot5/50 = 1$. $\operatorname{Var}(X) = npq\frac{N-n}{N-1} = 10(0.1)(0.9)\frac{40}{49} = 0.7347$.
+
+*Binomial approximation* (pretend each part is independently defective with $p = 0.1$): $P(X = 0) = 0.9^{10} = 0.3487$, $\mathbb{E}[X] = 1$, $\operatorname{Var}(X) = 0.9$. The mean is exact (linearity never cared about replacement), but the approximation overstates $P(X = 0)$ by $0.038$ and the variance by $22\%$: with $n/N = 20\%$ of the batch inspected, the finite-population correction $40/49 = 0.816$ is far from 1. Each defect you draw depletes the pool of defects, which pulls the count toward its mean. The project checks both PMFs against `scipy.stats` and plots them side by side.
+
+*Decision.* If the acceptance rule is "reject the batch if any sampled part is defective," this batch (10% defective) is accepted with probability $0.31$. To get the acceptance probability of a 10%-defective batch below $0.05$ you need $\binom{50 - 5}{n}/\binom{50}{n} < 0.05$, which the project finds happens at $n = 23$.
+
+### Example 4.10: Time to failure of a component (Exponential) [Part 2]
+
+A bearing's time to failure $T$ (hours) is modeled as $\mathrm{Expo}(\lambda)$ with mean time to failure $1/\lambda = 2000$ h, so $\lambda = 5 \times 10^{-4}$ per hour.
+
+1. $P(T > 3000) = e^{-3000/2000} = e^{-1.5} = 0.2231$.
+2. $P(T \le 500) = 1 - e^{-0.25} = 0.2212$. More than a fifth of bearings fail in the first quarter of their mean life.
+3. Median: $\ln 2/\lambda = 0.6931 \times 2000 = 1386$ h. Half of all bearings fail before $1386$ h even though the *mean* is $2000$ h; the mean is dragged up by the long tail.
+4. Memorylessness: $P(T > 6000 \mid T > 3000) = P(T > 3000) = 0.2231$. A bearing that has run 3000 h has, under this model, exactly the survival prospects of a new one. For a real bearing that is false (wear), and the Weibull distribution of ST-4 and the Gamma of F5 exist to fix it. The Exponential is correct for failures caused by external random shocks at a constant rate, not for wear-out.
+5. Standard deviation $= 1/\lambda = 2000$ h, equal to the mean. If your failure data has a standard deviation much smaller than the mean, the failure mechanism is not memoryless.
+
+The project asserts items 1–4 and simulates $10^5$ lifetimes to confirm the conditional survival in item 4 to within sampling error.
+
+## 5. Why it matters and where it connects
+
+- **F5** starts from this module's Definition 3.7 and builds joint PMFs and PDFs, covariance and correlation (Definition 3.12 done properly, with $|\operatorname{Cov}(X,Y)| \le \sigma_X\sigma_Y$ as Cauchy–Schwarz from LA-1 Theorem 3.11 applied to the inner product $\langle X, Y\rangle = \mathbb{E}[XY]$), conditional expectation (first-step analysis from §3.10 made general), the change-of-variables formula that gives Theorem 3.19's Beta normalizing constant, the multivariate Normal, and the laws of large numbers and the CLT. The CLT proof is Theorem 3.22 plus Theorem 3.23 plus a Taylor expansion of the cumulant generating function.
+- **SM-3** is §3.2 and §3.10. The multiplicity of an Einstein solid is the stars-and-bars count $\binom{n+k-1}{k}$ of Theorem 3.3; a two-state paramagnet has $\binom{N}{k}$ microstates with $k$ spins up, a Binomial; Boltzmann's $S = k_B\ln\Omega$ is the log of a binomial coefficient, and Stirling's formula turns it into the entropy of a Bernoulli. The fact that fluctuations scale as $\sqrt{N}$ while means scale as $N$ is $\operatorname{Var}(\mathrm{Bin}) = npq$ next to $\mathbb{E}[\mathrm{Bin}] = np$.
+- **SM-4** reads §3.14 backwards: the partition function $Z(\beta) = \sum_i e^{-\beta E_i}$ is the MGF of the energy at $t = -\beta$ (up to the counting measure), $\ln Z$ is a cumulant generating function, and $\langle E\rangle = -\partial_\beta\ln Z$, $\operatorname{Var}(E) = \partial_\beta^2\ln Z = k_B T^2 C_V$ are the two identities after Theorem 3.20.
+- **ST-1** takes every PMF and PDF in §3.10–3.13, fixes the data, and views it as a function of the parameter: the likelihood. Maximum likelihood for $\mathrm{Bin}$, $\mathrm{Pois}$, $\mathrm{Expo}$, $\mathcal{N}$ is one derivative of the formulas here. Fisher information is the variance of a score, computed by LOTUS. Unbiasedness is a statement about $\mathbb{E}$ of an estimator, and the bias–variance decomposition of MSE is equation (3.17) with a shifted origin.
+- **ST-2** uses Theorem 3.15(b): under the null hypothesis a $p$-value is $\mathrm{Unif}(0, 1)$. The Kolmogorov–Smirnov test in the project is the first hypothesis test you will have run.
+- **ST-5** is §3.5 and §3.7 at scale: Bayes' theorem with the prior a density ($\mathrm{Beta}(a, b)$ on a Binomial $p$, §3.13), the two-coins example (§3.6) as the model of "data independent given the parameter," and Monty Hall's lesson that the *mechanism* producing the evidence is part of the model.
+- **ML-1** defines risk as $\mathbb{E}[\text{loss}]$, computed by LOTUS, and estimates it by a sample mean, justified by the law of large numbers previewed in Part 9 of the project. **ML-3**: logistic regression is a $\mathrm{Bern}(\sigma(\mathbf{w}^\top\mathbf{x}))$ model; the cross-entropy loss is its negative log PMF. **ML-10**: the ELBO is an expectation under an approximate posterior, estimated by sampling exactly as in §3.11.
+- **QM-2**: $|\psi(x)|^2$ is a PDF and must have units of $1/[x]$ (the "density is not probability" warning of §3.11 verbatim); $\langle \hat{x}\rangle = \int x|\psi|^2dx$ is LOTUS; $\Delta x$ is a standard deviation; and the Gaussian wave packet's normalization is Theorem 3.18.
+- **LA-1** Theorem 3.11 (Cauchy–Schwarz) is, in F5, the reason correlation lies in $[-1, 1]$. The "introduce a free parameter $t$, use positivity, read off the discriminant" move from that proof is how F5 proves it.
+
+## 6. Exercises
+
+See [exercises.md](exercises.md). **A1–A5** are drills: de Méré's dice, two story proofs, a conditional probability from a table, a PMF/CDF/expectation computation, Normal and Exponential numbers. **B1–B8** are the module: B1 (inclusion–exclusion by indicators), B2 (the two-coin Bayes problem and conditional independence), B3 (pairwise vs mutual), B4 (Geometric variance and the first-success shift), B5 (Hypergeometric by indicators), B6 (Gamma moments), B7 (universality and a Cauchy sampler; extends `project.py`), B8 (Normal MGF and a sum with zero variance). B2, B4, B7 are essential. **C1–C4**: the Tuesday-boy problem, expected waits for $HH$ versus $HT$, the discrete memorylessness characterization, and the variance of the number of fixed points.
+
+## 7. Coding project
+
+`project.py` is a `Simulator`-style script: a seeded `numpy.random.default_rng`, exact formulas implemented from the notes, and every claim checked against simulation or against `scipy.stats`.
+
+1. **Monte Carlo of the traps.** Birthday problem: simulated match frequency against the exact product for $k = 1, \dots, 60$, with the $e^{-k(k-1)/730}$ approximation overlaid (figure). Monty Hall: $10^5$ games, switch vs stay, asserted within $3\sigma$ of $2/3$ and $1/3$; plus the random-host variant giving $1/2$. The matching problem: mean fixed points $\to 1$, $P(\text{none}) \to 1/e$. The base-rate example: simulate a million patients and read off the positive predictive value.
+2. **Exact PMFs from the formulas** (3.20)–(3.24) for Binomial, Geometric, Negative Binomial, Hypergeometric, Poisson, asserted against `scipy.stats` (watch the convention differences, commented in the code); means and variances computed from the PMFs and asserted against the table in §3.10; empirical histograms from `rng` overlaid on the PMFs (figure). Examples 4.9 and 4.10 asserted.
+3. **Poisson approximation error** (total variation distance) against $n$ for fixed $\lambda = 3$ (figure), and the table of Example 4.6.
+4. **Inverse-CDF sampling** for $\mathrm{Expo}(2)$ and for the piecewise CDF of Example 4.7, with empirical-CDF overlays (figure) and `scipy.stats.kstest` assertions at $p > 0.001$; universality in the other direction, $F(X) \sim \mathrm{Unif}$.
+5. **The Gaussian integral** by `quad`, by `dblquad` in Cartesian coordinates, and in polar form; $\Gamma(1/2)$; the Normal moments.
+6. **68–95–99.7** from $\Phi$ and from $10^6$ samples.
+7. **MGF numerically.** The sample MGF $\hat M(t) = \frac1N\sum_i e^{tX_i}$ for $\mathrm{Pois}(2)$, its first three derivatives at 0 by central finite differences, compared with $\mathbb{E}[X] = 2$, $\mathbb{E}[X^2] = 6$, $\mathbb{E}[X^3] = 22$ (the exact values are obtained by differentiating $e^{\lambda(e^t - 1)}$ with SymPy). The Binomial-sum and Poisson-limit MGF identities are checked symbolically.
+8. **Law of large numbers** running means for $\mathrm{Bern}(0.3)$ (converges) and standard Cauchy (does not; figure). The Cauchy has no mean, so there is nothing to converge to.
+9. **Linearity on dependent variables.** $X$ uniform on $\{-1, 0, 1\}$, $Y = X^2$: $\mathbb{E}[X + Y] = \mathbb{E}X + \mathbb{E}Y$ exactly and by simulation; also $\operatorname{Cov}(X, Y) = 0$ despite dependence; and a dependent pair (heads and tails counts) where $\operatorname{Var}(X + Y) = 0 \ne \operatorname{Var}X + \operatorname{Var}Y$.
+
+**Build it yourself first:** before reading Part 2, write `binom_pmf(k, n, p)`, `hgeom_pmf(k, w, b, n)`, and `pois_pmf(k, lam)` from (3.20), (3.23), (3.24) using `math.comb` and `math.exp`, and `expo_sample(lam, size, rng)` from Example 4.7. Then compare.
+
+**Your turn** (prompts at the end of the script): simulate the two-children problem under phrasings (i), (ii), (iii) of Trap 3 and recover $1/3$, $1/2$, $1/2$; estimate the probability that among 23 people at least one pair has birthdays within one day of each other (circularly, so Dec 31 and Jan 1 count); derive $\mathbb{E}[\text{rolls to see all six faces}] = 6\left(1 + \tfrac12 + \tfrac13 + \tfrac14 + \tfrac15 + \tfrac16\right) = 14.7$ as a sum of independent first-success waiting times with $p = 6/6, 5/6, \dots, 1/6$, and simulate it.
+
+## 8. Where you'll struggle
+
+- **Conditional probability.** Your intuition for it is broken. So is everyone's; the roadmap says fifty problems and means it. The five traps in §3.7 are not curiosities, they are the standard failure modes, and you will fall for at least two of them on first contact even having read the solutions. The fix is mechanical: (1) write the sample space, (2) write the conditioning event as a *set*, (3) compute $P(A \cap B)/P(B)$. Never reason in English past step 1. When a problem says "given," ask *how* the information arrived (Monty Hall with a knowing host vs a random host; "at least one boy" vs "the elder is a boy"). If you cannot write down the mechanism, you cannot write down $P(B)$.
+- **Independent vs disjoint.** You will use one word when you mean the other. Disjoint: $P(A \cap B) = 0$. Independent: $P(A \cap B) = P(A)P(B)$. Disjoint events with positive probability are maximally dependent. Say "cannot both happen" for disjoint and "doesn't change the odds" for independent until the words stop sliding.
+- **Forgetting that a random variable is a function.** The symptom is writing things like "$X = 3$" as if $X$ were a number, or asking "what is $X$?" The cure is to write $X(\omega)$ explicitly for a few problems: the sum of two dice is $X(i, j) = i + j$, the number of matches is $X(\sigma) = \#\{j : \sigma(j) = j\}$. The payoff is that linearity (Theorem 3.8) becomes obvious instead of mysterious, and "$X$ and $Y$ have the same distribution but are different" stops being a riddle.
+- **Treating a density as a probability.** You will write $f(x)$ where you mean $f(x)\,dx$, be surprised that $f > 1$, or forget the $1/\sigma$ in (3.28). Check units. A density has units of $1/[X]$. If your answer has the wrong units it is wrong; this catches most change-of-variable errors in F5 and most normalization errors in QM-2.
+- **The Gaussian integral is not derivable from scratch.** Nobody looks at $\int e^{-z^2/2}dz$ and thinks of squaring it and going to polar coordinates; that is a trick someone found, and the only way to have it is to have memorized it. Memorize: *square it, polar, the Jacobian $r$ makes it elementary.* The same for $\Gamma(1/2)$: *substitute $x = u^2/2$ and it becomes the Gaussian.* Do not spend an hour trying to find a direct route.
+- **MGFs look like busywork.** You will compute five of them, prove two things you already believed (Binomials add; Poisson is the Binomial limit), and wonder why. The answer is that F5's proof of the central limit theorem is six lines *with* MGFs and does not exist at this level without them, and SM-4's partition function is one. Learn Theorem 3.20's expansion and Theorem 3.22's product now so that F5 can spend its time on the theorem instead of the tool.
+- **Counting problems are hard and stay hard.** The story proofs in §3.2 look effortless because the right story is given. Finding the right story is a skill that improves slowly, and people who are excellent at probability are still routinely stuck on counting problems. Do not judge your grasp of probability by your speed at counting. If a counting problem resists for twenty minutes, compute small cases by brute force (the project shows how), guess the pattern, and move on; the probability content of this module does not depend on it.
+- **Which Geometric.** Blitzstein and these notes count failures (support from 0, mean $q/p$); Ross and SciPy's `geom` count trials (support from 1, mean $1/p$). Both are in the literature. Before using any formula or library call, write down which one it assumes. The project's Part 2 comments mark every convention conversion.
+- **The exercises that are harder than they look.** B4 (Geometric variance by first-step conditioning: the algebra for $\mathbb{E}[X^2]$ has a step where you must not drop the cross term). B7(b) (the Cauchy has no mean, so "check the sample mean" is a trap; the exercise wants you to see that). C2 (the $HH$ vs $HT$ asymmetry: after a failed attempt at $HH$ you are back at the start, but after a failed attempt at $HT$ you are halfway).
+
+## 9. Check yourself
+
+1. State Kolmogorov's three axioms and derive $P(A^c) = 1 - P(A)$ from them in one line.
+2. Prove $\binom{n}{k} = \binom{n}{n-k}$ with a story, not algebra.
+3. Write Bayes' theorem and derive it from the definition of conditional probability in two lines.
+4. Two events are disjoint and each has probability $0.3$. Are they independent? Why not?
+5. Give an example of events that are conditionally independent given $E$ but not independent.
+6. What is a random variable? What is a distribution? Give two different random variables with the same distribution.
+7. State linearity of expectation. What assumption about $X$ and $Y$ does it need? Prove it.
+8. What is $\mathbb{E}[I_A]$? Use it to find the expected number of fixed points of a random permutation of $n$ objects.
+9. Derive the Poisson PMF as a limit of Binomials. Which three limits did you use?
+10. Write $\operatorname{Var}(X) = \mathbb{E}[X^2] - (\mathbb{E}X)^2$ and name the mechanics theorem it corresponds to.
+11. If $U \sim \mathrm{Unif}(0, 1)$, how do you produce an $\mathrm{Expo}(\lambda)$ sample? Prove it works.
+12. State the memorylessness property. Which continuous distributions have it?
+13. Compute $\int_{-\infty}^\infty e^{-z^2/2}dz$. Outline the trick in one sentence.
+14. What is $M_X(t)$? Why is $M_{X+Y} = M_X M_Y$ for independent $X, Y$? What theorem lets you conclude the distribution of $X + Y$ from that product?
+15. A density takes the value $2.5$ at some point. Is that a problem? What are its units?
+
+## 10. Pair with
+
+- **Blitzstein & Hwang, *Introduction to Probability*, 2nd ed. (free at probabilitybook.net), ch. 1–6.** The source of the story-proof style used here, with far more worked problems than these notes. Ch. 1 counting and story proofs, ch. 2 conditioning and the traps (their treatment of Monty Hall and of the two-coins example is the model for §3.6–3.7), ch. 3–4 discrete distributions and expectation (indicator trick, LOTUS), ch. 5 continuous distributions (universality of the Uniform, their §5.3, is better explained there than anywhere), ch. 6 moments and MGFs. Do their end-of-chapter problems; the ones marked with a circle have solutions online.
+- **Harvard Stat 110 (Blitzstein), lectures 1–15 on YouTube.** Lecture 1 counting, 2–6 conditioning and Bayes, 7–8 random variables and the Binomial/Hypergeometric, 9 expectation and indicators, 10–11 Poisson and the Poisson paradigm, 12–13 continuous and the Normal (lecture 13 does the Gaussian integral live), 14 universality and LOTUS, 15 Gamma and MGFs. Watch 9 and 14 even if you skip the rest: the indicator trick and LOTUS are where his delivery adds the most over the book.
+- **Ross, *A First Course in Probability*, ch. 1–5 and 7.** Use as a drill source: more routine exercises than Blitzstein, with answers to odd problems. Warning: Ross's Geometric counts trials, not failures. Translate.
+- **Feller, *An Introduction to Probability Theory and Its Applications*, vol. I, ch. I–II and IV.** Only if you want the classical treatment of the matching problem and the birthday problem with their history; Feller's prose is the best in the subject and his problem sets are the hardest.

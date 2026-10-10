@@ -538,13 +538,17 @@ print(f"  B8: quartic slope {slope4:.3f} (expect -4); a_0/2 = 8pi^4/15 = {8 * PI
 
 
 def terms_for_uniform_error(name, tol=0.01, Nmax=600):
-    xf = np.linspace(-PI, PI, 20001)
+    """Smallest N with max_x |f - S_N f| < tol. Builds every term a_n cos(nx) once (both waves are
+    even, so b_n = 0) and accumulates with cumsum, so the cost is one (Nmax x grid) array, not Nmax partial sums."""
+    xf = np.linspace(-PI, PI, 8001)
     fx = WAVES[name](xf)
-    for N in range(1, Nmax + 1):
-        nn_ = np.arange(-N, N + 1)
-        if np.abs(fx - partial_sum(nn_, exact_c(name, nn_), xf)).max() < tol:
-            return N
-    return None
+    nn_ = np.arange(1, Nmax + 1)
+    a_n = 2 * exact_c(name, nn_).real                      # a_n = c_n + c_{-n} = 2 Re c_n for real even f
+    terms = a_n[:, None] * np.cos(np.outer(nn_, xf))       # row n-1: a_n cos(n x)
+    S = exact_c(name, [0])[0].real + np.cumsum(terms, axis=0)   # row N-1: S_N f on the grid
+    err = np.abs(S - fx).max(axis=1)
+    hits = np.nonzero(err < tol)[0]
+    return int(nn_[hits[0]]) if hits.size else None
 
 
 N_par, N_tri = terms_for_uniform_error("parabola"), terms_for_uniform_error("triangle")

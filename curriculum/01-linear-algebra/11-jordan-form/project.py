@@ -206,6 +206,11 @@ Ntest = S * sp.diag(sp.jordan_cell(0, 3), sp.jordan_cell(0, 2)) * S.inv()
 chains = nilpotent_chains(Ntest)
 assert sorted(len(c) for c in chains) == [2, 3]
 check_against_sympy(Ntest)
+# The rank-one nilpotent of §3.2: u v^T with v^T u = 0 has index 2 and blocks [2, 1].
+u, v = M([1, 1, 2]), M([1, 1, -1])
+N_uv = u * v.T
+assert v.T * u == M([[0]]) and N_uv ** 2 == sp.zeros(3, 3) and N_uv != sp.zeros(3, 3)
+assert jordan_block_sizes(N_uv, 0) == [2, 1]
 print("Part 2: chain construction recovers blocks [3, 2] for a scrambled nilpotent 5x5.")
 
 # %% [markdown]
@@ -262,6 +267,7 @@ print("Part 3: e^{At} = e^t[[1-t, t],[-t, 1+t]] verified symbolically, against e
 # %%
 A3 = M([[1, 1, 0], [-1, 2, 1], [-1, 0, 3]])
 assert sp.factor(A3.charpoly(x).as_expr()) == (x - 2) ** 3
+assert A3.trace() == 6 and A3.det() == 8
 N3 = A3 - 2 * sp.eye(3)
 assert N3 == M([[-1, 1, 0], [-1, 0, 1], [-1, 0, 1]])
 assert N3 ** 2 == M([[0, -1, 1], [0, -1, 1], [0, -1, 1]]) and N3 ** 3 == sp.zeros(3, 3)
@@ -272,6 +278,7 @@ assert v2 == M([0, 1, 1]) and v1 == M([1, 1, 1]) and N3 * v1 == sp.zeros(3, 1)
 P3 = sp.Matrix.hstack(v1, v2, e3)
 assert P3 == M([[1, 0, 0], [1, 1, 0], [1, 1, 1]])
 assert P3.inv() * A3 * P3 == sp.jordan_cell(2, 3)
+assert A3 * v1 == 2 * v1 and A3 * v2 == 2 * v2 + v1 and A3 * e3 == 2 * e3 + v2   # chain relations
 check_against_sympy(A3)
 print("Example 4.2: one 3-block for lambda = 2; chain (1,1,1) <- (0,1,1) <- (0,0,1).")
 
@@ -290,6 +297,9 @@ assert A4 * w == sp.zeros(4, 1)
 P4 = sp.Matrix.hstack(u1, u2, e3, w)
 assert P4.det() == 1
 assert P4.inv() * A4 * P4 == sp.diag(sp.jordan_cell(0, 3), sp.jordan_cell(0, 1))
+P_orig = M([[1, 1, 0, 1], [0, 1, 1, 0], [1, 0, 1, 0], [0, 1, 0, 1]])   # the basis A4 was built from
+assert P_orig.inv() * A4 * P_orig == P4.inv() * A4 * P4 and P_orig != P4   # same J, different P
+assert sp.Matrix.hstack(*A4.nullspace()).rank() == 2 and A4 * u1 == sp.zeros(4, 1)
 chains4 = nilpotent_chains(A4)
 assert sorted(len(c) for c in chains4) == [1, 3]
 check_against_sympy(A4)
@@ -322,6 +332,7 @@ A5 = M([[2, 1, 0], [1, 1, 0], [0, 1, 1]])
 p5 = A5.charpoly(x).as_expr()
 assert sp.expand(p5) == x ** 3 - 4 * x ** 2 + 4 * x - 1
 assert A5 ** 3 - 4 * A5 ** 2 + 4 * A5 - sp.eye(3) == sp.zeros(3, 3)       # p_A(A) = 0
+assert set(A5.eigenvals()) == {1, sp.Rational(3, 2) - sp.sqrt(5) / 2, sp.Rational(3, 2) + sp.sqrt(5) / 2}
 assert A5 ** 2 == M([[5, 3, 0], [3, 2, 0], [1, 2, 1]])
 assert A5.inv() == A5 ** 2 - 4 * A5 + 4 * sp.eye(3) == M([[1, -1, 0], [-1, 2, 0], [1, -2, 1]])
 _, rem = sp.div(sp.Poly(x ** 5, x), sp.Poly(p5, x))
@@ -416,6 +427,7 @@ assert sp.factor(A45.charpoly(x).as_expr()) == (x - 3) * (x - 1) ** 3
 assert poly_of_matrix(m45, A45) == sp.zeros(4, 4)
 assert poly_of_matrix((x - 1) * (x - 3), A45) != sp.zeros(4, 4)      # one factor too few
 assert jordan_structure(A45) == {1: [2, 1], 3: [1]}
+assert kernel_dims(A45, 1) == [0, 2, 3] and kernel_dims(A45, 3) == [0, 1]
 # m_A divides p_A (Theorem 3.13 + Cayley–Hamilton):
 assert sp.rem(sp.Poly(A45.charpoly(x).as_expr(), x), sp.Poly(m45, x)).is_zero
 # Numerically, in floating point, m(A) and p(A) are zero to rounding:
@@ -569,6 +581,47 @@ _, V_block = np.linalg.eig(np.array([[1.0, 1.0], [0.0, 1.0]]))
 cond_block = np.linalg.cond(V_block)
 assert cond_block > 1e15
 print(f"Part 8: angle ~ 2 sqrt(eps), cond(V) = 1/sqrt(eps) exactly; cond(V) for the exact block in floating point = {cond_block:.1e}")
+
+# %% [markdown]
+# ## Part 9: Exercise spot-checks
+#
+# The numbers quoted in solutions.md for A1, B2, B3(d), B5, B6(c) and C4(c).
+
+# %%
+A_a1 = M([[1, 1], [-1, 3]])
+P_a1 = M([[-1, 1], [-1, 0]])
+assert P_a1.inv() * A_a1 * P_a1 == sp.jordan_cell(2, 2)
+assert sp.simplify((A_a1 * t).exp() - sp.exp(2 * t) * M([[1 - t, t], [-t, 1 + t]])) == sp.zeros(2, 2)
+
+A_b2 = M([[2, 1, -1], [0, 1, 0], [1, 1, 0]])
+assert sp.factor(A_b2.charpoly(x).as_expr()) == (x - 1) ** 3 and kernel_dims(A_b2, 1) == [0, 2, 3]
+P_b2 = M([[1, 1, 1], [0, 0, -1], [1, 0, 0]])
+assert P_b2.inv() * A_b2 * P_b2 == sp.diag(sp.jordan_cell(1, 2), sp.jordan_cell(1, 1))
+
+N_b3 = M([[0, 0, 1, 2], [0, 0, 3, 4], [0, 0, 0, 0], [0, 0, 0, 0]])
+P_b3 = M([[1, 0, 2, 0], [3, 0, 4, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
+assert kernel_dims(N_b3, 0) == [0, 2, 4]
+assert P_b3.inv() * N_b3 * P_b3 == sp.diag(sp.jordan_cell(0, 2), sp.jordan_cell(0, 2))
+
+C_b5 = M([[0, 1, 0], [0, 0, 1], [1, -3, 3]])
+assert sp.factor(C_b5.charpoly(x).as_expr()) == (x - 1) ** 3 and jordan_block_sizes(C_b5, 1) == [3]
+assert C_b5.inv() == C_b5 ** 2 - 3 * C_b5 + 3 * sp.eye(3) == M([[3, -3, 1], [1, 0, 0], [0, 1, 0]])
+assert C_b5 ** 10 == 45 * C_b5 ** 2 - 80 * C_b5 + 36 * sp.eye(3) == M([[36, -80, 45], [45, -99, 55], [55, -120, 66]])
+N_b5 = C_b5 - sp.eye(3)
+assert N_b5 * M([1, 0, 0]) == M([-1, 0, 1]) and N_b5 * M([-1, 0, 1]) == M([1, 1, 1]) and N_b5 * M([1, 1, 1]) == sp.zeros(3, 1)
+# Every companion matrix is nonderogatory: m = p (B5(d)).
+assert minimal_polynomial_by_dependence(C_b5) == sp.expand((x - 1) ** 3)
+
+A_b6 = sp.Matrix.vstack(sp.Matrix.hstack(sp.zeros(3, 3), sp.eye(3)), sp.Matrix.hstack(-K_ring, sp.zeros(3, 3)))
+assert sp.factor(A_b6.charpoly(x).as_expr()) == x ** 2 * (x ** 2 + 3) ** 2
+assert jordan_block_sizes(A_b6, 0) == [2]                                    # free translation: x = a + b t
+assert jordan_block_sizes(A_b6, sp.I * sp.sqrt(3)) == [1, 1] and jordan_block_sizes(A_b6, -sp.I * sp.sqrt(3)) == [1, 1]
+one = M([1, 1, 1])
+assert A_b6 * sp.Matrix.vstack(sp.zeros(3, 1), one) == sp.Matrix.vstack(one, sp.zeros(3, 1))   # the chain
+
+# C4(c): e^{tA} is the degree-1 polynomial e^t((1 - t) I + t A) for Example 4.1's matrix.
+assert sp.simplify(E_formula - sp.exp(t) * ((1 - t) * sp.eye(2) + t * A_ode)) == sp.zeros(2, 2)
+print("Part 9: exercise numbers (A1, B2, B3d, B5, B6c, C4c) verified.")
 
 # %% [markdown]
 # ## Your turn

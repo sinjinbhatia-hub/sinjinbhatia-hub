@@ -458,3 +458,198 @@ $$
 So $\Omega_\pm^2 = (2\mp\sqrt2)\,g/\ell$. The mode shapes come from the first row, $a_2/a_1 = (2 - 2\mu)/\mu$: for $\mu = 2 - \sqrt2$, $a_2/a_1 = (2\sqrt2 - 2)/(2 - \sqrt2) = \sqrt2$ (both bobs swing the same way, the lower one $\sqrt2$ times further); for $\mu = 2 + \sqrt2$, $a_2/a_1 = -\sqrt2$ (opposite directions). **Numbers** ($m = 1$, $\ell = 1$, $g = 9.81$): $\Omega_-^2 = 0.585786\times9.81 = 5.7466$, $\Omega_- = 2.3972$ rad/s; $\Omega_+^2 = 3.414214\times9.81 = 33.4934$, $\Omega_+ = 5.7874$ rad/s. The project computes $M_0$ and $K$ as SymPy Hessians and solves the eigenproblem with `scipy.linalg.eigh(K, M0)`.
 
 **Chaos.** At large amplitude the double pendulum is chaotic: two trajectories that start $10^{-8}$ rad apart separate exponentially, $\delta(t)\sim\delta_0 e^{\lambda_L t}$, until the separation saturates at the size of the accessible region. The exponent $\lambda_L$ is the **Lyapunov exponent**. There is no closed-form solution to find; the statement is numerical. The project integrates two such trajectories from $\theta_1 = \theta_2 = 2$ rad at rest, plots $\log\delta$ against $t$, and fits the slope: the estimate is about $1.2\ \mathrm{s^{-1}}$ for $m = \ell = 1$, meaning the trajectories lose one decimal digit of agreement every $\ln 10/1.2 \approx 1.9$ s. After 30 s, $10^{-8}$ has become order 1. A snapshot grid in the project shows the two pendulums agreeing, then not.
+
+### Example 4.5: Pendulum with a horizontally oscillating support
+
+The pivot of a pendulum (mass $m$, length $\ell$) is driven along the $x$-axis: $x_p(t) = a\cos\gamma t$. **DOF:** 1 (the pivot's motion is imposed, not free). **Coordinate:** $\theta$. **Position:** $x = a\cos\gamma t + \ell\sin\theta$, $y = -\ell\cos\theta$. **Velocity:** $\dot x = -a\gamma\sin\gamma t + \ell\dot\theta\cos\theta$, $\dot y = \ell\dot\theta\sin\theta$.
+$$
+T = \tfrac12 m\left(\ell^2\dot\theta^2 - 2a\gamma\ell\,\dot\theta\sin\gamma t\cos\theta + a^2\gamma^2\sin^2\gamma t\right), \qquad V = -mg\ell\cos\theta.
+$$
+Here $T_2 = \frac12 m\ell^2\dot\theta^2$, $T_1 = -ma\gamma\ell\dot\theta\sin\gamma t\cos\theta$ (a rheonomic cross term), and $T_0 = \frac12 ma^2\gamma^2\sin^2\gamma t$, a pure function of $t$ that drops out of the equations (step 5 of the procedure).
+
+**Euler–Lagrange.** $\partial L/\partial\dot\theta = m\ell^2\dot\theta - ma\gamma\ell\sin\gamma t\cos\theta$. Time derivative:
+$$
+m\ell^2\ddot\theta - ma\gamma^2\ell\cos\gamma t\cos\theta + ma\gamma\ell\,\dot\theta\sin\gamma t\sin\theta.
+$$
+$\partial L/\partial\theta = ma\gamma\ell\,\dot\theta\sin\gamma t\sin\theta - mg\ell\sin\theta$. Subtract; the $\dot\theta\sin\gamma t\sin\theta$ terms cancel:
+$$
+\ddot\theta + \frac{g}{\ell}\sin\theta = \frac{a\gamma^2}{\ell}\cos\gamma t\,\cos\theta. \tag{4.11}
+$$
+**Interpretation.** $-\ddot x_p = a\gamma^2\cos\gamma t$ is the pivot's acceleration reversed. In the pivot's frame there is an effective horizontal gravity $-\ddot x_p$, and (4.11) is the pendulum equation with total effective gravity $(−\ddot x_p, -g)$ projected onto the tangent direction. **Limit:** $a = 0$ gives (4.1). ✓ The drive multiplies $\cos\theta$, a state-dependent coefficient, which is what "parametric" means; at small angles $\cos\theta\approx1$ and (4.11) is an ordinary driven oscillator, resonant at $\gamma = \omega_0$. If instead the pivot is shaken **vertically**, the drive multiplies $\sin\theta$, the linearization is $\ddot\theta + (\omega_0^2 - (a\gamma^2/\ell)\cos\gamma t)\theta = 0$, the **Mathieu equation**, and its stability chart contains Kapitza's result that fast vertical shaking stabilizes the inverted pendulum. Exercise C2 derives that equation and tests Kapitza's criterion numerically. The project checks (4.11) against SymPy.
+
+### Example 4.6: Block on a sliding wedge
+
+A wedge of mass $M$ and angle $\alpha$ sits on a frictionless floor. A block of mass $m$ slides without friction down its incline. **DOF:** wedge in 1D ($1$), block on the incline relative to the wedge ($1$): $n = 2$. **Coordinates:** $X$, the wedge's horizontal position; $s$, the block's distance down the incline from the wedge's top. **Positions:** wedge $(X, 0)$; block $(X + s\cos\alpha,\; h - s\sin\alpha)$ with $h$ the wedge height. **Velocities:** $\dot X$; block $(\dot X + \dot s\cos\alpha, -\dot s\sin\alpha)$.
+$$
+T = \tfrac12 M\dot X^2 + \tfrac12 m\left[(\dot X + \dot s\cos\alpha)^2 + \dot s^2\sin^2\alpha\right] = \tfrac12(M + m)\dot X^2 + m\cos\alpha\,\dot X\dot s + \tfrac12 m\dot s^2,
+$$
+$$
+V = mg(h - s\sin\alpha) = -mgs\sin\alpha + \text{const}.
+$$
+**Mass matrix:** $\begin{pmatrix}M + m & m\cos\alpha\\ m\cos\alpha & m\end{pmatrix}$, determinant $m(M + m) - m^2\cos^2\alpha = m(M + m\sin^2\alpha) > 0$. (Exercise A4 writes it as $J^\top\mathcal{M}J$.)
+
+**Euler–Lagrange.** $X$ is cyclic ($L$ does not contain $X$), so
+$$
+p_X = (M + m)\dot X + m\cos\alpha\,\dot s = \text{const}, \tag{4.12}
+$$
+which is conservation of total horizontal momentum (the floor pushes only vertically). Differentiating, $(M + m)\ddot X + m\cos\alpha\,\ddot s = 0$. For $s$: $\frac{d}{dt}(m\dot s + m\cos\alpha\,\dot X) = mg\sin\alpha$, i.e. $\ddot s + \cos\alpha\,\ddot X = g\sin\alpha$. Substitute $\ddot X = -\frac{m\cos\alpha}{M + m}\ddot s$:
+$$
+\ddot s\left(1 - \frac{m\cos^2\alpha}{M + m}\right) = g\sin\alpha \quad\Longrightarrow\quad \ddot s = \frac{(M + m)\,g\sin\alpha}{M + m\sin^2\alpha}, \qquad \ddot X = -\frac{m\,g\sin\alpha\cos\alpha}{M + m\sin^2\alpha}. \tag{4.13}
+$$
+**Limits:** $M\to\infty$: $\ddot s\to g\sin\alpha$, $\ddot X\to0$, the fixed incline. ✓ $\alpha\to\pi/2$: $\ddot s\to g$ (free fall beside a wall that is not pushed). ✓ $\alpha\to0$: nothing moves. ✓ Note $\ddot s > g\sin\alpha$ when the wedge can move: the incline retreats from under the block. **Numbers** ($M = 4$ kg, $m = 1$ kg, $\alpha = 30°$): $\ddot s = 5\times9.81\times0.5/(4 + 0.25) = 5.7706\ \mathrm{m/s^2}$, $\ddot X = -9.81\times0.5\times0.86603/4.25 = -0.9995\ \mathrm{m/s^2}$. Both constant: the motion is uniformly accelerated, and the project checks that the integrated $s(t)$ is exactly quadratic, that (4.12) holds, and that energy is conserved.
+
+### Example 4.7: The spherical pendulum (CM-5 preview)
+
+A bob of mass $m$ on a rigid massless rod of length $\ell$, free to swing in any direction. **DOF:** $3 - 1 = 2$. **Coordinates:** polar angle $\theta$ from the downward vertical and azimuth $\phi$. **Position:** $\mathbf{r} = \ell(\sin\theta\cos\phi,\ \sin\theta\sin\phi,\ -\cos\theta)$. **Velocity:** $\dot{\mathbf{r}} = \ell\dot\theta\,\hat{\boldsymbol\theta} + \ell\sin\theta\,\dot\phi\,\hat{\boldsymbol\phi}$ with orthogonal unit vectors, so
+$$
+T = \tfrac12 m\ell^2\left(\dot\theta^2 + \sin^2\theta\,\dot\phi^2\right), \qquad V = -mg\ell\cos\theta, \qquad L = \tfrac12 m\ell^2(\dot\theta^2 + \sin^2\theta\,\dot\phi^2) + mg\ell\cos\theta. \tag{4.14}
+$$
+**Mass matrix:** $m\ell^2\operatorname{diag}(1, \sin^2\theta)$: degenerate at $\theta = 0, \pi$, where $\phi$ is undefined. These coordinates are good everywhere else.
+
+**Euler–Lagrange.** $\phi$ is cyclic:
+$$
+p_\phi = m\ell^2\sin^2\theta\,\dot\phi = \text{const}, \tag{4.15}
+$$
+the vertical component of angular momentum. For $\theta$: $m\ell^2\ddot\theta = m\ell^2\sin\theta\cos\theta\,\dot\phi^2 - mg\ell\sin\theta$.
+
+**Reduction to one degree of freedom.** Eliminate $\dot\phi$ using (4.15), $\dot\phi = p_\phi/(m\ell^2\sin^2\theta)$:
+$$
+m\ell^2\ddot\theta = \frac{p_\phi^2\cos\theta}{m\ell^2\sin^3\theta} - mg\ell\sin\theta = -\frac{d}{d\theta}V_{\text{eff}}(\theta), \qquad V_{\text{eff}}(\theta) = \frac{p_\phi^2}{2m\ell^2\sin^2\theta} - mg\ell\cos\theta. \tag{4.16}
+$$
+(Check: $\frac{d}{d\theta}\frac{p_\phi^2}{2m\ell^2\sin^2\theta} = -\frac{p_\phi^2\cos\theta}{m\ell^2\sin^3\theta}$. ✓) The $\theta$-motion is a one-dimensional problem in the effective potential (4.16), whose first term, the **centrifugal barrier**, blows up at $\theta\to0$: a bob with any angular momentum can never pass through the bottom. The energy $E = \frac12 m\ell^2\dot\theta^2 + V_{\text{eff}}$ is conserved and equals the true $T + V$ here (scleronomic constraint, so $h = E$). This is exactly the reduction CM-5 performs for a planet: conserve angular momentum, fold it into an effective potential, solve a one-dimensional problem.
+
+**Conical pendulum.** $V_{\text{eff}}'(\theta_0) = 0$ gives $\frac{p_\phi^2\cos\theta_0}{m\ell^2\sin^3\theta_0} = mg\ell\sin\theta_0$, i.e. with (4.15), $\dot\phi_0^2 = \dfrac{g}{\ell\cos\theta_0}$: the bob circles at constant $\theta_0$ and constant rate. Exercise B6 shows the small oscillations of $\theta$ about $\theta_0$ have frequency $\Omega = \dot\phi_0\sqrt{1 + 3\cos^2\theta_0}$, which is between $\dot\phi_0$ and $2\dot\phi_0$, so the orbit does not close in general: it precesses. The project checks (4.15), energy conservation, the conical solution, and this frequency.
+
+**A trap, flagged here and again in §8.** Do not substitute (4.15) into $L$ and vary the result. $\frac12 m\ell^2\sin^2\theta\,\dot\phi^2$ becomes $+\frac{p_\phi^2}{2m\ell^2\sin^2\theta}$ *in $L$*, where it acts like $-V$: the centrifugal term comes out with the wrong sign. Substitute into the **equation of motion** (or into $E$), as done above. The object you may legitimately substitute into is the Routhian $L - p_\phi\dot\phi$, which CM-8 introduces alongside the Hamiltonian.
+
+### Example 4.8: Charged particle in electric and magnetic fields (CM-2 recap, with the momentum highlighted)
+
+Charge $q_e$, mass $m$, in fields given by potentials $\Phi(\mathbf{r}, t)$ and $\mathbf{A}(\mathbf{r}, t)$ with $\mathbf{E} = -\nabla\Phi - \partial_t\mathbf{A}$, $\mathbf{B} = \nabla\times\mathbf{A}$. No constraints; coordinates $x_1, x_2, x_3$. CM-2 showed that
+$$
+L = \tfrac12 m|\dot{\mathbf{r}}|^2 - q_e\Phi + q_e\,\dot{\mathbf{r}}\cdot\mathbf{A} \tag{4.17}
+$$
+reproduces the Lorentz force. Here is the computation again, because the generalized momentum is the point.
+
+**Generalized momentum:** $p_i = \partial L/\partial\dot x_i = m\dot x_i + q_eA_i$, i.e.
+$$
+\mathbf{p} = m\mathbf{v} + q_e\mathbf{A}. \tag{4.18}
+$$
+This is **not** $m\mathbf{v}$. It is what is conserved when a coordinate is cyclic, it is what becomes $-i\hbar\nabla$ in QM-2, and confusing it with $m\mathbf{v}$ is the single most common error in this topic.
+
+**Euler–Lagrange.** $\frac{d}{dt}(m\dot x_i + q_eA_i) = \partial L/\partial x_i = -q_e\partial_i\Phi + q_e\sum_j\dot x_j\partial_iA_j$. Along the motion $\frac{dA_i}{dt} = \partial_tA_i + \sum_j\dot x_j\partial_jA_i$. So
+$$
+m\ddot x_i = -q_e\partial_i\Phi - q_e\partial_tA_i + q_e\sum_j\dot x_j\left(\partial_iA_j - \partial_jA_i\right) = q_eE_i + q_e\,(\dot{\mathbf{r}}\times\mathbf{B})_i,
+$$
+using the identity $(\mathbf{v}\times(\nabla\times\mathbf{A}))_i = \sum_j v_j\partial_iA_j - \sum_j v_j\partial_jA_i$ (EM-1). ∎ The velocity-dependent potential of §3.5 is $U = q_e\Phi - q_e\dot{\mathbf{r}}\cdot\mathbf{A}$.
+
+**Worked case.** Uniform $\mathbf{B} = B\hat{\mathbf{z}}$, $\Phi = 0$, in the **Landau gauge** $\mathbf{A} = (0, Bx, 0)$ (check: $\nabla\times\mathbf{A} = \partial_x A_y\,\hat{\mathbf{z}} = B\hat{\mathbf{z}}$). Then $L = \frac12 m(\dot x^2 + \dot y^2 + \dot z^2) + q_eBx\dot y$. Both $y$ and $z$ are cyclic: $p_y = m\dot y + q_eBx$ and $p_z = m\dot z$ are conserved. The $x$ equation: $m\ddot x = q_eB\dot y$. Combine with $\dot y = (p_y - q_eBx)/m$: $m\ddot x = \frac{q_eB}{m}(p_y - q_eBx)$, a harmonic oscillator about $x_c = p_y/(q_eB)$ with frequency $\omega_c = q_eB/m$, the **cyclotron frequency**. The project integrates this with $q_e = m = 1$, $B = 2$, $\mathbf{v}_0 = (1, 0, 0)$ and asserts $p_y$ is conserved while $m\dot y$ is not, that the orbit radius is $mv/(q_eB) = 0.5$, and that the period is $2\pi m/(q_eB) = \pi$.
+
+### Example 4.9: Non-inertial frames from the Lagrangian
+
+A particle of mass $m$ in a potential $V$, described by an observer in a frame rotating with angular velocity $\boldsymbol\omega(t)$ about the origin. Taylor ch. 9 derives the fictitious forces by differentiating vectors in a rotating basis twice. The Lagrangian route is shorter and does the bookkeeping automatically.
+
+**Setup.** Let $\mathbf{r}$ be the inertial position and $\mathbf{r}'$ the same vector's components in the rotating frame: $\mathbf{r} = \mathcal{R}(t)\mathbf{r}'$ with $\mathcal{R}(t)$ a rotation matrix ($\mathcal{R}^\top\mathcal{R} = I$). The rotating observer measures $\mathbf{r}'$, $\dot{\mathbf{r}}'$, $\ddot{\mathbf{r}}'$.
+
+▶ **Try it first.** Differentiate $\mathcal{R}^\top\mathcal{R} = I$ to show $\mathcal{R}^\top\dot{\mathcal{R}}$ is antisymmetric. An antisymmetric $3\times3$ matrix acts as a cross product with some vector; call it $\boldsymbol\omega$. Use this to express the inertial velocity in rotating components, then write $L$ and turn the crank.
+
+**Derivation.**
+
+1. **Angular velocity.** From $\mathcal{R}^\top\mathcal{R} = I$: $\dot{\mathcal{R}}^\top\mathcal{R} + \mathcal{R}^\top\dot{\mathcal{R}} = 0$, so $W := \mathcal{R}^\top\dot{\mathcal{R}}$ satisfies $W^\top = -W$. Every antisymmetric $3\times3$ matrix has the form $W\mathbf{u} = \boldsymbol\omega\times\mathbf{u}$ for a unique vector $\boldsymbol\omega$ (its three independent entries), which **defines** the angular velocity, in rotating-frame components. (LA-12's appendix on $SO(3)$ is this fact in general.)
+
+2. **Inertial velocity.** $\dot{\mathbf{r}} = \dot{\mathcal{R}}\mathbf{r}' + \mathcal{R}\dot{\mathbf{r}}' = \mathcal{R}\left(\mathcal{R}^\top\dot{\mathcal{R}}\,\mathbf{r}' + \dot{\mathbf{r}}'\right) = \mathcal{R}\left(\dot{\mathbf{r}}' + \boldsymbol\omega\times\mathbf{r}'\right)$. Rotations preserve lengths, so
+   $$|\dot{\mathbf{r}}|^2 = |\dot{\mathbf{r}}' + \boldsymbol\omega\times\mathbf{r}'|^2.$$
+
+3. **The Lagrangian in rotating coordinates.** $V$ is a scalar, so $V(\mathbf{r}) = V(\mathcal{R}\mathbf{r}') =: V'(\mathbf{r}', t)$. Then
+   $$L = \tfrac12 m|\dot{\mathbf{r}}' + \boldsymbol\omega\times\mathbf{r}'|^2 - V' = \tfrac12 m|\dot{\mathbf{r}}'|^2 + m\,\dot{\mathbf{r}}'\cdot(\boldsymbol\omega\times\mathbf{r}') + \tfrac12 m|\boldsymbol\omega\times\mathbf{r}'|^2 - V'. \tag{4.19}$$
+   This is $T_2 + T_1 + T_0 - V$ in the notation of §3.6: the rotating coordinates are a rheonomic change of variables, and $T_1$ (the Coriolis term) and $T_0$ (the centrifugal term) are the $N_i$ and $T_0$ of (3.13).
+
+4. **Momentum.** $\mathbf{p}' = \partial L/\partial\dot{\mathbf{r}}' = m\dot{\mathbf{r}}' + m\boldsymbol\omega\times\mathbf{r}'$ (this is $\mathcal{R}^\top$ applied to the inertial momentum). Its time derivative, keeping $\dot{\boldsymbol\omega}$:
+   $$\frac{d\mathbf{p}'}{dt} = m\ddot{\mathbf{r}}' + m\dot{\boldsymbol\omega}\times\mathbf{r}' + m\boldsymbol\omega\times\dot{\mathbf{r}}'.$$
+
+5. **Position derivative.** Two vector-calculus facts. First, $\dot{\mathbf{r}}'\cdot(\boldsymbol\omega\times\mathbf{r}') = \mathbf{r}'\cdot(\dot{\mathbf{r}}'\times\boldsymbol\omega)$ (cyclic permutation of the triple product), whose gradient with respect to $\mathbf{r}'$ (holding $\dot{\mathbf{r}}'$ fixed) is $\dot{\mathbf{r}}'\times\boldsymbol\omega$. Second, $|\boldsymbol\omega\times\mathbf{r}'|^2 = \omega^2|\mathbf{r}'|^2 - (\boldsymbol\omega\cdot\mathbf{r}')^2$, whose gradient is $2\omega^2\mathbf{r}' - 2(\boldsymbol\omega\cdot\mathbf{r}')\boldsymbol\omega = -2\,\boldsymbol\omega\times(\boldsymbol\omega\times\mathbf{r}')$, by the BAC–CAB identity $\boldsymbol\omega\times(\boldsymbol\omega\times\mathbf{r}') = (\boldsymbol\omega\cdot\mathbf{r}')\boldsymbol\omega - \omega^2\mathbf{r}'$. So
+   $$\frac{\partial L}{\partial\mathbf{r}'} = m\,\dot{\mathbf{r}}'\times\boldsymbol\omega - m\,\boldsymbol\omega\times(\boldsymbol\omega\times\mathbf{r}') - \nabla' V'.$$
+
+6. **Assemble** $d\mathbf{p}'/dt = \partial L/\partial\mathbf{r}'$ and use $\dot{\mathbf{r}}'\times\boldsymbol\omega = -\boldsymbol\omega\times\dot{\mathbf{r}}'$:
+   $$\boxed{\;m\ddot{\mathbf{r}}' = -\nabla'V' \;\underbrace{-\;2m\,\boldsymbol\omega\times\dot{\mathbf{r}}'}_{\text{Coriolis}}\;\underbrace{-\;m\,\boldsymbol\omega\times(\boldsymbol\omega\times\mathbf{r}')}_{\text{centrifugal}}\;\underbrace{-\;m\,\dot{\boldsymbol\omega}\times\mathbf{r}'}_{\text{Euler}}\;} \tag{4.20}$$
+   ∎
+
+■ **What just happened.** The three fictitious forces fell out of the Euler–Lagrange equation of (4.19): the Coriolis force from the cross term $T_1$ (half of it from $d\mathbf{p}'/dt$, half from $\partial L/\partial\mathbf{r}'$, which is why the factor is 2), the centrifugal force from $T_0$, and the Euler force from differentiating $\boldsymbol\omega$ inside $\mathbf{p}'$. No basis vectors were differentiated. If you set $\dot{\boldsymbol\omega} = 0$ at step 4 you lose the Euler term silently, which is the §8 warning. Example 4.3 is the special case of (4.19) with $\boldsymbol\omega = \omega\hat{\mathbf{z}}$ constant and $\mathbf{r}'$ confined to a hoop: its $T_0 = \frac12 mR^2\omega^2\sin^2\theta$ is exactly $\frac12 m|\boldsymbol\omega\times\mathbf{r}'|^2$, and the effective potential (4.7) is $V - T_0$, the centrifugal potential. The project integrates a projectile from (4.19) with $\boldsymbol\omega = \omega\hat{\mathbf{z}}$ and $V = mgz$, integrates the same projectile in the inertial frame (a parabola), rotates the inertial solution into the rotating frame with $\mathcal{R}(t)^\top$, and asserts the two agree to $10^{-8}$.
+
+### 4.10 When the Lagrangian method is the wrong tool
+
+Honest list. The method is built on three things: a configuration space with coordinates, forces that are either conservative or expressible as $Q_i$, and constraints that are ideal and holonomic. Break one and the method bends or breaks.
+
+- **Impulsive forces and collisions.** A collision is an infinite force for zero time. Lagrange's equations hold in the integrated form $\Delta p_i = \int Q_i\,dt$, but you still need an independent rule (coefficient of restitution, conservation of momentum) for what happens *during* the impulse, and that rule is Newtonian. Use momentum balance across the impact and the Lagrangian between impacts.
+- **Friction with an unknown normal force.** Sliding friction is $\mu|\mathbf{N}|$ along $-\mathbf{v}$, and $|\mathbf{N}|$ is a constraint force, which the simple method has thrown away. You can recover $\mathbf{N}$ as a multiplier (§3.8), then feed $\mu|\lambda\nabla f|$ back in as $Q_i^{\text{nc}}$, and solve the coupled system numerically; it works but it is Newton with extra steps. Also, the sign of friction depends on the direction of motion, so the equations change form at every turning point.
+- **Non-holonomic constraints.** For a velocity constraint $\sum_i a_{ki}(q)\dot q_i = 0$ that does not integrate, there is no surface and no generalized coordinates on it. The correct procedure is d'Alembert with the virtual displacements restricted by $\sum_i a_{ki}\delta q_i = 0$, which gives (3.18) with $a_{ki}$ in place of $\partial f_k/\partial q_i$ (Exercise C1 does the rolling disk). What does **not** work is substituting the constraint into $L$ and varying: that answers a different question (the "vakonomic" problem) and gives equations of motion that experiments contradict for rolling bodies. If you take one thing from this paragraph: a velocity constraint restricts $\delta q$, not $L$.
+- **Dissipation beyond linear drag.** Rayleigh's function handles forces linear in velocity. Quadratic drag, dry friction, hysteresis: compute $Q_i^{\text{nc}}$ from (3.6) directly, and expect no conserved quantity to help you.
+- **When Newton is faster.** One particle, Cartesian coordinates, no constraints: $\mathbf{F} = m\mathbf{a}$ is one line and $L$ is three. The method pays for itself exactly when there are constraints or curvilinear coordinates. Knowing when *not* to reach for it is part of knowing it.
+
+## 5. Why it matters and where it connects
+
+- **CM-4** starts from (3.12) and the observation in §3.5 that a cyclic coordinate has a conserved momentum, and proves Noether's theorem: every continuous symmetry of $L$ gives a conserved quantity. The energy function $h$ of (3.15) is its central example, and the distinction $h \ne T + V$ for the rotating hoop (Example 4.3) is a CM-4 exercise in disguise.
+- **CM-5** repeats the reduction of Example 4.7 for a planet: conserve $p_\phi$, fold it into $V_{\text{eff}}(r) = p_\phi^2/(2mr^2) + V(r)$, and the two-body problem becomes one-dimensional. The centrifugal barrier, the circular orbit as a minimum of $V_{\text{eff}}$, and the small-oscillation frequency about it (Exercise B6) all reappear with $\sin\theta \to r$.
+- **CM-6** takes $M_{ij}$ from (3.13) and $K_{ij} = \partial^2V/\partial q_i\partial q_j$ at an equilibrium and solves $K\mathbf{a} = \Omega^2M\mathbf{a}$ in general, which is Example 4.4's small-oscillation calculation with the spectral theorem (LA-8) doing the work. Positive definiteness of $M$ (§3.6, step 4) is what makes the generalized eigenproblem well posed.
+- **CM-7** writes the Lagrangian of a rigid body in Euler angles by the procedure of §3.10 and derives Euler's equations. The rotating-frame Lagrangian (4.19) is the bridge: a rigid body is a rotating frame with mass attached.
+- **CM-8** applies a Legendre transform to $L$ in the velocities, turning $h(q, \dot q)$ into $H(q, p)$. The generalized momenta (3.12), including $\mathbf{p} = m\mathbf{v} + q_e\mathbf{A}$ from (4.18), become the coordinates of phase space. The Routhian mentioned in Example 4.7 is a Legendre transform in some variables only.
+- **QM-2, QM-4**: canonical quantization replaces the generalized momentum (3.12), not $m\mathbf{v}$, by $-i\hbar\partial/\partial q$. For a charged particle that gives $(-i\hbar\nabla - q_e\mathbf{A})^2/2m$, which is why (4.18) matters. CM-8 → QM-4 is the formal route; the content starts here.
+- **EM-5, EM-8**: the gauge change $\mathbf{A}\to\mathbf{A} + \nabla\chi$, $\Phi\to\Phi - \partial_t\chi$ changes (4.17) by the total derivative $q_e\,d\chi/dt$, which does not change the equations of motion. That is the mechanical statement of gauge invariance.
+- **LA-5, LA-8, LA-12**: the multiplier derivation (§3.8, step 2) is $(W^\perp)^\perp = W$. The mass matrix is a Gram matrix $J^\top\mathcal{M}J$, positive definite exactly when the tangent vectors are independent. In LA-12's language $M$ is a Riemannian metric on configuration space, and the free motion ($V = 0$) follows its geodesics.
+- **ML-2**: the stationarity conditions of $\min f(x)$ subject to $g_k(x) = 0$ are $\nabla f = \sum_k\lambda_k\nabla g_k$: equation (3.18) with the kinetic terms removed (statics). The KKT matrix of equality-constrained quadratic programming is (3.21) with $M$ the Hessian. "The multiplier is the constraint force" and "the dual variable is the shadow price" are the same sentence in two dialects.
+- **For the engineering courses**: multibody dynamics software (the kind that simulates linkages and vehicles) integrates (3.21) with constraint stabilization, and vibration analysis is CM-6 applied to the $M$ and $K$ you learned to compute here.
+
+## 6. Exercises
+
+See [exercises.md](exercises.md). **A1–A5** are drills: counting degrees of freedom, classifying constraints, one generalized force, one mass matrix, one dissipation check. **B1–B8** are the module. B1 (the two chain-rule identities, verified on the rotating hoop), B2 (pendulum tension by multipliers, with the DAE code), B4 (the parabolic wire, which bifurcates differently from the hoop), and B7 (Rayleigh damping on the double pendulum) are essential; B3, B5, B6, B8 extend the worked examples. **C1–C3**: the rolling disk's non-holonomic constraint and the correct equations for it, Kapitza's inverted pendulum, and the adiabatic invariant of a pendulum whose length changes slowly.
+
+## 7. Coding project
+
+`project.py` builds a symbolic-to-numeric pipeline and uses it to check every claim in §4.
+
+1. **`lagrangian_to_eom(L, qs, t, Q=None, params=None)`.** Takes a SymPy Lagrangian in terms of `sp.Function` coordinates, forms the Euler–Lagrange expressions, reads off the mass matrix $M$ as the Jacobian of those expressions with respect to the accelerations (equation (3.14)), solves the linear system for $\ddot q$, and returns both the symbolic accelerations and a `rhs(t, y)` function ready for `scipy.integrate.solve_ivp`. The optional `Q` adds generalized forces (3.11). A companion `energy_function` builds $h$ from (3.15).
+2. **Simple pendulum**: the pipeline reproduces (4.1) symbolically.
+3. **Atwood machine**: the reduced Lagrangian gives (4.2); then `dae_accelerations` solves the KKT system (3.21) at every time step and the recorded $\lambda$ is asserted to equal $-23.544$ N. The constraint drift is measured.
+4. **Rotating hoop**: (4.6) checked symbolically; $h$ conserved and $T + V$ not; the period about $\theta^*$ at $\omega = 2\omega_0$ measured from zero crossings and compared with $0.7325$ s; the bifurcation diagram drawn from the analytic branches with integrated trajectories confirming stability on each one.
+5. **Double pendulum**: SymPy's accelerations are asserted equal to the hand-expanded (4.10); the small-oscillation eigenproblem is solved with `scipy.linalg.eigh(K, M0)` and gives $(2\mp\sqrt2)g/\ell$ with mode ratios $\pm\sqrt2$; two trajectories $10^{-8}$ apart are integrated, their separation plotted on a log scale, and the Lyapunov exponent fitted; a $3\times4$ grid of snapshots; energy conservation.
+6. **Oscillating support, sliding wedge, spherical pendulum, charged particle**: (4.11), (4.13), (4.15)–(4.16), (4.18) checked symbolically or by integration, with the conserved momenta and energies verified.
+7. **Rotating frame**: the equations of motion of (4.19) are asserted equal to (4.20) symbolically; a projectile is integrated in the rotating frame, the inertial parabola is rotated into that frame, and the two are overlaid and asserted to agree.
+8. **Rayleigh**: $dE/dt = -2\mathcal{F}$ verified on a damped pendulum.
+
+**Build it yourself first:** write `lagrangian_to_eom` before reading it. The key step is extracting $M$: differentiate each Euler–Lagrange expression with respect to each $\ddot q_j$. Then write `dae_accelerations(M, F, J, gamma)` as a single `np.linalg.solve` on the block matrix of (3.21). Compare with the file.
+
+**Your turn** (at the end of the script): a pendulum whose length changes slowly (adiabatic invariant, Exercise C3), a bead on a rotating parabolic wire (Exercise B4, numerically), and Rayleigh damping on the double pendulum (Exercise B7).
+
+## 8. Where you'll struggle
+
+- **Choosing generalized coordinates is a skill, and the only way to get it is about twenty problems.** No rule generates the right coordinates. Angles for things that pivot, distances along constraints for things that slide, center-of-mass plus relative coordinates for pairs. You will choose badly several times (a Cartesian coordinate for a pendulum bob, which produces a Lagrangian with $\sqrt{\ell^2 - x^2}$ in it) and the Lagrangian itself will tell you, by becoming ugly. Do all of §4 with the notes closed, then the B exercises, then Taylor's chapter 7 problems until it stops hurting.
+- **D'Alembert's principle is slippery, and "virtual" is the slippery word.** A virtual displacement is at frozen time. For a scleronomic constraint this makes no difference and you can be sloppy. For a rheonomic one (rotating hoop, oscillating pivot) the constraint force *does* do real work, the energy $T + V$ is not conserved, and students conclude the principle has failed. It has not: it says the constraint force does no *virtual* work, and the frozen time is exactly what excludes the real work done by the motor. If you find yourself writing "the hoop does work on the bead so d'Alembert does not apply," reread Definition 3.4 and Example 4.3's last paragraph.
+- **The multiplier's sign.** $\mathbf{F}^c = +\lambda\nabla f$. The sign of $\lambda$ depends on how you wrote $f$ ($x_1 + x_2 - \ell$ versus $\ell - x_1 - x_2$). Students compute $\lambda$ correctly and then report the constraint force pointing the wrong way because they never checked which way $\nabla f$ points. Before interpreting $\lambda$, compute $\nabla f$ at a concrete configuration and draw the arrow. Example 4.2 and Exercise B2 both come out with $\lambda < 0$ for this reason.
+- **Substituting a conserved momentum into $L$.** For the spherical pendulum, $p_\phi = m\ell^2\sin^2\theta\,\dot\phi$ is constant, and it is tempting to replace $\dot\phi$ in $L$ and vary the result. The centrifugal term then has the wrong sign. The reason: $L$ is a function of $(q, \dot q)$, and the variation that gives Lagrange's equations holds $\dot\phi$ independent of $\theta$; substituting makes $\dot\phi$ depend on $\theta$ and the variation is a different variation. Substitute into the equation of motion or into $h$ (Example 4.7), or learn the Routhian in CM-8.
+- **The $\dot q^2$ terms from a $q$-dependent mass matrix.** When $M_{ij}$ depends on $q$, $\frac{d}{dt}\frac{\partial L}{\partial\dot q_i}$ contains $\sum_{jk}\frac{\partial M_{ij}}{\partial q_k}\dot q_k\dot q_j$, and $\frac{\partial L}{\partial q_i}$ contains $\frac12\sum_{jk}\frac{\partial M_{jk}}{\partial q_i}\dot q_j\dot q_k$. These partially cancel (Example 4.4) but not completely, and the survivors ($\dot\theta_2^2\sin\Delta$ in (4.10a)) are the terms students drop. Expand $\frac{d}{dt}$ with the full chain rule every time; never write $\frac{d}{dt}(M\dot q) = M\ddot q$ unless $M$ is constant.
+- **The double pendulum's equations are long and you will make a typo.** Everyone does. (4.10) is right because SymPy says so, not because the author is careful. Use `lagrangian_to_eom` to check your hand derivation of every system with more than one coordinate, every time.
+- **$T_0$ is not "just a constant."** For the rotating hoop, $T_0 = \frac12mR^2\omega^2\sin^2\theta$ depends on $\theta$ and is the whole bifurcation. Students who learned "constants in $L$ do not matter" sometimes drop it. Only terms that depend on $t$ alone (or are additive constants) can be dropped.
+- **The rotating-frame derivation hides $\dot{\boldsymbol\omega}$.** If you assume $\boldsymbol\omega$ constant at step 4 of Example 4.9, the Euler force $-m\dot{\boldsymbol\omega}\times\mathbf{r}'$ never appears and you will not notice its absence. For Earth it is negligible; for a spinning-up centrifuge or a satellite reorienting itself it is not. Carry $\dot{\boldsymbol\omega}$ until the end and set it to zero last.
+- **Non-holonomic constraints look holonomic.** "$\dot x = R\dot\phi\cos\theta$" looks like something you can substitute. You cannot, unless it integrates (§3.2), and whether it integrates depends on whether $\theta$ is a variable or a constant. Exercise C1(d) shows the wrong equations you get by substituting. If you cannot write the constraint as $f(q, t) = 0$ with no dots, stop and use (3.18) with the velocity coefficients in place of $\nabla f$.
+
+## 9. Check yourself
+
+1. How many degrees of freedom does a planar double pendulum have? A rigid body? A bead on a rotating hoop? Why does "degrees of freedom" need qualification for a sphere rolling on a plane?
+2. State d'Alembert's principle in one sentence, using the word "virtual" correctly. Then say what a virtual displacement is *not*.
+3. Derive the identity (3.9) in four lines, naming the two chain-rule facts you use.
+4. Why do constraint forces disappear from Lagrange's equations in good generalized coordinates? Answer with a dot product.
+5. Write the mass matrix $M_{ij}$ as a Gram matrix. Why is it positive definite? When does it fail to be?
+6. Write the multiplier form of Lagrange's equations and say in one sentence what $\lambda_k\nabla f_k$ is. What determines the sign of $\lambda_k$?
+7. For the rotating hoop at $\omega = 2\omega_0$, where are the equilibria and which are stable? What is conserved, and why is it not $T + V$?
+8. Write the double pendulum's kinetic energy from memory. What is $\det M$ and why is it never zero?
+9. The spherical pendulum: what is $p_\phi$, what is $V_{\text{eff}}(\theta)$, and what mistake must you avoid in deriving it?
+10. What is the generalized momentum of a charged particle in a magnetic field, and why is it not $m\mathbf{v}$?
+11. From $L = \frac12m|\dot{\mathbf{r}}' + \boldsymbol\omega\times\mathbf{r}'|^2 - V$, which term produces the Coriolis force, and why does it come with a factor of 2?
+12. Give one system for which the Lagrangian method is the wrong tool, and say what to use instead.
+
+## 10. Pair with
+
+- **Taylor, *Classical Mechanics*, ch. 7** (§7.1–7.7, 7.9–7.10). The clearest undergraduate treatment; his examples overlap ours (Atwood, block on wedge, bead on hoop) with different coordinate choices, which is instructive. Read §7.4 for his proof of the equivalence with Newton, and the end-of-chapter problems for the twenty you need. **Ch. 9** derives the fictitious forces by the vector method; compare with Example 4.9.
+- **Goldstein, Poole & Safko, *Classical Mechanics*, ch. 1–2.** §1.3–1.4 is the canonical source for d'Alembert's principle and the derivation in our §3.4, with the same notation. §1.5 does the velocity-dependent potential of the Lorentz force. §2.4 does multipliers and the rolling-disk example of §3.2. Denser than Taylor and more honest about non-holonomic constraints.
+- **MIT 8.223 (Classical Mechanics II, IAP), lectures 1–6** on OCW. A fast, problem-driven pass through exactly this material by someone working at a board; good for seeing the procedure of §3.10 executed live on unfamiliar systems.
+- **Landau & Lifshitz, *Mechanics*, §1–§5 and the problems after §5.** Nine pages that derive Lagrange's equations from Galilean invariance alone, then five worked problems that are a stiffer version of our §4. Read after, not before, this module. §30 Problem 1 is Kapitza's pendulum (Exercise C2).
+- **Strogatz, *Nonlinear Dynamics and Chaos*, §3.4 (pitchfork bifurcations) and §6.5 (the bead on a rotating hoop).** If the bifurcation in Example 4.3 interested you, this is the general theory, and Strogatz uses our exact system as his example.

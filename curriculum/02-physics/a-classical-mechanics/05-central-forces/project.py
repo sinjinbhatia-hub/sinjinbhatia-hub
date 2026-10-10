@@ -34,7 +34,7 @@ T_START = time.perf_counter()
 # ## Part 0: Tools shared by every part
 #
 # The relative problem is a single particle of mass $\mu$ acted on by a central
-# force $\mathbf F = F(r)\,\hat{\mathbf r}$ (eq. (3.5) of the notes). We integrate
+# force $\mathbf F = F(r)\,\hat{\mathbf r}$ (eq. (3.4) of the notes). We integrate
 # $\ddot{\mathbf r} = F(r)\,\mathbf r/(\mu r)$ in Cartesian coordinates with
 # `solve_ivp` (DOP853, tight tolerances) and detect apsides with events on
 # $\mathbf r\cdot\dot{\mathbf r} = 0$: $r\dot r$ passes from negative to positive at
@@ -51,7 +51,7 @@ def kepler_accel(k, mu):
 
 
 def power_law_accel(k, mu, n):
-    """Acceleration for the attractive power law F(r) = -k r^n (notes §3.11)."""
+    """Acceleration for the attractive power law F(r) = -k r^n (notes §3.9)."""
     def accel(x, y):
         r = np.hypot(x, y)
         f_over_r = -(k / mu) * r ** (n - 1)
@@ -85,7 +85,7 @@ def integrate_orbit(r0, v0, accel, t_end, events=None, n_out=2000, rtol=1e-11, a
 
 
 def energy_and_ell(x, y, vx, vy, mu, k):
-    """E = mu v^2/2 - k/r and ell = mu (x vy - y vx), eqs. (3.7), (3.6)."""
+    """E = mu v^2/2 - k/r and ell = mu (x vy - y vx), eqs. (3.8), (3.5)."""
     r = np.hypot(x, y)
     E = 0.5 * mu * (vx**2 + vy**2) - k / r
     ell = mu * (x * vy - y * vx)
@@ -127,7 +127,7 @@ def unwrapped_angle_at_events(sol_, t_ev, y_ev):
 
 
 def kepler_period(a, mu, k):
-    """Kepler's third law (3.17): T = 2 pi sqrt(mu a^3 / k)."""
+    """Kepler's third law (3.16): T = 2 pi sqrt(mu a^3 / k)."""
     return 2.0 * np.pi * np.sqrt(mu * a**3 / k)
 
 
@@ -176,7 +176,7 @@ sol = solve_ivp(two_body_rhs, (0, 3 * T_pred), [*r1_0, *r2_0, *v1_0, *v2_0],
 x1, y1, x2, y2 = sol.y[:4]
 Rx = (m1 * x1 + m2 * x2) / M_tot
 Ry = (m1 * y1 + m2 * y2) / M_tot
-# (3.3): the centre of mass moves uniformly.
+# (3.4): the centre of mass moves uniformly.
 assert np.max(np.abs(Rx - (R0[0] + V0[0] * sol.t))) < 1e-9
 assert np.max(np.abs(Ry - (R0[1] + V0[1] * sol.t))) < 1e-9
 
@@ -208,7 +208,7 @@ axR.plot(xr, yr, lw=1, label="relative orbit $\\mathbf{r}_1-\\mathbf{r}_2$")
 phi_grid = np.linspace(0, 2 * np.pi, 400)
 r_grid = c_fit / (1 + e_fit * np.cos(phi_grid - phi_peri_fit))
 axR.plot(r_grid * np.cos(phi_grid), r_grid * np.sin(phi_grid), "r:", lw=2, label="fitted conic")
-axR.plot(0, 0, "ko", label="focus (body 2 as seen from body 1)")
+axR.plot(0, 0, "ko", label="focus = position of $m_2$")
 axR.set_aspect("equal"); axR.legend(fontsize=8); axR.grid(alpha=.3)
 axR.set_title(f"Relative orbit: e = {e_fit:.4f}, a = {a_fit:.4f}")
 fig.tight_layout(); fig.savefig(FIG / "two_body_direct.png", dpi=120); plt.close(fig)
@@ -218,7 +218,7 @@ fig.tight_layout(); fig.savefig(FIG / "two_body_direct.png", dpi=120); plt.close
 #
 # In Kepler units ($\mu = k = 1$) we launch ten orbits from perihelion with
 # random $a \in [0.3, 5]$ and random $e$, measure the period as the time between
-# successive perihelion events, and fit $\log T$ against $\log a$. Theorem 3.6
+# successive perihelion events, and fit $\log T$ against $\log a$. Theorem 3.7
 # says the slope is exactly $3/2$ and the intercept is $\log 2\pi$.
 
 # %%
@@ -305,12 +305,19 @@ for j, (E, name, col) in enumerate(zip(energies, names, ["C0", "C1", "C2", "C3"]
     Et, _ = energy_and_ell(s.y[0], s.y[1], s.y[2], s.y[3], mu, k)
     assert np.max(np.abs(Et - E)) < 1e-8
 fig.tight_layout(); fig.savefig(FIG / "effective_potential_orbits.png", dpi=120); plt.close(fig)
+# Example 4.2: the E = -0.3, ell = 1 orbit in Kepler units, constants fixed by E and ell
+E42 = -0.3
+e42 = ecc_from_E_ell(E42, ell, mu, k); c42 = ell**2 / (mu * k)
+a42 = -k / (2 * E42); b42 = a42 * np.sqrt(1 - e42**2)
+assert abs(a42 - c42 / (1 - e42**2)) < 1e-12
+print(f"Part 3, Ex 4.2: E={E42}, ell=1: e = {e42:.4f}, c = {c42:.4f}, r_p = {c42/(1+e42):.4f}, r_a = {c42/(1-e42):.4f}, "
+      f"a = {a42:.4f}, b = {b42:.4f}, T = {kepler_period(a42, mu, k):.3f}, v_p = {ell/(mu*c42/(1+e42)):.4f}, v_a = {ell/(mu*c42/(1-e42)):.4f}")
 print("Part 3: turning points from the quadratic match c/(1±e); energy conserved to 1e-8 on all four conics.")
 
 # %% [markdown]
 # ## Part 4: Power-law forces $F = -kr^n$: closed, precessing, unstable
 #
-# Theorem 3.8: a circular orbit is stable iff $n > -3$, and small radial
+# Theorem 3.9: a circular orbit is stable iff $n > -3$, and small radial
 # oscillations have $\omega_r/\omega_\phi = \sqrt{n+3}$, so the angle from one
 # perihelion to the next is $\Delta\phi = 2\pi/\sqrt{n+3}$. We launch from $r_0 = 1$
 # with the circular speed multiplied by $1 + \epsilon$ and measure $\Delta\phi$.
@@ -364,7 +371,7 @@ for ax, (n, title) in zip(axes, cases):
     ax.plot(0, 0, "k*", ms=8); ax.set_aspect("equal"); ax.grid(alpha=.3); ax.set_title(title, fontsize=9)
 fig.tight_layout(); fig.savefig(FIG / "power_law_orbits.png", dpi=120); plt.close(fig)
 
-# Theorem 3.8: omega_r/omega_phi = sqrt(n+3). Exact for n = -2 and n = 1 (closed orbits).
+# Theorem 3.9: omega_r/omega_phi = sqrt(n+3). Exact for n = -2 and n = 1 (closed orbits).
 assert abs(ratios[-2] - 1.0) < 1e-6, ratios[-2]
 assert abs(ratios[1] - 2.0) < 1e-6, ratios[1]
 # For other n the small-amplitude formula holds to O(eps^2).
@@ -380,7 +387,7 @@ for n in (-2, -1, 1, -2.1):
 # For $F = -k/r^2 - \lambda/r^3$ Binet's equation stays linear:
 # $u'' + \beta^2 u = \mu k/\ell^2$ with $\beta^2 = 1 - \mu\lambda/\ell^2$, so the
 # perihelion advances by exactly $\Delta = 2\pi(1/\beta - 1)$ per orbit, which is
-# $\pi\mu\lambda/\ell^2$ to first order (§3.12). We measure it from successive
+# $\pi\mu\lambda/\ell^2$ to first order (§3.10, eq. (3.22)). We measure it from successive
 # perihelion events. Then the general-relativistic formula
 # $\delta\phi = 6\pi GM/(c^2 a(1-e^2))$ is evaluated for Mercury.
 
@@ -420,7 +427,7 @@ ax.plot(0, 0, "k*", ms=9); ax.set_aspect("equal"); ax.grid(alpha=.3); ax.legend(
 ax.set_title(f"$F=-k/r^2-\\lambda/r^3$: perihelion advances {np.degrees(prec_exact):.2f}° per orbit")
 fig.tight_layout(); fig.savefig(FIG / "precession.png", dpi=120); plt.close(fig)
 
-# GR perihelion shift of Mercury (formula stated in §3.12, not derived here)
+# GR perihelion shift of Mercury (formula (3.23), stated in §3.10, not derived here)
 GM_sun = 1.32712440018e20           # m^3/s^2
 c_light = 2.99792458e8
 a_merc, e_merc, T_merc_days = 5.7909e10, 0.20563, 87.969
@@ -504,7 +511,7 @@ fig.tight_layout(); fig.savefig(FIG / "rutherford_mc.png", dpi=120); plt.close(f
 # %% [markdown]
 # ## Part 7: The Laplace–Runge–Lenz vector points at perihelion
 #
-# $\mathbf A = \mathbf p\times\mathbf L - \mu k\,\hat{\mathbf r}$ (§3.14). Along the
+# $\mathbf A = \mathbf p\times\mathbf L - \mu k\,\hat{\mathbf r}$ (§3.12, eq. (3.29)). Along the
 # raw two-body orbit of Part 1 we check that $\mathbf A$ is constant, that
 # $|\mathbf A| = \mu k e$, and that its direction is the direction of the
 # fitted perihelion.

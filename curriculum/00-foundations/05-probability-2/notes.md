@@ -500,3 +500,202 @@ The error decays like $1/\sqrt n$, and the constant depends on the skewness-like
 $$P(X \le k) \approx \Phi\!\left(\frac{k + \tfrac12 - np}{\sqrt{np(1-p)}}\right).$$
 For $n = 100$, $p = \tfrac12$, $k = 45$: exact $P(X \le 45) = 0.1841$; without correction $\Phi(-1) = 0.1587$; with correction $\Phi(-0.9) = 0.1841$. The project prints all three.
 
+### 3.12 Markov chains
+
+**Definition 3.36.** A sequence $X_0, X_1, X_2, \dots$ taking values in a finite **state space** $\{1, \dots, m\}$ is a (time-homogeneous) **Markov chain** with **transition matrix** $P$ if
+$$P(X_{t+1} = j \mid X_t = i, X_{t-1} = i_{t-1}, \dots, X_0 = i_0) = P(X_{t+1} = j \mid X_t = i) = P_{ij}$$
+for all $t$ and all histories. The first equality is the **Markov property**: given the present, the past is irrelevant. $P$ is $m\times m$, has nonnegative entries, and each row sums to 1 ($\sum_j P_{ij} = 1$: from state $i$ you must go somewhere). Such a matrix is called **row-stochastic**.
+
+**Convention (row vectors).** Write the distribution of $X_t$ as a row vector $\boldsymbol\pi_t = (P(X_t = 1), \dots, P(X_t = m))$. LA-7 wrote probability vectors as columns and used a *column*-stochastic matrix acting on the left, $\mathbf{p}_{t+1} = M\mathbf{p}_t$. The two conventions are transposes of each other: $M = P^\top$, $\mathbf{p}_t = \boldsymbol\pi_t^\top$. Probability texts (Blitzstein, Norris, Levin–Peres) use rows; we follow them here. Whenever you read $P_{ij}$, say "from $i$ to $j$."
+
+**Theorem 3.37 (Evolution).** $\boldsymbol\pi_{t+1} = \boldsymbol\pi_t P$, hence $\boldsymbol\pi_t = \boldsymbol\pi_0 P^t$.
+
+*Derivation.* Law of total probability, conditioning on $X_t$: $P(X_{t+1} = j) = \sum_i P(X_t = i)P(X_{t+1} = j \mid X_t = i) = \sum_i (\boldsymbol\pi_t)_i P_{ij} = (\boldsymbol\pi_t P)_j$. Iterate. ∎
+
+**Chapman–Kolmogorov.** Let $P^{(n)}_{ij} = P(X_{t+n} = j \mid X_t = i)$ be the $n$-step transition probability. Then $P^{(m+n)}_{ij} = \sum_k P^{(m)}_{ik}P^{(n)}_{kj}$, i.e., $P^{(m+n)} = P^{(m)}P^{(n)}$, and so $P^{(n)} = P^n$. *Derivation:* condition on the state at the intermediate time $t + m$, use the Markov property to drop the earlier history. ∎ The $n$-step probabilities are the entries of the matrix power: LA-7's $P^n$ via diagonalization is exactly what you need.
+
+**Classification (brief).** State $j$ is **accessible** from $i$ if $P^n_{ij} > 0$ for some $n$. The chain is **irreducible** if every state is accessible from every other. The **period** of state $i$ is $\gcd\{n \ge 1 : P^n_{ii} > 0\}$; the chain is **aperiodic** if every period is 1 (a single $P_{ii} > 0$ anywhere in an irreducible chain suffices). A state is **recurrent** if, starting there, the chain returns with probability 1, **transient** otherwise; in a finite irreducible chain every state is recurrent (stated; Blitzstein §11.2). A bipartite random walk, which alternates between two sets of states, has period 2 (exercise B8).
+
+**Definition 3.38.** A **stationary distribution** is a row vector $\boldsymbol\pi$ with $\pi_i \ge 0$, $\sum_i\pi_i = 1$, and
+$$\boldsymbol\pi P = \boldsymbol\pi. \tag{3.26}$$
+If $\boldsymbol\pi_0 = \boldsymbol\pi$ then $\boldsymbol\pi_t = \boldsymbol\pi$ forever. Equation (3.26) says $\boldsymbol\pi$ is a **left eigenvector of $P$ with eigenvalue 1**; transposing, $P^\top\boldsymbol\pi^\top = \boldsymbol\pi^\top$, an ordinary eigenvector of $P^\top$, which is how you compute it (LA-7 and the project).
+
+**Theorem 3.39 (Existence for finite chains).** Every finite row-stochastic $P$ has a stationary distribution.
+
+*Derivation (with one citation).* (i) $P\mathbf{1} = \mathbf{1}$ because rows sum to 1, so 1 is an eigenvalue of $P$ with right eigenvector $\mathbf{1}$. $P$ and $P^\top$ have the same eigenvalues (same characteristic polynomial, LA-6), so there is a nonzero row vector $\mathbf{v}$ with $\mathbf{v}P = \mathbf{v}$. (ii) No eigenvalue exceeds 1 in modulus: if $P\mathbf{x} = \lambda\mathbf{x}$, pick the index $i$ with $|x_i|$ largest; then $|\lambda||x_i| = |\sum_j P_{ij}x_j| \le \sum_j P_{ij}|x_j| \le |x_i|$, so $|\lambda| \le 1$. (iii) What remains is that $\mathbf{v}$ can be chosen with nonnegative entries. This is the **Perron–Frobenius theorem** (stated, not proved; Horn & Johnson ch. 8): a nonnegative matrix has its spectral radius as an eigenvalue with a nonnegative eigenvector, and if the matrix is irreducible that eigenvalue is simple and the eigenvector is strictly positive. Normalize $\mathbf{v}$ to sum to 1. ∎
+
+**Theorem 3.40 (Convergence).** If $P$ is irreducible and aperiodic, the stationary distribution $\boldsymbol\pi$ is unique, $\pi_i > 0$ for all $i$, and $\boldsymbol\pi_0P^t \to \boldsymbol\pi$ for every initial distribution $\boldsymbol\pi_0$. Moreover the long-run fraction of time spent in state $i$ converges to $\pi_i$ (the ergodic theorem for Markov chains, which is the law of large numbers that Markov built).
+
+*The two-state case, proved completely.* Let $P = \begin{pmatrix}1-a & a\\ b & 1-b\end{pmatrix}$ with $0 < a, b < 1$ (irreducible since $a, b > 0$; aperiodic since the diagonal is positive). Write $\boldsymbol\pi_t = (p_t, 1 - p_t)$.
+
+1. Evolution: $p_{t+1} = p_t(1 - a) + (1 - p_t)b = b + (1 - a - b)p_t$.
+2. Fixed point: $p^* = b + (1 - a - b)p^*$ gives $p^* = \dfrac{b}{a + b}$, so $\boldsymbol\pi = \left(\dfrac{b}{a+b}, \dfrac{a}{a+b}\right)$. Check (3.26): $\frac{b(1-a) + ab}{a+b} = \frac{b}{a+b}$. ✓
+3. Subtract: $p_{t+1} - p^* = (1 - a - b)(p_t - p^*)$, so $p_t - p^* = (1 - a - b)^t(p_0 - p^*)$.
+4. Since $0 < a, b < 1$, we have $-1 < 1 - a - b < 1$, so $(1-a-b)^t \to 0$ and $p_t \to p^*$ from any $p_0$. The rate is geometric with ratio $|\lambda_2|$, where $\lambda_2 = 1 - a - b$ is the second eigenvalue of $P$ (trace $= 2 - a - b = 1 + \lambda_2$). ∎
+
+*General case, sketched.* If $P$ is diagonalizable, $\boldsymbol\pi_0P^t = \sum_i c_i\lambda_i^t\mathbf{v}_i$ in the basis of left eigenvectors (LA-7). Irreducible + aperiodic is exactly the hypothesis under which Perron–Frobenius guarantees that $\lambda_1 = 1$ is simple and every other eigenvalue has $|\lambda_i| < 1$, so all terms but the first die and $\boldsymbol\pi_0P^t \to c_1\mathbf{v}_1 = \boldsymbol\pi$ (the constant $c_1 = 1$ because probabilities sum to 1 at every $t$ and $\mathbf{v}_1 = \boldsymbol\pi$ sums to 1). The error decays like $|\lambda_2|^t$; the **mixing time** is of order $1/\log(1/|\lambda_2|)$. The project measures this slope. For the non-diagonalizable case and the full proof, Levin & Peres, *Markov Chains and Mixing Times*, ch. 4.
+
+**Theorem 3.41 (Detailed balance ⇒ stationary).** If a distribution $\boldsymbol\pi$ satisfies
+$$\pi_iP_{ij} = \pi_jP_{ji} \quad\text{for all } i, j, \tag{3.27}$$
+then $\boldsymbol\pi$ is stationary. A chain with such a $\boldsymbol\pi$ is called **reversible**.
+
+*Derivation.* $(\boldsymbol\pi P)_j = \sum_i\pi_iP_{ij} = \sum_i\pi_jP_{ji} = \pi_j\sum_iP_{ji} = \pi_j$, using (3.27) and then that row $j$ of $P$ sums to 1. ∎
+
+■ **What just happened.** Detailed balance says the probability flow $i \to j$ equals the flow $j \to i$ for *every pair*. Stationarity only says total inflow equals total outflow at every state. Detailed balance is stronger, and false for some stationary chains (a chain that cycles $1\to2\to3\to1$ with high probability has uniform stationary distribution but net circulation; the project checks). Its power: (3.27) involves only *ratios* $\pi_j/\pi_i$. If you want to sample from a $\boldsymbol\pi$ known only up to a normalizing constant (a Bayesian posterior in ST-6, a Boltzmann distribution in SM-6), you can design $P$ to satisfy (3.27) without ever computing the constant. That is the Metropolis algorithm: propose a move, accept it with probability $\min(1, \pi_j/\pi_i)$, and (3.27) holds by construction (exercise B10 verifies). This theorem is the engine of all of Markov chain Monte Carlo.
+
+**Random walk on a graph.** Let $G$ be a connected undirected graph with vertex degrees $d_i$ and $|E|$ edges. The random walk moves from $i$ to a uniformly random neighbor: $P_{ij} = 1/d_i$ if $i \sim j$, else 0.
+
+▶ **Try it first.** Guess $\boldsymbol\pi$ (where does a random walker spend more time: a vertex with many roads or few?) and check detailed balance.
+
+**Derivation.** Try $\pi_i = d_i/(2|E|)$ (this sums to 1 since $\sum_i d_i = 2|E|$, each edge counted from both ends). For $i \sim j$: $\pi_iP_{ij} = \frac{d_i}{2|E|}\cdot\frac{1}{d_i} = \frac{1}{2|E|}$, and by the same computation $\pi_jP_{ji} = \frac{1}{2|E|}$. Equal. For $i \not\sim j$ both sides are 0. So (3.27) holds and by Theorem 3.41, $\boldsymbol\pi$ is stationary: **the stationary distribution is proportional to degree.** ∎ (If $G$ is bipartite the walk has period 2 and $\boldsymbol\pi_t$ does not converge, though $\boldsymbol\pi$ is still stationary; the lazy walk that stays put with probability $\tfrac12$ fixes this. Exercise B8.)
+
+**PageRank, in one paragraph.** The web is a directed graph; the random surfer follows a random out-link with probability $\alpha \approx 0.85$ and jumps to a uniformly random page with probability $1 - \alpha$. The transition matrix is $G = \alpha P + (1 - \alpha)\tfrac{1}{m}\mathbf{1}\mathbf{1}^\top$ (with dangling pages patched to jump always). The teleportation makes $G$ strictly positive, hence irreducible and aperiodic, so by Theorem 3.40 there is a unique stationary $\boldsymbol\pi$ and $\boldsymbol\pi_0G^t \to \boldsymbol\pi$ from any start. That $\boldsymbol\pi$ is the PageRank vector; it is computed by power iteration (LA-7), and the second eigenvalue of $G$ is at most $\alpha$, so about $\log(10^{-8})/\log(0.85) \approx 113$ iterations suffice for eight digits. A page's rank is the long-run fraction of time the surfer spends there: high if many high-rank pages link to it.
+
+### 3.13 Information theory: entropy and KL divergence
+
+**Surprise.** The **surprise** (or information content) of an outcome with probability $p$ is $-\log p$. Shannon's requirements: surprise should be a decreasing function of $p$; a certain event ($p = 1$) should carry none; and the surprise of two *independent* events should add. Since the probability of two independent events multiplies, additivity forces a logarithm: $s(pq) = s(p) + s(q)$ with $s$ continuous and decreasing has only the solutions $s(p) = -c\log p$ with $c > 0$ (stated; it is the Cauchy functional equation). The constant $c$ is the choice of base: $\log_2$ gives **bits**, $\ln$ gives **nats**; $1\text{ nat} = 1/\ln 2 \approx 1.443$ bits.
+
+**Definition 3.42 (Entropy).** For a discrete $X$ with PMF $p$,
+$$H(X) = \mathbb{E}[-\log p(X)] = -\sum_x p(x)\log p(x), \tag{3.28}$$
+with the convention $0\log 0 = 0$ (justified by $\lim_{p\to0^+}p\log p = 0$). $H$ depends only on the multiset of probabilities, not on the labels or values of $X$.
+
+**Theorem 3.43.** (a) $H(X) \ge 0$, with equality iff $X$ is constant. (b) If $X$ takes at most $m$ values, $H(X) \le \log m$, with equality iff $X$ is uniform on $m$ values.
+
+*Derivation.* (a) Each term $-p(x)\log p(x) \ge 0$ since $0 < p \le 1$; the sum is 0 iff every $p(x) \in \{0, 1\}$. (b) Jensen (Theorem 3.32) with the concave function $\log$ applied to the random variable $1/p(X)$:
+$$H(X) = \mathbb{E}\!\left[\log\frac{1}{p(X)}\right] \le \log\mathbb{E}\!\left[\frac{1}{p(X)}\right] = \log\sum_{x : p(x) > 0}p(x)\cdot\frac{1}{p(x)} = \log(\#\text{support}) \le \log m.$$
+Equality in Jensen (strictly concave $\log$) iff $1/p(X)$ is constant iff $p$ is uniform on its support; equality in the last step iff the support has all $m$ values. ∎ (Exercise C3 gives the Lagrange-multiplier proof instead.)
+
+**Entropy of a coin.** $h(p) := H(\mathrm{Bernoulli}(p)) = -p\log_2p - (1-p)\log_2(1-p)$ bits. In words: zero at $p = 0$ and $p = 1$ (no surprise), symmetric about $p = \tfrac12$, maximum of exactly 1 bit at $p = \tfrac12$, concave, and with *vertical* tangents at the endpoints ($h'(p) = \log_2\frac{1-p}{p} \to \pm\infty$). At $p = 0.1$, $h \approx 0.469$ bits: a 90/10 coin carries less than half the information of a fair one. The project plots it.
+
+**Joint and conditional entropy.** $H(X, Y) = -\sum_{x,y}p(x,y)\log p(x,y)$ is the entropy of the pair. The **conditional entropy** is the average, over $x$, of the entropy of the slice:
+$$H(Y \mid X) = \sum_xp_X(x)H(Y \mid X = x) = -\sum_{x,y}p(x,y)\log p(y\mid x).$$
+**Chain rule:** $H(X, Y) = H(X) + H(Y\mid X)$. *Derivation:* $\log p(x,y) = \log p_X(x) + \log p(y\mid x)$ by the chain rule for probabilities; multiply by $-p(x,y)$ and sum; the first term gives $-\sum_xp_X(x)\log p_X(x)$ by (3.1). ∎
+
+**Definition 3.44 (KL divergence / relative entropy).** For PMFs $p, q$ on the same set,
+$$D(p\,\|\,q) = \sum_xp(x)\log\frac{p(x)}{q(x)} = \mathbb{E}_p\!\left[\log\frac{p(X)}{q(X)}\right], \tag{3.29}$$
+with $0\log(0/q) = 0$ and $D = +\infty$ if some $p(x) > 0$ where $q(x) = 0$. In words: the expected *extra* surprise when you use $q$ to code outcomes that actually follow $p$.
+
+**Theorem 3.45 (Gibbs' inequality).** $D(p\,\|\,q) \ge 0$, with equality if and only if $p = q$.
+
+▶ **Try it first.** Write $-D$ as $\mathbb{E}_p[\log(q/p)]$ and apply Jensen with the concave $\log$. Watch what $\mathbb{E}_p[q(X)/p(X)]$ sums to.
+
+**Derivation.** Restrict to the support $A = \{x : p(x) > 0\}$ (terms outside contribute 0 to $D$; if $q$ vanishes somewhere on $A$ then $D = \infty > 0$ and we are done). Jensen for concave $\log$:
+$$-D(p\|q) = \sum_{x\in A}p(x)\log\frac{q(x)}{p(x)} = \mathbb{E}_p\!\left[\log\frac{q(X)}{p(X)}\right] \le \log\mathbb{E}_p\!\left[\frac{q(X)}{p(X)}\right] = \log\sum_{x\in A}q(x) \le \log 1 = 0.$$
+Equality requires equality in Jensen (so $q/p$ is constant on $A$, since $\log$ is strictly concave) *and* $\sum_{x\in A}q(x) = 1$ (so $q$ has no mass outside $A$). Constant ratio with both summing to 1 forces $q = p$. ∎
+
+■ **What just happened.** One application of Jensen gives the inequality on which maximum likelihood (ST-1), maximum entropy (SM-4), the EM algorithm (ML-6) and variational inference (ST-6, ML-10) all rest. Note what KL is **not**: it is not symmetric ($D(p\|q) \ne D(q\|p)$ in general; Example 4.7 has $0.511$ nats one way and $0.368$ the other) and it does not satisfy the triangle inequality, so it is not a distance. It is a *divergence*: zero iff equal, positive otherwise, and that is all.
+
+**Cross-entropy.** $H(p, q) := -\sum_xp(x)\log q(x) = \mathbb{E}_p[-\log q(X)]$, the average surprise when the world is $p$ and you believe $q$. Adding and subtracting $\log p$:
+$$H(p, q) = -\sum_xp\log p + \sum_xp\log\frac pq = H(p) + D(p\,\|\,q). \tag{3.30}$$
+So $H(p, q) \ge H(p)$: believing the wrong distribution always costs. In ML-3, $p$ is the data distribution (fixed) and $q_\theta$ is the model; minimizing cross-entropy over $\theta$ is minimizing $D(p\|q_\theta)$ because $H(p)$ is a constant. And with $p$ the empirical distribution of a training set, $H(p, q_\theta) = -\frac1n\sum_i\log q_\theta(x_i)$ is the negative average log-likelihood: **cross-entropy minimization is maximum likelihood** (ST-1), and the gap to the minimum possible loss is exactly $D(p\|q_\theta)$.
+
+**Mutual information.** $I(X; Y) := D(p_{X,Y}\,\|\,p_Xp_Y) = \sum_{x,y}p(x,y)\log\dfrac{p(x,y)}{p_X(x)p_Y(y)}$. By Gibbs, $I(X;Y) \ge 0$ with equality iff $p_{X,Y} = p_Xp_Y$, i.e., iff $X \perp Y$ (Theorem 3.4). Expanding the log: $I(X;Y) = H(X) + H(Y) - H(X,Y) = H(Y) - H(Y\mid X)$ (chain rule). The second form says: mutual information is the reduction in uncertainty about $Y$ from learning $X$, and it is never negative: **conditioning reduces entropy on average** (exercise B9). Unlike covariance, $I$ detects every kind of dependence, including $Y = X^2$.
+
+**Differential entropy.** For a density $f$, $h(X) := -\int f(x)\log f(x)\,dx$. Two warnings. It can be **negative**: $\mathrm{Uniform}(0, \tfrac12)$ has $f = 2$ and $h = -\log 2$. And it is not scale-invariant: $h(aX) = h(X) + \log|a|$ (change of variables). The reason is that $h$ is really "entropy relative to the Lebesgue measure $dx$," and $dx$ is not a probability distribution; differences and KL divergences between densities behave perfectly, and KL is scale-invariant. Do not read a negative $h$ as a bug (§8).
+
+**Entropy of a Gaussian.** For $X \sim \mathcal{N}(\mu, \sigma^2)$, $\log f(x) = -\tfrac12\log(2\pi\sigma^2) - \frac{(x-\mu)^2}{2\sigma^2}$, so
+$$h(X) = -\mathbb{E}[\log f(X)] = \tfrac12\log(2\pi\sigma^2) + \frac{\mathbb{E}[(X-\mu)^2]}{2\sigma^2} = \tfrac12\log(2\pi\sigma^2) + \tfrac12 = \tfrac12\log(2\pi e\,\sigma^2). \tag{3.31}$$
+For $\sigma = 1$: $1.4189$ nats $= 2.047$ bits. For $\mathbf{X}\sim\mathcal{N}(\boldsymbol\mu, \Sigma)$ in $\mathbb{R}^k$, the same computation with $\mathbb{E}[(\mathbf{X}-\boldsymbol\mu)^\top\Sigma^{-1}(\mathbf{X}-\boldsymbol\mu)] = \mathbb{E}[\|\mathbf{Z}\|^2] = k$ gives $h(\mathbf{X}) = \tfrac12\log\big((2\pi e)^k\det\Sigma\big)$.
+
+**Theorem 3.46 (The Gaussian maximizes entropy for fixed variance).** Among all densities $f$ on $\mathbb{R}$ with mean $\mu$ and variance $\sigma^2$, $h(f) \le \tfrac12\log(2\pi e\sigma^2)$, with equality iff $f$ is $\mathcal{N}(\mu, \sigma^2)$.
+
+▶ **Try it first.** Let $g$ be the $\mathcal{N}(\mu,\sigma^2)$ density. Expand $0 \le D(f\|g) = -h(f) - \int f\log g$. Compute $-\int f\log g$: notice it involves only the mean and variance of $f$.
+
+**Derivation.** Gibbs' inequality holds for densities with the same proof (replace sums by integrals). So
+$$0 \le D(f\,\|\,g) = \int f\log f - \int f\log g = -h(f) - \int f(x)\Big[-\tfrac12\log(2\pi\sigma^2) - \frac{(x-\mu)^2}{2\sigma^2}\Big]dx = -h(f) + \tfrac12\log(2\pi\sigma^2) + \frac{\sigma^2}{2\sigma^2},$$
+because $\int f(x)(x-\mu)^2dx = \sigma^2$ by the assumption on $f$. The right side is $-h(f) + h(g)$ by (3.31). Hence $h(f) \le h(g)$, with equality iff $D(f\|g) = 0$ iff $f = g$. ∎
+
+■ **What just happened.** $-\int f\log g$ depends on $f$ only through the constraints (mean and variance) because $\log g$ is a *quadratic*. That is the general principle: the maximum-entropy density under constraints $\mathbb{E}[T_j(X)] = c_j$ has $\log f$ linear in the $T_j$. Variance constraint ⇒ Gaussian. Mean constraint on $[0,\infty)$ ⇒ exponential (next). Energy constraint ⇒ Boltzmann.
+
+**The exponential maximizes entropy on $[0, \infty)$ for fixed mean.** Maximize $h(f) = -\int_0^\infty f\log f$ subject to $\int_0^\infty f = 1$ and $\int_0^\infty xf = \mu$. Lagrangian (F6, calculus of variations, with multipliers $\alpha, \beta$):
+$$\mathcal{L}[f] = -\int f\log f\,dx - \alpha\Big(\int f\,dx - 1\Big) - \beta\Big(\int xf\,dx - \mu\Big).$$
+Varying $f$ pointwise, the integrand's derivative with respect to $f(x)$ must vanish: $-\log f(x) - 1 - \alpha - \beta x = 0$, so $f(x) = e^{-1-\alpha}e^{-\beta x} \propto e^{-\beta x}$. Normalizing on $[0,\infty)$ and matching the mean gives $f(x) = \frac1\mu e^{-x/\mu}$, the $\mathrm{Exponential}(1/\mu)$ density, with $h = 1 + \log\mu$. (The KL argument of Theorem 3.46 with $g$ exponential confirms it is the maximum, not a saddle: $-\int f\log g = \log\mu + \mathbb{E}_f[X]/\mu = \log\mu + 1 = h(g)$.) **SM-4 is this calculation** with $x$ replaced by the energy $E_i$ of microstate $i$ and the sum over microstates: the maximum-entropy distribution with fixed mean energy is $p_i \propto e^{-\beta E_i}$, the Boltzmann distribution, and $\beta = 1/k_BT$.
+
+**KL between two Gaussians (1D).** Let $f_1 = \mathcal{N}(\mu_1, \sigma_1^2)$, $f_2 = \mathcal{N}(\mu_2, \sigma_2^2)$. Then $D(f_1\|f_2) = \mathbb{E}_1[\log f_1] - \mathbb{E}_1[\log f_2] = -h(f_1) - \mathbb{E}_1[\log f_2]$. Using $\mathbb{E}_1[(X - \mu_2)^2] = \sigma_1^2 + (\mu_1 - \mu_2)^2$ (expand around $\mu_1$):
+$$-\mathbb{E}_1[\log f_2] = \tfrac12\log(2\pi\sigma_2^2) + \frac{\sigma_1^2 + (\mu_1-\mu_2)^2}{2\sigma_2^2}, \qquad D(f_1\,\|\,f_2) = \log\frac{\sigma_2}{\sigma_1} + \frac{\sigma_1^2 + (\mu_1 - \mu_2)^2}{2\sigma_2^2} - \frac12. \tag{3.32}$$
+Check: $\mu_1 = \mu_2$, $\sigma_1 = \sigma_2$ gives $0 + \tfrac12 - \tfrac12 = 0$. ✓ The multivariate version, by the same route, is $D = \tfrac12\big[\mathrm{tr}(\Sigma_2^{-1}\Sigma_1) + (\boldsymbol\mu_2 - \boldsymbol\mu_1)^\top\Sigma_2^{-1}(\boldsymbol\mu_2 - \boldsymbol\mu_1) - k + \log\frac{\det\Sigma_2}{\det\Sigma_1}\big]$; it is the KL term in every VAE loss (ML-10).
+
+## 4. Worked examples
+
+### Example 4.1: A joint PMF table, end to end
+
+$X \in \{0, 1, 2\}$, $Y \in \{0, 1\}$, joint PMF:
+
+| $p(x,y)$ | $y = 0$ | $y = 1$ | $p_X(x)$ |
+|---|---|---|---|
+| $x = 0$ | 0.10 | 0.20 | **0.30** |
+| $x = 1$ | 0.20 | 0.20 | **0.40** |
+| $x = 2$ | 0.20 | 0.10 | **0.30** |
+| $p_Y(y)$ | **0.50** | **0.50** | 1 |
+
+*Marginals* (3.1): row sums and column sums, shown in bold.
+
+*Conditionals* (3.3): $p_{Y|X}(\cdot\mid 0) = (0.10, 0.20)/0.30 = (\tfrac13, \tfrac23)$; $p_{Y|X}(\cdot\mid 1) = (\tfrac12, \tfrac12)$; $p_{Y|X}(\cdot\mid 2) = (\tfrac23, \tfrac13)$. The slices have different shapes, so $X$ and $Y$ are dependent. Directly: $p(0,0) = 0.10 \ne p_X(0)p_Y(0) = 0.15$. One failing cell is enough.
+
+*Moments.* $\mathbb{E}[X] = 0(0.3) + 1(0.4) + 2(0.3) = 1.0$. $\mathbb{E}[X^2] = 0.4 + 4(0.3) = 1.6$, so $\mathrm{Var}(X) = 0.6$. $\mathbb{E}[Y] = 0.5$, $\mathrm{Var}(Y) = 0.25$. $\mathbb{E}[XY] = \sum xy\,p(x,y) = 1\cdot1\cdot0.20 + 2\cdot1\cdot0.10 = 0.40$ (only cells with $x, y$ both nonzero contribute). $\mathrm{Cov}(X,Y) = 0.40 - (1.0)(0.5) = -0.10$. $\rho = -0.10/\sqrt{0.6\cdot0.25} = -0.10/0.3873 = -0.258$. Negative: larger $X$ makes $Y = 1$ less likely, as the conditionals showed.
+
+*Conditional expectation.* $\mathbb{E}[Y\mid X = x] = p_{Y|X}(1\mid x)$: $(\tfrac23, \tfrac12, \tfrac13)$ for $x = 0, 1, 2$. Adam's law check: $0.3(\tfrac23) + 0.4(\tfrac12) + 0.3(\tfrac13) = 0.2 + 0.2 + 0.1 = 0.5 = \mathbb{E}[Y]$. ✓ Eve's law: $\mathrm{Var}(Y\mid X = x) = p(1-p)$ for $p = \tfrac23, \tfrac12, \tfrac13$: $(\tfrac29, \tfrac14, \tfrac29)$, average $0.3(\tfrac29) + 0.4(\tfrac14) + 0.3(\tfrac29) = 0.1333 + 0.1 = 0.2333$. $\mathrm{Var}(\mathbb{E}[Y\mid X]) = \mathbb{E}[g(X)^2] - 0.25 = 0.3(\tfrac49) + 0.4(\tfrac14) + 0.3(\tfrac19) - 0.25 = 0.1333 + 0.1 + 0.0333 - 0.25 = 0.0167$. Sum: $0.2333 + 0.0167 = 0.25 = \mathrm{Var}(Y)$. ✓ Only 6.7% of the variance of $Y$ is "explained" by $X$; the best linear predictor (3.23) has slope $-0.10/0.6 = -0.167$. The project reproduces every number.
+
+### Example 4.2: Box–Muller, with numbers
+
+The derivation is §3.3. Here is what the computer does. Given $u_1 = 0.5$, $u_2 = 0.25$: $R = \sqrt{-2\ln 0.5} = \sqrt{1.3863} = 1.1774$, $\Theta = 2\pi(0.25) = \pi/2$, so $(Z_1, Z_2) = (1.1774\cos\tfrac\pi2, 1.1774\sin\tfrac\pi2) = (0, 1.1774)$. Given $u_1 = 0.1$, $u_2 = 0.125$: $R = \sqrt{-2\ln0.1} = \sqrt{4.6052} = 2.1460$, $\Theta = \pi/4$, $(Z_1, Z_2) = (1.5174, 1.5174)$. Check the inverse map: $z_1^2 + z_2^2 = 2(1.5174)^2 = 4.605 = -2\ln 0.1$. ✓
+
+Why this and not "add twelve uniforms and subtract 6" (which has mean 0 and variance 1)? Because the sum of twelve uniforms is *approximately* normal by the CLT, with a hard cutoff at $\pm6$ and the wrong kurtosis; Box–Muller is *exactly* normal. The project draws $10^5$ pairs, compares the quantiles against `scipy.stats.norm.ppf` in a QQ plot (a straight line through the origin with slope 1), checks that $Z_1$ and $Z_2$ have sample correlation within $\pm 0.01$ of zero, and runs a Kolmogorov–Smirnov test.
+
+### Example 4.3: Sum of two independent Uniforms, by convolution
+
+$X, Y \sim \mathrm{Uniform}(0,1)$ independent, $S = X + Y$. By (3.7), $f_S(s) = \int f_X(x)f_Y(s - x)\,dx$. The integrand is 1 when both $0 \le x \le 1$ and $0 \le s - x \le 1$ (i.e., $s - 1 \le x \le s$), else 0. So $f_S(s)$ is the length of the interval $[\max(0, s-1), \min(1, s)]$:
+$$f_S(s) = \begin{cases} s & 0 \le s \le 1 \\ 2 - s & 1 \le s \le 2 \\ 0 & \text{otherwise.}\end{cases}$$
+A triangle. Checks: area $= 1$; $\mathbb{E}[S] = 1 = \tfrac12 + \tfrac12$; $\mathrm{Var}(S) = \tfrac1{12} + \tfrac1{12} = \tfrac16$ (Corollary 3.15 with zero covariance); $P(S \le \tfrac12) = \int_0^{1/2}s\,ds = \tfrac18 = 0.125$. The sum of three uniforms is piecewise quadratic (the Irwin–Hall distribution) and already visibly bell-shaped: the CLT begins at $n = 3$ for this distribution, which is why the $n = 2, 5$ panels in the project look so different for Uniform versus Exponential.
+
+### Example 4.4: The bivariate normal with $\Sigma = \begin{pmatrix}2 & 1\\1 & 2\end{pmatrix}$
+
+Take $\boldsymbol\mu = \mathbf{0}$. *Eigenstructure* (LA-8): $\det(\Sigma - \lambda I) = (2-\lambda)^2 - 1 = 0$ gives $\lambda_1 = 3$, $\lambda_2 = 1$, with eigenvectors $\mathbf{q}_1 = (1, 1)/\sqrt2$ and $\mathbf{q}_2 = (1, -1)/\sqrt2$. So the density's level curves are ellipses with long axis along the diagonal (semi-axis $\propto\sqrt3 = 1.732$) and short axis along the anti-diagonal (semi-axis $\propto 1$). $\det\Sigma = 3$, $\Sigma^{-1} = \tfrac13\begin{pmatrix}2 & -1\\ -1 & 2\end{pmatrix}$, and the peak density is $f(\mathbf 0) = 1/(2\pi\sqrt3) = 0.0919$.
+
+*Correlation:* $\rho = 1/\sqrt{2\cdot2} = 0.5$.
+
+*The 95% ellipse:* $(\mathbf{x}^\top\Sigma^{-1}\mathbf{x} \le \chi^2_{2,0.95} = 5.991)$ has semi-axes $\sqrt{5.991\cdot 3} = 4.24$ along $\mathbf{q}_1$ and $\sqrt{5.991} = 2.45$ along $\mathbf{q}_2$.
+
+*Mahalanobis distance:* for $\mathbf{x} = (1, 1)$: $d^2 = \tfrac13(2 - 1 - 1 + 2) = \tfrac23$. For $\mathbf{x} = (1, -1)$: $d^2 = \tfrac13(2 + 1 + 1 + 2) = 2$. Same Euclidean length $\sqrt2$, but $(1,-1)$ is three times as "far" in Mahalanobis terms, because it points along the short axis. $P(d^2 > 2) = e^{-1} = 0.368$ while $P(d^2 > \tfrac23) = e^{-1/3} = 0.717$ (since $d^2 \sim \chi^2_2 = \mathrm{Exponential}(\tfrac12)$).
+
+*Conditional of $X_1$ given $X_2 = 1$* by (3.19), with $\Sigma_{11} = 2$, $\Sigma_{12} = 1$, $\Sigma_{22} = 2$: mean $= 0 + 1\cdot\tfrac12\cdot(1 - 0) = 0.5$; variance $= 2 - 1\cdot\tfrac12\cdot1 = 1.5$. So $X_1\mid X_2 = 1 \sim \mathcal{N}(0.5, 1.5)$. Sanity: the conditional variance $1.5 = \sigma_1^2(1 - \rho^2) = 2(0.75)$ ✓, and the regression slope $\Sigma_{12}/\Sigma_{22} = 0.5 = \rho\sigma_1/\sigma_2$ ✓. The project slices $4\times10^5$ Cholesky samples at $|x_2 - 1| < 0.05$ and asserts the sample mean and variance of the slice match $0.5$ and $1.5$.
+
+*Cholesky factor:* $L = \begin{pmatrix}\sqrt2 & 0\\ 1/\sqrt2 & \sqrt{3/2}\end{pmatrix} = \begin{pmatrix}1.4142 & 0 \\ 0.7071 & 1.2247\end{pmatrix}$. Check $LL^\top = \begin{pmatrix}2 & 1\\1 & \tfrac12 + \tfrac32\end{pmatrix} = \Sigma$. ✓ To sample: $\mathbf{x} = L\mathbf{z}$, i.e., $x_1 = \sqrt2 z_1$, $x_2 = z_1/\sqrt2 + \sqrt{3/2}\,z_2$.
+
+### Example 4.5: Galton's heights (a statistics example)
+
+Model mid-parent height $P$ and adult child height $C$ as jointly Gaussian, both with mean $\mu = 68$ inches and standard deviation $\sigma = 2.5$ inches, correlation $\rho = 0.5$. (Galton's 1886 table of 928 children had the mid-parent SD smaller than the children's, because averaging two parents reduces variance, and his fitted slope was about $\tfrac23$. With equal SDs the slope *is* $\rho$; we use round numbers.)
+
+*The regression line* (3.19)/(3.23): $\mathbb{E}[C\mid P = p] = 68 + 0.5\,(p - 68)$. A mid-parent of $73$ inches (5 above the mean, $z = 2$) has children expected at $68 + 2.5 = 70.5$ inches ($z = 1$). Half the excess is gone: regression to the mean.
+
+*Conditional spread:* $\mathrm{Var}(C\mid P) = \sigma^2(1 - \rho^2) = 6.25\cdot0.75 = 4.6875$, SD $= 2.165$ inches, the same for every $p$. So $P(C > 73 \mid P = 73) = 1 - \Phi\big(\tfrac{73 - 70.5}{2.165}\big) = 1 - \Phi(1.155) = 0.124$: only about one child in eight out-grows a 73-inch mid-parent.
+
+*It is symmetric:* $\mathbb{E}[P\mid C = 73] = 68 + 0.5(73 - 68) = 70.5$ as well. Exceptionally tall children have, on average, less exceptional parents. If "regression to mediocrity" were a biological force acting forward in time, it could not also act backward. It is not a force; it is $\rho < 1$.
+
+*Eve's law:* $\mathrm{Var}(C) = \mathbb{E}[\mathrm{Var}(C\mid P)] + \mathrm{Var}(\mathbb{E}[C\mid P]) = 4.6875 + 0.25\cdot6.25 = 4.6875 + 1.5625 = 6.25$. ✓ The explained fraction is $\rho^2 = 0.25$: knowing the parents' height removes a quarter of the variance in the child's. The project simulates $10^5$ families and recovers the slope, the intercept, and the conditional mean of children of 73-inch parents.
+
+### Example 4.6: A three-state weather chain
+
+States (Sunny, Cloudy, Rainy), transition matrix
+$$P = \begin{pmatrix} 0.7 & 0.3 & 0 \\ 0.3 & 0.4 & 0.3 \\ 0 & 0.6 & 0.4\end{pmatrix}.$$
+Rows sum to 1. Irreducible ($S\leftrightarrow C\leftrightarrow R$) and aperiodic ($P_{SS} > 0$), so Theorem 3.40 applies.
+
+*Via the eigenvector.* Solve $\boldsymbol\pi P = \boldsymbol\pi$, i.e., $P^\top\boldsymbol\pi^\top = \boldsymbol\pi^\top$, for $\boldsymbol\pi = (s, c, r)$:
+- column S: $0.7s + 0.3c = s \Rightarrow c = s$;
+- column R: $0.3c + 0.4r = r \Rightarrow r = c/2$;
+- column C is then automatic (the three equations are dependent, as they must be since $\det(P - I) = 0$): $0.3s + 0.4c + 0.6r = 0.3s + 0.4s + 0.3s = s = c$. ✓
+Normalize $s + s + s/2 = 1$: $\boldsymbol\pi = (0.4, 0.4, 0.2)$.
+
+*Via detailed balance.* $S$ and $R$ never communicate directly, so the chain is a path, and (3.27) along the two edges gives $\pi_S(0.3) = \pi_C(0.3)$ and $\pi_C(0.3) = \pi_R(0.6)$: $\pi_S = \pi_C = 2\pi_R$. Same answer, with no linear algebra. Any chain whose transition graph is a tree is reversible for this reason.
+
+*Mixing.* $\mathrm{tr}P = 1.5 = 1 + \lambda_2 + \lambda_3$ and $\det P = 0.7(0.16 - 0.18) - 0.3(0.12) = -0.05 = \lambda_2\lambda_3$. So $\lambda_{2,3}$ solve $\lambda^2 - 0.5\lambda - 0.05 = 0$: $\lambda_2 = 0.5854$, $\lambda_3 = -0.0854$. Starting from a sunny day, $\boldsymbol\pi_1 = (0.7, 0.3, 0)$ and $\boldsymbol\pi_2 = (0.58, 0.33, 0.09)$; the $\ell^1$ distances to $\boldsymbol\pi$ are $0.6$ and $0.36$, ratio $0.6 \approx \lambda_2$. The project plots $\|\boldsymbol\pi_t - \boldsymbol\pi\|_1$ on a log scale and fits the slope to $\log\lambda_2 = -0.535$.
+
+### Example 4.7: KL divergences, both ways
+
+*Bernoulli.* $p = \mathrm{Bern}(0.5)$, $q = \mathrm{Bern}(0.9)$.
+$$D(p\|q) = 0.5\ln\frac{0.5}{0.9} + 0.5\ln\frac{0.5}{0.1} = 0.5\ln\frac{25}{9} = 0.5108\text{ nats} = 0.7370\text{ bits},$$
+$$D(q\|p) = 0.9\ln\frac{0.9}{0.5} + 0.1\ln\frac{0.1}{0.5} = 0.9(0.5878) + 0.1(-1.6094) = 0.3681\text{ nats} = 0.5310\text{ bits}.$$
+Not symmetric. Interpretation: believing the coin is 90/10 when it is fair costs more than the reverse, because under $p$ the outcome tails (probability 0.5) is one you assigned only 0.1 to (surprise $\ln 5$), while under $q$ the rarely-seen tails is the only outcome where $p$ is badly wrong.
+
+*Gaussians,* by (3.32). $D(\mathcal{N}(0,1)\,\|\,\mathcal{N}(1, 2^2)) = \ln\tfrac21 + \frac{1 + 1}{2\cdot4} - \tfrac12 = 0.6931 + 0.25 - 0.5 = 0.4431$ nats. $D(\mathcal{N}(1, 4)\,\|\,\mathcal{N}(0, 1)) = \ln\tfrac12 + \frac{4 + 1}{2\cdot1} - \tfrac12 = -0.6931 + 2.5 - 0.5 = 1.3069$ nats. The wide distribution sees the narrow one as very wrong (it puts almost no mass where the wide one lives); the narrow one sees the wide one as merely diffuse. The project verifies both closed forms by Monte Carlo: sample $X\sim f_1$, average $\log f_1(X) - \log f_2(X)$.
+

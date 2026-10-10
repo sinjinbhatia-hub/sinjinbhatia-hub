@@ -290,7 +290,7 @@ def synthetic_image(N=256):
 img = synthetic_image()
 U, s, Vt = np.linalg.svd(img, full_matrices=False)
 ranks = [1, 5, 20, 50]
-fig, axes = plt.subplots(1, len(ranks) + 1, figsize=(16, 3.6))
+fig, axes = plt.subplots(1, len(ranks) + 1, figsize=(16, 4.2))
 axes[0].imshow(img, cmap="gray", vmin=0, vmax=1); axes[0].set_title("original (rank %d)" % np.linalg.matrix_rank(img))
 for ax, k in zip(axes[1:], ranks):
     Ak = rank_k(U, s, Vt, k)
