@@ -340,7 +340,8 @@ The **parallelepiped** spanned by $\mathbf{v}_1, \dots, \mathbf{v}_n$ is $P(\mat
 **Theorem 3.17 (Volume and determinant).** Let $A$ be $n\times n$ and $T(\mathbf{x}) = A\mathbf{x}$.
 (a) $\operatorname{vol}P(\mathbf{v}_1, \dots, \mathbf{v}_n) = |\det(\mathbf{v}_1 \cdots \mathbf{v}_n)|$.
 (b) For every parallelepiped $P$, $\operatorname{vol}T(P) = |\det A|\operatorname{vol}P$.
-(c) For every bounded region $\Omega$ that has a volume, $\operatorname{vol}T(\Omega) = |\det A|\operatorname{vol}\Omega$. \tag{3.9}
+(c) For every bounded region $\Omega$ that has a volume,
+$$\operatorname{vol}T(\Omega) = |\det A|\operatorname{vol}\Omega. \tag{3.9}$$
 
 ▶ **Try it first.** For (a), run elimination on the **columns** of $V = (\mathbf{v}_1\cdots\mathbf{v}_n)$ using only swaps and "add a multiple of one column to another." Both operations leave $|\det V|$ alone (Theorems 3.11, 3.3, (D2)) and leave $\operatorname{vol}P$ alone (V2, V4). Where do you end up?
 

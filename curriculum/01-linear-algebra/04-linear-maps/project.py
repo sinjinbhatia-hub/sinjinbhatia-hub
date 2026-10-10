@@ -126,6 +126,10 @@ for M in (D_mono, D_fact):
     assert not np.allclose(np.linalg.matrix_power(M, 3), 0)
     assert np.allclose(np.linalg.matrix_power(M, 4), 0)
 assert np.allclose(np.linalg.matrix_power(D_mono, 3), np.array([[0, 0, 0, 6], [0] * 4, [0] * 4, [0] * 4]))
+assert np.allclose(np.linalg.matrix_power(D_mono, 2), [[0, 0, 2, 0], [0, 0, 0, 6], [0] * 4, [0] * 4])
+# Example 4.1 check of (3.3): p = 2 - x + 5x^3 has p' = -1 + 15x^2.
+assert np.allclose(D_mono @ [2, -1, 0, 5], [-1, 0, 15, 0])
+assert np.allclose(coords(np.array([2, -1, 0, 5.]), factorial), [2, -1, 0, 30])   # section 3.3 example
 print("D^4 = 0 on P_3 (nilpotent of index 4); D^3 has the single entry 6 in the monomial basis.")
 
 # Heatmaps of the two matrices: same operator, two bases.
@@ -218,6 +222,8 @@ assert np.allclose(A_rot_new, [[0, 1], [-1, 0]])
 # Second route: apply the definition directly in the new basis. Must agree.
 assert np.allclose(matrix_of_map(lambda u: A_rot @ u, list(P_new.T), list(P_new.T)), A_rot_new)
 assert np.linalg.det(P_new) < 0   # the new basis is left-handed: that is why the sign flipped
+assert np.allclose(P_new @ [3, 1], [4, 2])                           # P(3,1) is NOT the new coordinates
+assert np.allclose(P_new @ A_rot @ np.linalg.inv(P_new), A_rot_new)  # for this P the wrong order agrees by accident
 print("Example 4.2: P^{-1} A P =\n", A_rot_new.astype(int), " (det P = %g < 0 explains the apparent reversal)" % np.linalg.det(P_new))
 
 # Exercise B3: the symmetric matrix [[2,1],[1,2]] is diagonal in the same basis.
@@ -506,6 +512,100 @@ P_skew = np.array([[1, 0, 0], [0, 1, -1], [0, 1, 1.]])          # non-orthogonal
 Rz_skew = change_of_basis(P_skew, Rz)
 assert np.isclose(np.trace(Rz_skew), 1 + 2 * np.cos(th30))
 print("Your turn 3: R_z(30°) in the tilted basis has trace %.4f = 1 + 2cos30° and no zero entries." % np.trace(Rz_tilt))
+
+# %% [markdown]
+# ### Reference implementation for Exercise B8 (`is_linear`, `kernel_basis`, `image_basis`)
+
+# %%
+from scipy.linalg import orth
+
+
+def is_linear(T, basis, trials=20, tol=1e-9):
+    """Numerical test of (3.1), T(a u + b v) = a T(u) + b T(v), on random combinations of the basis."""
+    B = np.column_stack([np.asarray(b, float).ravel() for b in basis])
+    for _ in range(trials):
+        a, b = rng.standard_normal(2)
+        u, v = B @ rng.standard_normal(B.shape[1]), B @ rng.standard_normal(B.shape[1])
+        if not np.allclose(T(a * u + b * v), a * T(u) + b * T(v), atol=tol):
+            return False
+    return True
+
+
+def kernel_basis(T, basis_in, basis_out):
+    """Basis of ker T as ambient vectors: null space of [T]_{B,C}, mapped back through basis_in."""
+    M = matrix_of_map(T, basis_in, basis_out)
+    B_in = np.column_stack([np.asarray(b, float).ravel() for b in basis_in])
+    return [B_in @ c for c in null_space(M).T]
+
+
+def image_basis(T, basis_in, basis_out):
+    """Basis of im T as ambient vectors: column space of [T]_{B,C}, mapped back through basis_out."""
+    M = matrix_of_map(T, basis_in, basis_out)
+    B_out = np.column_stack([np.asarray(b, float).ravel() for b in basis_out])
+    return [B_out @ c for c in orth(M).T]
+
+
+square = lambda p: np.asarray(p, float) ** 2
+assert is_linear(D, monomial) and is_linear(transpose_map, E) and not is_linear(square, monomial)
+assert np.allclose(matrix_of_map(square, monomial, monomial), np.eye(4))   # a matrix comes out anyway
+for T, basis in ((D, monomial), (skew_part, E)):
+    ker, img = kernel_basis(T, basis, basis), image_basis(T, basis, basis)
+    for k in ker:
+        assert np.allclose(T(k), 0)
+    assert len(ker) + len(img) == 4
+assert len(kernel_basis(D, monomial, monomial)) == 1 and len(kernel_basis(skew_part, E, E)) == 3
+print("Exercise B8: is_linear, kernel_basis, image_basis agree with the solutions.")
+
+# %% [markdown]
+# ### Checks of the numbers in exercises.md / solutions.md
+
+# %%
+# A2: T(x, y) = (x + 2y, 3x - y, y).
+T_A2 = lambda v: np.array([v[0] + 2 * v[1], 3 * v[0] - v[1], v[1]])
+M_A2 = matrix_of_map(T_A2, list(np.eye(2)), list(np.eye(3)))
+assert np.allclose(M_A2, [[1, 2], [3, -1], [0, 1]]) and np.allclose(M_A2 @ [1, -1], [-1, 4, -1])
+assert np.linalg.matrix_rank(M_A2) == 2 and null_space(M_A2).shape[1] == 0
+# A3 / B3: basis ((2,1),(1,1)); A = [[2,1],[1,2]].
+P_A3 = np.array([[2, 1], [1, 1.]])
+assert np.allclose(np.linalg.inv(P_A3), [[1, -1], [-1, 2]])
+assert np.allclose(np.linalg.solve(P_A3, [3, 2]), [1, 1]) and np.allclose(P_A3 @ [3, 2], [8, 5])
+A_B3 = np.array([[2, 1], [1, 2.]])
+assert np.allclose(A_B3 @ P_A3, [[5, 3], [4, 3]])
+assert np.allclose(change_of_basis(P_A3, A_B3), [[1, 0], [3, 3]])
+assert np.allclose(P_A3 @ A_B3 @ np.linalg.inv(P_A3), [[1, 3], [0, 3]])
+# A4: kernel and image of [[1,2,3],[2,4,6]].
+A_A4 = np.array([[1, 2, 3], [2, 4, 6.]])
+assert np.linalg.matrix_rank(A_A4) == 1 and null_space(A_A4).shape[1] == 2
+assert np.allclose(A_A4 @ [-2, 1, 0], 0) and np.allclose(A_A4 @ [-3, 0, 1], 0)
+# A5: R_theta R_phi = R_{theta+phi}; F^2 = I; det(F R) = -1.
+assert np.allclose(rotation(0.4) @ rotation(1.1), rotation(1.5))
+assert np.allclose(reflection(0.7) @ reflection(0.7), np.eye(2))
+assert np.isclose(np.linalg.det(reflection(0.7) @ rotation(0.4)), -1)
+assert np.allclose(reflection(0.7) @ rotation(0.4), reflection(0.7 - 0.2))   # F_phi R_theta = F_{phi - theta/2}
+# A6: D on P_2, and x p'.
+D2 = matrix_of_map(lambda p: D(np.append(p, 0.0))[:3], list(np.eye(3)), list(np.eye(3)))
+assert np.allclose(D2, [[0, 1, 0], [0, 0, 2], [0, 0, 0]])
+assert np.allclose(D2 @ D2, [[0, 0, 2], [0, 0, 0], [0, 0, 0]]) and np.allclose(D2 @ D2 @ D2, 0)
+xD = matrix_of_map(lambda p: np.array([0, p[1], 2 * p[2]]), list(np.eye(3)), list(np.eye(3)))
+assert np.allclose(xD, np.diag([0, 1, 2]))
+# B4(a): tr(XYZ) = tr(ZXY) but tr(XYZ) != tr(YXZ) for matrix units.
+X_, Y_, Z_ = E[0].reshape(2, 2), E[1].reshape(2, 2), E[2].reshape(2, 2)
+assert np.trace(X_ @ Y_ @ Z_) == 1 and np.trace(Z_ @ X_ @ Y_) == 1 and np.trace(Y_ @ X_ @ Z_) == 0
+# B5(b): AB = I_2 but BA != I_3.
+A_B5 = np.array([[1, 0, 0], [0, 1, 0.]]); B_B5 = A_B5.T
+assert np.allclose(A_B5 @ B_B5, np.eye(2)) and np.allclose(B_B5 @ A_B5, np.diag([1, 1, 0]))
+# B7(c): S = (I + T)/2 is a projection with trace 3 = rank.
+S_mat = 0.5 * (np.eye(4) + T_mat)
+assert np.allclose(S_mat @ S_mat, S_mat) and np.isclose(np.trace(S_mat), 3) and np.linalg.matrix_rank(S_mat) == 3
+# C3(e): oblique projection onto y = 2x along (1, 0).
+Q_ob = np.array([[1, 1], [2, 0.]])
+A_ob = Q_ob @ np.diag([1, 0.]) @ np.linalg.inv(Q_ob)
+assert np.allclose(A_ob, [[0, 0.5], [0, 1]]) and np.allclose(A_ob @ A_ob, A_ob)
+assert np.allclose(A_ob @ [1, 2], [1, 2]) and np.allclose(A_ob @ [1, 0], 0) and not np.allclose(A_ob, A_ob.T)
+# C1(c): Sylvester strict example.
+S_c1 = np.diag([1, 0.]); T_c1 = np.diag([1, 0.])
+assert np.linalg.matrix_rank(S_c1 @ T_c1) == 1 > 1 + 1 - 2
+print("Exercise numbers (A2–A6, B3–B5, B7, C1, C3) verified.")
 
 # %%
 if __name__ == "__main__":

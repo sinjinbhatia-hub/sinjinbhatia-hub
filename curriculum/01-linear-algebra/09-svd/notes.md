@@ -234,6 +234,8 @@ has rank exactly $k$, and §3.7 proves it is the best rank-$k$ approximation of 
 3. Since $\sigma_j \le \sigma_1$ for every $j$: $\|A\mathbf{x}\|^2 \le \sigma_1^2\sum_j c_j^2 = \sigma_1^2$. Equality holds at $\mathbf{x} = \mathbf{v}_1$ (all $c_j = 0$ except $c_1 = 1$), where $\|A\mathbf{v}_1\| = \sigma_1$. So the maximum is $\sigma_1$.
 4. For the minimum when $m \ge n$: all $n$ of the $\sigma_j$ (including zeros, if any) appear, $\|A\mathbf{x}\|^2 = \sum_{j=1}^n\sigma_j^2c_j^2 \ge \sigma_n^2\sum_j c_j^2 = \sigma_n^2$, with equality at $\mathbf{x} = \mathbf{v}_n$. ∎
 
+■ **What just happened.** In the $\mathbf{v}$-basis, $\|A\mathbf{x}\|^2$ is a weighted average of the $\sigma_j^2$ with weights $c_j^2$ summing to one. An average is at most the largest entry and at least the smallest. The spectral norm is the longest semi-axis of the ellipsoid, and (for $m \ge n$) the smallest singular value is the shortest.
+
 $$
 \|A\|_2 = \sigma_1, \qquad \min_{\|\mathbf{x}\|=1}\|A\mathbf{x}\| = \sigma_n \ (m \ge n). \tag{3.7}
 $$
@@ -556,7 +558,7 @@ Rank 1 by inspection (column 2 is twice column 1). So $r = 1$ and we expect one 
 
 *Left singular vector.* $A\mathbf{v}_1 = \tfrac{1}{\sqrt5}(1 + 4, 2 + 8, 3 + 12)^\top = \tfrac{5}{\sqrt5}(1, 2, 3)^\top = \sqrt5\,(1, 2, 3)^\top$, with norm $\sqrt5\sqrt{14} = \sqrt{70} = \sigma_1$ ✓. So $\mathbf{u}_1 = (1, 2, 3)^\top/\sqrt{14}$.
 
-*Complete $U$.* We need $\mathbf{u}_2, \mathbf{u}_3$ orthonormal and orthogonal to $(1, 2, 3)$. Take $\mathbf{u}_2 = (2, -1, 0)^\top/\sqrt5$ (dot with $(1,2,3)$: $2 - 2 = 0$ ✓). For $\mathbf{u}_3$, Gram–Schmidt $\mathbf{e}_3$ against $\mathbf{u}_1, \mathbf{u}_2$, or take the cross product $(1, 2, 3) \times (2, -1, 0) = (0\cdot 3 - 0, 6 - 0, -1 - 4)$... carefully: $(2\cdot 0 - 3\cdot(-1),\ 3\cdot 2 - 1\cdot 0,\ 1\cdot(-1) - 2\cdot 2) = (3, 6, -5)$, norm $\sqrt{9 + 36 + 25} = \sqrt{70}$. So $\mathbf{u}_3 = (3, 6, -5)^\top/\sqrt{70}$.
+*Complete $U$.* We need $\mathbf{u}_2, \mathbf{u}_3$ orthonormal and orthogonal to $(1, 2, 3)$. Take $\mathbf{u}_2 = (2, -1, 0)^\top/\sqrt5$ (dot with $(1,2,3)$: $2 - 2 = 0$ ✓). For $\mathbf{u}_3$, run Gram–Schmidt on $\mathbf{e}_3$ against $\mathbf{u}_1, \mathbf{u}_2$, or (in $\mathbb{R}^3$ only) take the cross product $(1, 2, 3) \times (2, -1, 0) = (2\cdot 0 - 3\cdot(-1),\ 3\cdot 2 - 1\cdot 0,\ 1\cdot(-1) - 2\cdot 2) = (3, 6, -5)$, norm $\sqrt{9 + 36 + 25} = \sqrt{70}$. So $\mathbf{u}_3 = (3, 6, -5)^\top/\sqrt{70}$.
 
 *Full and reduced forms.*
 $$
@@ -590,7 +592,7 @@ Each column sums to zero ✓.
 
 *Rank-one reconstruction.* $X_1 = \sigma_1\mathbf{u}_1\mathbf{v}_1^\top = 4\cdot\tfrac{1}{\sqrt2}(1, 0, -1, 0)^\top\cdot\tfrac{1}{\sqrt2}(1, 1) = \begin{pmatrix}2 & 2\\0 & 0\\-2 & -2\\0 & 0\end{pmatrix}$: observations 1 and 3 are reproduced exactly (they lie on the first axis) and 2 and 4 collapse to the centroid. Error $\|X - X_1\|_F^2 = 1 + 1 + 1 + 1 = 4 = \sigma_2^2$ ✓. In original coordinates add back $(3, 2)$ to each row.
 
-*What centering did.* The uncentered $\tilde X^\top\tilde X = \begin{pmatrix}46 & 30\\30 & 26\end{pmatrix}$ has top eigenvector at about $31°$ from the $x$-axis, pointing roughly toward the mean $(3, 2)$ rather than along the cloud. §8.
+*What centering did.* The uncentered $\tilde X^\top\tilde X = \begin{pmatrix}46 & 30\\30 & 26\end{pmatrix}$ has eigenvalues $36 \pm \sqrt{1000} \approx 67.6, 4.4$ and top eigenvector at about $36°$ from the $x$-axis: close to the direction of the mean $(3, 2)$ (at $33.7°$), not the $45°$ of the centered cloud. Without centering, the first "component" mostly reports where the data sits, not how it varies. §8.
 
 ### Example 4.4: Condition number and error amplification
 
@@ -648,3 +650,69 @@ A clockwise rotation by $\arctan(1/2) = 26.57°$. (The general result for simple
 *Stretch.* $U_{\text{mech}} = S = R^\top F = \dfrac{1}{\sqrt5}\begin{pmatrix}2 & -1\\1 & 2\end{pmatrix}\begin{pmatrix}1 & 1\\0 & 1\end{pmatrix} = \dfrac{1}{\sqrt5}\begin{pmatrix}2 & 1\\1 & 3\end{pmatrix}$. Symmetric ✓; trace $5/\sqrt5 = \sqrt5 = \phi + 1/\phi$ ✓; determinant $(6 - 1)/5 = 1$ ✓. Its eigenvectors are $\mathbf{v}_1, \mathbf{v}_2$ with eigenvalues $\phi, 1/\phi$. And $U_{\text{mech}}^2 = \tfrac15\begin{pmatrix}5 & 5\\5 & 10\end{pmatrix} = C$ ✓. The left stretch is $V_{\text{mech}} = RU_{\text{mech}}R^\top = \tfrac{1}{\sqrt5}\begin{pmatrix}3 & 1\\1 & 2\end{pmatrix}$, whose square is $FF^\top = \begin{pmatrix}2 & 1\\1 & 1\end{pmatrix}$ ✓.
 
 *Reading.* Simple shear by $\gamma = 1$ equals: stretch by $1.618$ along the fiber at $58.3°$ and by $0.618$ along the fiber at $-31.7°$ (no rotation of those fibers yet), then rotate the whole neighborhood clockwise by $26.6°$. The Green–Lagrange strain $E = \tfrac12(C - I) = \tfrac12\begin{pmatrix}0 & 1\\1 & 1\end{pmatrix}$ has eigenvalues $\tfrac12(\phi^2 - 1) = \phi/2 \approx 0.809$ and $\tfrac12(\phi^{-2} - 1) = -\phi^{-1}/2 \approx -0.309$ in those same two directions.
+
+## 5. Why it matters and where it connects
+
+- **LA-10 (decompositions atlas).** The SVD is the most expensive and most informative factorization in the atlas; LA-10 compares it with QR and the eigendecomposition and says when each is the right tool. The polar decomposition (3.13) appears there as "SVD regrouped."
+- **LA-13 (numerical linear algebra).** Theorem 3.9 is the *conditioning* half of LA-13's conditioning-versus-stability distinction. LA-13 derives the Golub–Kahan bidiagonalization that computes the SVD without forming $A^\top A$, explains why `svd_via_eig` in the project loses the small singular values, and uses $\sigma_n$ as the distance to the nearest singular matrix (Exercise C3). Randomized SVD (LA-13) is Eckart–Young plus a random projection.
+- **LA-14 (matrix calculus).** The gradient of $\|A - B\|_F^2$, of $\operatorname{tr}(Q^\top A)$ over orthogonal $Q$ (Procrustes, Exercise C1), and of $\mathbf{w}^\top S\mathbf{w}$ on the sphere are all computed there; their stationary points are the singular vectors found here.
+- **ST-3 (linear regression).** Least squares is $\hat{\boldsymbol{\beta}} = X^+\mathbf{y}$ (Theorem 3.10); *multicollinearity* means a small $\sigma_p$, so $\kappa_2(X)$ is large and $\hat{\boldsymbol{\beta}}$ is unstable (Theorem 3.9); *ridge regression* replaces $1/\sigma_i$ by $\sigma_i/(\sigma_i^2 + \lambda)$ in (3.11); the "hat matrix" is $XX^+ = U_rU_r^\top$ (Theorem 3.11(d)). ST-3 lists LA-9 as a prerequisite for exactly these four facts.
+- **ML-6 (unsupervised learning).** PCA via SVD is Theorem 3.12 verbatim. Spectral clustering uses the eigenvectors of a graph Laplacian, a symmetric PSD matrix where SVD and eigendecomposition coincide (§3.12). Manifold methods start from the failure of PCA on curved data.
+- **ML-9 (transformers).** Attention weight matrices and embedding matrices are analyzed and compressed by their singular values; low-rank adaptation of large models is Eckart–Young applied to the update of a weight matrix.
+- **F5 (multivariate Gaussian).** The covariance $\Sigma_{\text{cov}} = Q\Lambda Q^\top$ of a Gaussian is symmetric PSD; its level sets are ellipsoids whose axes are the principal components, with semi-axes $\propto\sqrt{\lambda_i}$. Sampling from $\mathcal N(\mathbf{0}, \Sigma_{\text{cov}})$ is $Q\Lambda^{1/2}\mathbf{z}$: rotate-stretch applied to white noise. The project's 3-D cloud is exactly this.
+- **CM-6 / CM-7 (mechanics).** The deformation gradient $F = RU$ of §3.11 is the polar decomposition; the inertia tensor in CM-7 is symmetric PD, so its principal axes are its singular vectors; the stiffness and mass matrices in CM-6 are symmetric PD and the normal-mode problem is their generalized eigenproblem.
+- **QM-7 / QC-2 (entanglement).** A two-particle state $|\psi\rangle = \sum_{ij}c_{ij}|i\rangle|j\rangle$ is a matrix $C = (c_{ij})$; its SVD $C = U\Sigma V^\top$ is the *Schmidt decomposition* $|\psi\rangle = \sum_k\sigma_k|u_k\rangle|v_k\rangle$. The state is entangled iff $\operatorname{rank}C > 1$, and the entanglement entropy is $-\sum_k\sigma_k^2\log\sigma_k^2$. The Schmidt decomposition is the SVD, with no changes.
+- **F3 / EM-3.** The DFT matrix is unitary (all singular values equal), which is why the Fourier transform neither amplifies nor attenuates. Green's functions discretize to matrices of rapidly decaying singular values (§3.13).
+
+## 6. Exercises
+
+See [exercises.md](exercises.md). **A1–A6** are drills: SVDs you can read off, norms, $\kappa$, shapes of the three forms, the pseudoinverse of a rank-one matrix. **B1–B8** are the module: B1 (what singular values do under transpose, inverse, scaling, orthogonal multiplication), B3 (full SVD of a $2 \times 3$ matrix by hand through $AA^\top$), B5 (non-uniqueness of the spectral-norm minimizer), B6 (the Penrose equations and the two projectors), B7 (Pearson's and Hotelling's PCA agree; what uncentered PCA does), and B8 (condition numbers in three norms, $\kappa(A^\top A) = \kappa(A)^2$) are essential. B4 and B9 extend `project.py`. **C1–C3**: the Procrustes problem, Weyl's inequality and a second proof of Eckart–Young, and the distance to singularity with a Hilbert-matrix experiment.
+
+## 7. Coding project
+
+`project.py` builds and tests everything in §3 numerically. In order:
+
+1. **`svd_via_eig(A)`.** The §3.2 derivation as code: `eigh` of $A^\top A$, sort, $\sigma_i = \sqrt{\lambda_i}$, $\mathbf{u}_i = A\mathbf{v}_i/\sigma_i$, complete $U$ by Gram–Schmidt. It is checked against `np.linalg.svd` on random matrices (reconstruction, singular values, and the four subspaces as projectors, since signs will differ), then shown failing on a matrix with singular values $1, 10^{-5}, 10^{-9}$: the small ones come out wrong because $\lambda_3 = 10^{-18}$ is below the rounding noise of $A^\top A$. This is why LA-13 exists.
+2. **Worked examples.** Every number in Examples 4.1–4.5 is asserted.
+3. **Image compression.** A $256 \times 256$ synthetic image (gradient background, disc, rectangle, diagonal band, sinusoidal texture) is approximated at ranks 1, 5, 20, 50 in a figure grid; the error $\|A - A_k\|_F$ is plotted against $k$ and asserted equal to the Eckart–Young prediction $\sqrt{\sum_{i > k}\sigma_i^2}$ for every $k$. Noise is then added and the scree plot develops a floor.
+4. **PCA on a 3-D Gaussian cloud** with a known covariance: the cloud with principal axes drawn with length proportional to the standard deviation $\sigma_i/\sqrt{n-1}$ along each, a scree plot, and the 2-D projection onto the first two components. PCA via `eigh` of the covariance is asserted equal to PCA via SVD of the centered data (eigenvalues to $\sigma_i^2/(n-1)$, eigenvectors up to sign).
+5. **Condition number.** Matrices $A = U\operatorname{diag}(1, 1/\kappa)V^\top$ for $\kappa$ from $1$ to $10^{12}$; the worst-case relative error from a fixed relative perturbation of $\mathbf{b}$ is plotted against $\kappa$ (it is a straight line of slope 1 on log–log axes) alongside the actual rounding error of `np.linalg.solve`, and the bound (3.10) is asserted.
+6. **Pseudoinverse** on a rank-deficient least-squares problem: $A^+\mathbf{b}$ has the minimal residual, is orthogonal to $N(A)$, and has smaller norm than every other minimizer $A^+\mathbf{b} + \mathbf{z}$ tried. $A^+ = (A^\top A)^{-1}A^\top$ is asserted for full column rank.
+7. **Polar decomposition** of random matrices: $Q^\top Q = I$, $S = S^\top \succeq 0$, $QS = A$, and $S = \sqrt{A^\top A}$ via `scipy.linalg.sqrtm`.
+8. **$\|A\|_2 = \sigma_1$** by sampling $20\,000$ random unit vectors: the sample maximum never exceeds $\sigma_1$ and gets within a few percent of it; $\mathbf{v}_1$ attains it exactly.
+
+**Build it yourself first:** write `svd_via_eig(A)` (Part 1) and `pca(X)` (Part 4, returning components, explained variance, and scores) before reading the provided versions. The "Your turn" cell asks you to compress your own synthetic pattern, to generate a rank-$k$-plus-noise dataset and recover $k$ from the scree plot, and to solve the orthogonal Procrustes problem with the SVD (Exercise C1 proves why it works).
+
+## 8. Where you'll struggle
+
+- **The derivation everyone sees and nobody remembers.** Students can recite "$\sigma_i^2$ are the eigenvalues of $A^\top A$" and cannot say why the $\mathbf{u}_i$ are orthonormal. The entire theorem is step 3 of §3.2: $(A\mathbf{v}_i)\cdot(A\mathbf{v}_j) = \mathbf{v}_i^\top A^\top A\mathbf{v}_j = \lambda_j\,\mathbf{v}_i\cdot\mathbf{v}_j$. Write that line out until you can produce it cold. If you can, you can reconstruct the whole proof in two minutes; if you cannot, you have memorized a recipe.
+- **"NumPy's SVD is wrong."** It is not. The signs of $(\mathbf{u}_i, \mathbf{v}_i)$ pairs are arbitrary (§3.3), and the basis for a repeated singular value is arbitrary. Your hand computation and NumPy's output will disagree in signs more often than not (Example 4.1). Check $U\Sigma V^\top = A$, or check that $\mathbf{u}_i\mathbf{u}_i^\top$ and $\mathbf{v}_i\mathbf{v}_i^\top$ agree, or check the subspace projectors $U_rU_r^\top$. Never check columns entrywise. The related bug: computing $U$ from `eigh(A @ A.T)` and $V$ from `eigh(A.T @ A)` separately and wondering why $U\Sigma V^\top \ne A$.
+- **Shapes.** Full ($m \times m$, $m \times n$, $n \times n$), economy ($m \times p$, $p \times p$, $n \times p$ with $p = \min(m,n)$), reduced ($m \times r$, $r \times r$, $n \times r$). NumPy returns `Vt`, not `V`, and `s` as a vector, not $\Sigma$. Reconstructing with `U @ np.diag(s) @ Vt` fails for non-square $A$ in the full form because `np.diag(s)` is $p \times p$ while $\Sigma$ must be $m \times n$. Use `full_matrices=False` for reconstruction, and write the shapes above each product until you stop making this mistake.
+- **Eckart–Young's proof is harder than its statement.** The statement is one line; the proof is nine steps. Most courses state it and move on. Do not. Steps 3–4 (split the error by a projector, use orthogonal invariance) and step 8 (a weight budget of $k$ with at most $1$ per slot is best spent on the top $k$) are reusable arguments; you will see the second one again as Ky Fan's maximum principle and in the proof of Weyl's inequality (Exercise C2). Work through the proof with $m = n = 3$, $k = 1$ and concrete $\mathbf{q}_1$ if the general case will not stick.
+- **PCA without centering.** If you forget to subtract the column means, $X^\top X/(n-1)$ is not the covariance and the first "principal component" points roughly toward the mean of the data (Example 4.3 shows $36°$ instead of $45°$). Every PCA pipeline must center; many should also standardize. The second PCA failure: comparing eigenvalues of $S$ to singular values of $X$ and forgetting the $\sqrt{n-1}$.
+- **$\kappa$ depends on the norm, and is not the determinant.** $\kappa_2 = \sigma_1/\sigma_n$ is the one with the clean geometric meaning; $\kappa_1$ and $\kappa_\infty$ differ from it by factors up to $n$ (Exercise B8). A tiny determinant does not mean ill-conditioned ($\varepsilon I$) and a determinant of $1$ does not mean well-conditioned (Example 4.5's shear has $\det F = 1$ and $\kappa_2 = \phi^2$; with $\gamma = 100$ it has $\det = 1$ and $\kappa_2 \approx 10^4$).
+- **Reading the stretch out of the polar decomposition.** In $F = RU$ the mechanics $U$ is a symmetric stretch (our $S = V\Sigma V^\top$), not our orthogonal $U$. Its eigenvectors are the *right* singular vectors of $F$, and its eigenvalues are the singular values. Students who mix the two notations get the principal directions rotated by $R$ (they report the $\mathbf{u}_i$ instead of the $\mathbf{v}_i$). Say "stretch tensor" and "singular-vector matrix" out loud instead of "$U$".
+- **Harder than they look.** B3 (the $2 \times 3$ SVD by hand) is routine but long; budget 40 minutes and check $\|A\|_F^2 = \sum\sigma_i^2$ at the end. B7(a) needs Eckart–Young, not just the Rayleigh quotient. C2 is a real proof; the Courant–Fischer step is where most attempts stall.
+
+## 9. Check yourself
+
+1. State the SVD with all shapes for a $5 \times 3$ matrix of rank 2, in full and reduced form. Which columns of $U$ and $V$ span each of the four subspaces?
+2. Why are the $\mathbf{u}_i = A\mathbf{v}_i/\sigma_i$ orthonormal? One line.
+3. Why do $A^\top A$ and $AA^\top$ have the same nonzero eigenvalues? What are they?
+4. In what sense is the SVD "unique"? What is the freedom when $\sigma_2 = \sigma_3$?
+5. Prove $\|A\|_2 = \sigma_1$ in three lines. Prove $\|A\|_F^2 = \sum\sigma_i^2$ in one.
+6. State Eckart–Young for both norms. What is $\|A - A_k\|_F$? Sketch the two ideas of the Frobenius proof.
+7. Derive $\|\delta\mathbf{x}\|/\|\mathbf{x}\| \le \kappa_2\|\delta\mathbf{b}\|/\|\mathbf{b}\|$. For which $\mathbf{b}, \delta\mathbf{b}$ is it an equality? How many digits do you lose when $\kappa_2 = 10^7$?
+8. Write $A^+$ in terms of the SVD. Why is $A^+\mathbf{b}$ the minimum-norm least-squares solution? What is $AA^+$?
+9. Given centered data $X$ with SVD $U\Sigma V^\top$, what are the principal components, the variances along them, and the scores? Why must $X$ be centered?
+10. Derive $A = QS$ from the SVD. In the deformation gradient $F = RU$, which singular vectors of $F$ are the principal material directions, and what are the principal stretches?
+11. If $A$ is symmetric with eigenvalues $3, -5, 1$, what are its singular values, and how do $U$ and $V$ relate to the eigenvectors?
+12. Give a $2 \times 2$ matrix whose eigenvalues are both $0$ but whose largest singular value is $10^6$.
+
+## 10. Pair with
+
+- **Strang, *Introduction to Linear Algebra* (5th ed.), ch. 7.** §7.1 opens with image compression, §7.2 is the derivation and the four subspaces, §7.3 is PCA, §7.4 the geometry. Strang's version of the "rotate, stretch, rotate" picture and his insistence on $A\mathbf{v}_i = \sigma_i\mathbf{u}_i$ as the thing to remember are the model for §2 and §3.1 here.
+- **Strang, *Linear Algebra and Learning from Data*, §I.8–I.9.** §I.8 is the SVD with a proof of Eckart–Young in the spectral norm and a discussion of which norms the theorem holds in; §I.9 is PCA and the "closest rank-$k$ matrix" with real data. Better than these notes on the data-science motivation and on the geometry of $\mathbf{v}_1$ as the direction of maximum variance.
+- **MIT 18.065 (Strang), lectures 4–7**, on OCW. Lecture 4 (eigenvalues) and 5 (positive definite matrices) are the LA-8 material in Strang's voice; **lecture 6 is the SVD** and lecture 7 is Eckart–Young. There is no 3Blue1Brown episode on the SVD (the *Essence of Linear Algebra* series stops at eigenvectors and change of basis), so lecture 6 is the video to watch for the picture; Strang draws the ellipse live and does the $A^\top A$ derivation on the board.
+- **Trefethen & Bau, *Numerical Linear Algebra*, lectures 4–5.** Lecture 4 is the cleanest written statement of the geometric picture (hyperellipse) and of existence and uniqueness; lecture 5 proves Eckart–Young in the spectral norm by the dimension-counting argument of Theorem 3.8. Short and exact; read after you have done the derivation here.
+- **G. W. Stewart, "On the early history of the singular value decomposition," *SIAM Review* 35 (1993).** The source for §1. Ten pages, no prerequisites beyond this module.

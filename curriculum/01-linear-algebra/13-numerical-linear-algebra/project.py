@@ -470,8 +470,8 @@ assert np.allclose(hist[1], [[3.4, 0.2], [0.2, 0.6]])
 assert np.allclose(hist[2], np.array([[99, 1], [1, 17]]) / 29)
 lam = np.sort(np.linalg.eigvalsh(A44))[::-1]
 ratio = lam[1] / lam[0]
-print(f"Example 4.4: A₁ = {hist[1].tolist()}, A₂ = {np.round(hist[2], 5).tolist()}; off-diagonals {[round(h[1,0],5) for h in hist]}")
-print(f"   λ₂/λ₁ = {ratio:.4f}; successive off-diagonal ratios: {[round(hist[k+1][1,0]/hist[k][1,0], 4) for k in range(4)]}")
+print(f"Example 4.4: A₁ = {hist[1].tolist()}, A₂ = {np.round(hist[2], 5).tolist()}; off-diagonals {[round(float(h[1,0]),5) for h in hist]}")
+print(f"   λ₂/λ₁ = {ratio:.4f}; successive off-diagonal ratios: {[round(float(hist[k+1][1,0]/hist[k][1,0]), 4) for k in range(4)]}")
 assert np.isclose(ratio, 3 - 2 * np.sqrt(2)) and np.isclose(hist[2][1, 0] / hist[1][1, 0], ratio, atol=2e-3)
 # Theorem 3.11: A_{k+1} = (Q⁽ᵏ⁾)ᵀ A Q⁽ᵏ⁾ and A^k = Q⁽ᵏ⁾ R⁽ᵏ⁾, so Q⁽ᵏ⁾e₁ is normalized power iteration.
 assert np.allclose(Qacc.T @ A44 @ Qacc, hist[4])
@@ -797,17 +797,27 @@ def gmres(A, b, k):
     return x, np.array(hist) / beta
 
 
-m = 200; hh = 1.0 / (m + 1); beta_cd = 30.0
+# (a) Finite termination: on a 60×60 convection–diffusion matrix GMRES must reach the exact solution at step ≤ 60.
+m = 60; hh = 1.0 / (m + 1); beta_cd = 30.0
 Acd = (sps.diags([-np.ones(m - 1), 2 * np.ones(m), -np.ones(m - 1)], [-1, 0, 1]) / hh**2
        + beta_cd * sps.diags([-np.ones(m - 1), np.ones(m - 1)], [-1, 1]) / (2 * hh)).tocsr()
 assert abs(Acd - Acd.T).max() > 0            # genuinely nonsymmetric
 bcd = np.ones(m)
 Qa, Ha = arnoldi(Acd, bcd, 30)
 assert np.allclose(Acd @ Qa[:, :30], Qa @ Ha) and np.allclose(Qa.T @ Qa, np.eye(31))
-x_g, hist_g = gmres(Acd, bcd, 120)
+x_g, hist_g = gmres(Acd, bcd, m)
 x_cd = spla.spsolve(Acd.tocsc(), bcd)
-print(f"GMRES on a 200×200 convection–diffusion matrix: relative residual {hist_g[-1]:.1e} after {len(hist_g)} steps; error vs direct solve {np.linalg.norm(x_g - x_cd)/np.linalg.norm(x_cd):.1e}")
-assert hist_g[-1] < 1e-8 and np.all(np.diff(hist_g) <= 1e-12)   # GMRES residuals never increase
+assert np.all(np.diff(hist_g) <= 1e-10)          # residuals never increase (nested subspaces)
+assert hist_g[-1] < 1e-10 and hist_g[-2] > 1e-6  # ... and this one needs all 60 steps: the spectrum is spread out
+print(f"GMRES on a 60×60 convection–diffusion matrix: residual {hist_g[-2]:.1e} at step 59, {hist_g[-1]:.1e} at step 60 (finite termination); error vs direct {np.linalg.norm(x_g - x_cd)/np.linalg.norm(x_cd):.1e}")
+# (b) A clustered spectrum converges fast: A = 2I + B with ‖B‖₂ = 1. The polynomial p(z) = (1 − z/2)^k has p(0) = 1
+# and |p(A)| = ‖(−B/2)^k‖ ≤ 2^-k, so GMRES (which minimizes over all such p, eq. 3.28) satisfies ‖r_k‖ ≤ 2^-k ‖b‖.
+nB = 300
+Bm = rng.standard_normal((nB, nB)); Bm /= np.linalg.norm(Bm, 2)
+A2B = 2 * np.eye(nB) + Bm; b2B = rng.standard_normal(nB)
+x_g2, hist_g2 = gmres(A2B, b2B, 40)
+assert np.all(hist_g2 <= 2.0 ** -np.arange(1, 41) * (1 + 1e-9)) and hist_g2[-1] < 1e-10
+print(f"GMRES on 2I + B (‖B‖=1, n=300): ‖r_k‖/‖b‖ at k=10,20,30: {hist_g2[9]:.1e}, {hist_g2[19]:.1e}, {hist_g2[29]:.1e}  ≤ 2^-k = {2.0**-10:.1e}, {2.0**-20:.1e}, {2.0**-30:.1e}")
 
 # %% [markdown]
 # ## Part 6: Randomized SVD (§3.13)
@@ -958,20 +968,26 @@ def preconditioned_cg(A, b, Minv, tol=1e-8, maxiter=10000):
     return x, maxiter
 
 
+a_smooth = lambda X, Y: np.exp(6 * (X + Y))          # conductivity varying by e^12 ≈ 1.6e5 across the square
 a_jump = lambda X, Y: np.where((X > 0.25) & (X < 0.75) & (Y > 0.25) & (Y < 0.75), 1e3, 1.0)
 Nv = 40
-Av, hv = variable_coefficient_poisson(Nv, a_jump)
-assert abs(Av - Av.T).max() < 1e-9
 assert np.allclose(variable_coefficient_poisson(10, lambda X, Y: np.ones_like(X))[0].toarray(), laplacian_2d(10)[0].toarray())
-bv = rng.standard_normal(Nv * Nv)
-x_plain, it_plain, _ = conjugate_gradient(Av, bv)
-Dv = Av.diagonal()
-x_pcg, it_pcg = preconditioned_cg(Av, bv, lambda r: r / Dv)
-x_dir = spla.spsolve(Av.tocsc(), bv)
-assert np.linalg.norm(x_pcg - x_dir) / np.linalg.norm(x_dir) < 1e-5 and np.linalg.norm(x_plain - x_dir) / np.linalg.norm(x_dir) < 1e-5
-kap_v = np.linalg.cond(Av.toarray()); kap_pv = np.linalg.cond((Av.toarray() / Dv[:, None]) / np.sqrt(Dv)[None, :] * np.sqrt(Dv)[:, None])
-print(f"variable-coefficient Poisson (a = 1 or 1e3), N={Nv}: κ(A) = {kap_v:.1e}, κ(D^-1/2 A D^-1/2) = {kap_pv:.1e}; CG {it_plain} its, Jacobi-PCG {it_pcg} its")
-assert it_pcg < 0.5 * it_plain
+for name, a_func in (("a = exp(6(x+y))", a_smooth), ("a = 1 or 1e3 (jump)", a_jump)):
+    Av, hv = variable_coefficient_poisson(Nv, a_func)
+    assert abs(Av - Av.T).max() < 1e-9 * abs(Av).max()
+    bv = rng.standard_normal(Nv * Nv)
+    x_plain, it_plain, _ = conjugate_gradient(Av, bv)
+    Dv = Av.diagonal()
+    x_pcg, it_pcg = preconditioned_cg(Av, bv, lambda r: r / Dv)
+    x_dir = spla.spsolve(Av.tocsc(), bv)
+    assert np.linalg.norm(x_pcg - x_dir) / np.linalg.norm(x_dir) < 1e-5 and np.linalg.norm(x_plain - x_dir) / np.linalg.norm(x_dir) < 1e-5
+    Ad = Av.toarray(); kap_v = np.linalg.cond(Ad)
+    kap_pv = np.linalg.cond(Ad / np.sqrt(Dv)[:, None] / np.sqrt(Dv)[None, :])      # κ(D^-1/2 A D^-1/2) = κ(D⁻¹A)
+    print(f"variable-coefficient Poisson, {name}, N={Nv}: κ(A) = {kap_v:.1e} → κ(D⁻¹A) = {kap_pv:.1e} (√ ratio {np.sqrt(kap_v/kap_pv):.0f}); CG {it_plain} its → Jacobi-PCG {it_pcg} its (ratio {it_plain/it_pcg:.0f})")
+    if a_func is a_smooth:
+        assert kap_v / kap_pv > 1e3 and it_plain / it_pcg > 20
+    else:   # κ barely moves but the preconditioned spectrum is clustered: CG responds to the whole spectrum, not only κ
+        assert kap_v / kap_pv < 3 and it_plain / it_pcg > 5
 # On the constant-coefficient Laplacian D = (4/h²) I, so D⁻¹A = (h²/4) A has the same κ: Jacobi does nothing.
 A, h = laplacian_2d(40); b = rng.standard_normal(1600)
 _, it_a, _ = conjugate_gradient(A, b); _, it_b = preconditioned_cg(A, b, lambda r: r / A.diagonal())
@@ -999,25 +1015,34 @@ def lanczos(A, b, k):
 N = 100
 A, h = laplacian_2d(N)                                   # 10,000 × 10,000
 lam_min = (8 / h**2) * np.sin(np.pi * h / 2) ** 2; lam_max = (8 / h**2) * np.cos(np.pi * h / 2) ** 2
+assert np.isclose(lam_min + lam_max, 8 / h**2)           # the spectrum is symmetric about 4/h²: both ends are equally clustered
 b = rng.standard_normal(N * N)
-al, be, QL = lanczos(A, b, 30)
-Tk = np.diag(al) + np.diag(be, 1) + np.diag(be, -1)
-assert np.allclose(QL[:, :30].T @ A @ QL[:, :30], Tk, atol=1e-8)       # T_k = Q_kᵀ A Q_k
-ritz_hist = [np.linalg.eigvalsh(np.diag(al[:j]) + np.diag(be[:j - 1], 1) + np.diag(be[:j - 1], -1)) for j in range(1, 31)]
-ritz = ritz_hist[-1]
-print(f"Lanczos, 30 steps on the 10,000×10,000 Laplacian: Ritz extremes [{ritz[0]:.4f}, {ritz[-1]:.4f}] vs exact [{lam_min:.4f}, {lam_max:.4f}]")
-print(f"   relative error: λ_max {abs(ritz[-1]-lam_max)/lam_max:.1e} (top of the spectrum is well separated),  λ_min {abs(ritz[0]-lam_min)/lam_min:.1e} (bottom is clustered: slower)")
-assert abs(ritz[-1] - lam_max) / lam_max < 1e-4 and ritz[0] >= lam_min * (1 - 1e-10)   # Ritz values lie inside the spectrum
-assert abs(ritz[0] - lam_min) / lam_min < 0.5
-# Lanczos-estimated condition number vs exact (an inexpensive κ estimate for CG stopping/iteration prediction)
-print(f"   κ estimate from Ritz values: {ritz[-1]/ritz[0]:.0f} vs exact {laplacian_condition(N):.0f}")
+K_LZ = 200
+al, be, QL = lanczos(A, b, K_LZ)
+T30 = np.diag(al[:30]) + np.diag(be[:29], 1) + np.diag(be[:29], -1)
+assert np.allclose(QL[:, :30].T @ A @ QL[:, :30], T30, atol=1e-6)      # T_k = Q_kᵀ A Q_k (Lanczos = Arnoldi for symmetric A)
+ritz_hist = [np.linalg.eigvalsh(np.diag(al[:j]) + np.diag(be[:j - 1], 1) + np.diag(be[:j - 1], -1)) for j in range(1, K_LZ + 1)]
+for k in (30, 60, 100, 200):
+    rv = ritz_hist[k - 1]
+    print(f"Lanczos k={k:3d} on the 10,000×10,000 Laplacian: Ritz extremes [{rv[0]:9.3f}, {rv[-1]:10.2f}] vs exact [{lam_min:.3f}, {lam_max:.2f}];"
+          f" abs errors {rv[0]-lam_min:8.2f} / {lam_max-rv[-1]:7.2f};  rel errors {(rv[0]-lam_min)/lam_min:.1e} / {(lam_max-rv[-1])/lam_max:.1e}")
+    assert rv[0] >= lam_min * (1 - 1e-10) and rv[-1] <= lam_max * (1 + 1e-10)   # Ritz values lie inside the spectrum (B5)
+r30 = ritz_hist[29]
+# At 30 steps: both ends have converged to the same *absolute* accuracy (the spectrum is symmetric), a few hundred
+# out of a width of 8/h² ≈ 81,600. That is 0.1–0.3% of λ_max but several hundred percent of λ_min ≈ 19.7.
+assert (r30[0] - lam_min) < 400 and (lam_max - r30[-1]) < 400 and 0.25 < (r30[0] - lam_min) / (lam_max - r30[-1]) < 4
+assert (lam_max - r30[-1]) / lam_max < 5e-3 and (r30[0] - lam_min) / lam_min > 1
+r200 = ritz_hist[-1]
+assert abs(r200[-1] - lam_max) / lam_max < 1e-5 and abs(r200[0] - lam_min) / lam_min < 1e-3
+print(f"   κ estimate from 30 Ritz values: {r30[-1]/r30[0]:.0f}; from 200: {r200[-1]/r200[0]:.0f}; exact {laplacian_condition(N):.0f}")
+print("   (Lanczos finds the extremes first in ABSOLUTE terms; the relative gap (λ₂−λ₁)/(λₙ−λ₁) ≈ 3.6e-4 is what sets the speed, and it is the same at both ends.)")
 
 fig, ax = plt.subplots(figsize=(6.5, 4))
-for j, rv in enumerate(ritz_hist, start=1):
-    ax.plot(np.full(len(rv), j), rv, ".", color=PAL[0], ms=3)
+for j, rv in enumerate(ritz_hist[:100], start=1):
+    ax.semilogy(np.full(len(rv), j), rv, ".", color=PAL[0], ms=2.5)
 ax.axhline(lam_min, color="gray", ls="--", lw=1, label="λ_min, λ_max exact"); ax.axhline(lam_max, color="gray", ls="--", lw=1)
-ax.set_xlabel("Lanczos step k"); ax.set_ylabel("Ritz values of T_k"); ax.legend(loc="center right")
-ax.set_title("Lanczos on the 10⁴×10⁴ Laplacian: Ritz values converge to the extremes first")
+ax.set_xlabel("Lanczos step k"); ax.set_ylabel("Ritz values of T_k (log scale)"); ax.legend(loc="center right")
+ax.set_title("Lanczos on the 10⁴×10⁴ Laplacian: both ends converge at the same absolute rate")
 fig.tight_layout(); fig.savefig(FIG / "lanczos_ritz.png", dpi=120); plt.close(fig)
 
 # %%

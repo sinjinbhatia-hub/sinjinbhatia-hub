@@ -16,7 +16,7 @@ Everything from here on uses this. LA-5 studies projections, which are linear ma
 
 Take the matrix $\operatorname{diag}(2, 1) = \begin{pmatrix} 2 & 0 \\ 0 & 1 \end{pmatrix}$. What does it do? "Stretches by 2 along the first basis direction." If the first basis vector is $\mathbf{e}_1$, that is a horizontal stretch. If someone else's first basis vector is $(1, 1)/\sqrt{2}$, the same matrix describes a stretch along the diagonal. The matrix alone does not tell you the map. The matrix plus a basis does.
 
-The reverse is just as unsettling. Rotation of the plane by $90°$ has matrix $\begin{pmatrix} 0 & -1 \\ 1 & 0 \end{pmatrix}$ in the standard basis. Describe the same rotation using the basis $(1, 1), (1, -1)$ and you get $\begin{pmatrix} 0 & 1 \\ -1 & 0 \end{pmatrix}$ (Example 4.2). Same motion, different numbers, and in this case the numbers *look like* rotation the other way.
+The reverse is equally unsettling. Rotation of the plane by $90°$ has matrix $\begin{pmatrix} 0 & -1 \\ 1 & 0 \end{pmatrix}$ in the standard basis. Describe the same rotation using the basis $(1, 1), (1, -1)$ and you get $\begin{pmatrix} 0 & 1 \\ -1 & 0 \end{pmatrix}$ (Example 4.2). Same motion, different numbers, and in this case the numbers *look like* rotation the other way.
 
 Physicists hit this wall first, and hit it hard, because the laws they wrote down are about objects that exist independently of anyone's axes. By 1765 Euler had shown that a rigid body has three perpendicular **principal axes**: a frame in which the relationship between angular velocity and angular momentum, $\mathbf{L} = I\boldsymbol{\omega}$, decouples into three separate equations, because the matrix $I$ is diagonal there. In any other frame the same physical relationship is described by a full $3 \times 3$ array with off-diagonal entries, and the equations of motion look far worse. The body hasn't changed. Cauchy, in the 1820s, found the same structure in continuum mechanics: at each point of a loaded solid there is a **stress tensor** $\sigma$, a linear map that sends the unit normal of any small cut surface to the force per area acting across it, and there is a frame (the principal stress directions) in which the shear components vanish. Otto Mohr's circle (1882), which every mechanical engineer learns, is a graphical way of reading off how the components of $\sigma$ change as you rotate the frame. Example 4.4 shows it is nothing but the change-of-basis formula of this module.
 
@@ -59,7 +59,7 @@ Project the plane onto the line $y = 2x$. Every point slides perpendicularly ont
 
 Dimension bookkeeping: $2 = 1 + 1$. Started with two, destroyed one, kept one.
 
-Try it on a rotation: nothing is squashed (kernel is just $\{\mathbf{0}\}$), everything is reachable (image is the whole plane). $2 = 0 + 2$. A map from $\mathbb{R}^3$ to $\mathbb{R}^2$, like $(x, y, z) \mapsto (x, y)$: the $z$-axis is squashed, the image is all of $\mathbb{R}^2$. $3 = 1 + 2$. A map from $\mathbb{R}^2$ into $\mathbb{R}^3$, like $(x, y) \mapsto (x, y, 0)$: nothing squashed, the image is a plane inside $\mathbb{R}^3$. $2 = 0 + 2$.
+Try it on a rotation: nothing is squashed (the kernel is $\{\mathbf{0}\}$ alone), everything is reachable (image is the whole plane). $2 = 0 + 2$. A map from $\mathbb{R}^3$ to $\mathbb{R}^2$, like $(x, y, z) \mapsto (x, y)$: the $z$-axis is squashed, the image is all of $\mathbb{R}^2$. $3 = 1 + 2$. A map from $\mathbb{R}^2$ into $\mathbb{R}^3$, like $(x, y) \mapsto (x, y, 0)$: nothing squashed, the image is a plane inside $\mathbb{R}^3$. $2 = 0 + 2$.
 
 The guess you should now be able to make: **(dimensions squashed) + (dimensions kept) = (dimensions you started with).** That is Rank–Nullity, Theorem 3.14. Note that the right-hand side is the dimension of the *input* space, not the output. The output space only constrains how big the image can be.
 
@@ -236,7 +236,7 @@ $$
 
 A second derivation, worth seeing because it is the one you will reconstruct under exam pressure: for any $\mathbf{v}$, $[T\mathbf{v}]_{\mathcal{B}'} = P^{-1}[T\mathbf{v}]_{\mathcal{B}} = P^{-1}A[\mathbf{v}]_{\mathcal{B}} = P^{-1}AP[\mathbf{v}]_{\mathcal{B}'}$. So the matrix $P^{-1}AP$ does to $\mathcal{B}'$-coordinates what $T$ does to vectors, and by Theorem 3.6 the matrix with that property is unique: it is $[T]_{\mathcal{B}'}$.
 
-■ **What just happened.** Read $P^{-1}AP$ from the right, the direction the vector enters: $P$ converts new coordinates to old; $A$ applies $T$ in old coordinates; $P^{-1}$ converts the result back to new coordinates. For a map $T: V \to W$ with a basis change on each side ($P$ in $V$, $Q$ in $W$), the same argument gives $[T]_{\mathcal{B}',\mathcal{C}'} = Q^{-1}[T]_{\mathcal{B},\mathcal{C}}\,P$ (Exercise B2 uses this).
+■ **What just happened.** Read $P^{-1}AP$ from the right, the direction the vector enters: $P$ converts new coordinates to old; $A$ applies $T$ in old coordinates; $P^{-1}$ converts the result back to new coordinates. For a map $T: V \to W$ with a basis change on each side ($P$ in $V$, $Q$ in $W$), the same argument gives $[T]_{\mathcal{B}',\mathcal{C}'} = Q^{-1}[T]_{\mathcal{B},\mathcal{C}}\,P$: convert input coordinates with $P$, apply, convert output coordinates back with $Q^{-1}$.
 
 Example 4.2 runs (3.6) with numbers for the $90°$ rotation. Example 4.4 runs it for the stress tensor.
 
@@ -313,7 +313,7 @@ $$
 
 Three remarks.
 
-- For an $m \times n$ matrix $A$, (3.7) reads $n = \dim N(A) + \operatorname{rank}A$. LA-3 got this by counting: each free variable gives one basis vector of $N(A)$, each pivot one basis vector of $C(A)$, and every column is one or the other. That argument needs elimination. This one needs no coordinates and works for $D$ on polynomials or $A \mapsto A - A^\top$ on matrices just as well.
+- For an $m \times n$ matrix $A$, (3.7) reads $n = \dim N(A) + \operatorname{rank}A$. LA-3 got this by counting: each free variable gives one basis vector of $N(A)$, each pivot one basis vector of $C(A)$, and every column is one or the other. That argument needs elimination. This one needs no coordinates and works for $D$ on polynomials or $A \mapsto A - A^\top$ on matrices equally well.
 - $\operatorname{rank}T \le \min(\dim V, \dim W)$: the image is a subspace of $W$, and by (3.7) its dimension is at most $\dim V$.
 - The right side of (3.7) involves only the *input* dimension. $\dim W$ puts a ceiling on the rank, nothing more.
 
@@ -385,8 +385,8 @@ A corollary with real content: **for square matrices, a one-sided inverse is two
 
 **Derivation.**
 
-1. *Vector space.* $S + T$ is linear: $(S+T)(a\mathbf{u} + b\mathbf{v}) = S(a\mathbf{u} + b\mathbf{v}) + T(a\mathbf{u} + b\mathbf{v}) = a(S\mathbf{u} + T\mathbf{u}) + b(S\mathbf{v} + T\mathbf{v}) = a(S+T)\mathbf{u} + b(S+T)\mathbf{v}$. Likewise $cT$. The eight axioms of LA-3 hold because they hold in $W$ at every $\mathbf{v}$ ("pointwise"); the zero map $\mathbf{v} \mapsto \mathbf{0}$ is the zero vector.
-2. *$\Phi$ is linear.* Column $j$ of $[S + T]_{\mathcal{B},\mathcal{C}}$ is $[(S+T)\mathbf{b}_j]_{\mathcal{C}} = [S\mathbf{b}_j]_{\mathcal{C}} + [T\mathbf{b}_j]_{\mathcal{C}}$ by Theorem 3.4, which is column $j$ of $[S] + [T]$. Likewise $[cT] = c[T]$.
+1. *Vector space.* $S + T$ is linear: $(S+T)(a\mathbf{u} + b\mathbf{v}) = S(a\mathbf{u} + b\mathbf{v}) + T(a\mathbf{u} + b\mathbf{v}) = a(S\mathbf{u} + T\mathbf{u}) + b(S\mathbf{v} + T\mathbf{v}) = a(S+T)\mathbf{u} + b(S+T)\mathbf{v}$. So is $cT$: $(cT)(a\mathbf{u} + b\mathbf{v}) = c(aT\mathbf{u} + bT\mathbf{v}) = a(cT)\mathbf{u} + b(cT)\mathbf{v}$. The eight axioms of LA-3 hold because they hold in $W$ at every $\mathbf{v}$ ("pointwise"); the zero map $\mathbf{v} \mapsto \mathbf{0}$ is the zero vector.
+2. *$\Phi$ is linear.* Column $j$ of $[S + T]_{\mathcal{B},\mathcal{C}}$ is $[(S+T)\mathbf{b}_j]_{\mathcal{C}} = [S\mathbf{b}_j]_{\mathcal{C}} + [T\mathbf{b}_j]_{\mathcal{C}}$ by Theorem 3.4, which is column $j$ of $[S] + [T]$. And column $j$ of $[cT]$ is $[cT\mathbf{b}_j]_{\mathcal{C}} = c[T\mathbf{b}_j]_{\mathcal{C}}$, so $[cT] = c[T]$.
 3. *$\Phi$ is injective.* If $[T]_{\mathcal{B},\mathcal{C}} = 0$ then every $[T\mathbf{b}_j]_{\mathcal{C}} = \mathbf{0}$, so every $T\mathbf{b}_j = \mathbf{0}$, so $T$ agrees with the zero map on a basis and equals it by the uniqueness half of Theorem 3.2. So $\ker\Phi = \{0\}$ and Theorem 3.13 applies.
 4. *$\Phi$ is surjective.* Given any $M \in \mathbb{R}^{m\times n}$, set $\mathbf{w}_j = \sum_i M_{ij}\mathbf{c}_i$ and let $T$ be the linear extension with $T\mathbf{b}_j = \mathbf{w}_j$ (existence half of Theorem 3.2). Then $[T\mathbf{b}_j]_{\mathcal{C}}$ is column $j$ of $M$, so $\Phi(T) = M$.
 5. $\Phi$ is an isomorphism, so by Theorem 3.17(c), $\dim\mathcal{L}(V, W) = \dim\mathbb{R}^{m\times n} = mn$. ∎
@@ -395,7 +395,7 @@ A corollary with real content: **for square matrices, a one-sided inverse is two
 
 ### 3.13 Some operators worth knowing by sight
 
-**Nilpotent operators.** $T$ is **nilpotent** if $T^k = 0$ for some $k$ (the smallest such $k$ is the *index*). Differentiation on $\mathcal{P}_3$ is the standard example: each application lowers the degree by one or kills the polynomial, so $D^4 = 0$ on $\mathcal{P}_3$, while $D^3x^3 = 6 \neq 0$, so the index is $4$. Its matrix is in Example 4.1. In the basis $(1, x, x^2/2, x^3/6)$ it is the **shift matrix** with $1$s just above the diagonal, which is the model for every nilpotent operator (LA-11, Jordan form). Exercise C2 proves the index of a nilpotent operator is at most $\dim V$.
+**Nilpotent operators.** $T$ is **nilpotent** if $T^k = 0$ for some $k$ (the smallest such $k$ is the *index*). Differentiation on $\mathcal{P}_3$ is the standard example: each application lowers the degree by one or kills the polynomial, so $D^4 = 0$ on $\mathcal{P}_3$, while $D^3x^3 = 6 \neq 0$, so the index is $4$. Its matrix is in Example 4.1. In the basis $(1, x, x^2/2, x^3/6)$ it is the **shift matrix** with $1$s immediately above the diagonal, which is the model for every nilpotent operator (LA-11, Jordan form). Exercise C2 proves the index of a nilpotent operator is at most $\dim V$.
 
 **Projections (idempotents).** $P$ is a **projection** if $P^2 = P$. Geometric meaning: once a vector has landed in the image, projecting again does nothing. Precisely: if $\mathbf{w} \in \operatorname{im}P$, say $\mathbf{w} = P\mathbf{v}$, then $P\mathbf{w} = P^2\mathbf{v} = P\mathbf{v} = \mathbf{w}$. So $P$ acts as the identity on its image and as zero on its kernel, and every vector splits as $\mathbf{v} = (\mathbf{v} - P\mathbf{v}) + P\mathbf{v}$ with the first piece in the kernel ($P(\mathbf{v} - P\mathbf{v}) = P\mathbf{v} - P^2\mathbf{v} = \mathbf{0}$) and the second in the image. In a basis made of a basis of the image followed by a basis of the kernel, the matrix is $\operatorname{diag}(1, \dots, 1, 0, \dots, 0)$ with $\operatorname{rank}P$ ones. Example 4.3 shows this for the line $y = 2x$; Exercise C3 proves it in general. LA-5 adds the orthogonality condition $P = P^\top$, which pins down *which* projection onto a given image.
 
@@ -476,7 +476,7 @@ $$P^{-1}AP = \tfrac12\begin{pmatrix} 1 & 1 \\ 1 & -1\end{pmatrix}\begin{pmatrix}
 
 *What it means.* In the standard basis, "rotation by $90°$" reads $\mathbf{e}_1 \mapsto \mathbf{e}_2$, $\mathbf{e}_2 \mapsto -\mathbf{e}_1$. In the new basis it reads $\mathbf{b}'_1 \mapsto -\mathbf{b}'_2$, $\mathbf{b}'_2 \mapsto \mathbf{b}'_1$, which is the pattern of rotation by $-90°$. Nothing is wrong. The frame $(\mathbf{b}'_1, \mathbf{b}'_2)$ is left-handed ($\det P = -2 < 0$: going from $\mathbf{b}'_1$ to $\mathbf{b}'_2$ is a clockwise turn), so a counterclockwise motion of the plane has clockwise-looking coordinates. Invariants: $\operatorname{tr} = 0$ and $\det = 1$ for both matrices, as Theorem 3.10 and §3.13 require.
 
-*The wrong direction, for the record.* $PAP^{-1} = \begin{pmatrix} 0 & -1 \\ 1 & 0\end{pmatrix}$ here, by coincidence equal to $A$ (because $P^{-1} = \tfrac12 P$ and $P$ anticommutes with $A$). In general $PAP^{-1}$ is the matrix of $T$ in the basis whose *old* coordinates are the columns of $P^{-1}$, which is not what was asked. Exercise B3 has a case where the two answers differ visibly.
+*The wrong direction, for the record.* For this particular $P$, $P^{-1} = \tfrac12 P$, so $PAP^{-1} = \tfrac12 PAP = P^{-1}AP$: the wrong-direction product gives the right answer by accident, and a direction error would go unnoticed. In general $PAP^{-1}$ is the matrix of $T$ in the basis whose vectors (in old coordinates) are the columns of $P^{-1}$, which is not what was asked. Exercise B3 has a basis where the two products differ visibly, and where even the trace and determinant cannot tell them apart.
 
 ### Example 4.3: Projection onto the line $y = 2x$
 
@@ -531,7 +531,7 @@ In LA-8 the principal frame will be the eigenvector basis of the symmetric matri
 
 ## 6. Exercises
 
-See [exercises.md](exercises.md). A1–A5 drill the definition of linearity, computing matrices from (3.2), coordinate vectors, and kernels. B1–B8 are the module: B1 (coordinate isomorphism), B2 (integration and differentiation, when a one-sided inverse exists), B3 (change of basis in both directions, numbers), B5 ($AB = I$ implies $BA = I$, via Rank–Nullity), and B8 (extend `project.py`) are essential. C1–C3 go further: rank of a composition, nilpotent index, and the structure theorem for projections.
+See [exercises.md](exercises.md). A1–A6 drill the definition of linearity, computing matrices from (3.2), coordinate vectors, kernels, and the rotation and differentiation matrices. B1–B8 are the module: B1 (isomorphisms carry bases to bases), B2 (integration and differentiation, when a one-sided inverse exists), B3 (change of basis in both directions, numbers), B5 ($AB = I$ implies $BA = I$, via Rank–Nullity), and B8 (extend `project.py`) are essential. C1–C3 go further: rank of a composition, nilpotent index, and the structure theorem for projections.
 
 ## 7. Coding project
 
@@ -577,6 +577,6 @@ See [exercises.md](exercises.md). A1–A5 drill the definition of linearity, com
 
 ## 10. Pair with
 
-- **Axler, *Linear Algebra Done Right*, 4th ed., ch. 3** (§3A–3D; §3E–3F are LA-12). Axler proves Theorems 3.2, 3.14, 3.17 and 3.19 in the same order as here, with cleaner notation and more examples of maps on function spaces. His proof of the Fundamental Theorem of Linear Maps (3.21 in his numbering) is the one in §3.9. Read 3D for matrices of maps after you have done Example 4.1 by hand.
+- **Axler, *Linear Algebra Done Right*, 4th ed., ch. 3** (§3A–3D; §3E–3F are LA-12). Axler proves Theorems 3.2, 3.14, 3.17 and 3.19 in the same order as here, with cleaner notation and more examples of maps on function spaces. His proof of the Fundamental Theorem of Linear Maps is the one in §3.9. Read 3D for matrices of maps after you have done Example 4.1 by hand.
 - **Strang, *Introduction to Linear Algebra*, §8.2–8.3** (the matrix of a linear transformation; the search for a good basis). Strang's §8.2 does the differentiation and integration matrices (Example 4.1 and Exercise B2) and is better than these notes on the "a different basis gives a different matrix" examples. §8.3 previews why diagonal (eigenvector) and orthogonal (SVD) bases are the ones worth searching for.
 - **3Blue1Brown, *Essence of Linear Algebra*, episodes 9–13.** Episode 13 (change of basis) is the one to watch twice; it animates (3.5) and $P^{-1}AP$ and uses the same "whose grid are we speaking" language as §2. Episodes 9–12 (dot products and duality, cross products, Cramer's rule) are the bridge toward LA-6 and LA-12; watch them once now for the pictures. Rewatch episodes 3, 4, 7 and 8 (transformations, composition, null space and column space, nonsquare matrices) if the grid-deformation picture of §2 is not yet automatic.
