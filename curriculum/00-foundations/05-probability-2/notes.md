@@ -370,3 +370,133 @@ $$f(\mathbf{x}_1 \mid \mathbf{x}_2) = \frac{(2\pi)^{-(p+q)/2}(\det S\det\Sigma_{
 
 **Mahalanobis distance.** $d(\mathbf{x}) = \sqrt{(\mathbf{x} - \boldsymbol\mu)^\top\Sigma^{-1}(\mathbf{x} - \boldsymbol\mu)}$. Since $\Sigma^{-1} = L^{-\top}L^{-1}$, $d(\mathbf{x}) = \|L^{-1}(\mathbf{x} - \boldsymbol\mu)\| = \|\mathbf{z}\|$: it is the ordinary Euclidean distance *after* undoing the transformation that made the Gaussian elliptical. It measures "how many standard deviations away, in the right direction." If $\mathbf{X} \sim \mathcal{N}(\boldsymbol\mu, \Sigma)$ then $d(\mathbf{X})^2 = \|\mathbf{Z}\|^2 \sim \chi^2_k$ (§3.5), which is how you set a confidence ellipse: the ellipse $d(\mathbf{x})^2 \le \chi^2_{k, 0.95}$ contains 95% of the mass. For $k = 2$, $\chi^2_{2,0.95} = -2\ln 0.05 \approx 5.99$ (since $\chi^2_2$ is $\mathrm{Exponential}(\tfrac12)$). The weighted inner product of LA-1 exercise C1 with weight matrix $\Sigma^{-1}$ is exactly this.
 
+### 3.9 Conditional expectation
+
+**Definition 3.25.** For each $x$ with $p_X(x) > 0$, the **conditional expectation of $Y$ given $X = x$** is the mean of the conditional distribution (3.3)/(3.4):
+$$g(x) := \mathbb{E}[Y \mid X = x] = \sum_y y\,p_{Y|X}(y \mid x) \quad\text{or}\quad \int y\,f_{Y|X}(y \mid x)\,dy.$$
+This is an ordinary function of $x$. The **conditional expectation $\mathbb{E}[Y \mid X]$** is the random variable $g(X)$: plug the random $X$ into the function $g$.
+
+The second sentence is the conceptual leap (§8). $\mathbb{E}[Y \mid X = 3]$ is a number. $\mathbb{E}[Y \mid X]$ is a random variable, a function of $X$, whose value is $\mathbb{E}[Y\mid X = 3]$ on the event $X = 3$. It is "the best guess of $Y$ once you know $X$," considered before you know $X$.
+
+Three properties, each immediate from the definition since conditioning on $X = x$ is just computing with the conditional distribution:
+
+- **Linearity:** $\mathbb{E}[aY + bW \mid X] = a\,\mathbb{E}[Y \mid X] + b\,\mathbb{E}[W \mid X]$.
+- **Taking out what is known:** $\mathbb{E}[h(X)\,Y \mid X] = h(X)\,\mathbb{E}[Y \mid X]$. Given $X = x$, $h(X)$ is the constant $h(x)$, and constants come out of expectations. In particular $\mathbb{E}[h(X) \mid X] = h(X)$.
+- **Independence drops the conditioning:** if $X \perp Y$ then $p_{Y|X}(y\mid x) = p_Y(y)$ (Theorem 3.4(b)), so $\mathbb{E}[Y \mid X] = \mathbb{E}[Y]$, a constant.
+
+**Theorem 3.26 (Adam's law, or the tower property).** $\mathbb{E}\big[\mathbb{E}[Y \mid X]\big] = \mathbb{E}[Y]$.
+
+▶ **Try it first.** $\mathbb{E}[Y\mid X]$ is $g(X)$; compute $\mathbb{E}[g(X)]$ by LOTUS and swap the order of summation.
+
+**Derivation.** $\mathbb{E}[g(X)] = \sum_x g(x)\,p_X(x) = \sum_x\Big(\sum_y y\,p_{Y|X}(y\mid x)\Big)p_X(x) = \sum_x\sum_y y\,p_{X,Y}(x,y) = \sum_y y\sum_x p_{X,Y}(x,y) = \sum_y y\,p_Y(y) = \mathbb{E}[Y]$, using the chain rule and then (3.1). Integrals for the continuous case. ∎ The same argument with extra conditioning gives $\mathbb{E}\big[\mathbb{E}[Y\mid X, W]\,\big|\,W\big] = \mathbb{E}[Y\mid W]$: averaging out the finer information leaves the coarser.
+
+■ **What just happened.** To compute $\mathbb{E}[Y]$, you may first compute it on each slice $X = x$ and then average the slice answers with the weights $p_X(x)$. This is the law of total probability for expectations, and it is the single most useful computational trick in probability: condition on the thing that makes the problem easy, then average.
+
+**Definition 3.27.** $\mathrm{Var}(Y \mid X) := \mathbb{E}[Y^2 \mid X] - (\mathbb{E}[Y\mid X])^2$, the variance of the conditional distribution, as a random variable (function of $X$).
+
+**Theorem 3.28 (Eve's law, or the law of total variance).**
+$$\mathrm{Var}(Y) = \mathbb{E}\big[\mathrm{Var}(Y \mid X)\big] + \mathrm{Var}\big(\mathbb{E}[Y\mid X]\big). \tag{3.21}$$
+
+▶ **Try it first.** Take $\mathbb{E}$ of Definition 3.27 using Adam's law, write down $\mathrm{Var}(g(X))$ by the usual formula, and add.
+
+**Derivation.** Write $g(X) = \mathbb{E}[Y\mid X]$.
+
+1. $\mathbb{E}[\mathrm{Var}(Y\mid X)] = \mathbb{E}\big[\mathbb{E}[Y^2\mid X]\big] - \mathbb{E}[g(X)^2] = \mathbb{E}[Y^2] - \mathbb{E}[g(X)^2]$, by Adam's law applied to $Y^2$.
+2. $\mathrm{Var}(g(X)) = \mathbb{E}[g(X)^2] - (\mathbb{E}[g(X)])^2 = \mathbb{E}[g(X)^2] - (\mathbb{E}[Y])^2$, by Adam's law applied to $Y$.
+3. Add: $\mathbb{E}[Y^2] - (\mathbb{E}[Y])^2 = \mathrm{Var}(Y)$. ∎
+
+■ **What just happened.** Total variance = average *within*-slice variance (how spread $Y$ is once $X$ is known; the "unexplained" part) + variance of the slice *means* (how much knowing $X$ moves your guess; the "explained" part). The ratio $\mathrm{Var}(\mathbb{E}[Y\mid X])/\mathrm{Var}(Y)$ is the fraction of variance explained by $X$; for a jointly Gaussian pair it equals $\rho^2$ (check: $\mathrm{Var}(\mathbb{E}[Y\mid X]) = \mathrm{Var}(\rho\frac{\sigma_Y}{\sigma_X}X) = \rho^2\sigma_Y^2$). This is $R^2$ in ST-3 and the ANOVA decomposition in ST-2. Students swap the two terms constantly (§8); say the words "average of the conditional variances, plus variance of the conditional means."
+
+**Theorem 3.29 (Conditional expectation is the best predictor in mean square; projection).** Among all functions $h$, the mean squared error $\mathbb{E}[(Y - h(X))^2]$ is minimized by $h(X) = \mathbb{E}[Y\mid X]$. Moreover, the residual $Y - \mathbb{E}[Y\mid X]$ is orthogonal to every function of $X$:
+$$\mathbb{E}\big[(Y - \mathbb{E}[Y\mid X])\,h(X)\big] = 0 \quad\text{for all } h. \tag{3.22}$$
+
+▶ **Try it first.** Prove (3.22) with Adam's law and "taking out what is known." Then write $Y - h(X) = (Y - \mathbb{E}[Y\mid X]) + (\mathbb{E}[Y\mid X] - h(X))$ and expand the square. Which cross term vanishes, and why?
+
+**Derivation.**
+
+1. Orthogonality. $\mathbb{E}\big[(Y - g(X))h(X)\big] = \mathbb{E}\Big[\mathbb{E}\big[(Y - g(X))h(X)\,\big|\,X\big]\Big]$ by Adam's law $= \mathbb{E}\big[h(X)\,\mathbb{E}[Y - g(X)\mid X]\big]$ by taking out what is known $= \mathbb{E}\big[h(X)(g(X) - g(X))\big] = 0$, since $\mathbb{E}[Y\mid X] = g(X)$ and $\mathbb{E}[g(X)\mid X] = g(X)$.
+2. Pythagoras. Let $R = Y - g(X)$ (the residual) and $D = g(X) - h(X)$ (a function of $X$). Then $Y - h(X) = R + D$ and
+$$\mathbb{E}[(Y - h(X))^2] = \mathbb{E}[R^2] + 2\,\mathbb{E}[RD] + \mathbb{E}[D^2] = \mathbb{E}[R^2] + \mathbb{E}[D^2] \ge \mathbb{E}[R^2],$$
+because $\mathbb{E}[RD] = 0$ by step 1 with $h = D$. Equality iff $\mathbb{E}[D^2] = 0$ iff $h(X) = g(X)$ with probability 1. ∎
+
+■ **What just happened.** In the inner product $\langle U, V\rangle = \mathbb{E}[UV]$ of Theorem 3.17, the set of all (square-integrable) functions of $X$ is a subspace. Equation (3.22) says the residual $Y - \mathbb{E}[Y\mid X]$ is orthogonal to that whole subspace. So $\mathbb{E}[Y\mid X]$ is the **orthogonal projection of $Y$ onto the functions of $X$** (LA-5: the projection is the unique vector in the subspace whose residual is orthogonal to the subspace), and the mean-square optimality is LA-5's "projection is the closest point," proved by the same Pythagoras argument as LA-1 exercise B7(c). This is the geometric heart of regression: *regression is projection*. ST-3 does it with a finite data vector and the column space of a design matrix; here it is the infinite-dimensional original.
+
+**The best linear predictor.** Suppose you restrict $h$ to lines, $h(X) = \alpha + \beta X$. Minimize $J(\alpha, \beta) = \mathbb{E}[(Y - \alpha - \beta X)^2]$.
+
+▶ **Try it first.** Set both partial derivatives to zero. They are two linear equations in $(\alpha, \beta)$; the $\alpha$ equation is "the residual has mean zero."
+
+**Derivation.**
+
+1. $\partial J/\partial\alpha = -2\,\mathbb{E}[Y - \alpha - \beta X] = 0 \Rightarrow \alpha = \mu_Y - \beta\mu_X$.
+2. $\partial J/\partial\beta = -2\,\mathbb{E}[X(Y - \alpha - \beta X)] = 0 \Rightarrow \mathbb{E}[XY] - \alpha\mu_X - \beta\,\mathbb{E}[X^2] = 0$. Substitute step 1: $\mathbb{E}[XY] - \mu_X\mu_Y + \beta\mu_X^2 - \beta\,\mathbb{E}[X^2] = 0$, i.e., $\mathrm{Cov}(X,Y) - \beta\,\mathrm{Var}(X) = 0$.
+3. Therefore
+$$\beta^* = \frac{\mathrm{Cov}(X, Y)}{\mathrm{Var}(X)} = \rho\,\frac{\sigma_Y}{\sigma_X}, \qquad \hat Y = \mu_Y + \rho\frac{\sigma_Y}{\sigma_X}(X - \mu_X). \tag{3.23}$$
+($J$ is a convex quadratic in $(\alpha, \beta)$, so the stationary point is the minimum.) The residual variance is $\mathrm{Var}(Y - \beta^*X) = \sigma_Y^2 - 2\beta^*\mathrm{Cov}(X,Y) + \beta^{*2}\sigma_X^2 = \sigma_Y^2 - 2\rho^2\sigma_Y^2 + \rho^2\sigma_Y^2 = \sigma_Y^2(1 - \rho^2)$. ∎
+
+■ **What just happened.** (3.23) is (3.19) in one dimension. For a jointly Gaussian pair, the best linear predictor *is* the conditional expectation (because the conditional mean happens to be linear). For any other joint distribution, (3.23) is still the best line, but $\mathbb{E}[Y\mid X]$ may be a curve that does better. Now **regression to the mean**: in standardized units, (3.23) reads $\hat z_Y = \rho\,z_X$. A parent two standard deviations tall ($z_X = 2$) has a child predicted at $2\rho$ standard deviations, which is *less* than 2 whenever $\rho < 1$. Nothing is pulling anyone toward the mean: it is the statement that the line of best fit has slope $\rho < 1$ in standardized units, and it holds equally for predicting parents from children. Galton's "force" was an artifact of imperfect correlation. Example 4.5 does the numbers.
+
+### 3.10 Inequalities
+
+**Theorem 3.30 (Markov).** If $X \ge 0$ and $a > 0$, then $P(X \ge a) \le \mathbb{E}[X]/a$.
+
+*Derivation.* For every outcome, $a\cdot\mathbf{1}\{X \ge a\} \le X$: if $X \ge a$ the left side is $a \le X$; otherwise the left side is $0 \le X$. Take expectations: $a\,P(X \ge a) \le \mathbb{E}[X]$. ∎
+
+**Theorem 3.31 (Chebyshev).** If $X$ has mean $\mu$ and variance $\sigma^2$, then for any $k > 0$, $P(|X - \mu| \ge k) \le \sigma^2/k^2$.
+
+*Derivation.* $|X - \mu| \ge k$ iff $(X - \mu)^2 \ge k^2$. Apply Markov to the nonnegative variable $(X - \mu)^2$ with $a = k^2$: $P((X-\mu)^2 \ge k^2) \le \mathbb{E}[(X-\mu)^2]/k^2 = \sigma^2/k^2$. ∎
+
+Both are crude (for a Gaussian, $P(|X - \mu| \ge 2\sigma) \approx 0.046$ while Chebyshev gives $0.25$) but they assume *nothing* about the shape of the distribution, and that is what the law of large numbers needs.
+
+**Theorem 3.32 (Jensen).** If $g$ is convex and $\mathbb{E}[X]$ exists, then $\mathbb{E}[g(X)] \ge g(\mathbb{E}[X])$. If $g$ is concave the inequality reverses. For strictly convex $g$, equality holds iff $X$ is constant.
+
+*Two-point case.* If $X = x_1$ with probability $p$ and $x_2$ with probability $1 - p$, then $\mathbb{E}[g(X)] = p\,g(x_1) + (1-p)\,g(x_2) \ge g(p x_1 + (1-p)x_2) = g(\mathbb{E}[X])$. That inequality *is* the definition of convexity: the chord lies above the graph.
+
+*General case.* Let $\mu = \mathbb{E}[X]$. A convex function has a supporting line at every point: there is a constant $c$ with $g(x) \ge g(\mu) + c(x - \mu)$ for all $x$ (the tangent line if $g$ is differentiable; otherwise any slope between the one-sided derivatives). Take expectations of both sides: $\mathbb{E}[g(X)] \ge g(\mu) + c\,\mathbb{E}[X - \mu] = g(\mu)$. For strictly convex $g$ the supporting line touches only at $\mu$, so equality forces $X = \mu$ with probability 1. ∎
+
+Uses: $g(x) = x^2$ gives $\mathbb{E}[X^2] \ge (\mathbb{E}X)^2$, i.e., $\mathrm{Var} \ge 0$. $g = -\log$ (convex) gives $\mathbb{E}[\log X] \le \log\mathbb{E}[X]$, which is the proof of Gibbs' inequality in §3.13. Cauchy–Schwarz (Theorem 3.17) completes the set; together these four are most of the inequalities you will use in ST and ML.
+
+### 3.11 Limit theorems
+
+**Definition 3.33.** $X_n \to X$ **in probability** ($X_n \xrightarrow{p} X$) if for every $\epsilon > 0$, $P(|X_n - X| > \epsilon) \to 0$. $X_n \to X$ **in distribution** ($X_n \xrightarrow{d} X$) if $F_{X_n}(x) \to F_X(x)$ at every $x$ where $F_X$ is continuous.
+
+The difference in one sentence each: convergence in probability says the random variables themselves become close (realization by realization, with high probability), while convergence in distribution says only that their *histograms* become close ($X_n$ and $X$ need not even live on the same sample space). In probability implies in distribution; the converse fails: if $Z \sim \mathcal{N}(0,1)$ and $X_n = (-1)^n Z$, every $X_n$ is exactly $\mathcal{N}(0,1)$, so $X_n \xrightarrow{d} Z$, but $|X_n - Z| = 2|Z|$ for odd $n$, so there is no convergence in probability. Almost-sure convergence ($P(\lim X_n = X) = 1$) is stronger than both.
+
+**Theorem 3.34 (Weak law of large numbers).** Let $X_1, X_2, \dots$ be iid with mean $\mu$ and finite variance $\sigma^2$, and $\bar X_n = \frac1n\sum_{i=1}^n X_i$. Then $\bar X_n \xrightarrow{p} \mu$.
+
+▶ **Try it first.** Compute $\mathbb{E}[\bar X_n]$ and $\mathrm{Var}(\bar X_n)$ using (3.14); then Chebyshev.
+
+**Derivation.** $\mathbb{E}[\bar X_n] = \mu$ by linearity. By (3.14) with all $a_i = 1/n$ and all covariances zero (independence), $\mathrm{Var}(\bar X_n) = \frac{1}{n^2}\cdot n\sigma^2 = \sigma^2/n$. Chebyshev: $P(|\bar X_n - \mu| \ge \epsilon) \le \dfrac{\sigma^2}{n\epsilon^2} \to 0$. ∎
+
+■ **What just happened.** Averaging $n$ independent copies divides the variance by $n$; Chebyshev converts small variance into high probability of being close. Independence was used once, to kill the covariances; the proof goes through verbatim for *uncorrelated* variables (exercise B7), which is Markov's point against Nekrasov. The **strong law** says more: $P(\bar X_n \to \mu) = 1$ (almost-sure convergence), and needs only $\mathbb{E}|X_1| < \infty$, no variance. Its proof is beyond this module (Blitzstein §10.2 sketches it; Durrett, *Probability: Theory and Examples*, §2.4 proves it). Operationally: the weak law says at each large $n$ the average is probably near $\mu$; the strong law says the *sequence* of running averages converges, for almost every realization.
+
+**Theorem 3.35 (Central limit theorem).** Let $X_1, X_2, \dots$ be iid with mean $\mu$ and variance $\sigma^2 \in (0, \infty)$. Then
+$$\frac{\bar X_n - \mu}{\sigma/\sqrt n} = \frac{1}{\sqrt n}\sum_{i=1}^n\frac{X_i - \mu}{\sigma} \;\xrightarrow{d}\; \mathcal{N}(0, 1). \tag{3.24}$$
+
+We prove it under one extra assumption: the MGF of $X_1$ exists in a neighborhood of 0. (The general finite-variance case replaces MGFs with characteristic functions $\mathbb{E}[e^{itX}]$, which always exist; the structure of the proof is identical.)
+
+▶ **Try it first.** Let $Y_i = (X_i - \mu)/\sigma$, with MGF $M$. Write the MGF of the standardized sum as a power of $M(t/\sqrt n)$. Taylor-expand $M$ to second order around 0 (you know $M(0), M'(0), M''(0)$) and take $n\to\infty$. What limit do you recognize?
+
+**Derivation.**
+
+1. $Y_i$ has mean 0 and variance 1, so its MGF satisfies $M(0) = 1$, $M'(0) = \mathbb{E}[Y] = 0$, $M''(0) = \mathbb{E}[Y^2] = 1$. Since $M$ exists near 0 it is infinitely differentiable there, and Taylor's theorem gives $M(s) = 1 + 0\cdot s + \tfrac12 s^2 + r(s)$ with $r(s)/s^2 \to 0$ as $s \to 0$.
+2. Let $S_n = \frac{1}{\sqrt n}\sum Y_i$. By independence and Corollary 3.5, $M_{S_n}(t) = \prod_i\mathbb{E}[e^{tY_i/\sqrt n}] = M(t/\sqrt n)^n = \left(1 + \frac{t^2}{2n} + r\!\left(\tfrac{t}{\sqrt n}\right)\right)^n$.
+3. Take logs and use $\log(1 + u) = u + O(u^2)$ for small $u$, with $u_n = \frac{t^2}{2n} + r(t/\sqrt n)$:
+$$\log M_{S_n}(t) = n\,u_n + n\,O(u_n^2) = \frac{t^2}{2} + n\,r\!\left(\tfrac{t}{\sqrt n}\right) + O\!\left(\tfrac{1}{n}\right).$$
+The middle term: $n\,r(t/\sqrt n) = t^2\cdot\dfrac{r(t/\sqrt n)}{(t/\sqrt n)^2} \to t^2\cdot 0 = 0$ by step 1. So $\log M_{S_n}(t) \to t^2/2$, i.e., $M_{S_n}(t) \to e^{t^2/2}$ for every $t$ near 0.
+4. $e^{t^2/2}$ is the MGF of $\mathcal{N}(0,1)$ (F4). The **continuity theorem** (Lévy; for MGFs, Curtiss 1942) states: if $M_{S_n}(t) \to M_S(t)$ for all $t$ in a neighborhood of 0, where $M_S$ is the MGF of some $S$, then $S_n \xrightarrow{d} S$. We cite this; it is not proved here. (Billingsley, *Probability and Measure*, §30; Blitzstein §10.3 states it the same way.) Hence $S_n \xrightarrow{d} \mathcal{N}(0,1)$. ∎
+
+■ **What just happened.** Every distribution with mean 0 and variance 1 has an MGF that looks like $1 + t^2/2$ to second order; the third-order and higher terms are what make distributions different from each other, and raising $M(t/\sqrt n)$ to the $n$-th power wipes them out, because they are $O(n^{-3/2})$ each and there are only $n$ of them. The CLT is the statement that only the first two moments survive aggregation. The honest gap is step 4: we proved the MGFs converge and cited that this forces the distributions to converge.
+
+**How fast?** **Berry–Esseen (1941–42):** if additionally $\rho_3 = \mathbb{E}|X_1 - \mu|^3 < \infty$, then for all $n$ and all $x$,
+$$\Big|P\!\left(\tfrac{\bar X_n - \mu}{\sigma/\sqrt n} \le x\right) - \Phi(x)\Big| \le \frac{C\,\rho_3}{\sigma^3\sqrt n}, \qquad C \le 0.4748 \text{ (Shevtsova 2011)}. \tag{3.25}$$
+The error decays like $1/\sqrt n$, and the constant depends on the skewness-like ratio $\rho_3/\sigma^3$. For a $\mathrm{Bernoulli}(0.1)$ this ratio is large, which is why that case converges visibly slower in the project.
+
+**What the CLT does not say.**
+1. *Heavy tails.* If the variance is infinite, (3.24) is false. The Cauchy distribution has no mean at all, and the average of $n$ iid Cauchys is again Cauchy with the same scale (provable via characteristic functions: $\varphi(t) = e^{-|t|}$, so $\varphi(t/n)^n = e^{-|t|}$): averaging does nothing. A Pareto with tail exponent $\alpha \le 2$ has infinite variance, and its standardized sums converge to a non-Gaussian *stable* law. The project shows the histograms refusing to become bell-shaped.
+2. *Dependence.* If $X_i = X_1$ for all $i$ then $\bar X_n = X_1$ forever. Mild dependence (e.g., a Markov chain that mixes fast, §3.12) still gives a CLT, but with a different variance in the limit; strong dependence can destroy it.
+3. *The tails at fixed $n$.* (3.25) bounds the *absolute* error uniformly in $x$. A bound of $0.01$ is excellent near the center and worthless at $x = 5$, where $1 - \Phi(5) \approx 3\times 10^{-7}$. The relative error in the tails can be enormous; large-deviation theory (not in this curriculum) handles that regime.
+
+**Normal approximation to the Binomial.** $X \sim \mathrm{Bin}(n, p)$ is a sum of $n$ iid Bernoullis, so $X \approx \mathcal{N}(np, np(1-p))$ for $np$ and $n(1-p)$ both at least about 10. Because $X$ is an integer and the normal is continuous, approximate $P(X \le k)$ by the normal mass up to $k + \tfrac12$ (**continuity correction**):
+$$P(X \le k) \approx \Phi\!\left(\frac{k + \tfrac12 - np}{\sqrt{np(1-p)}}\right).$$
+For $n = 100$, $p = \tfrac12$, $k = 45$: exact $P(X \le 45) = 0.1841$; without correction $\Phi(-1) = 0.1587$; with correction $\Phi(-0.9) = 0.1841$. The project prints all three.
+

@@ -535,3 +535,193 @@ For a die: mean $3.5$, variance $35/12 \approx 2.917$, standard deviation $1.708
 | $\mathrm{HGeom}(w, b, n)$ | white in $n$ draws, no replacement | $\binom{w}{k}\binom{b}{n-k}/\binom{w+b}{n}$ | $nw/N$ | $npq\frac{N-n}{N-1}$ |
 | $\mathrm{Pois}(\lambda)$ | count of rare events | $e^{-\lambda}\lambda^k/k!$ | $\lambda$ | $\lambda$ |
 | $\mathrm{DUnif}\{1..n\}$ | fair $n$-sided die | $1/n$ | $(n+1)/2$ | $(n^2-1)/12$ |
+
+### 3.11 Continuous random variables
+
+**Definition 3.13.** $X$ is **continuous** if there is a function $f_X \ge 0$, the **probability density function (PDF)**, with
+$$F_X(x) = P(X \le x) = \int_{-\infty}^x f_X(t)\,dt, \qquad\text{so that}\qquad f_X = F_X' \text{ where } F_X \text{ is differentiable.} \tag{3.25}$$
+
+Consequences. $\int_{-\infty}^\infty f_X = 1$ (that is $F(\infty) = 1$). $P(a < X \le b) = F(b) - F(a) = \int_a^b f_X$. And $P(X = x) = \int_x^x f_X = 0$ for every single $x$: a continuous variable hits any exact value with probability zero, so $P(X \le x) = P(X < x)$ and endpoints never matter.
+
+**Density is not probability.** $f_X(x)$ is not $P(X = x)$; that is 0. The probability is the *area*: $P(x < X < x + \epsilon) \approx f_X(x)\,\epsilon$. A density can exceed 1 ($X \sim \mathrm{Unif}(0, 1/2)$ has $f = 2$ on its support). A density has units of $1/[X]$: if $X$ is a time in seconds, $f_X$ is "per second," and only $f_X(x)\,dx$ is dimensionless. Every time you write a density, ask what its units are. This catches most errors in change-of-variables (F5).
+
+**Expectation and LOTUS.** $\mathbb{E}[X] = \int x f_X(x)\,dx$ and $\mathbb{E}[g(X)] = \int g(x) f_X(x)\,dx$, when the integrals converge absolutely. The heuristic: chop the line into bins of width $dx$, put mass $f_X(x)\,dx$ at $x$, and apply the discrete definitions; the Riemann sums converge to the integrals. A rigorous proof of continuous LOTUS needs the measure-theoretic definition of $\mathbb{E}$ and is the one place in this module where we point elsewhere (Billingsley §16, or F5's sketch). Theorems 3.8, 3.11–3.14 and Definition 3.12 then hold verbatim for continuous variables, with the same proofs read through LOTUS.
+
+#### Uniform
+
+**Story.** A point chosen "completely at random" in $[a, b]$: probability proportional to length. $X \sim \mathrm{Unif}(a, b)$.
+
+**PDF and CDF.** $f(x) = \frac{1}{b - a}$ on $[a, b]$, else 0. $F(x) = \frac{x - a}{b - a}$ on $[a, b]$.
+
+**Mean and variance.** $\mathbb{E}[X] = \int_a^b \frac{x}{b-a}dx = \frac{b^2 - a^2}{2(b-a)} = \frac{a + b}{2}$. $\mathbb{E}[X^2] = \frac{b^3 - a^3}{3(b-a)} = \frac{a^2 + ab + b^2}{3}$. So
+$$\operatorname{Var}(X) = \frac{a^2 + ab + b^2}{3} - \frac{(a+b)^2}{4} = \frac{4a^2 + 4ab + 4b^2 - 3a^2 - 6ab - 3b^2}{12} = \frac{(b - a)^2}{12}.$$
+For $\mathrm{Unif}(0, 1)$: mean $1/2$, variance $1/12$. (The same $1/12$ as a uniform rod's moment of inertia about its center per unit mass per unit length squared. It is the same integral.)
+
+**Theorem 3.15 (Universality of the Uniform).** Let $F$ be a CDF that is continuous and strictly increasing on the support of its distribution, with inverse $F^{-1} : (0, 1) \to \mathbb{R}$.
+
+(a) If $U \sim \mathrm{Unif}(0, 1)$ then $X = F^{-1}(U)$ has CDF $F$.
+
+(b) If $X$ has CDF $F$ then $F(X) \sim \mathrm{Unif}(0, 1)$.
+
+▶ **Try it first.** For (a), compute $P(F^{-1}(U) \le x)$ by applying $F$ to both sides of the inequality. You will need $P(U \le u) = u$.
+
+*Proof.* (a) $F$ is increasing, so $F^{-1}(U) \le x$ iff $U \le F(x)$. Hence $P(X \le x) = P(U \le F(x)) = F(x)$, since $P(U \le u) = u$ for $u \in [0, 1]$ and $F(x) \in [0, 1]$. ∎
+
+(b) For $u \in (0, 1)$: $F(X) \le u$ iff $X \le F^{-1}(u)$ (again because $F$ is increasing). So $P(F(X) \le u) = P(X \le F^{-1}(u)) = F(F^{-1}(u)) = u$, which is the $\mathrm{Unif}(0, 1)$ CDF. ∎
+
+■ **What just happened.** (a) is **inverse-CDF sampling**: a uniform random number generator plus the inverse CDF of any distribution gives you samples from that distribution. Example 4.7 does the Exponential; the project does a custom piecewise CDF. (b) says any continuous random variable can be turned into a uniform by pushing it through its own CDF; ST-2 uses it (a $p$-value under the null is $\mathrm{Unif}(0,1)$), and it is why Q–Q plots work. Where $F$ has flat pieces or jumps, replace $F^{-1}$ by the quantile function $F^{-1}(u) = \min\{x : F(x) \ge u\}$ and (a) still holds; (b) needs continuity.
+
+#### Exponential
+
+**Story.** The waiting time until an event that happens "at a constant rate $\lambda$ with no memory": the time to the next radioactive decay, the next customer, the failure of a component with no wear-out. $X \sim \mathrm{Expo}(\lambda)$, $\lambda > 0$, in units of events per unit time.
+
+**PDF, CDF, survival.** $f(x) = \lambda e^{-\lambda x}$ for $x > 0$. $F(x) = \int_0^x \lambda e^{-\lambda t}dt = 1 - e^{-\lambda x}$. The **survival function** is $P(X > x) = e^{-\lambda x}$. $\tag{3.26}$
+
+**Mean and variance.** Let $Y \sim \mathrm{Expo}(1)$. Integrating by parts with $u = y$, $dv = e^{-y}dy$: $\mathbb{E}[Y] = \int_0^\infty y e^{-y}dy = [-ye^{-y}]_0^\infty + \int_0^\infty e^{-y}dy = 0 + 1 = 1$. Again with $u = y^2$: $\mathbb{E}[Y^2] = [-y^2 e^{-y}]_0^\infty + 2\int_0^\infty y e^{-y}dy = 2$. So $\operatorname{Var}(Y) = 2 - 1 = 1$. Now $X = Y/\lambda$ (check: $P(Y/\lambda > x) = P(Y > \lambda x) = e^{-\lambda x}$), so by Theorems 3.8 and 3.12,
+$$\mathbb{E}[X] = \frac1\lambda, \qquad \operatorname{Var}(X) = \frac{1}{\lambda^2}, \qquad \sigma_X = \frac1\lambda.$$
+Mean equals standard deviation: another diagnostic. Median: $1 - e^{-\lambda m} = 1/2$ gives $m = \ln 2/\lambda \approx 0.693/\lambda$, well below the mean because of the long right tail.
+
+**Theorem 3.16 (Memorylessness).** If $X \sim \mathrm{Expo}(\lambda)$ then for all $s, t \ge 0$,
+$$P(X > s + t \mid X > s) = P(X > t).$$
+
+*Proof.* $P(X > s + t \mid X > s) = \dfrac{P(X > s + t,\ X > s)}{P(X > s)} = \dfrac{P(X > s+t)}{P(X > s)} = \dfrac{e^{-\lambda(s+t)}}{e^{-\lambda s}} = e^{-\lambda t}$. ∎
+
+A component that has lasted 3000 hours is, as far as its remaining life goes, as good as new. This is a strong modeling assumption, correct for radioactive decay and wrong for anything that wears out; Example 4.10 shows what it implies numerically.
+
+**Theorem 3.17 (Memorylessness characterizes the Exponential).** Let $X$ be a positive random variable with a continuous CDF, with $P(X > t) \to 0$ as $t \to \infty$, satisfying $P(X > s + t \mid X > s) = P(X > t)$ for all $s, t \ge 0$. Then $X \sim \mathrm{Expo}(\lambda)$ for some $\lambda > 0$.
+
+▶ **Try it first.** Write $G(t) = P(X > t)$. The hypothesis says $G(s + t) = G(s)G(t)$. What functions satisfy that? Start with $G(2) = G(1)^2$, then $G(1/2)$, then $G(m/n)$.
+
+**Derivation.**
+
+1. Let $G(t) = P(X > t)$, so $G(0) = 1$, $G$ is continuous (since $F$ is), non-increasing, and $G(t) \to 0$. The hypothesis is $G(s + t) = G(s)\,G(t)$ for all $s, t \ge 0$.
+2. *$G$ never vanishes.* If $G(t_0) = 0$ for some $t_0 > 0$, then $G(t_0/2)^2 = G(t_0) = 0$, so $G(t_0/2) = 0$, and by induction $G(t_0/2^n) = 0$ for all $n$. But $t_0/2^n \to 0$ and $G$ is continuous with $G(0) = 1$. Contradiction.
+3. *Set $\lambda$.* $0 < G(1) < 1$: positive by step 2, and if $G(1) = 1$ then $G(n) = G(1)^n = 1$ for all integers $n$, contradicting $G \to 0$. Define $\lambda = -\ln G(1) > 0$, so $G(1) = e^{-\lambda}$.
+4. *Rationals.* $G(1) = G(\tfrac1n + \cdots + \tfrac1n) = G(\tfrac1n)^n$, so $G(\tfrac1n) = e^{-\lambda/n}$ (positive root, by step 2). Then $G(\tfrac mn) = G(\tfrac1n)^m = e^{-\lambda m/n}$.
+5. *Reals.* For irrational $t$, choose rationals $r_k \to t$. Continuity gives $G(t) = \lim G(r_k) = \lim e^{-\lambda r_k} = e^{-\lambda t}$.
+6. So $P(X > t) = e^{-\lambda t}$ for all $t \ge 0$, which is (3.26). ∎
+
+■ **What just happened.** The functional equation $G(s + t) = G(s)G(t)$ forces an exponential, exactly as $h(s + t) = h(s) + h(t)$ with continuity forces a linear function. Among continuous positive distributions, "no memory" and "exponential" are the same thing. Exercise C3 does the discrete version: no memory on $\{0, 1, 2, \dots\}$ forces the Geometric, which is why the Geometric is the discrete shadow of the Exponential.
+
+**Exponential and the Poisson process (stated; F5 proves it).** Suppose events occur in time so that the number in any interval of length $t$ is $\mathrm{Pois}(\lambda t)$ and counts in disjoint intervals are independent. Then the waiting time $T_1$ to the first event satisfies $P(T_1 > t) = P(\text{no events in } [0, t]) = e^{-\lambda t}$, so $T_1 \sim \mathrm{Expo}(\lambda)$; and the gaps between successive events are i.i.d. $\mathrm{Expo}(\lambda)$. Conversely, i.i.d. exponential gaps produce Poisson counts. The rate $\lambda$ is the same number in both descriptions: events per unit time.
+
+### 3.12 The Normal distribution
+
+**Definition 3.14.** The **standard Normal** $Z \sim \mathcal{N}(0, 1)$ has PDF
+$$\varphi(z) = \frac{1}{\sqrt{2\pi}}\,e^{-z^2/2}, \qquad z \in \mathbb{R}, \tag{3.27}$$
+and CDF $\Phi(z) = \int_{-\infty}^z \varphi$.
+
+Where does $1/\sqrt{2\pi}$ come from? It is whatever constant makes the area 1, and finding it requires the one genuine trick in this module.
+
+**Theorem 3.18 (The Gaussian integral).** $\displaystyle\int_{-\infty}^\infty e^{-z^2/2}\,dz = \sqrt{2\pi}$.
+
+▶ **Try it first.** You cannot do this integral directly ($e^{-z^2/2}$ has no elementary antiderivative). Instead call the integral $I$, write $I^2$ as a double integral over the plane, and change to polar coordinates. Try it before reading; then memorize the move, because you will not rediscover it under pressure.
+
+**Derivation.**
+
+1. Let $I = \int_{-\infty}^\infty e^{-x^2/2}dx$. Then $I^2 = \left(\int e^{-x^2/2}dx\right)\left(\int e^{-y^2/2}dy\right) = \iint_{\mathbb{R}^2} e^{-(x^2 + y^2)/2}\,dx\,dy$, because the integrand factors and the two integrals have independent variables.
+2. Polar coordinates: $x = r\cos\theta$, $y = r\sin\theta$, $x^2 + y^2 = r^2$, $dx\,dy = r\,dr\,d\theta$. So
+$$I^2 = \int_0^{2\pi}\!\int_0^\infty e^{-r^2/2}\,r\,dr\,d\theta.$$
+3. The extra factor $r$ is what makes the inner integral elementary: with $u = r^2/2$, $du = r\,dr$, $\int_0^\infty e^{-r^2/2}r\,dr = \int_0^\infty e^{-u}du = 1$.
+4. $I^2 = \int_0^{2\pi} 1\,d\theta = 2\pi$, and $I > 0$, so $I = \sqrt{2\pi}$. ∎
+
+■ **What just happened.** One copy of the integral is impossible; the product of two copies is a rotationally symmetric integral over the plane, and rotational symmetry hands you the Jacobian factor $r$ that makes it trivial. Example 4.8 checks it numerically. The trick reappears when you compute $\Gamma(1/2)$ in §3.13 and when F5 normalizes the multivariate Gaussian.
+
+**Mean and variance of $Z$.** $\mathbb{E}[Z] = \frac{1}{\sqrt{2\pi}}\int z e^{-z^2/2}dz = 0$: the integrand is odd and the integral converges absolutely ($\int |z|e^{-z^2/2}dz = 2$, by the substitution $u = z^2/2$ on each half). For the variance, $\operatorname{Var}(Z) = \mathbb{E}[Z^2] - 0$, and by LOTUS
+$$\mathbb{E}[Z^2] = \frac{1}{\sqrt{2\pi}}\int_{-\infty}^\infty z\cdot\big(z e^{-z^2/2}\big)dz.$$
+Integrate by parts with $u = z$ and $dv = ze^{-z^2/2}dz$, so $v = -e^{-z^2/2}$:
+$$\mathbb{E}[Z^2] = \frac{1}{\sqrt{2\pi}}\Big(\big[-ze^{-z^2/2}\big]_{-\infty}^{\infty} + \int_{-\infty}^\infty e^{-z^2/2}dz\Big) = \frac{1}{\sqrt{2\pi}}\big(0 + \sqrt{2\pi}\big) = 1.$$
+The boundary term vanishes because $e^{-z^2/2}$ beats any polynomial. So $\mathbb{E}[Z] = 0$, $\operatorname{Var}(Z) = 1$: the name is honest.
+
+**The general Normal by location-scale.** Define $X = \mu + \sigma Z$ with $\sigma > 0$. By Theorems 3.8 and 3.12, $\mathbb{E}[X] = \mu$ and $\operatorname{Var}(X) = \sigma^2$. Its CDF is $F_X(x) = P(\mu + \sigma Z \le x) = P\!\left(Z \le \frac{x - \mu}{\sigma}\right) = \Phi\!\left(\frac{x-\mu}{\sigma}\right)$, and differentiating with the chain rule,
+$$f_X(x) = \frac{1}{\sigma}\,\varphi\!\left(\frac{x - \mu}{\sigma}\right) = \frac{1}{\sigma\sqrt{2\pi}}\exp\!\left(-\frac{(x-\mu)^2}{2\sigma^2}\right). \tag{3.28}$$
+We write $X \sim \mathcal{N}(\mu, \sigma^2)$. The $1/\sigma$ in front is the units: $f_X$ must have units of $1/[X]$, and $\varphi$ is dimensionless.
+
+**Standardization.** Reverse the construction: if $X \sim \mathcal{N}(\mu, \sigma^2)$ then $Z = (X - \mu)/\sigma \sim \mathcal{N}(0, 1)$. Every Normal probability reduces to $\Phi$: $P(a < X \le b) = \Phi\!\left(\frac{b-\mu}{\sigma}\right) - \Phi\!\left(\frac{a-\mu}{\sigma}\right)$.
+
+**The 68–95–99.7 rule.** $P(|Z| \le 1) = \Phi(1) - \Phi(-1) = 2\Phi(1) - 1 = 0.6827$; $P(|Z| \le 2) = 0.9545$; $P(|Z| \le 3) = 0.9973$. For any Normal: 68% of the mass within one $\sigma$ of the mean, 95% within two, 99.7% within three. (Here $\Phi(-z) = 1 - \Phi(z)$ by the symmetry of $\varphi$.) The project checks these from $\Phi$ and from samples.
+
+**$\Phi$ has no closed form.** Liouville proved (1835) that $e^{-z^2}$ has no elementary antiderivative, so $\Phi$ is a new special function. It is tabulated and computed numerically (`scipy.stats.norm.cdf`), and written in terms of the error function as $\Phi(z) = \tfrac12\big(1 + \operatorname{erf}(z/\sqrt2)\big)$. You will never "solve for $x$" in $\Phi(x) = 0.99$ by algebra; you invert numerically ($z_{0.99} = 2.326$).
+
+**Why the Normal is everywhere (preview of F5).** The **central limit theorem**: if $X_1, X_2, \dots$ are i.i.d. with mean $\mu$ and finite variance $\sigma^2$, then $\dfrac{X_1 + \cdots + X_n - n\mu}{\sigma\sqrt n} \to \mathcal{N}(0, 1)$ in distribution as $n \to \infty$. Whatever the $X_i$ look like (dice, Bernoullis, exponentials), their standardized sum looks Normal. De Moivre saw the Binomial case in 1733. F5 proves the general case with the MGFs of §3.14: the MGF of the standardized sum tends to $e^{t^2/2}$, and uniqueness finishes it. Measurement errors, heights, and the thermal velocity of a gas molecule (Maxwell 1860) are all sums of many small independent contributions.
+
+### 3.13 Gamma and Beta (densities and normalizing constants only; F5 does the rest)
+
+**Definition 3.15 (The Gamma function).** For $a > 0$,
+$$\Gamma(a) = \int_0^\infty x^{a-1}e^{-x}\,dx. \tag{3.29}$$
+The integral converges: near 0 the integrand is $\sim x^{a-1}$, integrable for $a > 0$; at infinity $e^{-x}$ wins.
+
+**Theorem 3.19.** (a) $\Gamma(a + 1) = a\,\Gamma(a)$. (b) $\Gamma(n) = (n-1)!$ for integers $n \ge 1$. (c) $\Gamma(\tfrac12) = \sqrt\pi$.
+
+*Proof.* (a) Integrate by parts with $u = x^a$, $dv = e^{-x}dx$: $\Gamma(a+1) = \int_0^\infty x^a e^{-x}dx = [-x^a e^{-x}]_0^\infty + a\int_0^\infty x^{a-1}e^{-x}dx = 0 + a\Gamma(a)$. (b) $\Gamma(1) = \int_0^\infty e^{-x}dx = 1 = 0!$. If $\Gamma(n) = (n-1)!$ then by (a) $\Gamma(n+1) = n\Gamma(n) = n\cdot(n-1)! = n!$. Induction. (c) $\Gamma(\tfrac12) = \int_0^\infty x^{-1/2}e^{-x}dx$. Substitute $x = u^2/2$, $dx = u\,du$, $x^{-1/2} = \sqrt2/u$:
+$$\Gamma(\tfrac12) = \int_0^\infty \frac{\sqrt2}{u}\,e^{-u^2/2}\,u\,du = \sqrt2\int_0^\infty e^{-u^2/2}du = \sqrt2\cdot\frac{\sqrt{2\pi}}{2} = \sqrt\pi,$$
+using Theorem 3.18 and the evenness of $e^{-u^2/2}$. ∎
+
+So $\Gamma$ interpolates the factorial, and $\Gamma(\tfrac12) = \sqrt\pi$ is the Gaussian integral in disguise. Also $\Gamma(\tfrac32) = \tfrac12\sqrt\pi$, $\Gamma(\tfrac52) = \tfrac34\sqrt\pi$, by (a).
+
+**Gamma distribution.** $X \sim \mathrm{Gamma}(a, \lambda)$, $a, \lambda > 0$, has PDF
+$$f(x) = \frac{\lambda^a}{\Gamma(a)}\,x^{a-1}e^{-\lambda x}, \qquad x > 0.$$
+It integrates to 1: substitute $u = \lambda x$ to get $\frac{\lambda^a}{\Gamma(a)}\int_0^\infty (u/\lambda)^{a-1}e^{-u}\frac{du}{\lambda} = \frac{1}{\Gamma(a)}\Gamma(a) = 1$. $\mathrm{Gamma}(1, \lambda) = \mathrm{Expo}(\lambda)$. The story, proved in F5: $\mathrm{Gamma}(n, \lambda)$ is the sum of $n$ i.i.d. $\mathrm{Expo}(\lambda)$, i.e., the time of the $n$-th event in a Poisson process; and $\mathrm{Gamma}(n/2, 1/2)$ is the $\chi^2_n$ distribution of ST-2. The mean is $a/\lambda$ and the variance $a/\lambda^2$ (Exercise B6 derives them from (3.29) and Theorem 3.19(a)).
+
+**Beta distribution.** $X \sim \mathrm{Beta}(a, b)$, $a, b > 0$, has PDF
+$$f(x) = \frac{1}{B(a, b)}\,x^{a-1}(1-x)^{b-1}, \qquad 0 < x < 1, \qquad B(a, b) = \int_0^1 x^{a-1}(1-x)^{b-1}dx = \frac{\Gamma(a)\Gamma(b)}{\Gamma(a + b)}.$$
+The last equality is stated here and proved in F5 (it is a two-dimensional change of variables on the product of two Gamma integrals, the same move as Theorem 3.18). $\mathrm{Beta}(1, 1) = \mathrm{Unif}(0, 1)$. The Beta is the distribution of a probability: in ST-5 it is the conjugate prior for the $p$ of a Binomial, and in F5 it is the distribution of the $k$-th smallest of $n$ uniforms.
+
+### 3.14 Moment generating functions
+
+**Definition 3.16.** The **moment generating function (MGF)** of $X$ is
+$$M_X(t) = \mathbb{E}\big[e^{tX}\big], \tag{3.30}$$
+provided this is finite for all $t$ in some open interval $(-\epsilon, \epsilon)$ around 0. Not every distribution has one (the Cauchy of the project does not; $e^{tX}$ has infinite expectation for every $t \ne 0$).
+
+**Theorem 3.20 (MGFs generate moments).** If $M_X$ exists then $\mathbb{E}[X^n] = M_X^{(n)}(0)$, the $n$-th derivative at 0, and
+$$M_X(t) = \sum_{n=0}^\infty \mathbb{E}[X^n]\,\frac{t^n}{n!}.$$
+
+▶ **Try it first.** Expand $e^{tX}$ as a power series in $t$ and take the expectation of each term.
+
+**Derivation.**
+
+1. $e^{tX} = \sum_{n\ge0} \frac{t^n X^n}{n!}$ for every outcome.
+2. Take expectations and exchange $\mathbb{E}$ with the sum: $M_X(t) = \sum_n \frac{t^n}{n!}\mathbb{E}[X^n]$. (The exchange is legitimate when $M_X$ is finite near 0; the series then converges absolutely and the justification is the dominated convergence theorem, which is the second and last place this module points to measure theory.)
+3. A power series $\sum_n c_n t^n$ convergent near 0 has $c_n = M^{(n)}(0)/n!$ (Taylor). Matching coefficients, $\mathbb{E}[X^n]/n! = M_X^{(n)}(0)/n!$. ∎
+
+■ **What just happened.** All the moments of $X$ are packed into one function, and differentiation unpacks them. In practice the Taylor-coefficient route is often faster than differentiating: Exercise B7 reads $\mathbb{E}[Z^4] = 3$ straight off the series of $e^{t^2/2}$. The logarithm $K_X(t) = \ln M_X(t)$ is the *cumulant generating function*; $K'(0) = \mathbb{E}[X]$ and $K''(0) = \operatorname{Var}(X)$ (check: $K' = M'/M$, $K'' = (M''M - M'^2)/M^2$, evaluate at $t = 0$ where $M = 1$). In SM-4 the partition function is $\ln Z(\beta) = K_E(-\beta)$ for the energy, and $\langle E\rangle = -\partial_\beta \ln Z$, $\operatorname{Var}(E) = \partial^2_\beta \ln Z$ are exactly these two identities.
+
+**Theorem 3.21 (Five MGFs).**
+
+| $X$ | $M_X(t)$ | valid for |
+|---|---|---|
+| $\mathrm{Bern}(p)$ | $q + pe^t$ | all $t$ |
+| $\mathrm{Bin}(n, p)$ | $(q + pe^t)^n$ | all $t$ |
+| $\mathrm{Pois}(\lambda)$ | $\exp\big(\lambda(e^t - 1)\big)$ | all $t$ |
+| $\mathcal{N}(\mu, \sigma^2)$ | $\exp\big(\mu t + \tfrac12\sigma^2 t^2\big)$ | all $t$ |
+| $\mathrm{Expo}(\lambda)$ | $\dfrac{\lambda}{\lambda - t}$ | $t < \lambda$ |
+
+*Derivations.* *Bernoulli:* LOTUS, $\mathbb{E}[e^{tX}] = e^{0}q + e^{t}p$. *Binomial:* by LOTUS and the binomial theorem, $\sum_k \binom nk p^k q^{n-k}e^{tk} = \sum_k \binom nk (pe^t)^k q^{n-k} = (pe^t + q)^n$. (Or: Theorem 3.22 below applied to $n$ independent Bernoullis.) *Poisson:* $\sum_k e^{tk}\frac{e^{-\lambda}\lambda^k}{k!} = e^{-\lambda}\sum_k \frac{(\lambda e^t)^k}{k!} = e^{-\lambda}e^{\lambda e^t}$. *Standard Normal:* complete the square in the exponent, $tz - z^2/2 = -\tfrac12(z - t)^2 + \tfrac12 t^2$, so
+$$M_Z(t) = \frac{1}{\sqrt{2\pi}}\int e^{tz - z^2/2}dz = e^{t^2/2}\cdot\frac{1}{\sqrt{2\pi}}\int e^{-(z-t)^2/2}dz = e^{t^2/2},$$
+the last integral being the total mass of a Normal centered at $t$. *General Normal:* $X = \mu + \sigma Z$, $M_X(t) = \mathbb{E}[e^{t\mu}e^{t\sigma Z}] = e^{\mu t}M_Z(\sigma t) = e^{\mu t + \sigma^2t^2/2}$. *Exponential:* $\int_0^\infty e^{tx}\lambda e^{-\lambda x}dx = \lambda\int_0^\infty e^{-(\lambda - t)x}dx = \frac{\lambda}{\lambda - t}$, which converges only for $t < \lambda$. ∎
+
+Check against §3.10–3.12: for Poisson, $M'(t) = \lambda e^t M(t)$ so $M'(0) = \lambda$; $M''(t) = (\lambda e^t)^2 M(t) + \lambda e^t M(t)$ so $M''(0) = \lambda^2 + \lambda = \mathbb{E}[X^2]$. For the Exponential, $M(t) = (1 - t/\lambda)^{-1} = \sum_n (t/\lambda)^n$, so $\mathbb{E}[X^n] = n!/\lambda^n$: mean $1/\lambda$, second moment $2/\lambda^2$. For $\mathcal{N}(0,1)$, $e^{t^2/2} = \sum_k \frac{t^{2k}}{2^k k!}$: odd moments vanish and $\mathbb{E}[Z^{2k}] = \frac{(2k)!}{2^k k!}$, so $\mathbb{E}[Z^2] = 1$, $\mathbb{E}[Z^4] = 3$.
+
+**Theorem 3.22 (MGF of a sum of independent variables).** If $X \perp Y$ then $M_{X+Y}(t) = M_X(t)\,M_Y(t)$.
+
+*Proof.* $M_{X+Y}(t) = \mathbb{E}[e^{t(X+Y)}] = \mathbb{E}[e^{tX}e^{tY}] = \mathbb{E}[e^{tX}]\,\mathbb{E}[e^{tY}]$, the last step by Theorem 3.13 with $g(x) = e^{tx}$, $h(y) = e^{ty}$. ∎
+
+**Theorem 3.23 (Uniqueness; stated).** If $M_X(t) = M_Y(t)$ for all $t$ in some open interval around 0, then $X$ and $Y$ have the same distribution.
+
+The proof inverts a Laplace transform and is in Billingsley §30 or Feller vol. II; we use the theorem as a tool. Together, Theorems 3.22 and 3.23 turn "what is the distribution of $X + Y$?" into "multiply two functions and recognize the product."
+
+**Application 1: Binomials add.** If $X \sim \mathrm{Bin}(n, p)$ and $Y \sim \mathrm{Bin}(m, p)$ are independent, $M_{X+Y}(t) = (q + pe^t)^n(q + pe^t)^m = (q + pe^t)^{n+m}$, which is the MGF of $\mathrm{Bin}(n + m, p)$. By uniqueness, $X + Y \sim \mathrm{Bin}(n+m, p)$. ∎ (Same for Poissons: $e^{\lambda(e^t-1)}e^{\mu(e^t-1)} = e^{(\lambda+\mu)(e^t-1)}$, so independent Poissons add to a Poisson. And for Normals, $e^{\mu_1 t + \sigma_1^2t^2/2}e^{\mu_2 t + \sigma_2^2 t^2/2}$ is the MGF of $\mathcal{N}(\mu_1 + \mu_2, \sigma_1^2 + \sigma_2^2)$: independent Normals add to a Normal, with variances adding, as Theorem 3.14 said they must.)
+
+**Application 2: The Poisson limit, again.** With $p = \lambda/n$,
+$$M_{\mathrm{Bin}(n, \lambda/n)}(t) = \left(1 - \frac\lambda n + \frac\lambda n e^t\right)^n = \left(1 + \frac{\lambda(e^t - 1)}{n}\right)^n \;\xrightarrow[n\to\infty]{}\; \exp\big(\lambda(e^t - 1)\big) = M_{\mathrm{Pois}(\lambda)}(t),$$
+using $(1 + c/n)^n \to e^c$. The MGFs converge to the Poisson MGF, which (by a continuity theorem that F5 states alongside the CLT) means the distributions converge: the same conclusion as §3.10, in one line instead of four factors. This is the template for F5's proof of the CLT.
+
+### 3.15 How to solve a probability problem
+
+1. **Name things in symbols before computing anything.** "Let $D$ be the event the part is defective; let $X$ be the number of defective parts in the sample." Half of all errors in this subject are ambiguities in the English that symbols would have exposed (Trap 3).
+2. **Write down exactly what is asked** as $P(\cdot)$, $P(\cdot \mid \cdot)$, or $\mathbb{E}[\cdot]$.
+3. **Condition on what you wish you knew.** If knowing $B$ would make the problem easy, use LOTP (3.11) over a partition, or first-step analysis. If you know $B$ and want $A$ but the problem gives you $P(B \mid A)$, use Bayes (3.10).
+4. **Look for symmetry and indicators.** "Expected number of ..." is almost always $\sum_j P(A_j)$. "Probability that the $j$-th draw is ..." is almost always the same as for the first draw.
+5. **Recognize a named distribution from its story**, then look up the mean and variance instead of recomputing.
+6. **Sanity-check.** Probabilities lie in $[0, 1]$. Take $p \to 0$, $p \to 1$, $n \to \infty$ and see if the answer does something sensible. Check units of any density. Check $\sum p(x) = 1$.
+7. **Simulate.** Ten lines of NumPy with $10^5$ trials settle most disputes to two decimals. The project is a template. If the simulation and the formula disagree, the formula is usually wrong, but check that the simulation implements the *same* conditioning (Monty Hall with a random host is a different simulation from Monty Hall with a knowing host).

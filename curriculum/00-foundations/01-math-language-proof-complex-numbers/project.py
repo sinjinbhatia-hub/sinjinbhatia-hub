@@ -313,6 +313,7 @@ lam = np.roots([1, 2 * gamma, w0**2])                   # roots of lambda^2 + 2 
 assert np.allclose(np.sort(lam.imag), [-np.sqrt(15) / 2, np.sqrt(15) / 2]) and np.allclose(lam.real, -gamma)
 wd = np.sqrt(w0**2 - gamma**2)
 assert np.isclose(wd, 1.9365, atol=5e-5)
+assert np.isclose(gamma / wd, 0.2582, atol=5e-5)      # C_2 = 1/sqrt(15) in Example 4.9
 
 # (3.19): d/dt e^{lambda t} = lambda e^{lambda t} for complex lambda, by central differences.
 tt = np.linspace(0, 5, 200)

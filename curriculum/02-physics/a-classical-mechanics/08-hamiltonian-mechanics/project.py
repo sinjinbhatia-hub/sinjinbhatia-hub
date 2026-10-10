@@ -529,7 +529,9 @@ def period_measured(E):
     s = solve_ivp(lambda t, y: [y[1] / (m * l**2), -m * g * l * np.sin(y[0])], (0, 60), [th0, 0.0],
                   rtol=1e-11, atol=1e-13, events=ev)
     te = s.t_events[0]
-    return te[0] if len(te) else np.nan              # first upward zero crossing of p after t=0 is one full period
+    # p starts at 0 and goes negative; it crosses zero upward at each theta = -th0 turning point, i.e. at
+    # T/2, 3T/2, ...; consecutive upward crossings are one period apart.
+    return te[1] - te[0]
 
 
 Es = np.array([-0.9, -0.5, 0.0, 0.5, 0.9])
