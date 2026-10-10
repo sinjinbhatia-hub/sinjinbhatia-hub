@@ -188,13 +188,13 @@ Each line below is: expand $df$ with Theorem 3.8, rearrange into $\mathbf{g}^\to
 $$
 \nabla_{\mathbf{x}}(\mathbf{a}^\top\mathbf{x}) = \mathbf{a}. \tag{3.9}
 $$
-*Derivation.* d(\mathbf{a}^\top\mathbf{x}) = \mathbf{a}^\top d\mathbf{x}$ (linearity; $\mathbf{a}$ is constant). Read off $\mathbf{g} = \mathbf{a}$. ∎
+*Derivation.* $d(\mathbf{a}^\top\mathbf{x}) = \mathbf{a}^\top d\mathbf{x}$ (linearity; $\mathbf{a}$ is constant). Read off $\mathbf{g} = \mathbf{a}$. ∎
 
 **(3.10)**
 $$
 \nabla_{\mathbf{x}}(\mathbf{x}^\top A\mathbf{x}) = (A + A^\top)\mathbf{x}, \qquad = 2A\mathbf{x} \text{ when } A = A^\top. \tag{3.10}
 $$
-*Derivation.* d(\mathbf{x}^\top A\mathbf{x}) = (d\mathbf{x})^\top A\mathbf{x} + \mathbf{x}^\top A\,d\mathbf{x}$ by (3.5). The first term is a scalar, so it equals its transpose: $(d\mathbf{x})^\top A\mathbf{x} = \mathbf{x}^\top A^\top d\mathbf{x}$. Sum: $\mathbf{x}^\top(A^\top + A)\,d\mathbf{x} = \big((A + A^\top)\mathbf{x}\big)^\top d\mathbf{x}$. ∎
+*Derivation.* $d(\mathbf{x}^\top A\mathbf{x}) = (d\mathbf{x})^\top A\mathbf{x} + \mathbf{x}^\top A\,d\mathbf{x}$ by (3.5). The first term is a scalar, so it equals its transpose: $(d\mathbf{x})^\top A\mathbf{x} = \mathbf{x}^\top A^\top d\mathbf{x}$. Sum: $\mathbf{x}^\top(A^\top + A)\,d\mathbf{x} = \big((A + A^\top)\mathbf{x}\big)^\top d\mathbf{x}$. ∎
 
 **(3.11)**
 $$
@@ -212,43 +212,43 @@ $$
 $$
 J_{\mathbf{x} \mapsto A\mathbf{x}} = A. \tag{3.13}
 $$
-*Derivation.* d(A\mathbf{x}) = A\,d\mathbf{x}$; read off $M = A$ from Theorem 3.9. (A linear map is its own derivative at every point.) ∎
+*Derivation.* $d(A\mathbf{x}) = A\,d\mathbf{x}$; read off $M = A$ from Theorem 3.9. (A linear map is its own derivative at every point.) ∎
 
 **(3.14)**
 $$
 \nabla_A(\mathbf{x}^\top A\mathbf{y}) = \mathbf{x}\mathbf{y}^\top. \tag{3.14}
 $$
-*Derivation.* d(\mathbf{x}^\top A\mathbf{y}) = \mathbf{x}^\top(dA)\mathbf{y} = \operatorname{tr}(\mathbf{x}^\top dA\,\mathbf{y}) = \operatorname{tr}(\mathbf{y}\mathbf{x}^\top dA)$ (cyclic) $= \operatorname{tr}\big((\mathbf{x}\mathbf{y}^\top)^\top dA\big)$. Read off $G = \mathbf{x}\mathbf{y}^\top$. Shape check: $A$ is $m \times n$, $\mathbf{x} \in \mathbb{R}^m$, $\mathbf{y} \in \mathbb{R}^n$, $\mathbf{x}\mathbf{y}^\top$ is $m \times n$. ✓ ∎
+*Derivation.* $d(\mathbf{x}^\top A\mathbf{y}) = \mathbf{x}^\top(dA)\mathbf{y} = \operatorname{tr}(\mathbf{x}^\top dA\,\mathbf{y}) = \operatorname{tr}(\mathbf{y}\mathbf{x}^\top dA)$ (cyclic) $= \operatorname{tr}\big((\mathbf{x}\mathbf{y}^\top)^\top dA\big)$. Read off $G = \mathbf{x}\mathbf{y}^\top$. Shape check: $A$ is $m \times n$, $\mathbf{x} \in \mathbb{R}^m$, $\mathbf{y} \in \mathbb{R}^n$, $\mathbf{x}\mathbf{y}^\top$ is $m \times n$. ✓ ∎
 
 **(3.15)**
 $$
 \nabla_A\operatorname{tr}(AB) = B^\top. \tag{3.15}
 $$
-*Derivation.* d\operatorname{tr}(AB) = \operatorname{tr}(dA\,B) = \operatorname{tr}(B\,dA) = \operatorname{tr}\big((B^\top)^\top dA\big)$. ∎
+*Derivation.* $d\operatorname{tr}(AB) = \operatorname{tr}(dA\,B) = \operatorname{tr}(B\,dA) = \operatorname{tr}\big((B^\top)^\top dA\big)$. ∎
 
 **(3.16)**
 $$
 \nabla_A\operatorname{tr}(A^\top BA) = (B + B^\top)A. \tag{3.16}
 $$
-*Derivation.* d\operatorname{tr}(A^\top BA) = \operatorname{tr}\big((dA)^\top BA\big) + \operatorname{tr}(A^\top B\,dA)$. First term: $\operatorname{tr}\big((dA)^\top BA\big) = \operatorname{tr}\big((BA)^\top dA\big)$ (transpose inside the trace). Second: $\operatorname{tr}(A^\top B\,dA) = \operatorname{tr}\big((B^\top A)^\top dA\big)$. Sum: $\operatorname{tr}\big((BA + B^\top A)^\top dA\big)$. ∎
+*Derivation.* $d\operatorname{tr}(A^\top BA) = \operatorname{tr}\big((dA)^\top BA\big) + \operatorname{tr}(A^\top B\,dA)$. First term: $\operatorname{tr}\big((dA)^\top BA\big) = \operatorname{tr}\big((BA)^\top dA\big)$ (transpose inside the trace). Second: $\operatorname{tr}(A^\top B\,dA) = \operatorname{tr}\big((B^\top A)^\top dA\big)$. Sum: $\operatorname{tr}\big((BA + B^\top A)^\top dA\big)$. ∎
 
 **(3.17)**
 $$
 \nabla_A\log\det A = A^{-\top} := (A^{-1})^\top. \tag{3.17}
 $$
-*Derivation.* d\log\det A = \operatorname{tr}(A^{-1}dA) = \operatorname{tr}\big((A^{-\top})^\top dA\big)$ by rule (f). ∎
+*Derivation.* $d\log\det A = \operatorname{tr}(A^{-1}dA) = \operatorname{tr}\big((A^{-\top})^\top dA\big)$ by rule (f). ∎
 
 **(3.18)**
 $$
 \nabla_A\|A\|_F^2 = 2A. \tag{3.18}
 $$
-*Derivation.* \|A\|_F^2 = \operatorname{tr}(A^\top A)$; $d = \operatorname{tr}\big((dA)^\top A\big) + \operatorname{tr}(A^\top dA) = 2\operatorname{tr}(A^\top dA)$. ∎
+*Derivation.* $\|A\|_F^2 = \operatorname{tr}(A^\top A)$; $d = \operatorname{tr}\big((dA)^\top A\big) + \operatorname{tr}(A^\top dA) = 2\operatorname{tr}(A^\top dA)$. ∎
 
 **(3.19)**
 $$
 J_{\sigma}(\mathbf{x}) = \operatorname{diag}(\sigma'(\mathbf{x})), \qquad \nabla_{\mathbf{x}}\big(\mathbf{a}^\top\sigma(\mathbf{x})\big) = \operatorname{diag}(\sigma'(\mathbf{x}))\,\mathbf{a} = \sigma'(\mathbf{x}) \odot \mathbf{a}. \tag{3.19}
 $$
-*Derivation.* d\sigma(\mathbf{x}) = \sigma'(\mathbf{x}) \odot d\mathbf{x} = \operatorname{diag}(\sigma'(\mathbf{x}))\,d\mathbf{x}$ by rule (g), which is the Jacobian claim by Theorem 3.9. Then $d(\mathbf{a}^\top\sigma(\mathbf{x})) = \mathbf{a}^\top\operatorname{diag}(\sigma'(\mathbf{x}))\,d\mathbf{x} = \big(\operatorname{diag}(\sigma'(\mathbf{x}))\mathbf{a}\big)^\top d\mathbf{x}$, using that a diagonal matrix is symmetric. ∎
+*Derivation.* $d\sigma(\mathbf{x}) = \sigma'(\mathbf{x}) \odot d\mathbf{x} = \operatorname{diag}(\sigma'(\mathbf{x}))\,d\mathbf{x}$ by rule (g), which is the Jacobian claim by Theorem 3.9. Then $d(\mathbf{a}^\top\sigma(\mathbf{x})) = \mathbf{a}^\top\operatorname{diag}(\sigma'(\mathbf{x}))\,d\mathbf{x} = \big(\operatorname{diag}(\sigma'(\mathbf{x}))\mathbf{a}\big)^\top d\mathbf{x}$, using that a diagonal matrix is symmetric. ∎
 
 **(3.20) Jacobian of softmax.** $\mathbf{s} = \operatorname{softmax}(\mathbf{z})$, $s_i = e^{z_i}/\sum_k e^{z_k}$. Then
 $$

@@ -490,7 +490,7 @@ Three constants: $c$, $x_0$, $\lambda$. Three conditions: the two endpoints and 
 $$
 2c\sinh(1/c) = 3 \quad\Longrightarrow\quad c = 0.61647\ \mathrm{m},
 $$
-by bisection. Then $\lambda = 0.61647\cosh(1.62213) = 1.6217\ \mathrm{m}$ and the lowest point is $y(0) = c - \lambda = -1.0052\ \mathrm{m}$: a three-metre chain between points two metres apart sags one metre. The project minimizes the discretized energy with a length constraint and recovers this curve to $2\times10^{-4}$; its constrained optimizer also reports the multiplier it used, $1.6216$, matching $\lambda$.
+by bisection. Then $\lambda = 0.61647\cosh(1.62213) = 1.6217\ \mathrm{m}$ and the lowest point is $y(0) = c - \lambda = -1.0053\ \mathrm{m}$: a three-metre chain between points two metres apart sags one metre. The project minimizes the discretized energy with a length constraint and recovers this curve to $2\times10^{-4}$; its constrained optimizer also reports the multiplier it used, $1.6216$, matching $\lambda$.
 
 ### Example 4.5: Beltrami by hand for a falling particle
 

@@ -254,7 +254,7 @@ assert np.allclose(out["x_p"], [-2, 0, 1]) and np.allclose(out["specials"][0], [
 assert np.allclose(A42 @ out["x_p"], [1, 3, 4]) and np.allclose(A42 @ out["specials"][0], 0)
 assert classify(A42, [1, 3, 5])["kind"] == "none"
 try:
-    lu_decompose(A42)                       # exact zero pivot in column 2 -> singular
+    lu_decompose(A42, tol=1e-12)            # no usable pivot in column 2 -> singular
     raise AssertionError("should have raised")
 except np.linalg.LinAlgError as err:
     print("Example 4.2: lu_decompose raised:", err)
@@ -411,7 +411,7 @@ assert predicted_flops(3) == 13                         # exercise B8(a): Exampl
 fig, ax = plt.subplots(figsize=(6.4, 4))
 ax.semilogx(ns, flops / ns.astype(float) ** 3, "o-", lw=2, ms=6, color="C0", label="counted flops / $n^3$")
 ax.axhline(2 / 3, color="C1", lw=2, ls="--", label="2/3 (leading term)")
-ax.set_xlabel("$n$"); ax.set_ylabel("flops / $n^3$"); ax.set_title("LU cost approaches $\\frac{2}{3}n^3$ from above")
+ax.set_xlabel("$n$"); ax.set_ylabel("flops / $n^3$"); ax.set_title("LU cost approaches $\\frac{2}{3}n^3$ from below")
 ax.grid(alpha=.3); ax.legend(); fig.tight_layout(); fig.savefig(FIG / "flop_count.png", dpi=120); plt.close(fig)
 print("Part 6: flop counter matches the exact formula; flops/n^3 at n=200 is", round(flops[-1] / 200**3, 4))
 

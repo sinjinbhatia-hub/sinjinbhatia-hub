@@ -258,7 +258,7 @@ c_cat = brentq(lambda c: 2 * c * np.sinh(1 / c) - ell, 0.2, 5.0)
 lam_cat = c_cat * np.cosh(1 / c_cat)
 y_cat = lambda xx: c_cat * np.cosh(xx / c_cat) - lam_cat          # (4.7) with x0 = 0, y(±1) = 0
 assert np.isclose(c_cat, 0.61647, atol=5e-6) and np.isclose(lam_cat, 1.6217, atol=5e-5)
-assert np.isclose(y_cat(0.0), -1.0052, atol=5e-5)
+assert np.isclose(y_cat(0.0), -1.0053, atol=5e-5)
 assert np.isclose(quad(lambda xx: np.sqrt(1 + np.sinh(xx / c_cat) ** 2), -1, 1)[0], ell)   # length check
 print(f"Part 4: catenary c = {c_cat:.5f}, λ = {lam_cat:.4f}, lowest point y(0) = {y_cat(0.0):.4f}")
 
