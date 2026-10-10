@@ -565,6 +565,314 @@ assert sp.simplify(dL_Q2 - total_dt(F_Q2, [ox, oy], [ovx, ovy], [oax, oay])) == 
 assert sp.simplify(sp.diff(L_iso, ovx) * ovy + sp.diff(L_iso, ovy) * ovx - F_Q2 - Q2) == 0
 print("Your turn 1 (reference): Q2 = m(ẋẏ + ω²xy) is conserved; generator K = (ẏ, ẋ), F =", F_Q2)
 
+# %% [markdown]
+# ## Reference checks for the exercises
+#
+# Every number quoted in `solutions.md` is produced below, and every symbolic
+# claim there is re-derived by `delta_L`, `noether_charge_quasi` and `on_shell_dt`.
+# Do the exercise on paper first; then run this and compare.
+
+# %%
+# --- A1(c): helical potential V(r, z - a*theta). Nothing is cyclic, but the screw
+#     motion K = (0, 1, a) is a symmetry with charge p_theta + a p_z.
+a_h = sp.Symbol("a", positive=True)
+Vh = sp.Function("V")
+(rh, thh, zh), (rhd, thhd, zhd), _ = coords(["r", "theta", "z"])
+L_helix = sp.Rational(1, 2) * m * (rhd**2 + rh**2 * thhd**2 + zhd**2) - Vh(rh, zh - a_h * thh)
+Q_helix = noether_charge(L_helix, [rh, thh, zh], [rhd, thhd, zhd], K=[0, 1, a_h])
+assert sp.simplify(Q_helix - (m * rh**2 * thhd + a_h * m * zhd)) == 0
+print("A1  helical potential: screw generator K = (0, 1, a) gives Q =", Q_helix)
+
+# --- A2(c): the magnetic term drops out of h.
+qe, Bf = sp.symbols("q_e B", positive=True)
+L_mag = sp.Rational(1, 2) * m * (vx**2 + vy**2) + qe * Bf * x * vy        # Landau gauge A = (0, Bx, 0)
+assert sp.simplify(energy_function(L_mag, [x, y], [vx, vy]) - sp.Rational(1, 2) * m * (vx**2 + vy**2)) == 0
+
+# --- A5: four candidate generators for L = ½m(ẋ² + ẏ²) − V(y).
+L_Vy = sp.Rational(1, 2) * m * (vx**2 + vy**2) - Vf(y)
+dVy = sp.diff(Vf(y), y)
+assert delta_L(L_Vy, [x, y], [vx, vy], K=[1, 0]) == 0
+assert sp.simplify(delta_L(L_Vy, [x, y], [vx, vy], K=[0, 1]) + dVy) == 0
+assert sp.simplify(delta_L(L_Vy, [x, y], [vx, vy], K=[-y, x]) + x * dVy) == 0
+dL_shear = delta_L(L_Vy, [x, y], [vx, vy], K=[y, 0])
+assert sp.simplify(dL_shear - m * vx * vy) == 0
+try:
+    total_derivative_potential(dL_shear, [x, y], [vx, vy])
+    raise AssertionError("m ẋ ẏ must not be a total derivative of any F(q, t)")
+except ValueError:
+    pass
+print("A5  shear K = (y, 0): δL =", dL_shear, " (quadratic in velocities: not a quasi-symmetry)")
+
+# --- A6: time translation K = ẋ for L = ½mẋ² − V(x): δL = dL/dt, F = L, Q = h.
+L_1d = sp.Rational(1, 2) * m * xv**2 - Vf(xq)
+dL_t = delta_L(L_1d, [xq], [xv], K=[xv], a=[xa])
+assert sp.simplify(dL_t - total_dt(L_1d, [xq], [xv], [xa])) == 0
+assert sp.simplify(sp.diff(L_1d, xv) * xv - L_1d - energy_function(L_1d, [xq], [xv])) == 0
+
+# %%
+# --- B1: uniform gravity L = ½m|v|² − mgz.
+L_grav = sp.Rational(1, 2) * m * (vx**2 + vy**2 + vz**2) - m * g * z
+assert noether_charge(L_grav, [x, y, z], [vx, vy, vz], K=[1, 0, 0]) == m * vx
+Q_z, F_z = noether_charge_quasi(L_grav, [x, y, z], [vx, vy, vz], K=[0, 0, 1])
+assert sp.simplify(F_z + m * g * t) == 0 and sp.simplify(Q_z - (m * vz + m * g * t)) == 0
+Q_bz, F_bz = noether_charge_quasi(L_grav, [x, y, z], [vx, vy, vz], K=[0, 0, t])
+assert sp.simplify(F_bz - (m * z - m * g * t**2 / 2)) == 0
+assert sp.simplify(Q_bz - (m * vz * t - m * z + m * g * t**2 / 2)) == 0
+for Qg in (Q_z, Q_bz):
+    assert on_shell_dt(Qg, L_grav, [x, y, z], [vx, vy, vz], [ax, ay, az]) == 0
+assert sp.simplify(noether_charge(L_grav, [x, y, z], [vx, vy, vz], K=[-y, x, 0]) - m * (x * vy - y * vx)) == 0
+for Kbad in ([0, -z, y], [z, 0, -x]):            # rotations about x and y are not even quasi-symmetries
+    try:
+        noether_charge_quasi(L_grav, [x, y, z], [vx, vy, vz], K=Kbad)
+        raise AssertionError
+    except ValueError:
+        pass
+print("B1  gravity: z-translation F =", F_z, ", Q =", Q_z, ";  z-boost F =", F_bz, ", Q =", Q_bz)
+
+# --- B2: two-body separation and L_tot = M R×V + μ s×ṡ.
+Mtot = m1 + m2
+mu = m1 * m2 / Mtot
+VX, vs_ = sp.symbols("V_X v_s", real=True)
+T_two = sp.Rational(1, 2) * m1 * v1**2 + sp.Rational(1, 2) * m2 * v2**2
+T_sep = T_two.subs({v1: VX + m2 / Mtot * vs_, v2: VX - m1 / Mtot * vs_}, simultaneous=True)
+assert sp.simplify(T_sep - (sp.Rational(1, 2) * Mtot * VX**2 + sp.Rational(1, 2) * mu * vs_**2)) == 0
+Rv = sp.Matrix(sp.symbols("R1 R2 R3", real=True)); Vv = sp.Matrix(sp.symbols("V1 V2 V3", real=True))
+sv = sp.Matrix(sp.symbols("s1 s2 s3", real=True)); sdv = sp.Matrix(sp.symbols("sd1 sd2 sd3", real=True))
+Ltot = m1 * (Rv + m2 / Mtot * sv).cross(Vv + m2 / Mtot * sdv) + m2 * (Rv - m1 / Mtot * sv).cross(Vv - m1 / Mtot * sdv)
+assert sp.simplify(Ltot - (Mtot * Rv.cross(Vv) + mu * sv.cross(sdv))) == sp.zeros(3, 1)
+print("B2  two-body: T = ½M V² + ½μ v_s² and L_tot = M R×V + μ s×ṡ verified symbolically")
+
+# --- B3: charged particle in B = B ẑ, Landau gauge (CM-3 Example 4.8).
+py_mag = noether_charge(L_mag, [x, y], [vx, vy], K=[0, 1])
+assert sp.simplify(py_mag - (m * vy + qe * Bf * x)) == 0
+Qx_mag, Fx_mag = noether_charge_quasi(L_mag, [x, y], [vx, vy], K=[1, 0])
+assert sp.simplify(Fx_mag - qe * Bf * y) == 0 and sp.simplify(Qx_mag - (m * vx - qe * Bf * y)) == 0
+Qrot_mag, Frot_mag = noether_charge_quasi(L_mag, [x, y], [vx, vy], K=[-y, x])
+assert sp.simplify(Frot_mag - qe * Bf * (x**2 - y**2) / 2) == 0
+assert sp.simplify(Qrot_mag - (m * (x * vy - y * vx) + qe * Bf * (x**2 + y**2) / 2)) == 0
+for Qm in (py_mag, Qx_mag, Qrot_mag):
+    assert on_shell_dt(Qm, L_mag, [x, y], [vx, vy], [ax, ay]) == 0
+Xc, Yc = py_mag / (qe * Bf), -Qx_mag / (qe * Bf)                       # guiding centre
+rhoL2 = (x - Xc)**2 + (y - Yc)**2
+assert sp.simplify(rhoL2 - m**2 * (vx**2 + vy**2) / (qe * Bf)**2) == 0   # Larmor radius² = (mv/q_eB)²
+assert sp.simplify(Qrot_mag - qe * Bf * (Xc**2 + Yc**2 - rhoL2) / 2) == 0
+# symmetric gauge: rotation is strict, both translations quasi, same charges
+L_sym = sp.Rational(1, 2) * m * (vx**2 + vy**2) + qe * Bf * (x * vy - y * vx) / 2
+assert sp.simplify(noether_charge(L_sym, [x, y], [vx, vy], K=[-y, x]) - Qrot_mag) == 0
+Qxs, Fxs = noether_charge_quasi(L_sym, [x, y], [vx, vy], K=[1, 0])
+Qys, Fys = noether_charge_quasi(L_sym, [x, y], [vx, vy], K=[0, 1])
+assert sp.simplify(Fxs - qe * Bf * y / 2) == 0 and sp.simplify(Qxs - Qx_mag) == 0
+assert sp.simplify(Fys + qe * Bf * x / 2) == 0 and sp.simplify(Qys - py_mag) == 0
+print("B3  magnetic field: p_y =", py_mag, ";  x-translation F =", Fx_mag, ", Q =", Qx_mag)
+print("    rotation: F =", Frot_mag, ", Q =", Qrot_mag, " = ½q_eB(R_c² − ρ_L²)")
+
+# --- B4: anisotropic oscillator; δL for a rotation equals dL_z/dt on shell.
+w1, w2 = sp.symbols("omega1 omega2", positive=True)
+L_aniso = sp.Rational(1, 2) * m * (ovx**2 + ovy**2) - sp.Rational(1, 2) * m * (w1**2 * ox**2 + w2**2 * oy**2)
+Lz_xy = m * (ox * ovy - oy * ovx)
+dL_rot = delta_L(L_aniso, [ox, oy], [ovx, ovy], K=[-oy, ox])
+assert sp.simplify(dL_rot - m * (w1**2 - w2**2) * ox * oy) == 0
+assert sp.simplify(on_shell_dt(Lz_xy, L_aniso, [ox, oy], [ovx, ovy], [oax, oay]) - dL_rot) == 0
+Ex_, Ey_ = (sp.Rational(1, 2) * m * ovx**2 + sp.Rational(1, 2) * m * w1**2 * ox**2,
+            sp.Rational(1, 2) * m * ovy**2 + sp.Rational(1, 2) * m * w2**2 * oy**2)
+assert on_shell_dt(Ex_, L_aniso, [ox, oy], [ovx, ovy], [oax, oay]) == 0
+assert on_shell_dt(Ey_, L_aniso, [ox, oy], [ovx, ovy], [oax, oay]) == 0
+Q3 = (ovx**2 - w1**2 * ox**2) * ovy + 4 * w1**2 * ox * ovx * oy       # cubic charge for ω2 = 2ω1
+L_12 = L_aniso.subs(w2, 2 * w1)
+assert on_shell_dt(Q3, L_12, [ox, oy], [ovx, ovy], [oax, oay]) == 0
+assert on_shell_dt(Q3, L_aniso, [ox, oy], [ovx, ovy], [oax, oay]) != 0
+print("B4  anisotropic oscillator: δL(rotation) = dL_z/dt =", dL_rot, ";  Q3 conserved iff ω2 = 2ω1")
+
+# --- B5: bead on a horizontal rod rotating at ω: h flat, E = T grows.
+(rb,), (rbd,), (rbdd,) = coords(["rho"])
+L_rod = sp.Rational(1, 2) * m * (rbd**2 + omega**2 * rb**2)
+h_rod = energy_function(L_rod, [rb], [rbd])
+assert sp.simplify(h_rod - sp.Rational(1, 2) * m * (rbd**2 - omega**2 * rb**2)) == 0
+assert on_shell_dt(h_rod, L_rod, [rb], [rbd], [rbdd]) == 0
+assert sp.simplify(on_shell_dt(L_rod, L_rod, [rb], [rbd], [rbdd]) - 2 * m * omega**2 * rb * rbd) == 0  # dE/dt = τω
+assert el_accelerations(L_rod, [rb], [rbd], [rbdd])[rbdd] == omega**2 * rb
+m_r, w_r, r0_r, t1 = 0.5, 2.0, 0.1, 1.0
+r1, rd1 = r0_r * np.cosh(w_r * t1), r0_r * w_r * np.sinh(w_r * t1)
+h_rod_num = 0.5 * m_r * (rd1**2 - w_r**2 * r1**2)
+E_rod_0, E_rod_1 = 0.5 * m_r * w_r**2 * r0_r**2, 0.5 * m_r * (rd1**2 + w_r**2 * r1**2)
+P_motor = m_r * w_r**3 * r0_r**2 * np.sinh(2 * w_r * t1)
+assert np.isclose(h_rod_num, -0.5 * m_r * w_r**2 * r0_r**2)
+assert np.isclose(E_rod_1, 0.5 * m_r * w_r**2 * r0_r**2 * np.cosh(2 * w_r * t1))
+assert np.isclose(E_rod_1 - h_rod_num, m_r * w_r**2 * r1**2)
+sol_rod = solve_ivp(lambda t_, s: [s[1], w_r**2 * s[0]], (0, t1), [r0_r, 0.0], method="DOP853", rtol=1e-11, atol=1e-13)
+assert np.allclose(sol_rod.y[:, -1], [r1, rd1], rtol=1e-8)
+print(f"B5  rod (m = {m_r}, ω = {w_r}, r₀ = {r0_r}): at t = 1 s  r = {r1:.5f} m, ṙ = {rd1:.5f} m/s, "
+      f"h = {h_rod_num:.4f} J, E(0) = {E_rod_0:.4f} J, E(1 s) = {E_rod_1:.5f} J, motor power = {P_motor:.4f} W")
+
+# --- B6: quartic period in closed form; T(A) ∝ A^{-1}; Kepler ⟨1/r⟩ = 1/a.
+from scipy.special import gamma as Gamma
+T_quartic_exact = np.sqrt(2 * np.pi) * Gamma(0.25) / Gamma(0.75)
+assert np.isclose(T_quartic_quad, T_quartic_exact, rtol=1e-9)
+assert np.isclose(period_quad(4, 2.0), T_quartic_exact / 2, rtol=1e-8)
+inv_r_avg = time_average(1 / np.linalg.norm(rr, axis=1), sol_1.t)
+assert np.isclose(inv_r_avg, 1 / a0, rtol=1e-6)
+r_avg = time_average(np.linalg.norm(rr, axis=1), sol_1.t)
+assert np.isclose(r_avg, a0 * (1 + e0**2 / 2), rtol=1e-6)                 # ⟨r⟩_t = a(1 + e²/2), not a
+Tq_avg, Vq_avg = time_average(Tq, tq), time_average(Vq, tq)
+assert np.isclose(Tq_avg, 2 / 3 * 0.25, rtol=1e-6) and np.isclose(Vq_avg, 1 / 12, rtol=1e-6)
+print(f"B6  quartic: T(1) = {T_quartic_exact:.6f} = √(2π)Γ(1/4)/Γ(3/4), T(2) = {period_quad(4, 2.0):.6f}; "
+      f"⟨T⟩ = {Tq_avg:.6f} = 2E/3, ⟨V⟩ = {Vq_avg:.6f} = E/3;  Kepler ⟨1/r⟩ = {inv_r_avg:.6f} = 1/a, ⟨r⟩ = {r_avg:.6f} = a(1 + e²/2)")
+
+# --- B7: A² = m²κ² + 2mEL² along the orbit; e from E and L.
+A2 = np.sum(A**2, axis=1); L2 = np.sum(Lv**2, axis=1)
+assert np.allclose(A2, 1 + 2 * E * L2, atol=1e-9)
+e_from_EL = np.sqrt(1 + 2 * E[0] * L2[0])
+assert np.isclose(e_from_EL, e0)
+print(f"B7  A² − m²κ² − 2mEL² = {np.abs(A2 - 1 - 2 * E * L2).max():.1e} along the orbit;  e = √(1 + 2EL²/mκ²) = {e_from_EL:.4f}")
+
+# %%
+# --- B8: pericenter advance vs ε (extends Part 3).
+eps_list = np.array([0.0005, 0.001, 0.002, 0.004])
+adv_meas = []
+for ep in eps_list:
+    sol_e = integrate(lambda t_, s, ep=ep: kepler_rhs(t_, s, eps=ep), s0, 8 * T0, n_out=800, events=pericenter)
+    ps = sol_e.y_events[0]
+    ang = np.unwrap(np.arctan2(ps[:, :3] @ e2, ps[:, :3] @ e1))
+    adv_meas.append(np.mean(np.diff(ang)))
+adv_meas = np.degrees(adv_meas)
+adv_pred = np.degrees(6 * np.pi * eps_list / Lmag**4)
+rel_err = (adv_meas - adv_pred) / adv_pred
+c_fit = np.polyfit(eps_list, rel_err, 1)[0]
+assert np.isclose(adv_meas[2], np.degrees(shift_per_orbit), rtol=1e-3)     # same as Part 3
+assert np.all(rel_err > 0) and np.all(np.diff(rel_err) > 0), rel_err      # error grows with ε
+assert np.allclose(rel_err, c_fit * eps_list, atol=0.004), (rel_err, c_fit * eps_list)   # ... linearly
+print("B8  ε            =", eps_list)
+print("    measured [°] =", np.round(adv_meas, 3))
+print("    1st order [°]=", np.round(adv_pred, 3))
+print("    rel. error   =", np.round(rel_err, 4), f"  ≈ {c_fit:.0f}·ε")
+fig, (axl, axr) = plt.subplots(1, 2, figsize=(10, 4))
+axl.plot(eps_list, adv_meas, "o", color=C[0], label="measured")
+axl.plot(eps_list, adv_pred, "-", color=C[1], label="6πκεm²/L⁴")
+axl.set_xlabel("ε"); axl.set_ylabel("advance per orbit [°]"); axl.legend(fontsize=9)
+axr.plot(eps_list, 100 * rel_err, "o", color=C[0], label="measured")
+axr.plot(eps_list, 100 * c_fit * eps_list, "--", color=C[2], label=f"{c_fit:.0f}·ε")
+axr.set_xlabel("ε"); axr.set_ylabel("relative error of first order [%]"); axr.legend(fontsize=9)
+fig.suptitle("B8: first-order perturbation theory fails linearly in ε")
+fig.tight_layout(); fig.savefig(FIG / "precession_vs_eps.png", dpi=120); plt.close(fig)
+
+# %%
+# --- C1: the isotropic oscillator's three charges and E² = Q1² + Q2² + ω²L_z².
+Q1 = sp.Rational(1, 2) * m * (ovx**2 - ovy**2) + sp.Rational(1, 2) * m * w**2 * (ox**2 - oy**2)
+Lz_w = m * (ox * ovy - oy * ovx)
+E_iso = energy_function(L_iso, [ox, oy], [ovx, ovy])
+for Qc in (Q1, Q2, Lz_w, E_iso):
+    assert on_shell_dt(Qc, L_iso, [ox, oy], [ovx, ovy], [oax, oay]) == 0
+assert sp.simplify(E_iso**2 - (Q1**2 + Q2**2 + w**2 * Lz_w**2)) == 0
+dL_Q1 = delta_L(L_iso, [ox, oy], [ovx, ovy], K=[ovx, -ovy], a=[oax, oay])
+Lx_part = sp.Rational(1, 2) * m * ovx**2 - sp.Rational(1, 2) * m * w**2 * ox**2
+Ly_part = sp.Rational(1, 2) * m * ovy**2 - sp.Rational(1, 2) * m * w**2 * oy**2
+assert sp.simplify(dL_Q1 - total_dt(Lx_part - Ly_part, [ox, oy], [ovx, ovy], [oax, oay])) == 0
+assert sp.simplify(sp.diff(L_iso, ovx) * ovx - sp.diff(L_iso, ovy) * ovy - (Lx_part - Ly_part) - Q1) == 0
+# complex amplitudes: m a_x conj(a_y) = Q2 + i ω L_z
+a_x, a_y_conj = ovx + sp.I * w * ox, ovy - sp.I * w * oy          # symbols are real, so conj(a_y) = ẏ − iωy
+assert sp.simplify(sp.expand(m * a_x * a_y_conj) - (Q2 + sp.I * w * Lz_w)) == 0
+# the trajectory x = cos t, y = 2 sin t (m = ω = 1)
+tt = np.linspace(0, 2 * np.pi, 7)
+xs_, ys_, vxs_, vys_ = np.cos(tt), 2 * np.sin(tt), -np.sin(tt), 2 * np.cos(tt)
+E_n = 0.5 * (vxs_**2 + vys_**2) + 0.5 * (xs_**2 + ys_**2)
+Q1_n = 0.5 * (vxs_**2 - vys_**2) + 0.5 * (xs_**2 - ys_**2)
+Q2_n = vxs_ * vys_ + xs_ * ys_
+Lz_n = xs_ * vys_ - ys_ * vxs_
+assert np.allclose(E_n, 2.5) and np.allclose(Q1_n, -1.5) and np.allclose(Q2_n, 0) and np.allclose(Lz_n, 2)
+assert np.allclose(E_n**2, Q1_n**2 + Q2_n**2 + Lz_n**2)
+print(f"C1  x = cos t, y = 2 sin t: E = {E_n[0]:.2f}, Q1 = {Q1_n[0]:.2f}, Q2 = {Q2_n[0]:.2f}, L_z = {Lz_n[0]:.2f};  "
+      f"E² = {E_n[0]**2:.4f} = Q1² + Q2² + ω²L_z² = {Q1_n[0]**2 + Q2_n[0]**2 + Lz_n[0]**2:.4f}")
+
+# --- C2: hydrostatic virial for a uniform sphere; negative heat capacity numbers.
+rho_u = 1.3;  R_u = 1.0;  G_u = 1.0
+M_u = 4 / 3 * np.pi * R_u**3 * rho_u
+P_u = lambda r_: 2 * np.pi * G_u / 3 * rho_u**2 * (R_u**2 - r_**2)       # dP/dr = -G m(r) ρ / r²
+three_int_P = 3 * quad(lambda r_: P_u(r_) * 4 * np.pi * r_**2, 0, R_u)[0]
+V_grav_u = -quad(lambda r_: G_u * (4 / 3 * np.pi * r_**3 * rho_u) * (4 * np.pi * r_**2 * rho_u) / r_, 0, R_u)[0]
+assert np.isclose(three_int_P, -V_grav_u) and np.isclose(-V_grav_u, 0.6 * G_u * M_u**2 / R_u)
+# hydrostatic equilibrium check: dP/dr + G m(r) ρ / r² = 0
+r_chk = np.linspace(0.05, 0.95, 7)
+assert np.allclose(np.gradient(P_u(r_chk), r_chk, edge_order=2), -G_u * (4 / 3 * np.pi * r_chk**3 * rho_u) * rho_u / r_chk**2, rtol=1e-2)
+T_sun_real = 3 * T_sun                                                     # |V| ≈ 1.8 GM²/R instead of 0.6
+GM_E, R_E = 3.986004e14, 6.371e6
+r_sat = R_E + 400e3
+v_sat = np.sqrt(GM_E / r_sat)
+dE_per_km = GM_E / (2 * r_sat**2) * 1e3                                    # J/kg lost when r drops by 1 km
+dv_per_km = 0.5 * v_sat / r_sat * 1e3                                      # m/s gained
+assert np.isclose(np.sqrt(GM_E / (r_sat - 1e3)) - v_sat, dv_per_km, rtol=1e-3)
+print(f"C2  uniform sphere: 3∫P dV = {three_int_P:.5f} = −V_grav = (3/5)GM²/R = {0.6 * G_u * M_u**2 / R_u:.5f}")
+print(f"    Sun with |V| = 1.8 GM²/R: T ≈ {T_sun_real:.2e} K;  satellite at 400 km: v = {v_sat:.1f} m/s, "
+      f"loses {dE_per_km:.0f} J/kg and gains {dv_per_km:.3f} m/s per km of descent")
+
+# --- C3: V = −c/r²: fall to the centre (ℓ² < 2mc) or escape (ℓ² > 2mc), compared with Binet.
+def inv_sq_rhs(t_, s, c=1.0, m_=1.0):
+    """V = −c/r² in the plane: r̈ = −(2c/(m r⁴)) r (force −2c/r³ toward the centre)."""
+    x_, y_, vx_, vy_ = s
+    r2 = x_ * x_ + y_ * y_
+    f = -2 * c / (m_ * r2 * r2)
+    return [vx_, vy_, f * x_, f * y_]
+
+
+def run_inv_sq(ell2, r_stop, t_max=200.0):
+    """Start at r = 1, ṟ = 0, angular momentum ℓ (m = c = 1); stop when r = r_stop."""
+    ev = lambda t_, s: np.hypot(s[0], s[1]) - r_stop
+    ev.terminal = True
+    sol_ = solve_ivp(inv_sq_rhs, (0, t_max), [1.0, 0.0, 0.0, np.sqrt(ell2)], method="DOP853",
+                     rtol=1e-11, atol=1e-13, events=ev, dense_output=True)
+    assert sol_.t_events[0].size == 1, (ell2, r_stop)
+    t_hit = sol_.t_events[0][0]
+    ts = np.linspace(0, t_hit, 40001)
+    xs, ys = sol_.sol(ts)[:2]
+    return t_hit, np.unwrap(np.arctan2(ys, xs))[-1], xs, ys
+
+
+ell2_in, ell2_out = 1.9, 2.1
+t_in, th_in, x_in, y_in = run_inv_sq(ell2_in, 0.05)
+lam_in = np.sqrt(2 / ell2_in - 1)
+t_in_pred, th_in_pred = np.sqrt(1 - 0.05**2) / np.sqrt(2 - ell2_in), np.arccosh(1 / 0.05) / lam_in
+assert np.isclose(t_in, t_in_pred, rtol=1e-6) and np.isclose(th_in, th_in_pred, rtol=1e-5), (t_in, t_in_pred, th_in, th_in_pred)
+t_out, th_out, x_out, y_out = run_inv_sq(ell2_out, 20.0)
+lam_out = np.sqrt(1 - 2 / ell2_out)
+t_out_pred, th_out_pred = np.sqrt(20.0**2 - 1) / np.sqrt(ell2_out - 2), np.arccos(1 / 20.0) / lam_out
+th_inf = np.pi / (2 * lam_out)
+assert np.isclose(t_out, t_out_pred, rtol=1e-6) and np.isclose(th_out, th_out_pred, rtol=1e-5)
+sol_c = solve_ivp(inv_sq_rhs, (0, 20.0), [1.0, 0.0, 0.0, np.sqrt(2.0)], method="DOP853", rtol=1e-11, atol=1e-13, t_eval=np.linspace(0, 20, 500))
+assert np.abs(np.hypot(sol_c.y[0], sol_c.y[1]) - 1).max() < 1e-8          # ℓ² = 2mc: circular at any radius
+print(f"C3  ℓ² = {ell2_in}: reaches r = 0.05 at t = {t_in:.4f} (predicted {t_in_pred:.4f}) after θ = {th_in:.3f} rad "
+      f"= {th_in / (2 * np.pi):.2f} turns (Binet: arccosh(20)/λ = {th_in_pred:.3f})")
+print(f"    ℓ² = {ell2_out}: reaches r = 20 at t = {t_out:.3f} (predicted {t_out_pred:.3f}) after θ = {th_out:.4f} rad "
+      f"(Binet {th_out_pred:.4f}); r → ∞ at θ∞ = π/(2λ') = {th_inf:.4f} rad")
+fig, (axi, axo2) = plt.subplots(1, 2, figsize=(10, 4.6))
+axi.plot(x_in, y_in, color=C[0], lw=0.8); axi.plot(0, 0, "k*"); axi.set_aspect("equal")
+axi.set_title(f"V = −c/r², ℓ² = {ell2_in} < 2mc: spiral into the centre")
+axo2.plot(x_out, y_out, color=C[1], lw=0.8); axo2.plot(0, 0, "k*"); axo2.set_aspect("equal")
+axo2.set_title(f"ℓ² = {ell2_out} > 2mc: escape after {th_inf / (2 * np.pi):.2f} turns")
+fig.tight_layout(); fig.savefig(FIG / "inverse_square_orbits.png", dpi=120); plt.close(fig)
+
+# --- C4: damped oscillator L = e^{γt}(½mẋ² − ½kx²): h not conserved, but Q is.
+gam = sp.Symbol("gamma", positive=True)
+L_damp = sp.exp(gam * t) * (sp.Rational(1, 2) * m * xv**2 - sp.Rational(1, 2) * k_s * xq**2)
+assert sp.simplify(el_accelerations(L_damp, [xq], [xv], [xa])[xa] + gam * xv + k_s * xq / m) == 0
+h_damp = energy_function(L_damp, [xq], [xv])
+assert sp.simplify(on_shell_dt(h_damp, L_damp, [xq], [xv], [xa]) + gam * L_damp) == 0          # dh/dt = −∂L/∂t = −γL
+dL_damp = delta_L(L_damp, [xq], [xv], K=[xv + gam * xq / 2], a=[xa])
+assert sp.simplify(dL_damp - total_dt(L_damp, [xq], [xv], [xa])) == 0                           # F = L
+Q_damp = sp.simplify(sp.diff(L_damp, xv) * (xv + gam * xq / 2) - L_damp)
+Q_damp_expected = sp.exp(gam * t) * (sp.Rational(1, 2) * m * xv**2 + sp.Rational(1, 2) * k_s * xq**2 + gam * m * xq * xv / 2)
+assert sp.simplify(Q_damp - Q_damp_expected) == 0
+assert on_shell_dt(Q_damp, L_damp, [xq], [xv], [xa]) == 0
+gam_n, Om_n = 0.2, np.sqrt(1 - 0.2**2 / 4)
+sol_d = solve_ivp(lambda t_, s: [s[1], -gam_n * s[1] - s[0]], (0, 20), [1.0, 0.0], method="DOP853",
+                  rtol=1e-11, atol=1e-13, t_eval=np.linspace(0, 20, 401))
+xd, vd = sol_d.y
+Qd = np.exp(gam_n * sol_d.t) * (0.5 * vd**2 + 0.5 * xd**2 + 0.5 * gam_n * xd * vd)
+hd = np.exp(gam_n * sol_d.t) * (0.5 * vd**2 + 0.5 * xd**2)
+assert np.abs(Qd - 0.5).max() < 1e-8 and hd.max() - hd.min() > 0.05
+x20_pred = np.exp(-gam_n * 10) * (np.cos(Om_n * 20) + gam_n / (2 * Om_n) * np.sin(Om_n * 20))
+assert np.isclose(xd[-1], x20_pred, atol=1e-9)
+print(f"C4  damped oscillator (m = k = 1, γ = 0.2, x₀ = 1, ẋ₀ = 0): Q = {Qd[0]:.6f} at t = 0, {Qd[-1]:.6f} at t = 20 "
+      f"(|ΔQ| ≤ {np.abs(Qd - 0.5).max():.1e}); h ranges over [{hd.min():.4f}, {hd.max():.4f}]; x(20) = {xd[-1]:.6f}")
+
 # %%
 if __name__ == "__main__":
     print("All checks passed. Figures in", FIG)

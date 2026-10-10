@@ -319,25 +319,32 @@ kp = lambda nu: int(np.argmin(np.abs(xi_p - nu)))
 assert np.isclose(abs(Gp[0]), 0.002) and abs(Gp[kp(500)]) < 1e-9 and abs(Gp[kp(1000)]) < 1e-9
 # Example 4.3: the delay leaves |G| = tau |sinc(tau xi)| alone and makes the phase -2 pi t0 xi.
 sel_p = xi_p <= 2000
-assert np.allclose(Gp[sel_p], np.exp(-2j * np.pi * t0_p * xi_p[sel_p]) * tau_p * sinc(tau_p * xi_p[sel_p]), atol=1e-8)
+G_an = np.exp(-2j * np.pi * t0_p * xi_p[sel_p]) * tau_p * sinc(tau_p * xi_p[sel_p])
+err_p = np.max(np.abs(Gp[sel_p] - G_an))
+assert err_p < 5e-7, err_p            # measured 1.8e-7 up to 2 kHz: trapezoid error of a 10 us grid, 1e-4 of the 0.002 peak
 assert np.isclose(abs(Gp[kp(100)]), 1.871e-3, atol=1e-6) and np.isclose(abs(Gp[kp(100)]), 0.002 * sinc(0.2), atol=1e-8)
 assert np.isclose(np.degrees(np.angle(Gp[kp(100)])), -108.0, atol=1e-6)
 print(f"  Example 4.1/4.3: sinc^2(0.3) = {sinc(0.3)**2:.5f}; 2 ms pulse delayed 3 ms, from the FFT at 100 Hz: "
       f"|G| = {abs(Gp[kp(100)]):.3e}, phase = {np.degrees(np.angle(Gp[kp(100)])):.1f} deg; nulls at 500, 1000 Hz.")
 
 # Convolution theorem: Pi * Pi = triangle, transform = sinc^2 (Theorem 3.7).
-tri_num = np.convolve(rect(x), rect(x), mode="same") * dx
-assert np.max(np.abs(tri_num - np.clip(1 - np.abs(x), 0, None))) < 1e-2
+# np.convolve's full output lives on the grid x0 + x0 + m dx; the samples at our x[j] = x0 + j dx are
+# m = j + N/2. (mode="same" on an even-length grid is off by one sample, which shifts the phase by
+# exp(-2 pi i xi dx) and breaks the frequency-domain check below; slice explicitly instead.)
+Nx = len(x)
+tri_num = np.convolve(rect(x), rect(x))[Nx // 2:Nx // 2 + Nx] * dx
+assert np.max(np.abs(tri_num - np.clip(1 - np.abs(x), 0, None))) < dx     # Riemann-sum error at the peak, dx/2
 _, Ftri = ft_numeric(tri_num, -L, dx)
 _, Frect = ft_numeric(rect(x), -L, dx)
-assert np.max(np.abs(Ftri[band] - sinc(xi[band]) ** 2)) < 5e-3
-assert np.max(np.abs(Ftri[band] - Frect[band] ** 2)) < 5e-3          # (f*g)^ = f^ g^ on the grid
+assert np.max(np.abs(Ftri[band] - sinc(xi[band]) ** 2)) < 1e-4
+assert np.max(np.abs(Ftri[band] - Frect[band] ** 2)) < 1e-12         # (f*g)^ = f^ g^ EXACTLY on the grid (Theorem 3.22)
 # The mirror (3.14): (f g)^ = f^ * g^ for two Gaussians, where everything is explicit.
 g1, g2 = np.exp(-np.pi * x**2), np.exp(-2 * np.pi * x**2)
 _, Fprod = ft_numeric(g1 * g2, -L, dx)
 dxi = xi[1] - xi[0]
-conv_hat = np.convolve(np.exp(-np.pi * xi**2), np.sqrt(0.5) * np.exp(-np.pi * xi**2 / 2), mode="same") * dxi
-assert np.max(np.abs(Fprod[band].real - conv_hat[band])) < 1e-6
+conv_hat = np.convolve(np.exp(-np.pi * xi**2), np.sqrt(0.5) * np.exp(-np.pi * xi**2 / 2))[Nx // 2:Nx // 2 + Nx] * dxi
+assert np.max(np.abs(Fprod[band].real - conv_hat[band])) < 1e-12     # exact: Gaussians sum under Poisson summation
+assert np.max(np.abs(Fprod[band].real - np.exp(-np.pi * xi[band]**2 / 3) / np.sqrt(3))) < 1e-12   # (3.12) with a = 3 pi
 fig, ax = plt.subplots(1, 2, figsize=(10, 4))
 ax[0].plot(x, tri_num, label="Pi * Pi (np.convolve)"); ax[0].plot(x, np.clip(1 - np.abs(x), 0, None), "k--", label="triangle")
 ax[0].set_xlim(-2, 2); ax[0].legend(); ax[0].grid(alpha=.3); ax[0].set_title("Convolution: rect * rect = triangle")
@@ -655,7 +662,7 @@ ker = np.exp(-(xx**2 + yy**2) / (2 * 2.0**2)); ker /= ker.sum()
 ker = np.roll(ker, (-32, -32), axis=(0, 1))                                   # kernel centred at index (0, 0): no shift
 blur_fft = np.fft.ifft2(np.fft.fft2(img) * np.fft.fft2(ker)).real            # (3.13) in 2D, circular
 blur_direct = sum(ker[a, b] * np.roll(img, (a, b), axis=(0, 1))             # (ker (*) img)[i,j] = sum ker[a,b] img[i-a,j-b]
-                  for a in range(64) for b in range(64) if ker[a, b] > 1e-12)
+                  for a in range(64) for b in range(64))                     # all 4096 shifts: exact circular convolution
 assert np.allclose(blur_fft, blur_direct, atol=1e-12)
 K2 = np.fft.fft2(ker)
 assert np.isclose(K2[0, 0].real, 1.0) and abs(K2[32, 32]) < 1e-3            # passes DC untouched, kills the Nyquist corner

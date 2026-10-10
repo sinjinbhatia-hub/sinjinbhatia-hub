@@ -11,7 +11,9 @@
 # constraint and its Lagrange multiplier; (5) Snell's law from Fermat;
 # (6) geodesics on a sphere (two dependent variables); (7) J[y + eps*eta] vs eps;
 # (8) gradient of J_h versus h times the E–L expression, eq. (3.9);
-# (9) SymPy checks of the identities used in the notes and exercise numbers.
+# (8b) the same with the trapezoid rule, one order better; (9) SymPy checks of the
+# identities used in the notes; (10) reference checks for every number quoted in
+# solutions.md, with Exercise B8's catenoid at the end.
 #
 # Run headless: `MPLBACKEND=Agg python3 project.py`. Figures go to ./figures/.
 
@@ -431,6 +433,42 @@ ax.set_xlabel("h"); ax.legend(fontsize=8); ax.grid(alpha=.3, which="both"); ax.s
 fig.tight_layout(); fig.savefig(FIG / "gradient_vs_EL.png", dpi=120); plt.close(fig)
 
 # %% [markdown]
+# ## Part 8b: The trapezoid-rule discretization is one order better (Exercise B4)
+#
+# J_h = (h/2) Σ_i [L(x_i, y_i, p_i) + L(x_{i+1}, y_{i+1}, p_i)]. Its gradient is
+# h [ ½(L_y(x_i, y_i, p_i) + L_y(x_i, y_i, p_{i−1})) − (Q̃_i − Q̃_{i−1})/h ] with
+# Q̃_i = ½(L_y'(x_i, y_i, p_i) + L_y'(x_{i+1}, y_{i+1}, p_i)) living on segment i,
+# so the difference quotient is CENTERED at x_i and the mismatch with h·EL(x_i)
+# is O(h^3): it drops by 8, not 4, when h is halved. Same L and y as Part 8.
+
+
+# %%
+def J_trap(y_int, x):
+    """Trapezoid-rule discretization of ∫ L dx on the polygon (Exercise B4)."""
+    y = with_ends(y_int, y_f(x[0]), y_f(x[-1])); hh = x[1] - x[0]; p = np.diff(y) / hh
+    return 0.5 * hh * np.sum(L_f(x[:-1], y[:-1], p) + L_f(x[1:], y[1:], p))
+
+
+def grad_J_trap(y_int, x):
+    """Exercise B4(a): h [ ½(L_y(i, p_i) + L_y(i, p_{i−1})) − (Q̃_i − Q̃_{i−1})/h ], Q̃_i the segment average of L_y'."""
+    y = with_ends(y_int, y_f(x[0]), y_f(x[-1])); hh = x[1] - x[0]; p = np.diff(y) / hh
+    Q_seg = 0.5 * (Lp_f(x[:-1], y[:-1], p) + Lp_f(x[1:], y[1:], p))                 # one value per segment
+    Ly_avg = 0.5 * (Ly_f(x[1:-1], y[1:-1], p[1:]) + Ly_f(x[1:-1], y[1:-1], p[:-1]))  # one value per interior node
+    return hh * (Ly_avg - (Q_seg[1:] - Q_seg[:-1]) / hh)
+
+
+errs_t = []
+for Ng in (50, 100, 200, 400):
+    xg = np.linspace(0, 1, Ng + 2); hg = xg[1] - xg[0]; yg = y_f(xg[1:-1])
+    assert np.max(np.abs(approx_fprime(yg, J_trap, 1e-7, xg) - grad_J_trap(yg, xg))) < 1e-4   # the formula is the gradient
+    errs_t.append(np.max(np.abs(grad_J_trap(yg, xg) - hg * EL_f(xg[1:-1]))))
+ratios_t = np.array(errs_t[:-1]) / np.array(errs_t[1:])
+assert np.all(ratios_t > 7.0) and np.all(ratios_t < 9.0), ratios_t
+assert np.isclose(errs_t[0], 3.82e-6, rtol=2e-2) and np.isclose(ratios_t[0], 7.72, atol=0.02)
+print(f"Part 8b: trapezoid rule: max|∂J_h/∂y_i − h·EL(x_i)| = {errs_t[0]:.2e}, {errs_t[1]:.2e}, {errs_t[2]:.2e}, {errs_t[3]:.2e}; "
+      f"ratios on halving h: {np.round(ratios_t, 2)} -> O(h^3)")
+
+# %% [markdown]
 # ## Part 9: SymPy checks of the identities, and the numbers in the exercises
 
 # %%
@@ -468,6 +506,146 @@ assert np.isclose(th_B7, np.pi) and np.isclose(th_B7 * np.sqrt(a_B7 / g), np.sqr
 assert np.isclose(2 * np.pi * np.sqrt((1 / (2 * np.pi)) / g), np.sqrt(2 * np.pi / g))
 print(f"        catenoid critical half-separation d/R = {d_crit:.4f}; B7: T = sqrt(π/g) = {np.sqrt(np.pi / g):.4f} s; "
       f"C2: T = sqrt(2π/g) = {np.sqrt(2 * np.pi / g):.4f} s")
+
+# %% [markdown]
+# ## Part 10: Reference checks for the exercises
+#
+# Every number quoted in solutions.md that is not already asserted above is
+# computed or asserted here, and the reference implementation for Exercise B8
+# (the catenoid) is at the end of the cell. Do the exercises before reading it.
+
+# %%
+# A1: the general solutions satisfy their Euler–Lagrange equations.
+C1s, C2s = sp.symbols("C1 C2")
+for Lc, ysol in ((yp_**2 + yf**2, C1s * sp.exp(xs_) + C2s * sp.exp(-xs_)),
+                 (xs_ * yp_**2, C1s * sp.log(xs_) + C2s),
+                 (yp_**2 - 2 * yf * sp.sin(xs_), sp.sin(xs_) + C1s * xs_ + C2s),
+                 (xs_**2 * yp_**2 + yf**2, C1s * xs_**((-1 + sp.sqrt(5)) / 2) + C2s * xs_**((-1 - sp.sqrt(5)) / 2))):
+    assert sp.simplify(EL_of(Lc).subs(yf, ysol).doit()) == 0, Lc
+# A2: Φ(ε) = 11/6 − ε/2 + ε²/3, so δJ = Φ'(0) = −1/2; formula (3.3) gives the same.
+eps_s = sp.symbols("epsilon")
+yA2, etaA2 = xs_**2, xs_ * (1 - xs_)
+PhiA2 = sp.integrate(sp.expand(sp.diff(yA2 + eps_s * etaA2, xs_)**2 + 2 * xs_ * (yA2 + eps_s * etaA2)), (xs_, 0, 1))
+assert sp.expand(PhiA2) == sp.Rational(11, 6) - eps_s / 2 + eps_s**2 / 3
+assert sp.integrate(2 * xs_ * etaA2 + 2 * sp.diff(yA2, xs_) * sp.diff(etaA2, xs_), (xs_, 0, 1)) == -sp.Rational(1, 2)
+# A3(b), (d): Beltrami quantities y²(1 − y'²) and e^y/sqrt(1 + y'²).
+for Lc, Hc in ((yf**2 * (1 + yp_**2), yf**2 * (1 - yp_**2)), (sp.exp(yf) * sp.sqrt(1 + yp_**2), sp.exp(yf) / sp.sqrt(1 + yp_**2))):
+    assert sp.simplify(Lc - yp_ * sp.diff(Lc, yp_) - Hc) == 0
+# A4: E–L of y sqrt(1 + y'²), times (1 + y'²)^{3/2}, is 1 + y'² − y y''.
+assert sp.simplify(EL_of(yf * sp.sqrt(1 + yp_**2)) * (1 + yp_**2) ** sp.Rational(3, 2) - (1 + yp_**2 - yf * sp.diff(yf, xs_, 2))) == 0
+# A5: free right end gives J = −1/6; imposing y(1) = 0 gives J = −1/24.
+JA5 = lambda ysol: sp.integrate(sp.Rational(1, 2) * sp.diff(ysol, xs_)**2 + ysol, (xs_, 0, 1))
+assert JA5(xs_**2 / 2 - xs_) == -sp.Rational(1, 6) and JA5(xs_ * (xs_ - 1) / 2) == -sp.Rational(1, 24)
+# B1: n = 1/y gives semicircles centred on the x-axis; n = n0(1 + κy) gives catenaries.
+Rs, x0s_, n0s, kaps, Cs = sp.symbols("R x0 n0 kappa C", positive=True)
+semi = sp.sqrt(Rs**2 - (xs_ - x0s_)**2)
+assert sp.simplify((yf**2 * (1 + yp_**2)).subs(yf, semi).doit() - Rs**2) == 0          # the first integral y²(1 + y'²) = R²
+assert sp.simplify(EL_of(sp.sqrt(1 + yp_**2) / yf).subs(yf, semi).doit()) == 0
+Lmir = n0s * (1 + kaps * yf) * sp.sqrt(1 + yp_**2)
+ymir = ((Cs / n0s) * sp.cosh(n0s * kaps * (xs_ - x0s_) / Cs) - 1) / kaps
+assert sp.simplify(EL_of(Lmir).subs(yf, ymir).doit()) == 0
+# B2(b): the equator θ = π/2, φ = ωt satisfies both E–L equations of L = sqrt(θ'² + sin²θ φ'²).
+ts_, oms = sp.symbols("t omega", positive=True)
+thf, phf = sp.Function("theta")(ts_), sp.Function("phi")(ts_)
+Lsph = sp.sqrt(sp.diff(thf, ts_)**2 + sp.sin(thf)**2 * sp.diff(phf, ts_)**2)
+for qf in (thf, phf):
+    ELq = sp.diff(Lsph, qf) - sp.diff(sp.diff(Lsph, sp.diff(qf, ts_)), ts_)
+    assert sp.simplify(ELq.subs({thf: sp.pi / 2, phf: oms * ts_}).doit()) == 0
+# B5(d): δ²S for η = sin(πt/T) is (T/2)(π²/T² − ω²), negative once T > π/ω.
+Ts = sp.symbols("T", positive=True)
+etaB5 = sp.sin(sp.pi * ts_ / Ts)
+d2S = sp.integrate(sp.diff(etaB5, ts_)**2 - oms**2 * etaB5**2, (ts_, 0, Ts))
+assert sp.simplify(d2S - (Ts / 2) * (sp.pi**2 / Ts**2 - oms**2)) == 0
+# B6: y = 6x(1 − x) solves the E–L equation of y'² + λy with λ = −24 (J = 12 and the constraint are checked in Part 9).
+assert sp.simplify(EL_of(yp_**2 - 24 * yf).subs(yf, 6 * xs_ * (1 - xs_)).doit()) == 0
+# B7: wall at x = 1 gives θ1 = π, a = 1/π = 0.3183, arrival depth 2/π = 0.6366, T = sqrt(π/g) = 0.5659 s < 0.5829 s to (1, 1).
+assert np.isclose(a_B7, 1 / np.pi) and np.isclose(a_B7, 0.3183, atol=5e-5) and np.isclose(2 * a_B7, 0.6366, atol=5e-5)
+assert np.isclose(np.sqrt(np.pi / g), 0.5659, atol=5e-5) and np.sqrt(np.pi / g) < T_cyc
+# C1(d): the brachistochrone Lagrangian is not jointly convex in (y, y'): det Hess = (3 − y'²)/(8 g y³ (1 + y'²)) < 0 for |y'| > sqrt(3).
+yv, pv, gv = sp.symbols("y p g", positive=True)
+Hb = sp.hessian(sp.sqrt(1 + pv**2) / sp.sqrt(2 * gv * yv), (yv, pv))
+assert sp.simplify(Hb.det() - (3 - pv**2) / (8 * gv * yv**3 * (1 + pv**2))) == 0
+# C2: same-height endpoint X = 1 m: a = 1/(2π) = 0.1592, depth 1/π = 0.3183, T = sqrt(2π/g) = 0.8003 s;
+#     f(θ) = (θ − sin θ)/(1 − cos θ) is strictly increasing on (0, 2π) with f(π) = π/2.
+assert np.isclose(1 / (2 * np.pi), 0.1592, atol=5e-5) and np.isclose(1 / np.pi, 0.3183, atol=5e-5) and np.isclose(np.sqrt(2 * np.pi / g), 0.8003, atol=5e-5)
+f42 = lambda th: (th - np.sin(th)) / (1 - np.cos(th))
+ths_grid = np.linspace(1e-3, 2 * np.pi - 1e-3, 5000)
+assert np.all(np.diff(f42(ths_grid)) > 0) and np.isclose(f42(np.pi), np.pi / 2)
+# C3: the E–L equation of the Dirichlet energy ½(u_x² + u_y²) is −(u_xx + u_yy) = 0.
+Xs, Ys, uxs, uys = sp.symbols("x y u_x u_y")
+uf = sp.Function("u")(Xs, Ys)
+Ldir = sp.Rational(1, 2) * (uxs**2 + uys**2)
+subs_u = {uxs: sp.diff(uf, Xs), uys: sp.diff(uf, Ys)}
+EL_dir = -sp.diff(sp.diff(Ldir, uxs).subs(subs_u), Xs) - sp.diff(sp.diff(Ldir, uys).subs(subs_u), Ys)
+assert sp.simplify(EL_dir + sp.diff(uf, Xs, 2) + sp.diff(uf, Ys, 2)) == 0
+# C4: the Gaussian with λ2 = −1/(2σ²), λ1 = μ/σ², λ0 = 1 − μ²/(2σ²) − ½ ln(2πσ²) solves the algebraic E–L equation,
+#     meets the three constraints, and has entropy ½ ln(2πeσ²).
+xr, mus = sp.symbols("x mu", real=True); sigs = sp.symbols("sigma", positive=True)
+qG = sp.exp(-(xr - mus)**2 / (2 * sigs**2)) / (sigs * sp.sqrt(2 * sp.pi))
+lam2, lam1, lam0 = -1 / (2 * sigs**2), mus / sigs**2, 1 - mus**2 / (2 * sigs**2) - sp.log(2 * sp.pi * sigs**2) / 2
+assert sp.simplify(sp.expand_log(-sp.log(qG) - 1 + lam0 + lam1 * xr + lam2 * xr**2, force=True)) == 0
+assert [sp.simplify(sp.integrate(m * qG, (xr, -sp.oo, sp.oo))) for m in (1, xr, xr**2)] == [1, mus, mus**2 + sigs**2]
+assert sp.simplify(-sp.integrate(qG * sp.expand_log(sp.log(qG), force=True), (xr, -sp.oo, sp.oo)) - sp.log(2 * sp.pi * sp.E * sigs**2) / 2) == 0
+print("Part 10: exercise checks A1–A5, B1, B2, B5, B6, B7, C1–C4 all pass.")
+
+
+# Reference implementation for Exercise B8: the catenoid between the rings y(±d) = 1 (Example 4.6, λ = 0).
+def polygon_area(y_int, x, ya, yb):
+    """Exact area of the polygon rotated about the x-axis: Σ π (y_i + y_{i+1}) Δs_i (each segment sweeps a conical frustum)."""
+    y = with_ends(y_int, ya, yb)
+    return float(2 * np.pi * np.sum(np.hypot(np.diff(x), np.diff(y)) * 0.5 * (y[1:] + y[:-1])))
+
+
+def polygon_area_grad(y_int, x, ya, yb):
+    """∂(polygon_area)/∂y_i = 2π [ (Δy_{i−1}/Δs_{i−1}) ȳ_{i−1} + Δs_{i−1}/2 − (Δy_i/Δs_i) ȳ_i + Δs_i/2 ], ȳ the segment mean of y."""
+    y = with_ends(y_int, ya, yb); dy = np.diff(y); ds = np.hypot(np.diff(x), dy); ym = 0.5 * (y[1:] + y[:-1])
+    return 2 * np.pi * ((dy[:-1] / ds[:-1]) * ym[:-1] + 0.5 * ds[:-1] - (dy[1:] / ds[1:]) * ym[1:] + 0.5 * ds[1:])
+
+
+def catenoid_area(c, d):
+    """Area of y = c cosh(x/c) on [−d, d] rotated about the x-axis: 2πc [d + (c/2) sinh(2d/c)]."""
+    return 2 * np.pi * c * (d + 0.5 * c * np.sinh(2 * d / c))
+
+
+d_ring = 0.5
+c_lo = brentq(lambda c: c * np.cosh(d_ring / c) - 1, 0.1, 0.5)     # thin neck
+c_hi = brentq(lambda c: c * np.cosh(d_ring / c) - 1, 0.5, 1.5)     # fat neck
+assert np.isclose(c_lo, 0.23509, atol=5e-6) and np.isclose(c_hi, 0.84834, atol=5e-6)
+assert np.isclose(catenoid_area(c_lo, d_ring), 6.8457, atol=5e-5) and np.isclose(catenoid_area(c_hi, d_ring), 5.9918, atol=5e-5)
+assert np.isclose(quad(lambda xx: 2 * np.pi * c_hi * np.cosh(xx / c_hi) ** 2, -d_ring, d_ring)[0], catenoid_area(c_hi, d_ring))
+assert catenoid_area(c_hi, d_ring) < 2 * np.pi < catenoid_area(c_lo, d_ring)
+Nk = 40; xk = np.linspace(-d_ring, d_ring, Nk + 2); opts_k = dict(maxiter=5000, ftol=1e-15, gtol=1e-12)
+assert np.max(np.abs(approx_fprime(0.9 * np.ones(Nk), polygon_area, 1e-7, xk, 1.0, 1.0) - polygon_area_grad(0.9 * np.ones(Nk), xk, 1.0, 1.0))) < 1e-4
+res_cnd = minimize(polygon_area, np.ones(Nk), args=(xk, 1.0, 1.0), jac=polygon_area_grad, method="L-BFGS-B",
+                   bounds=[(0.0, None)] * Nk, options=opts_k)                                   # start: the cylinder, area 2π
+dev_cnd = np.max(np.abs(res_cnd.x - c_hi * np.cosh(xk[1:-1] / c_hi)))
+assert dev_cnd < 1e-4 and np.isclose(res_cnd.fun, 5.9920, atol=5e-5) and res_cnd.fun < 2 * np.pi
+res_cnd2 = minimize(polygon_area, c_lo * np.cosh(xk[1:-1] / c_lo), args=(xk, 1.0, 1.0), jac=polygon_area_grad, method="L-BFGS-B",
+                    bounds=[(0.0, None)] * Nk, options=opts_k)                                  # start ON the thin-neck catenoid
+assert np.isclose(res_cnd2.fun, res_cnd.fun, atol=1e-4), "the thin-neck catenoid is a saddle: the minimizer leaves it"
+print(f"        B8 (d = 0.5): c cosh(d/c) = 1 has roots c = {c_lo:.5f} (area {catenoid_area(c_lo, d_ring):.4f}) and "
+      f"c = {c_hi:.5f} (area {catenoid_area(c_hi, d_ring):.4f}); two disks 2π = {2 * np.pi:.4f}. "
+      f"Minimizer: area {res_cnd.fun:.4f}, max deviation from the fat-neck catenoid {dev_cnd:.1e}; "
+      f"started on the thin-neck one it ends at area {res_cnd2.fun:.4f}")
+d_far = 0.8; xk2 = np.linspace(-d_far, d_far, Nk + 2); hk2 = xk2[1] - xk2[0]
+assert d_far > d_crit and np.min([c * np.cosh(d_far / c) for c in np.linspace(0.05, 5, 2000)]) > 1      # no catenoid exists
+res_gold = minimize(polygon_area, np.ones(Nk), args=(xk2, 1.0, 1.0), jac=polygon_area_grad, method="L-BFGS-B",
+                    bounds=[(0.0, None)] * Nk, options=opts_k)
+assert res_gold.x.max() < 1e-6 and np.isclose(res_gold.fun, 2 * np.pi * np.sqrt(1 + hk2**2), atol=1e-6)
+assert np.isclose(res_gold.fun, 6.2880, atol=5e-5)
+print(f"        B8 (d = 0.8 > {d_crit:.4f}): every interior node goes to the axis (max y = {res_gold.x.max():.1e}); "
+      f"area {res_gold.fun:.4f} = 2π sqrt(1 + h²) -> 2π (Goldschmidt two-disk solution)")
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+xx = np.linspace(-d_ring, d_ring, 200)
+ax1.plot(xx, c_hi * np.cosh(xx / c_hi), "k-", lw=2, label=f"catenoid c = {c_hi:.3f}, area {catenoid_area(c_hi, d_ring):.3f}")
+ax1.plot(xx, c_lo * np.cosh(xx / c_lo), "C3--", label=f"catenoid c = {c_lo:.3f} (saddle), area {catenoid_area(c_lo, d_ring):.3f}")
+ax1.plot(xk, with_ends(res_cnd.x, 1, 1), "C1.", label=f"L-BFGS-B polygon, area {res_cnd.fun:.3f}")
+ax1.set_ylim(0, 1.1); ax1.legend(fontsize=7); ax1.grid(alpha=.3); ax1.set_title("Rings at x = ±0.5: two catenoids, one minimum")
+ax2.plot(xk2, with_ends(res_gold.x, 1, 1), "C1.-", label=f"L-BFGS-B polygon, area {res_gold.fun:.3f}")
+ax2.axhline(0, color="gray", lw=.8); ax2.set_ylim(-0.05, 1.1); ax2.legend(fontsize=8); ax2.grid(alpha=.3)
+ax2.set_title("Rings at x = ±0.8: no catenoid; two disks (2π = 6.283)")
+fig.tight_layout(); fig.savefig(FIG / "catenoid.png", dpi=120); plt.close(fig)
 
 # %% [markdown]
 # ## Your turn
