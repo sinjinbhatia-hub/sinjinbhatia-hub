@@ -3,9 +3,10 @@
 #
 # This script builds the geometric intuition of LA-1 and checks every
 # numerical claim in the notes. Parts: (1) row vs column picture of Ax = b,
-# (2) a span explorer in R^3, (3) Ax computed two ways and matrix products
-# built from (3.3), (4) Cauchy–Schwarz, the angle formula, and the triangle
-# inequality on random data, (5) unit balls of three norms.
+# (2) a span explorer in R^3, (3) Ax computed two ways, (3.3) checked column
+# by column, and the non-commuting products of Example 4.3, (4) Cauchy–Schwarz,
+# the angle formula, and the triangle inequality on random data, (5) unit
+# spheres of three norms. A reference solution for exercise B8 is the last cell.
 #
 # Run headless: `MPLBACKEND=Agg python3 project.py`. Figures go to ./figures/.
 
@@ -37,7 +38,7 @@ def plot_two_pictures(A, b, name):
     fig, (ax_row, ax_col) = plt.subplots(1, 2, figsize=(10, 4.5))
 
     # Row picture: each row a_i1 x + a_i2 y = b_i is a line.
-    t = np.linspace(-6, 8, 200)
+    t = np.linspace(x[0] - 6, x[0] + 6, 200)
     for i in range(2):
         a1, a2 = A[i]
         if abs(a2) > 1e-12:
@@ -47,7 +48,7 @@ def plot_two_pictures(A, b, name):
     ax_row.plot(*x, "ko", ms=7, label=f"solution ({x[0]:g}, {x[1]:g})")
     ax_row.set_title("Row picture: intersect the lines")
     ax_row.set_aspect("equal"); ax_row.grid(alpha=.3); ax_row.legend(fontsize=8)
-    ax_row.set_xlim(-2, 6); ax_row.set_ylim(-2, 7)
+    ax_row.set_xlim(x[0] - 4, x[0] + 4); ax_row.set_ylim(x[1] - 4, x[1] + 4)  # centred on the solution
 
     # Column picture: x1 * a_1 + x2 * a_2 = b, drawn head to tail.
     a1, a2 = A[:, 0], A[:, 1]
@@ -83,6 +84,14 @@ while abs(np.linalg.det(A_rand)) < 0.5:
 b_rand = rng.integers(-4, 5, size=2).astype(float)
 x_rand = plot_two_pictures(A_rand, b_rand, "random")
 print("Random system A =", A_rand.tolist(), "b =", b_rand.tolist(), "x =", x_rand)
+
+# Example 4.2 (and Theorem 3.6): parallel columns span only a line.
+A2 = np.array([[1, 2], [2, 4.]])
+assert np.linalg.matrix_rank(A2) == 1                      # columns (1,2), (2,4) are parallel
+assert np.linalg.matrix_rank(np.c_[A2, [1, 3]]) == 2       # b = (1,3) is off their line: no solution
+assert np.linalg.matrix_rank(np.c_[A2, [1, 2]]) == 1       # b = (1,2) is on it: solutions exist
+assert np.allclose(A2 @ [1, 0], [1, 2]) and np.allclose(A2 @ [0, 0.5], [1, 2])  # two different recipes
+print("Example 4.2: rank A = 1; (1,3) not in the column span, (1,2) is, with recipes (1,0) and (0,1/2).")
 
 # %% [markdown]
 # ## Part 2: Span explorer
@@ -122,10 +131,14 @@ plt.close(fig)
 P_dep = sample_span(cases["three_dependent_plane_B4"])
 n_normal = np.array([1, 1, -1.0])
 assert np.allclose(P_dep @ n_normal, 0), "dependent triple should stay in the plane x + y - z = 0"
-# ... while the independent triple does not.
+# ... while the independent triple leaves that plane,
 P_ind = sample_span(cases["three_independent_space"])
 assert np.abs(P_ind @ n_normal).max() > 1.0
-print("Span checks passed: dependent triple lies in x + y - z = 0; independent triple does not.")
+# and the actual claims: the independent triple spans all of R^3 (rank 3), the dependent one a plane (rank 2).
+assert np.linalg.matrix_rank(np.array(cases["three_independent_space"], float)) == 3
+assert np.linalg.matrix_rank(np.array(cases["three_dependent_plane_B4"], float)) == 2
+assert np.linalg.matrix_rank(np.array(cases["two_vectors_plane"], float)) == 2
+print("Span checks passed: dependent triple has rank 2 and lies in x + y - z = 0; independent triple has rank 3.")
 
 # %% [markdown]
 # ## Part 3: Ax two ways, and AB from its columns
@@ -133,8 +146,9 @@ print("Span checks passed: dependent triple lies in x + y - z = 0; independent t
 # (3.1) column form: Ax = sum_j x_j a_j.   (3.2) row form: (Ax)_i = r_i · x.
 # (3.3) AB has k-th column A b_k.  Theorem 3.5: A e_j = a_j.
 #
-# **Build it yourself first:** write `matvec_columns` and `matvec_rows` before
-# reading these.
+# **Build it yourself first** (notes §7): write `matvec_columns`, `matvec_rows`,
+# and Part 4's `project_onto_line` before reading these. Exercise B8 then asks
+# you to add `matmat_columns(A, B)`; this part uses `A @ B` so as not to give it away.
 
 
 # %%
@@ -159,60 +173,68 @@ def matvec_rows(A, x):
     return out
 
 
-def matmat_columns(A, B):
-    """AB whose k-th column is A @ B[:, k], eq. (3.3). (Exercise B8 reference.)"""
-    A = np.asarray(A, float); B = np.asarray(B, float)
-    m, n = A.shape; n2, p = B.shape
-    assert n == n2, "inner dimensions must match"
-    C = np.zeros((m, p))
-    for k in range(p):
-        C[:, k] = matvec_columns(A, B[:, k])
-    return C
-
-
 for _ in range(50):
     m, n, p = rng.integers(1, 7, size=3)
     A = rng.standard_normal((m, n)); x = rng.standard_normal(n); B = rng.standard_normal((n, p))
     assert np.allclose(matvec_columns(A, x), matvec_rows(A, x))
     assert np.allclose(matvec_columns(A, x), A @ x)
-    assert np.allclose(matmat_columns(A, B), A @ B)
+    # (3.3): the k-th column of AB is A times the k-th column of B.
+    for k in range(p):
+        assert np.allclose((A @ B)[:, k], matvec_columns(A, B[:, k]))
     # Theorem 3.5: A e_j = column j.
     for j in range(n):
         e = np.zeros(n); e[j] = 1
         assert np.allclose(matvec_columns(A, e), A[:, j])
     # (AB)x = A(Bx), the reason (3.3) is the right definition.
     y = rng.standard_normal(p)
-    assert np.allclose(matmat_columns(A, B) @ y, A @ (B @ y))
+    assert np.allclose((A @ B) @ y, A @ (B @ y))
     # (AB)^T = B^T A^T, Theorem 3.8.
     assert np.allclose((A @ B).T, B.T @ A.T)
 
 # Example 4.3: rotation and stretch do not commute.
 R = np.array([[0, -1], [1, 0]], float)
 S = np.array([[2, 0], [0, 1]], float)
-RS = matmat_columns(R, S); SR = matmat_columns(S, R)
+RS = R @ S; SR = S @ R
+for k in range(2):  # the column-by-column computation in the notes
+    assert np.allclose(RS[:, k], matvec_columns(R, S[:, k])) and np.allclose(SR[:, k], matvec_columns(S, R[:, k]))
 assert np.allclose(RS, [[0, -1], [2, 0]]) and np.allclose(SR, [[0, -2], [1, 0]])
 assert not np.allclose(RS, SR)
+assert np.allclose(RS @ [1, 0], [0, 2]) and np.allclose(SR @ [1, 0], [0, 1])
 print("Example 4.3: RS =", RS.tolist(), " SR =", SR.tolist(), " (not equal)")
-print("Part 3 checks passed: (3.1) == (3.2) == NumPy; (3.3) gives (AB)x = A(Bx).")
+
+# Example 4.3, rigid body: 90° turns about the fixed x- and y-axes, applied to a phone's screen normal e_3.
+Rx = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]], float)
+Ry = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]], float)
+c90, s90 = np.cos(np.pi / 2), np.sin(np.pi / 2)
+assert np.allclose(Rx, [[1, 0, 0], [0, c90, -s90], [0, s90, c90]])   # standard rotation about x by 90°
+assert np.allclose(Ry, [[c90, 0, s90], [0, 1, 0], [-s90, 0, c90]])   # standard rotation about y by 90°
+e3 = np.array([0, 0, 1.0])
+assert np.allclose(Ry @ Rx, [[0, 1, 0], [0, 0, -1], [-1, 0, 0]]) and np.allclose(Ry @ Rx @ e3, [0, -1, 0])
+assert np.allclose(Rx @ Ry, [[0, 0, 1], [1, 0, 0], [0, 1, 0]]) and np.allclose(Rx @ Ry @ e3, [1, 0, 0])
+print("Example 4.3 (3D): x-then-y sends e3 to", (Ry @ Rx @ e3).tolist(), "; y-then-x sends it to", (Rx @ Ry @ e3).tolist())
+print("Part 3 checks passed: (3.1) == (3.2) == NumPy; (3.3) column by column; (AB)x = A(Bx).")
 
 # %% [markdown]
 # ## Part 4: Dot product, angle formula, Cauchy–Schwarz, triangle inequality
 #
-# Theorem 3.10: u·v = |u||v|cos θ.  Theorem 3.11: |u·v| ≤ |u||v|.
-# Theorem 3.12: |u+v| ≤ |u| + |v|.  Example 4.5 / B7: projection formula.
+# Theorem 3.10: u·v = |u||v|cos θ in R^2 and R^3.  Theorem 3.11: |u·v| ≤ |u||v|.
+# (3.5): cos θ = u·v / (|u||v|) defines θ in any R^n.  Theorem 3.12: |u+v| ≤ |u| + |v|.
+# §3.6: the l1 and l-inf triangle inequalities.  Example 4.5 / B7: projection formula.
 
 
 # %%
 def dot(u, v):
+    """Dot product u·v = sum_i u_i v_i, Definition 3.9."""
     return float(np.sum(np.asarray(u, float) * np.asarray(v, float)))
 
 
 def norm(v):
+    """Euclidean norm ||v|| = sqrt(v·v), Definition 3.9."""
     return np.sqrt(dot(v, v))
 
 
 def angle_between(u, v):
-    """θ in radians from the angle formula (3.4)."""
+    """θ in [0, π] (radians) with cos θ = u·v / (||u|| ||v||), eq. (3.5)."""
     c = dot(u, v) / (norm(u) * norm(v))
     return np.arccos(np.clip(c, -1, 1))
 
@@ -229,6 +251,9 @@ for n in (2, 3, 4, 10):
     uv = np.sum(U * V, axis=1); nu = np.linalg.norm(U, axis=1); nv = np.linalg.norm(V, axis=1)
     assert np.all(np.abs(uv) <= nu * nv * (1 + 1e-12)), "Cauchy–Schwarz violated"
     assert np.all(np.linalg.norm(U + V, axis=1) <= nu + nv + 1e-12), "triangle inequality violated"
+    # §3.6: triangle inequality for l1 and l-inf (entrywise |a + b| <= |a| + |b|, then sum / take max).
+    assert np.all(np.abs(U + V).sum(1) <= np.abs(U).sum(1) + np.abs(V).sum(1) + 1e-12)
+    assert np.all(np.abs(U + V).max(1) <= np.abs(U).max(1) + np.abs(V).max(1) + 1e-12)
     # Parallelogram law (B6) holds for the Euclidean norm...
     lhs = np.linalg.norm(U + V, axis=1) ** 2 + np.linalg.norm(U - V, axis=1) ** 2
     assert np.allclose(lhs, 2 * nu**2 + 2 * nv**2)
@@ -240,9 +265,21 @@ for n in (2, 3, 4, 10):
 u = [1, 2, 0, -1]; v = [3, -1, 2, 1]; w = [1, 1, 1, 1]
 assert dot(u, v) == 0
 assert np.isclose(norm(u), np.sqrt(6)) and np.isclose(norm(v), np.sqrt(15))
+assert dot(u, w) == 2 and np.isclose(norm(w), 2)
 theta_uw = np.degrees(angle_between(u, w))
-assert np.isclose(np.cos(np.radians(theta_uw)), 1 / np.sqrt(6))
-print(f"Example 4.4: u·v = 0 (orthogonal); angle(u, w) = {theta_uw:.1f} degrees (notes say ≈ 65.9)")
+assert np.isclose(theta_uw, 65.9, atol=0.05), theta_uw          # the value printed in Example 4.4
+print(f"Example 4.4: u·v = 0 (orthogonal); angle(u, w) = {theta_uw:.1f} degrees")
+
+# Theorem 3.10 checked independently in R^2: the geometric angle between two arrows is the
+# difference of their polar angles (np.arctan2), folded into [0, π]. No dot products involved.
+U2 = rng.standard_normal((N, 2)); V2 = rng.standard_normal((N, 2))
+d = np.abs(np.arctan2(U2[:, 1], U2[:, 0]) - np.arctan2(V2[:, 1], V2[:, 0]))
+theta_geom = np.minimum(d, 2 * np.pi - d)
+theta_dot = np.array([angle_between(a, b) for a, b in zip(U2, V2)])
+# arccos loses digits near 0 and π (its slope blows up), so allow 1e-9 rather than 1e-15.
+assert np.allclose(theta_dot, theta_geom, rtol=0, atol=1e-9)
+print(f"Theorem 3.10 in R^2: dot-product angle matches the arctan2 angle on {N} random pairs "
+      f"(max diff {np.abs(theta_dot - theta_geom).max():.1e})")
 
 # Example 4.5 and B7(d): projection and the orthogonal residual.
 p = project_onto_line([3, 1], [1, 1]); assert np.allclose(p, [2, 2])
@@ -260,6 +297,8 @@ print("Part 4 checks passed on", N, "random pairs in several dimensions.")
 
 # %% [markdown]
 # ## Part 5: Unit balls of the l1, l2, l-infinity norms
+#
+# The figure draws each unit sphere {v : ||v|| = 1}, the boundary of the unit ball {v : ||v|| <= 1}.
 
 # %%
 th = np.linspace(0, 2 * np.pi, 400)
@@ -271,7 +310,7 @@ for q, (name, f) in enumerate([("l1 (diamond)", lambda P: np.abs(P).sum(1)),
     # Scale each direction so its norm is exactly 1: that traces the unit sphere of the norm.
     boundary = circle / f(circle)[:, None]
     ax.plot(boundary[:, 0], boundary[:, 1], label=name)
-ax.set_aspect("equal"); ax.grid(alpha=.3); ax.legend(); ax.set_title("Unit balls: {v : ||v|| = 1}")
+ax.set_aspect("equal"); ax.grid(alpha=.3); ax.legend(); ax.set_title("Unit spheres {v : ||v|| = 1}\n(boundaries of the unit balls)")
 fig.savefig(FIG / "unit_balls.png", dpi=120)
 plt.close(fig)
 
@@ -280,7 +319,7 @@ V = rng.standard_normal((N, 6)); n = 6
 linf = np.abs(V).max(1); l2 = np.linalg.norm(V, axis=1); l1 = np.abs(V).sum(1)
 assert np.all(linf <= l2 + 1e-12) and np.all(l2 <= l1 + 1e-12)
 assert np.all(l1 <= np.sqrt(n) * l2 + 1e-12) and np.all(np.sqrt(n) * l2 <= n * linf + 1e-12)
-print("Part 5: norm chain (C2) verified; unit balls saved.")
+print("Part 5: norm chain (C2) verified; unit spheres saved.")
 
 # %% [markdown]
 # ## Your turn
@@ -296,6 +335,35 @@ print("Part 5: norm chain (C2) verified; unit balls saved.")
 #    on random matrices. Then estimate the *smallest* constant K by maximizing
 #    `||A x||` over 10,000 random unit vectors x. Compare K with ||A||_F.
 #    (LA-9 will tell you K is the largest singular value.)
+# 5. Exercise B8: add `matmat_columns(A, B)` here, built from `matvec_columns`.
+#    A reference solution is the next cell. Write your own first, then delete
+#    the reference cell (it would otherwise redefine your function) and rerun.
+
+
+# %% [markdown]
+# ## Reference solution for B8 (write your own first)
+
+
+# %%
+def matmat_columns(A, B):
+    """AB whose k-th column is A @ B[:, k], eq. (3.3). Reference solution for exercise B8."""
+    A = np.asarray(A, float); B = np.asarray(B, float)
+    m, n = A.shape; n2, p = B.shape
+    assert n == n2, "inner dimensions must match"
+    C = np.zeros((m, p))
+    for k in range(p):
+        C[:, k] = matvec_columns(A, B[:, k])
+    return C
+
+
+A = rng.standard_normal((4, 3)); B = rng.standard_normal((3, 5))
+assert np.allclose(matmat_columns(A, B), A @ B)
+x = rng.standard_normal(5)
+assert np.allclose(matmat_columns(A, B) @ x, A @ (B @ x))
+# Why (AB)x = A(Bx) is automatic: by (3.1), (AB)x = sum_k x_k (column k of AB) = sum_k x_k (A b_k).
+# By linearity of A (Theorem 3.4) that is A(sum_k x_k b_k) = A(Bx). Definition (3.3) was chosen to
+# make this one-line argument work; "row times column" is the entry-level consequence.
+print("B8 reference: matmat_columns agrees with A @ B on 4x3 times 3x5.")
 
 # %%
 if __name__ == "__main__":

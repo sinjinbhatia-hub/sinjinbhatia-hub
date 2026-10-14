@@ -266,7 +266,7 @@ Cauchy–Schwarz is what guarantees the right side lies in $[-1, 1]$, so that $\
 
 ### 3.6 Other norms (a preview you'll need)
 
-The Euclidean norm isn't the only way to measure length. Two others you'll meet constantly:
+The Euclidean norm (written $\|\mathbf{v}\|_2$, the $\ell^2$ norm, when we compare it with others) isn't the only way to measure length. Two others you'll meet constantly:
 
 - **$\ell^1$ norm:** $\|\mathbf{v}\|_1 = |v_1| + \cdots + |v_n|$ (Manhattan distance). Central to lasso regression in ST-3 and sparsity in ML.
 - **$\ell^\infty$ norm:** $\|\mathbf{v}\|_\infty = \max_i |v_i|$. The natural norm for componentwise error bounds in numerical work; the matrix norm it induces (largest absolute row sum) gives the condition number $\kappa_\infty$ in LA-13 Exercise A3.
@@ -275,7 +275,7 @@ All three satisfy: $\|\mathbf{v}\| \ge 0$ with equality only at $\mathbf{0}$; $\
 
 1. For each $i$, $|u_i + v_i| \le |u_i| + |v_i|$.
 2. Sum over $i$: $\|\mathbf{u} + \mathbf{v}\|_1 \le \|\mathbf{u}\|_1 + \|\mathbf{v}\|_1$.
-3. Instead bound each right side by its maximum: $|u_i + v_i| \le \|\mathbf{u}\|_\infty + \|\mathbf{v}\|_\infty$ for every $i$, so the largest left side is too: $\|\mathbf{u} + \mathbf{v}\|_\infty \le \|\mathbf{u}\|_\infty + \|\mathbf{v}\|_\infty$. ∎
+3. For $\ell^\infty$, bound each term on the right of step 1 by its maximum: $|u_i + v_i| \le |u_i| + |v_i| \le \|\mathbf{u}\|_\infty + \|\mathbf{v}\|_\infty$ for every $i$. The largest left side, $\|\mathbf{u} + \mathbf{v}\|_\infty$, obeys the same bound. ∎
 
 The unit balls $\{\mathbf{v} : \|\mathbf{v}\| \le 1\}$ are a disk ($\ell^2$), a diamond ($\ell^1$), and a square ($\ell^\infty$) in $\mathbb{R}^2$. The project draws their boundaries, the unit spheres $\{\mathbf{v} : \|\mathbf{v}\| = 1\}$.
 
@@ -314,7 +314,7 @@ Change $\mathbf{b}$ to $(1, 2)^\top$: now $\mathbf{b} = 1\cdot(1,2)^\top + 0\cdo
 
 **The lesson:** whether $A\mathbf{x} = \mathbf{b}$ is solvable depends on $\mathbf{b}$ *and* on the columns; whether the solution is *unique* depends only on the columns (are they "independent," LA-3's word for not-parallel-in-any-generalized-sense).
 
-### Example 4.3: Matrix multiplication, order matters, and a mechanics preview
+### Example 4.3: Matrix multiplication, order matters, and turning a rigid body
 
 Let $R$ rotate the plane by $90°$ counterclockwise and $S$ stretch the $x$-axis by $2$:
 $$
@@ -330,7 +330,21 @@ $SR$: columns are $S(0, 1)^\top = (0, 1)^\top$ and $S(-1, 0)^\top = (-2, 0)^\top
 
 $RS \ne SR$. Geometrically: $RS$ means stretch first, then rotate; $SR$ means rotate first, then stretch. Stretching along $x$ and then rotating is not the same as rotating and then stretching along $x$. Apply both to $\mathbf{e}_1$: $RS\mathbf{e}_1 = (0, 2)^\top$ but $SR\mathbf{e}_1 = (0, 1)^\top$.
 
-*Mechanics preview.* In CM-7, the orientation of a rigid body is a rotation matrix, and the fact that rotations about different axes don't commute is why Euler angles are such a pain and why angular velocity is a vector but finite rotation is not.
+*A rigid body in $\mathbb{R}^3$.* In CM-7 the orientation of a rigid body is a $3\times 3$ rotation matrix, and turning the body twice is a matrix product. Lay a phone flat on a table, screen up, so its screen normal is $\mathbf{e}_3 = (0, 0, 1)^\top$. The $90°$ counterclockwise rotations about the table's fixed $x$- and $y$-axes are
+$$
+R_x = \begin{pmatrix} 1 & 0 & 0 \\ 0 & 0 & -1 \\ 0 & 1 & 0 \end{pmatrix}, \qquad R_y = \begin{pmatrix} 0 & 0 & 1 \\ 0 & 1 & 0 \\ -1 & 0 & 0 \end{pmatrix}.
+$$
+(Theorem 3.5 again: $R_x$ fixes $\mathbf{e}_1$ and sends $\mathbf{e}_2 \mapsto \mathbf{e}_3$, $\mathbf{e}_3 \mapsto -\mathbf{e}_2$, and those images are its columns.)
+
+Turn about $x$, then about $y$: that is $R_yR_x$ (the right factor acts first). Its columns are $R_y$ applied to the columns of $R_x$: $R_y(1,0,0)^\top = (0,0,-1)^\top$, $R_y(0,0,1)^\top = (1,0,0)^\top$, $R_y(0,-1,0)^\top = (0,-1,0)^\top$. So
+$$
+R_yR_x = \begin{pmatrix} 0 & 1 & 0 \\ 0 & 0 & -1 \\ -1 & 0 & 0 \end{pmatrix}, \qquad R_yR_x\,\mathbf{e}_3 = (0, -1, 0)^\top.
+$$
+Turn about $y$, then about $x$: $R_xR_y$ has columns $R_x(0,0,-1)^\top = (0,1,0)^\top$, $R_x(0,1,0)^\top = (0,0,1)^\top$, $R_x(1,0,0)^\top = (1,0,0)^\top$, so
+$$
+R_xR_y = \begin{pmatrix} 0 & 0 & 1 \\ 1 & 0 & 0 \\ 0 & 1 & 0 \end{pmatrix}, \qquad R_xR_y\,\mathbf{e}_3 = (1, 0, 0)^\top.
+$$
+Same two quarter-turns, different order, and the screen ends up facing $-y$ in one case and $+x$ in the other. Try it with a real phone. CM-7 §3.2 ("Finite rotations do not commute; infinitesimal ones do") builds on exactly this: it is why angular velocity is a vector but a finite rotation is not, and why Euler angles are a pain. The project checks both products.
 
 ### Example 4.4: Dot products in $\mathbb{R}^4$, where there's nothing to draw
 
@@ -342,7 +356,7 @@ $\|\mathbf{u}\| = \sqrt{1 + 4 + 0 + 1} = \sqrt{6}$, $\|\mathbf{v}\| = \sqrt{9 + 
 
 Cauchy–Schwarz check: $|\mathbf{u}\cdot\mathbf{v}| = 0 \le \sqrt{6}\sqrt{15} = \sqrt{90} \approx 9.49$. ✓ (Trivially, but the project checks thousands of random pairs.)
 
-Now $\mathbf{w} = (1, 1, 1, 1)^\top$: $\mathbf{u}\cdot\mathbf{w} = 2$, $\|\mathbf{w}\| = 2$, so $\cos\theta = 2/(\sqrt{6}\cdot 2) = 1/\sqrt{6} \approx 0.408$, $\theta \approx 65.9°$. The "angle between two 4-vectors" is a real, computable thing.
+Now $\mathbf{w} = (1, 1, 1, 1)^\top$: $\mathbf{u}\cdot\mathbf{w} = 2$, $\|\mathbf{w}\| = 2$, so by (3.5) $\cos\theta = 2/(\sqrt{6}\cdot 2) = 1/\sqrt{6} \approx 0.408$, $\theta \approx 65.9°$. The "angle between two 4-vectors" is a real, computable thing, defined by (3.5) and guaranteed to exist by Cauchy–Schwarz.
 
 ### Example 4.5: Projection, the formula that keeps coming back
 
@@ -354,37 +368,37 @@ Check: the error $\mathbf{u} - \mathbf{p} = (1, -1)^\top$, and $(1, -1)\cdot(1, 
 
 ## 5. Why it matters and where it connects
 
-- **LA-3** names $\operatorname{span}$ of the columns the *column space* and asks "which columns are redundant?" (independence, basis, dimension). Theorem 3.6 becomes the first of four fundamental subspaces.
+- **LA-3** names $\operatorname{span}$ of the columns the *column space* and asks "which columns are redundant?" (independence, basis, dimension). The span of the columns in Theorem 3.6 becomes the column space $C(A)$, the first of the four fundamental subspaces.
 - **LA-4** takes Theorem 3.5 ($A\mathbf{e}_j = \mathbf{a}_j$) and makes it the bridge between abstract linear maps and matrices: a matrix is what a linear map does to a basis.
 - **LA-5** takes Example 4.5 and generalizes it: projection onto a subspace, least squares, orthogonal bases. The $t^* = \mathbf{u}\cdot\mathbf{v}/\|\mathbf{v}\|^2$ formula becomes $P = A(A^\top A)^{-1}A^\top$.
 - **LA-8** takes the three properties of the dot product (symmetric, linear, positive definite) as the definition of an inner product, so that functions can have angles and Fourier series (F2) become projections.
 - **CM-7**: rotation matrices and non-commutativity (Example 4.3).
 - **QM-4**: the dot product becomes $\langle\phi|\psi\rangle$, probabilities are $|\langle\phi|\psi\rangle|^2$, and Cauchy–Schwarz becomes the uncertainty principle. Literally: the uncertainty principle is Cauchy–Schwarz applied to two particular vectors.
-- **ML-1, ML-4**: cosine similarity (Theorem 3.10) is how embeddings are compared; the kernel trick is "replace the dot product."
+- **ML-1, ML-4**: cosine similarity (the right side of (3.5)) is how embeddings are compared; the kernel trick is "replace the dot product."
 - **ST-3**: regression is projection (Example 4.5 in $n$ dimensions).
 
 ## 6. Exercises
 
-See [exercises.md](exercises.md). A1–A5 are drills on computing $A\mathbf{x}$ both ways and dot products. B1–B7 are the module: B2 (prove linearity from the row form), B4 (span of three vectors in $\mathbb{R}^3$), B6 (parallelogram law), and B7 (project.py extension) are essential. C1–C3 go further: Cauchy–Schwarz for weighted dot products, the $\ell^1$ triangle inequality, and a first look at matrix norms.
+See [exercises.md](exercises.md). A1–A5 drill $A\mathbf{x}$ both ways, dot products and an angle, a $2\times 2$ product in both orders, and three norms. B1–B8 are the module: B2 (prove linearity from the row form), B4 (span of three vectors in $\mathbb{R}^3$), B6 (parallelogram law), B7 (projection), and B8 (`project.py` extension: `matmat_columns`) are essential. C1–C3 go further: Cauchy–Schwarz for weighted dot products, the chain of norm inequalities $\|\mathbf{v}\|_\infty \le \|\mathbf{v}\|_2 \le \|\mathbf{v}\|_1 \le \sqrt{n}\,\|\mathbf{v}\|_2 \le n\,\|\mathbf{v}\|_\infty$, and a first matrix norm (Frobenius).
 
 ## 7. Coding project
 
 `project.py` builds the geometric intuition this module is about:
 
-1. **Two pictures.** Plots the row picture (lines) and column picture (vectors and their combination) for Example 4.1, then for a random $2 \times 2$ system. Verifies that the solution found by NumPy is the right recipe for the columns.
-2. **Span explorer.** Samples thousands of random coefficients for two or three vectors in $\mathbb{R}^3$ and plots where the combinations land, for independent vectors (fills space), two vectors (a plane), and a dependent triple (a plane, not space). You will see what "span" looks like.
-3. **$A\mathbf{x}$ two ways.** Implements `matvec_rows` and `matvec_columns` from (3.1) and (3.2) and asserts they agree with each other and with NumPy on random matrices.
-4. **Cauchy–Schwarz and the triangle inequality** are checked on 10,000 random pairs. The angle formula is checked against `np.arccos`.
-5. **Unit balls** for $\ell^1$, $\ell^2$, $\ell^\infty$ are drawn.
+1. **Two pictures.** Plots the row picture (lines) and column picture (vectors and their combination) for Example 4.1, then for a random $2 \times 2$ system. Verifies that the solution found by NumPy is the right recipe for the columns. Checks Example 4.2 by ranks: the columns span only a line, $(1, 3)^\top$ is off it, $(1, 2)^\top$ is on it, and both recipes in the example hit $(1, 2)^\top$.
+2. **Span explorer.** Samples thousands of random coefficients for two or three vectors in $\mathbb{R}^3$ and plots where the combinations land, for independent vectors (fills space), two vectors (a plane), and a dependent triple (a plane, not space). You will see what "span" looks like. Asserts that the independent triple has rank 3 and the dependent one rank 2, and that the dependent triple's combinations satisfy the B4 equation $x + y - z = 0$.
+3. **$A\mathbf{x}$ two ways.** Implements `matvec_columns` and `matvec_rows` from (3.1) and (3.2) and asserts they agree with each other and with NumPy on random matrices. Checks (3.3) column by column and both products of Example 4.3, including the $3\times 3$ rotations.
+4. **Cauchy–Schwarz and the triangle inequality** (for $\ell^2$, $\ell^1$, $\ell^\infty$) are checked on 10,000 random pairs. Theorem 3.10 is checked independently in $\mathbb{R}^2$: the angle from (3.5) is compared with the geometric angle between the two arrows' polar angles from `np.arctan2`. Example 4.4's $65.9°$ is asserted.
+5. **Unit spheres** (the boundaries of the unit balls) for $\ell^1$, $\ell^2$, $\ell^\infty$ are drawn.
 
-**Build it yourself:** before reading the code, write `matvec_columns(A, x)` (loop over columns, accumulate `x[j] * A[:, j]`) and `project_onto_line(u, v)`. Then compare.
+**Build it yourself:** before reading the code, write `matvec_columns(A, x)` (loop over columns, accumulate `x[j] * A[:, j]`), `matvec_rows(A, x)` (one dot product per row), and `project_onto_line(u, v)`. Then compare. Exercise B8 adds `matmat_columns(A, B)`; a reference solution sits at the very bottom of the script, below "Your turn."
 
 ## 8. Where you'll struggle
 
 - **Believing the column picture is worth it.** It feels like a notational trick when the row picture gives you the answer just as fast for $2\times 2$. It isn't a trick. The row picture does not survive past $\mathbb{R}^3$, and almost every theorem from LA-3 onward is a statement about columns. If you find yourself defaulting to "rows dotted with $\mathbf{x}$" when thinking (not computing), stop and rewrite as a combination of columns.
 - **$AB$ versus $BA$.** You will compute the wrong one at least once. Say it out loud: "$AB$ applies $B$ first." Check with Example 4.3 until it's automatic.
 - **Shape errors.** An $m \times n$ matrix times an $n \times p$ matrix is $m \times p$. The inner dimensions must match and disappear. Write shapes above every product until you stop making mistakes. (This habit saves hours in ML-9.)
-- **The Cauchy–Schwarz proof** is the first "trick" proof in the course: introduce a free variable $t$, use a positivity fact, extract a conclusion from the discriminant. It feels like magic the first time. It's a standard move you'll see a dozen more times (LA-8, F4's variance inequality, QM-4's uncertainty principle). Learn the move, not just the result.
+- **The Cauchy–Schwarz proof** is the first "trick" proof in the course: introduce a free variable $t$, use a positivity fact, extract a conclusion from the discriminant. It feels like magic the first time. It's a standard move you'll see a dozen more times (LA-8; F5 Theorem 3.17, the covariance inequality $|\operatorname{Cov}(X,Y)| \le \sigma_X\sigma_Y$ that puts correlation in $[-1, 1]$; QM-4's uncertainty principle). Learn the move, not just the result.
 - **Thinking $\mathbf{u}\cdot\mathbf{v} = 0$ means one of them is zero.** It doesn't. Example 4.4.
 
 ## 9. Check yourself
@@ -403,7 +417,7 @@ See [exercises.md](exercises.md). A1–A5 are drills on computing $A\mathbf{x}$ 
 
 ## 10. Pair with
 
-- **Strang, *Introduction to Linear Algebra*, ch. 1** (§1.1–1.3). Strang's exposition of the two pictures is the original and still the best; read it for the pictures of planes in $\mathbb{R}^3$.
+- **Strang, *Introduction to Linear Algebra*, ch. 1** (§1.1–1.3). Strang uses the names "row picture" and "column picture" that this module uses, and his exposition of the two pictures is still the clearest; read it for the pictures of planes in $\mathbb{R}^3$.
 - **MIT 18.06, lecture 1 (Strang)** on OCW. Watch him draw the row and column pictures live. Twenty minutes well spent.
 - **3Blue1Brown, *Essence of Linear Algebra*, episodes 1–4.** Animated vectors, span, linear transformations as grid deformations, and matrix multiplication as composition. Watch episodes 3 and 4 after §3.3; they make (3.3) visual.
 - **Axler, *Linear Algebra Done Right*, §1A.** Only if you want to see $\mathbb{R}^n$ and $\mathbb{C}^n$ defined with full rigor. Skip for now otherwise; we return to Axler in LA-3.

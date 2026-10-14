@@ -62,7 +62,7 @@ Counterexample for $\ell^1$: $\mathbf{u} = (1, 0)^\top$, $\mathbf{v} = (0, 1)^\t
 
 (d) $\mathbf{u} = (2, 3, 6)^\top$, $\mathbf{v} = (1,1,1)^\top$. $\mathbf{u}\cdot\mathbf{v} = 11$, $\|\mathbf{v}\|^2 = 3$, $t^* = 11/3$. Projection $\mathbf{p} = (11/3, 11/3, 11/3)^\top$. Residual $\mathbf{r} = \mathbf{u} - \mathbf{p} = (-5/3, -2/3, 7/3)^\top$. Check (b): $\mathbf{r}\cdot\mathbf{v} = (-5 - 2 + 7)/3 = 0$. ✓ Check (c): $\|\mathbf{u}\|^2 = 4 + 9 + 36 = 49$. $\|\mathbf{p}\|^2 = 3\cdot(121/9) = 121/3$. $\|\mathbf{r}\|^2 = (25 + 4 + 49)/9 = 78/9 = 26/3$. Sum: $121/3 + 26/3 = 147/3 = 49$. ✓
 
-**B8.** Reference implementation (also in `project.py` under "Your turn", so you can compare):
+**B8.** Reference implementation (the same code is in the cell of `project.py` headed "Reference solution for B8", below "Your turn", so you can compare after writing your own):
 
 ```python
 def matmat_columns(A, B):

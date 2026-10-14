@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from scipy.integrate import solve_ivp
 from scipy.linalg import eigh
+from scipy.optimize import brentq
 
 FIG = Path(__file__).resolve().parent / "figures"
 FIG.mkdir(exist_ok=True)
@@ -350,9 +351,11 @@ solB = solve_ivp(dp.rhs, (0, 30), y0 + np.array([1e-8, 0, 0, 0]), t_eval=tt, **T
 delta = np.linalg.norm(solA.y - solB.y, axis=0)
 window = (delta > 1e-7) & (delta < 1e-2)
 lyap, intercept = np.polyfit(tt[window], np.log(delta[window]), 1)
-assert 0.9 < lyap < 1.4, lyap                      # notes: "about 1.1 s^-1"
+assert 1.0 < lyap < 1.2, lyap                      # notes: "about 1.1 s^-1"
 assert delta[1500:].max() > 1.0                    # by 15 s the separation is order 1 or larger
 t_sat = tt[np.argmax(delta > 1.0)]
+assert 13.0 < t_sat < 17.0, t_sat                  # notes: "after about 15 s, 1e-8 has become order 1"
+assert 1.8 < np.log(10) / lyap < 2.3               # notes: "one decimal digit every ln10/1.1 ~ 2 s"
 print(f"   Lyapunov exponent estimate = {lyap:.3f} 1/s (fit over {tt[window][0]:.2f}-{tt[window][-1]:.2f} s); "
       f"one decimal digit lost every {np.log(10)/lyap:.2f} s; separation reaches 1 at t = {t_sat:.1f} s")
 
@@ -467,12 +470,19 @@ assert np.abs(sol_c.y[0] - th0).max() < 1e-9
 sol_p = solve_ivp(sph.rhs, (0, 12), [th0 + 0.01, 0.0, 0.0, phid0], t_eval=np.linspace(0, 12, 6001), **TIGHT)
 P_th = period_from_crossings(sol_p.t, sol_p.y[0] - sol_p.y[0].mean())
 assert abs(P_th / (2 * np.pi / Om_B6) - 1) < 1e-2, P_th
+# the 0.1% gap is not amplitude dependence: the kick raises p_phi, which moves the conical
+# equilibrium of V_eff to theta_e (p^2 cos = g sin^4 for m = ell = 1); B6's formula at theta_e matches
+p_kick = np.sin(th0 + 0.01)**2 * phid0
+th_e = brentq(lambda q: p_kick**2 * np.cos(q) - G * np.sin(q)**4, th0, th0 + 0.05)
+Om_e = p_kick / np.sin(th_e)**2 * np.sqrt(1 + 3 * np.cos(th_e)**2)
+assert np.isclose(np.degrees(th_e), 40.49, atol=5e-3) and abs(P_th / (2 * np.pi / Om_e) - 1) < 2e-4, (th_e, P_th)
 pphi_t = np.sin(sol_p.y[0])**2 * sol_p.y[3]
 _, h_sph = energy_function(L_sph, [th, ph], t, params=sph_params)
 E_sph = h_sph(sol_p.t, sol_p.y)
 assert np.abs(pphi_t - pphi_t[0]).max() < 1e-10 and np.abs(E_sph - E_sph[0]).max() < 1e-9
 print(f"   conical motion holds theta0 to {np.abs(sol_c.y[0]-th0).max():.1e}; perturbed: theta period {P_th:.4f} s vs "
-      f"2pi/Omega = {2*np.pi/Om_B6:.4f} s; p_phi and E conserved to 1e-10, 1e-9")
+      f"2pi/Omega = {2*np.pi/Om_B6:.4f} s at theta0, {2*np.pi/Om_e:.4f} s at the shifted equilibrium theta_e = "
+      f"{np.degrees(th_e):.2f} deg; p_phi and E conserved to 1e-10, 1e-9")
 
 fig, ax = plt.subplots(1, 2, figsize=(9, 4))
 xs = np.sin(sol_p.y[0]) * np.cos(sol_p.y[1]); ys = np.sin(sol_p.y[0]) * np.sin(sol_p.y[1])
@@ -738,7 +748,8 @@ for gamma_v in (150.0, 60.0):
     kap[gamma_v] = s
 dev150 = np.abs(kap[150.0].y[0] - np.pi).max(); dev60 = np.abs(kap[60.0].y[0] - np.pi).max()
 assert A_K**2 * 150**2 > 2 * G * ELL_K > A_K**2 * 60**2       # 56.25 > 19.62 > 9
-assert dev150 < 0.3 and dev60 > 2.0
+assert dev150 < 0.11            # never strays beyond its 0.1 rad start (solutions: max |theta - pi| = 0.100)
+assert dev60 > np.pi            # falls and swings through the bottom (theta - pi passes -pi)
 Om_eff = np.sqrt(A_K**2 * 150**2 / (2 * ELL_K**2) - G / ELL_K)
 print(f"C2(d): a^2 gamma^2 = {A_K**2*150**2:.2f} (gamma=150) and {A_K**2*60**2:.2f} (gamma=60) vs 2 g ell = {2*G*ELL_K:.2f}. "
       f"gamma=150: max|theta - pi| = {dev150:.3f} rad (stays inverted; Omega_eff^2 = {Om_eff**2:.3f}, Omega_eff = {Om_eff:.3f} rad/s, "
@@ -766,8 +777,8 @@ turning = np.where(np.diff(np.sign(sol.y[1])) != 0)[0]           # theta_dot cha
 I_ad = (E_ad / om_ad)[turning]
 amp_ad = (np.abs(sol.y[0]) * ell_t**0.75)[turning]
 spread_I = np.ptp(I_ad) / I_ad.mean(); spread_amp = np.ptp(amp_ad) / amp_ad.mean()
-assert spread_I < 0.012 and spread_amp < 0.012
-assert E_ad[turning][-1] / E_ad[turning][0] < 0.75                 # E itself falls by ~ ell^{-1/2} = 1/sqrt(2)
+assert spread_I < 1e-3 and spread_amp < 1e-3                      # "well under 1%" (measured: a few hundredths of a percent)
+assert abs(E_ad[turning][-1] / E_ad[turning][0] - 2**-0.5) < 5e-3  # E itself falls as ell^{-1/2} = 1/sqrt(2) as ell doubles
 print(f"C3(d): E/omega flat to {100*spread_I:.2f}% and theta_max ell^(3/4) flat to {100*spread_amp:.2f}% over {len(turning)} turning points, "
       f"while E falls to {E_ad[turning][-1]/E_ad[turning][0]:.3f} of its start (prediction ell^(-1/2) = {2**-0.5:.3f}); "
       f"omega runs from {om_ad[0]:.3f} to {om_ad[-1]:.3f} rad/s, so elld/(ell omega) <= {(0.02/ell_t*1/om_ad).max():.4f}")

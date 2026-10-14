@@ -2,7 +2,7 @@
 
 **Time:** ~12 hours · **Prerequisites:** LA-3 · **Unlocks:** LA-5, LA-6
 
-> **Conventions in this module.** $V$ and $W$ are finite-dimensional real vector spaces (LA-3) with $\dim V = n$ and $\dim W = m$. A linear map is written $T: V \to W$; $T\mathbf{v}$ and $T(\mathbf{v})$ mean the same thing. A **basis** is an *ordered* list $\mathcal{B} = (\mathbf{b}_1, \dots, \mathbf{b}_n)$; reordering it changes every matrix below. The coordinate vector of $\mathbf{v}$ in $\mathcal{B}$ is $[\mathbf{v}]_{\mathcal{B}} \in \mathbb{R}^n$. The matrix of $T$ with respect to the input basis $\mathcal{B}$ and output basis $\mathcal{C}$ is $[T]_{\mathcal{B},\mathcal{C}}$, an $m \times n$ matrix whose $j$-th column is $[T\mathbf{b}_j]_{\mathcal{C}}$; when $V = W$ and $\mathcal{B} = \mathcal{C}$ we write $[T]_{\mathcal{B}}$. **Change of basis:** if $\mathcal{B}$ is the old basis and $\mathcal{B}'$ the new one, $P$ is the matrix whose columns are the *new* basis vectors written in *old* coordinates, so $P[\mathbf{v}]_{\mathcal{B}'} = [\mathbf{v}]_{\mathcal{B}}$ (new coordinates in, old coordinates out) and $[T]_{\mathcal{B}'} = P^{-1}[T]_{\mathcal{B}}P$. $\mathcal{P}_n$ is the space of polynomials of degree at most $n$ (dimension $n + 1$) and $D$ is differentiation. $\ker T$ is the kernel (null space), $\operatorname{im} T$ the image (range). Composition $S \circ T$ means "$T$ first, then $S$." Rotation angles are counterclockwise positive. $\operatorname{tr} A$ is the sum of the diagonal entries.
+> **Conventions in this module.** $V$ and $W$ are finite-dimensional real vector spaces (LA-3) with $\dim V = n$ and $\dim W = m$. A linear map is written $T: V \to W$; $T\mathbf{v}$ and $T(\mathbf{v})$ mean the same thing. A **basis** is an *ordered* list $\mathcal{B} = (\mathbf{b}_1, \dots, \mathbf{b}_n)$; reordering it changes every matrix below. The coordinate vector of $\mathbf{v}$ in $\mathcal{B}$ is $[\mathbf{v}]_{\mathcal{B}} \in \mathbb{R}^n$. The matrix of $T$ with respect to the input basis $\mathcal{B}$ and output basis $\mathcal{C}$ is $[T]_{\mathcal{B},\mathcal{C}}$, an $m \times n$ matrix whose $j$-th column is $[T\mathbf{b}_j]_{\mathcal{C}}$; when $V = W$ and $\mathcal{B} = \mathcal{C}$ we write $[T]_{\mathcal{B}}$. **Change of basis:** if $\mathcal{B}$ is the old basis and $\mathcal{B}'$ the new one, $P$ is the matrix whose columns are the *new* basis vectors written in *old* coordinates, so $P[\mathbf{v}]_{\mathcal{B}'} = [\mathbf{v}]_{\mathcal{B}}$ (new coordinates in, old coordinates out) and $[T]_{\mathcal{B}'} = P^{-1}[T]_{\mathcal{B}}P$. $\mathcal{P}_n$ is the space of polynomials of degree at most $n$ (dimension $n + 1$) and $D$ is differentiation. $\ker T$ is the kernel (null space), $\operatorname{im} T$ the image (range). Composition $S \circ T$ means "$T$ first, then $S$." Rotation angles are counterclockwise positive. $\operatorname{tr} A$ is the sum of the diagonal entries. **Stress** (Example 4.4): $\mathbf{t} = \sigma\mathbf{n}$, $\sigma_{ij}$ is the $i$-component of the traction on the face with outward normal $\mathbf{e}_j$, tension positive, MPa; Mohr's circle is plotted with $\tau'$ upward.
 
 ## 0. Where this sits
 
@@ -10,7 +10,7 @@ From LA-3 you need: vector space, subspace, linear independence, basis, dimensio
 
 Until now a matrix has been the object and "the map $\mathbf{x} \mapsto A\mathbf{x}$" a thing you say about it. This module reverses that. The **map** is the object. A matrix is a *description* of the map in a chosen basis, the way $(3, 2)$ is a description of an arrow once you have chosen axes. Rotate the axes and the numbers change; the arrow doesn't. Rotate the basis and the matrix changes; the map doesn't.
 
-Everything from here on uses this. LA-5 studies projections, which are linear maps with $P^2 = P$, and orthogonal changes of basis. LA-6 defines the determinant as the volume-scaling factor of a map and proves it is basis-independent. LA-7 is entirely about finding the basis in which an operator's matrix is diagonal, and "diagonalization" is the change of basis $P^{-1}AP$ of this module with a well-chosen $P$. CM-7's inertia tensor and principal axes are Example 4.4 in three dimensions.
+Everything from here on uses this. LA-5 studies projections, which are linear maps with $P^2 = P$, and orthogonal changes of basis. LA-6 constructs the determinant, proves it is the volume-scaling factor of a map (LA-6 Theorem 3.17), and shows it is basis-independent. LA-7 is entirely about finding the basis in which an operator's matrix is diagonal, and "diagonalization" is the change of basis $P^{-1}AP$ of this module with a well-chosen $P$. CM-7's inertia tensor and principal axes are Example 4.4 in three dimensions.
 
 ## 1. The problem that forced this idea
 
@@ -96,7 +96,7 @@ Examples, each with the one-line reason it is linear:
 - **(e) Integration** $J: \mathcal{P}_n \to \mathcal{P}_{n+1}$, $(Jp)(x) = \int_0^x p(t)\,dt$. Linear because integrals are.
 - **(f) Evaluation at a point** $\operatorname{ev}_a: \mathcal{P}_n \to \mathbb{R}$, $p \mapsto p(a)$. Linear because $(af + bg)(a) = af(a) + bg(a)$.
 - **(g) Transpose** $A \mapsto A^\top$ from $\mathbb{R}^{m\times n}$ to $\mathbb{R}^{n\times m}$. Linear because $(aA + bB)^\top = aA^\top + bB^\top$ entry by entry.
-- **(h) Matrix multiplication as a map on matrices.** For fixed $M$, $L_M: X \mapsto MX$ on $\mathbb{R}^{n\times n}$. Linear because $M(aX + bY) = aMX + bMY$ (LA-1 Theorem 3.4 applied column by column). So is $X \mapsto MX - XM$, the commutator with $M$, which runs all of QM-4.
+- **(h) Matrix multiplication as a map on matrices.** For fixed $M$, $L_M: X \mapsto MX$ on $\mathbb{R}^{n\times n}$. Linear because $M(aX + bY) = aMX + bMY$ (LA-1 Theorem 3.4 applied column by column). So is $X \mapsto MX - XM$, the commutator with $M$, behind QM-4's uncertainty principle and all of QM-5's angular-momentum algebra.
 - **(i) Trace** $A \mapsto \operatorname{tr} A$ from $\mathbb{R}^{n\times n}$ to $\mathbb{R}$. Linear because the diagonal of $aA + bB$ is $a$ times the diagonal of $A$ plus $b$ times the diagonal of $B$.
 
 Non-examples, each with the property that fails: translation $\mathbf{v} \mapsto \mathbf{v} + \mathbf{c}$ ($T\mathbf{0} \neq \mathbf{0}$ unless $\mathbf{c} = \mathbf{0}$); the norm $\mathbf{v} \mapsto \|\mathbf{v}\|$ ($\|-\mathbf{v}\| \neq -\|\mathbf{v}\|$); the determinant on $2\times 2$ matrices ($\det(2A) = 4\det A$); squaring a polynomial.
@@ -122,7 +122,7 @@ Non-examples, each with the property that fails: translation $\mathbf{v} \mapsto
 
 **Definition 3.3 (Coordinate vector).** For a basis $\mathcal{B} = (\mathbf{b}_1, \dots, \mathbf{b}_n)$ of $V$ and $\mathbf{v} = \sum_j x_j\mathbf{b}_j$, the **coordinate vector** of $\mathbf{v}$ is $[\mathbf{v}]_{\mathcal{B}} = (x_1, \dots, x_n)^\top \in \mathbb{R}^n$.
 
-Examples. In $\mathbb{R}^n$ with the standard basis, $[\mathbf{v}]_{\text{std}} = \mathbf{v}$: the vector is its own coordinate vector, which is why you have never had to think about this. In $\mathcal{P}_3$ with the monomial basis $(1, x, x^2, x^3)$, $[\,2 - x + 5x^3\,] = (2, -1, 0, 5)^\top$. In the basis $(1, x, x^2/2, x^3/6)$ the same polynomial is $2\cdot 1 - 1\cdot x + 0\cdot\tfrac{x^2}{2} + 30\cdot\tfrac{x^3}{6}$, so its coordinate vector is $(2, -1, 0, 30)^\top$. In $\mathbb{R}^{2\times 2}$ with the basis $(E_{11}, E_{12}, E_{21}, E_{22})$ (the matrix units: a single $1$ in the named slot), $\left[\begin{pmatrix} a & b \\ c & d\end{pmatrix}\right] = (a, b, c, d)^\top$: a matrix "flattened row by row."
+Examples. In $\mathbb{R}^n$ with the standard basis, $[\mathbf{v}]_{\text{std}} = \mathbf{v}$: the vector is its own coordinate vector, which is why you have never had to think about this. In $\mathcal{P}_3$ with the monomial basis $(1, x, x^2, x^3)$, $[\,2 - x + 5x^3\,] = (2, -1, 0, 5)^\top$. In the basis $(1, x, x^2/2, x^3/6)$ the same polynomial is $2\cdot 1 - 1\cdot x + 0\cdot\tfrac{x^2}{2} + 30\cdot\tfrac{x^3}{6}$, so its coordinate vector is $(2, -1, 0, 30)^\top$. In $\mathbb{R}^{2\times 2}$ with the basis $(E_{11}, E_{12}, E_{21}, E_{22})$ (the matrix units: a single $1$ in the named slot), $\left[\begin{pmatrix} a & b \\ c & d\end{pmatrix}\right] = (a, b, c, d)^\top$: a matrix "flattened row by row." (LA-12 and LA-14 flatten column by column instead, $\operatorname{vec}(X) = (a, c, b, d)^\top$. That is the basis $(E_{11}, E_{21}, E_{12}, E_{22})$, so their $4\times 4$ matrix of a map is $SMS$, where $M$ is ours and $S = S^{-1}$ is the permutation matrix that swaps slots $2$ and $3$: a change of basis in the sense of §3.6.)
 
 **Theorem 3.4 (The coordinate map is an isomorphism).** The map $\kappa_{\mathcal{B}}: V \to \mathbb{R}^n$, $\mathbf{v} \mapsto [\mathbf{v}]_{\mathcal{B}}$, is linear, injective, and surjective.
 
@@ -204,7 +204,9 @@ $$
 P = \Big( [\mathbf{b}'_1]_{\mathcal{B}} \;\; \cdots \;\; [\mathbf{b}'_n]_{\mathcal{B}} \Big), \qquad P\,[\mathbf{v}]_{\mathcal{B}'} = [\mathbf{v}]_{\mathcal{B}}. \tag{3.5}
 $$
 
-The second statement is (3.3) applied to $T = I_V$. **Read it carefully: the columns of $P$ are the new basis vectors written in old coordinates, and $P$ converts new coordinates to old coordinates.** $P$ is invertible (its columns are the coordinates of a basis, hence independent), and $P^{-1} = [I_V]_{\mathcal{B},\mathcal{B}'}$ converts old coordinates to new, because $[I]_{\mathcal{B},\mathcal{B}'}[I]_{\mathcal{B}',\mathcal{B}} = [I]_{\mathcal{B}'} = I$ by (3.4).
+The second statement is (3.3) applied to $T = I_V$. **Read it carefully: the columns of $P$ are the new basis vectors written in old coordinates, and $P$ converts new coordinates to old coordinates.** The matrix going the other way, $[I_V]_{\mathcal{B},\mathcal{B}'}$, is its inverse. By (3.4) applied to $I_V \circ I_V = I_V$ in both orders,
+$$[I_V]_{\mathcal{B},\mathcal{B}'}\,[I_V]_{\mathcal{B}',\mathcal{B}} = [I_V]_{\mathcal{B}'} = I \qquad\text{and}\qquad [I_V]_{\mathcal{B}',\mathcal{B}}\,[I_V]_{\mathcal{B},\mathcal{B}'} = [I_V]_{\mathcal{B}} = I.$$
+So $P$ is invertible and $P^{-1} = [I_V]_{\mathcal{B},\mathcal{B}'}$ converts old coordinates to new.
 
 ▶ **Try it first.** Let $\mathcal{B}$ be the standard basis of $\mathbb{R}^2$ and $\mathcal{B}' = \big((1, 1), (1, -1)\big)$. Write $P$. Find the $\mathcal{B}'$-coordinates of $\mathbf{v} = (3, 1)$ twice: by solving $a(1,1) + b(1,-1) = (3,1)$ directly, and by computing $P^{-1}\mathbf{v}$. They had better agree.
 
@@ -263,7 +265,7 @@ So any property shared by all matrices of an operator, regardless of basis, is a
 
 ■ **What just happened.** "The trace of the operator $T$" is now a meaningful number, $\operatorname{tr}T := \operatorname{tr}[T]_{\mathcal{B}}$ for any basis $\mathcal{B}$, even though it was defined by summing entries that depend on the basis. Note that $\operatorname{tr}(XYZ) = \operatorname{tr}(ZXY)$ (cyclic) but $\operatorname{tr}(XYZ) \neq \operatorname{tr}(YXZ)$ in general: only cyclic rotations are free.
 
-Two more invariants, previewed:
+Three more invariants, previewed:
 
 - **Determinant.** $\det(P^{-1}AP) = \det(P^{-1})\det(A)\det(P) = \det A$, because LA-6 proves $\det(XY) = \det X\det Y$ and $\det(P^{-1}) = 1/\det P$. §3.13 shows the $2\times 2$ case as an area; LA-6 does the rest.
 - **Eigenvalues.** A number $\lambda$ is an eigenvalue of $A$ if $A\mathbf{v} = \lambda\mathbf{v}$ for some $\mathbf{v} \neq \mathbf{0}$ (LA-7). If so, then $(P^{-1}AP)(P^{-1}\mathbf{v}) = P^{-1}A\mathbf{v} = \lambda\,P^{-1}\mathbf{v}$, and $P^{-1}\mathbf{v} \neq \mathbf{0}$ since $P^{-1}$ is invertible. So similar matrices have the same eigenvalues, with the eigenvectors converted by $P^{-1}$ (old coordinates to new, as they should be). LA-7 builds on exactly this line.
@@ -321,7 +323,7 @@ Three remarks.
 
 *Proof.* $T$ injective $\iff \ker T = \{\mathbf{0}\}$ (Theorem 3.13) $\iff \dim\ker T = 0 \iff \dim\operatorname{im}T = \dim V$ (by (3.7)) $\iff \dim\operatorname{im}T = \dim W \iff \operatorname{im}T = W$ (a subspace with the full dimension is the whole space, LA-3) $\iff T$ surjective. Bijective is both. ∎
 
-This fails the moment the dimensions differ. $D: \mathcal{P}_3 \to \mathcal{P}_3$ is neither injective (constants die) nor surjective ($x^3$ is not a derivative of a cubic). $J: \mathcal{P}_2 \to \mathcal{P}_3$ is injective but not surjective (nothing integrates to $1$ from $0$). $D: \mathcal{P}_3 \to \mathcal{P}_2$ is surjective but not injective. Exercise B2 computes all three.
+With equal dimensions both properties can fail together: $D: \mathcal{P}_3 \to \mathcal{P}_3$ is neither injective (constants die) nor surjective ($x^3$ is not a derivative of a cubic), as Example 4.1 shows. With different dimensions they come apart. $J: \mathcal{P}_2 \to \mathcal{P}_3$ is injective but not surjective (nothing integrates to $1$ from $0$). $D: \mathcal{P}_3 \to \mathcal{P}_2$ is surjective but not injective. Exercise B2 computes both.
 
 ### 3.10 Isomorphism
 
@@ -355,6 +357,8 @@ Apply $S$ to both sides: $a\,S\mathbf{w}_1 + b\,S\mathbf{w}_2 = S(a\mathbf{w}_1 
 
 Previews, proved later: (j) $\det A \neq 0$ (LA-6). (k) $0$ is not an eigenvalue of $A$ (LA-7; (k)$\iff$(c) is immediate once "eigenvalue $0$" is unpacked as "$A\mathbf{v} = \mathbf{0}$ with $\mathbf{v} \neq \mathbf{0}$").
 
+▶ **Try it first.** Prove (c)$\iff$(e) using only Corollary 3.15 and the meaning of $N(A)$ and $C(A)$. Then decide which of the other conditions are restatements of (c) or (e) in different words.
+
 *Proof.* Let $T\mathbf{x} = A\mathbf{x}$.
 
 (c)$\iff$(d): $A\mathbf{x} = \sum_j x_j\mathbf{a}_j$ (LA-1 eq. 3.1), so "$A\mathbf{x} = \mathbf{0}$ only for $\mathbf{x} = \mathbf{0}$" says exactly "the only combination of the columns that vanishes is the trivial one," which is LA-3's definition of independence.
@@ -375,13 +379,15 @@ Previews, proved later: (j) $\det A \neq 0$ (LA-6). (k) $0$ is not an eigenvalue
 
 (i)$\iff$(c) and (e): existence for every $\mathbf{b}$ is (e). Given existence, uniqueness for every $\mathbf{b}$ is equivalent to (c) because two solutions of $A\mathbf{x} = \mathbf{b}$ differ by an element of $N(A)$ (LA-1 Exercise B3), and conversely $N(A) \neq \{\mathbf{0}\}$ gives $A\mathbf{x} = \mathbf{0}$ two solutions. ∎
 
+■ **What just happened.** Every condition was connected to (c), "nothing is squashed," and the one link with real content was Rank–Nullity: for a square matrix, nothing squashed forces everything reachable. The rest are (c) or (e) said in the language of columns, rows, pivots, or solutions.
+
 A corollary with real content: **for square matrices, a one-sided inverse is two-sided.** If $AB = I$, then $B\mathbf{x} = \mathbf{0}$ implies $\mathbf{x} = AB\mathbf{x} = \mathbf{0}$, so $B$ satisfies (c), hence (a), and then $A = A(BB^{-1}) = (AB)B^{-1} = B^{-1}$, so $BA = I$ too. Exercise B5 asks you to write this out and to say exactly where Rank–Nullity was used.
 
 ### 3.12 The space of linear maps
 
 **Theorem 3.19.** $\mathcal{L}(V, W)$ is a vector space under $(S + T)\mathbf{v} := S\mathbf{v} + T\mathbf{v}$ and $(cT)\mathbf{v} := c\,T\mathbf{v}$, and if $\dim V = n$, $\dim W = m$, then $\dim\mathcal{L}(V, W) = mn$.
 
-▶ **Try it first.** Fix bases and consider $\Phi: \mathcal{L}(V, W) \to \mathbb{R}^{m\times n}$, $T \mapsto [T]_{\mathcal{B},\mathcal{C}}$. Show it is linear, injective, and surjective. What does Theorem 3.17(c) then say?
+▶ **Try it first.** Fix bases and consider $\Phi: \mathcal{L}(V, W) \to \mathbb{R}^{m\times n}$, $T \mapsto [T]_{\mathcal{B},\mathcal{C}}$. Show it is linear, injective, and surjective. Then count dimensions, taking care over which of the two spaces you already know is finite-dimensional.
 
 **Derivation.**
 
@@ -389,9 +395,9 @@ A corollary with real content: **for square matrices, a one-sided inverse is two
 2. *$\Phi$ is linear.* Column $j$ of $[S + T]_{\mathcal{B},\mathcal{C}}$ is $[(S+T)\mathbf{b}_j]_{\mathcal{C}} = [S\mathbf{b}_j]_{\mathcal{C}} + [T\mathbf{b}_j]_{\mathcal{C}}$ by Theorem 3.4, which is column $j$ of $[S] + [T]$. And column $j$ of $[cT]$ is $[cT\mathbf{b}_j]_{\mathcal{C}} = c[T\mathbf{b}_j]_{\mathcal{C}}$, so $[cT] = c[T]$.
 3. *$\Phi$ is injective.* If $[T]_{\mathcal{B},\mathcal{C}} = 0$ then every $[T\mathbf{b}_j]_{\mathcal{C}} = \mathbf{0}$, so every $T\mathbf{b}_j = \mathbf{0}$, so $T$ agrees with the zero map on a basis and equals it by the uniqueness half of Theorem 3.2. So $\ker\Phi = \{0\}$ and Theorem 3.13 applies.
 4. *$\Phi$ is surjective.* Given any $M \in \mathbb{R}^{m\times n}$, set $\mathbf{w}_j = \sum_i M_{ij}\mathbf{c}_i$ and let $T$ be the linear extension with $T\mathbf{b}_j = \mathbf{w}_j$ (existence half of Theorem 3.2). Then $[T\mathbf{b}_j]_{\mathcal{C}}$ is column $j$ of $M$, so $\Phi(T) = M$.
-5. $\Phi$ is an isomorphism, so by Theorem 3.17(c), $\dim\mathcal{L}(V, W) = \dim\mathbb{R}^{m\times n} = mn$. ∎
+5. *Counting dimensions.* By steps 2–4, $\Phi$ is an isomorphism. We cannot yet apply Theorem 3.17(c) to $\Phi$, because its proof runs Rank–Nullity on a finite-dimensional *domain*, and finite-dimensionality of $\mathcal{L}(V, W)$ is what we are proving. So run it on the inverse instead. $\Phi^{-1}: \mathbb{R}^{m\times n} \to \mathcal{L}(V, W)$ is linear by Theorem 3.17(a) and bijective, and its domain has dimension $mn$. Theorem 3.14 says $\operatorname{im}\Phi^{-1} = \mathcal{L}(V, W)$ is finite-dimensional and $mn = \dim\ker\Phi^{-1} + \dim\operatorname{im}\Phi^{-1} = 0 + \dim\mathcal{L}(V, W)$. ∎
 
-■ **What just happened.** The "matrix of a map" construction is itself a linear isomorphism between maps and matrices. Everything in this module is one sentence: *$\mathcal{L}(V, W) \cong \mathbb{R}^{m\times n}$, with composition going to multiplication, and the isomorphism depends on the choice of bases by the rule $P^{-1}AP$.* The case $W = \mathbb{R}$ gives $\mathcal{L}(V, \mathbb{R})$, the **dual space** $V^*$, of dimension $n$; LA-12 is about it.
+■ **What just happened.** The "matrix of a map" construction is itself a linear isomorphism between maps and matrices. Everything in this module is one sentence: *$\mathcal{L}(V, W) \cong \mathbb{R}^{m\times n}$, with composition going to multiplication, and the isomorphism depends on the choice of bases by the rule $Q^{-1}AP$ ($P^{-1}AP$ for an operator).* The case $W = \mathbb{R}$ gives $\mathcal{L}(V, \mathbb{R})$, the **dual space** $V^*$, of dimension $n$; LA-12 is about it.
 
 ### 3.13 Some operators worth knowing by sight
 
@@ -425,6 +431,8 @@ $$
 \operatorname{area}\big(A(\text{unit square})\big) = |ad - bc|. \tag{3.8}
 $$
 
+■ **What just happened.** Base times height became a statement about the two columns of $A$, and the angle dropped out: the identity $(a^2 + c^2)(b^2 + d^2) - (ab + cd)^2 = (ad - bc)^2$ did all the work. The area depends only on where $\mathbf{e}_1$ and $\mathbf{e}_2$ land, as Theorem 3.2 says everything about the map must.
+
 So: rotation, $\cos^2 + \sin^2 = 1$, area preserved. Reflection, $-\cos^2 2\varphi - \sin^2 2\varphi = -1$, area preserved but the sign is negative: the square has been flipped over. Shear, $1\cdot 1 - k\cdot 0 = 1$, area preserved even though the shape is badly distorted. Projection $\tfrac15\begin{pmatrix}1 & 2 \\ 2 & 4\end{pmatrix}$: $\tfrac{1}{25}(4 - 4) = 0$, the square is flattened to a segment. $\begin{pmatrix} 2 & 1 \\ 1 & 3\end{pmatrix}$: area $5$. The project computes each area from the polygon and compares.
 
 The number $ad - bc$ is the **determinant**, LA-6's subject. LA-6 proves it scales the area of *every* region, not only the unit square; that its sign records whether orientation is preserved; that $\det(AB) = \det A\det B$ (compose the maps, multiply the scale factors); and hence that $\det$ is a similarity invariant. The sign is the explanation of Example 4.2: the basis $(1, 1), (1, -1)$ has $\det P = -2 < 0$, it is a left-handed frame, so a counterclockwise rotation looks clockwise in its coordinates.
@@ -457,9 +465,9 @@ so
 $$
 [D]_{\mathcal{B}'} = \begin{pmatrix} 0 & 1 & 0 & 0 \\ 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 1 \\ 0 & 0 & 0 & 0 \end{pmatrix},
 $$
-the shift matrix: it moves each coordinate one slot down and drops the first. Same operator, cleaner matrix, because the basis was chosen so that $D$ carries each basis vector to the previous one. (This is the Taylor-series basis: $f = \sum_k f^{(k)}(0)\,x^k/k!$, so the $\mathcal{B}'$-coordinates of $f$ are its derivatives at $0$, and differentiation shifts them.)
+the shift matrix: it moves each coordinate up one slot ($x_{k+1}$ into slot $k$), drops the first, and puts $0$ in the last slot, $(x_1, x_2, x_3, x_4)^\top \mapsto (x_2, x_3, x_4, 0)^\top$. Same operator, cleaner matrix, because the basis was chosen so that $D$ carries each basis vector to the previous one. (This is the Taylor-series basis: $f = \sum_k f^{(k)}(0)\,x^k/k!$, so the $\mathcal{B}'$-coordinates of $f$ are its derivatives at $0$, and differentiation shifts them.)
 
-Consistency with Theorem 3.8: the change-of-basis matrix has columns $[\mathbf{b}'_j]_{\mathcal{B}}$, i.e. $P = \operatorname{diag}(1, 1, \tfrac12, \tfrac16)$ and $P^{-1} = \operatorname{diag}(1, 1, 2, 6)$. Then $[D]_{\mathcal{B}}P$ has columns $\mathbf{0}, (1,0,0,0)^\top, \tfrac12(0,2,0,0)^\top = (0,1,0,0)^\top, \tfrac16(0,0,3,0)^\top = (0,0,\tfrac12,0)^\top$, and multiplying by $P^{-1}$ on the left scales row $3$ by $2$ (and row $4$ by $6$, which is all zeros), turning the $\tfrac12$ into a $1$. Result: the shift matrix. ✓ The project computes both matrices from the definition, checks them against SymPy, and checks $P^{-1}AP$.
+Consistency with Theorem 3.8: the change-of-basis matrix has columns $[\mathbf{b}'_j]_{\mathcal{B}}$, i.e. $P = \operatorname{diag}(1, 1, \tfrac12, \tfrac16)$ and $P^{-1} = \operatorname{diag}(1, 1, 2, 6)$. Then $[D]_{\mathcal{B}}P$ has columns $\mathbf{0}, (1,0,0,0)^\top, \tfrac12(0,2,0,0)^\top = (0,1,0,0)^\top, \tfrac16(0,0,3,0)^\top = (0,0,\tfrac12,0)^\top$, and multiplying by $P^{-1}$ on the left scales row $3$ by $2$ (and row $4$ by $6$, which is all zeros), turning the $\tfrac12$ into a $1$. Result: the shift matrix. ✓ The project computes both matrices from the definition, checks them against SymPy, and checks that $P^{-1}[D]_{\mathcal{B}}P$ with this $P$ is the shift matrix.
 
 ### Example 4.2: Rotation by $90°$ in the basis $(1, 1), (1, -1)$
 
@@ -474,7 +482,7 @@ $$P^{-1}AP = \tfrac12\begin{pmatrix} 1 & 1 \\ 1 & -1\end{pmatrix}\begin{pmatrix}
 
 *Check against the definition.* Column $1$ should be $[T\mathbf{b}'_1]_{\mathcal{B}'}$. $T\mathbf{b}'_1 = (-1, 1)$; solve $a(1,1) + b(1,-1) = (-1, 1)$: $a + b = -1$, $a - b = 1$, so $a = 0$, $b = -1$. Column $(0, -1)^\top$. ✓ Column $2$: $T\mathbf{b}'_2 = (1, 1) = 1\cdot\mathbf{b}'_1 + 0\cdot\mathbf{b}'_2$. Column $(1, 0)^\top$. ✓ (This is exactly the computation of §2.)
 
-*What it means.* In the standard basis, "rotation by $90°$" reads $\mathbf{e}_1 \mapsto \mathbf{e}_2$, $\mathbf{e}_2 \mapsto -\mathbf{e}_1$. In the new basis it reads $\mathbf{b}'_1 \mapsto -\mathbf{b}'_2$, $\mathbf{b}'_2 \mapsto \mathbf{b}'_1$, which is the pattern of rotation by $-90°$. Nothing is wrong. The frame $(\mathbf{b}'_1, \mathbf{b}'_2)$ is left-handed ($\det P = -2 < 0$: going from $\mathbf{b}'_1$ to $\mathbf{b}'_2$ is a clockwise turn), so a counterclockwise motion of the plane has clockwise-looking coordinates. Invariants: $\operatorname{tr} = 0$ and $\det = 1$ for both matrices, as Theorem 3.10 and §3.13 require.
+*What it means.* In the standard basis, "rotation by $90°$" reads $\mathbf{e}_1 \mapsto \mathbf{e}_2$, $\mathbf{e}_2 \mapsto -\mathbf{e}_1$. In the new basis it reads $\mathbf{b}'_1 \mapsto -\mathbf{b}'_2$, $\mathbf{b}'_2 \mapsto \mathbf{b}'_1$, which is the pattern of rotation by $-90°$. Nothing is wrong. The frame $(\mathbf{b}'_1, \mathbf{b}'_2)$ is left-handed ($\det P = -2 < 0$: going from $\mathbf{b}'_1$ to $\mathbf{b}'_2$ is a clockwise turn), so a counterclockwise motion of the plane has clockwise-looking coordinates. Invariants: $\operatorname{tr} = 0$ and $\det = 1$ for both matrices, as Theorem 3.10 and the determinant preview of §3.7 (proved in LA-6) require.
 
 *The wrong direction, for the record.* For this particular $P$, $P^{-1} = \tfrac12 P$, so $PAP^{-1} = \tfrac12 PAP = P^{-1}AP$: the wrong-direction product gives the right answer by accident, and a direction error would go unnoticed. In general $PAP^{-1}$ is the matrix of $T$ in the basis whose vectors (in old coordinates) are the columns of $P^{-1}$, which is not what was asked. Exercise B3 has a basis where the two products differ visibly, and where even the trace and determinant cannot tell them apart.
 
@@ -498,7 +506,7 @@ Or without arithmetic: $P^2 = \mathbf{u}(\mathbf{u}^\top\mathbf{u})\mathbf{u}^\t
 
 At a point in a loaded plate the stress state is the symmetric matrix
 $$\sigma = \begin{pmatrix} \sigma_x & \tau_{xy} \\ \tau_{xy} & \sigma_y\end{pmatrix} = \begin{pmatrix} 80 & 40 \\ 40 & 20\end{pmatrix}\ \text{MPa}$$
-in the $x, y$ frame. Cauchy's theorem says $\sigma$ is a linear map: for a cut with unit normal $\mathbf{n}$, the traction (force per area) across the cut is $\mathbf{t} = \sigma\mathbf{n}$. The entries are the components of that map in the $x, y$ frame. A different engineer uses axes rotated by $\theta$: $\mathbf{e}'_1 = (\cos\theta, \sin\theta)$, $\mathbf{e}'_2 = (-\sin\theta, \cos\theta)$. Same plate, same map, different numbers. What are they?
+in the $x, y$ frame. Cauchy's theorem says $\sigma$ is a linear map: for a cut with unit normal $\mathbf{n}$, the traction (force per area) across the cut is $\mathbf{t} = \sigma\mathbf{n}$. Conventions, as in LA-12: $\sigma_{ij}$ is the $i$-component of the traction on the face whose outward normal is $\mathbf{e}_j$, tension is positive, and units are MPa. On Mohr's circle we plot $(\sigma'_x, \tau')$ with $\tau' = \sigma'_{12}$ upward; some mechanics texts plot shear downward or use a clockwise-positive shear rule, which mirrors the picture top to bottom. The entries are the components of that map in the $x, y$ frame. A different engineer uses axes rotated by $\theta$: $\mathbf{e}'_1 = (\cos\theta, \sin\theta)$, $\mathbf{e}'_2 = (-\sin\theta, \cos\theta)$. Same plate, same map, different numbers. What are they?
 
 *The change-of-basis step.* The new basis vectors in old coordinates are the columns of $R_\theta$, so $P = R_\theta$ in (3.5). Since $R_\theta^\top R_\theta = I$, $P^{-1} = R_\theta^\top$. By (3.6),
 $$\sigma' = R_\theta^\top\,\sigma\,R_\theta.$$
@@ -523,11 +531,11 @@ In LA-8 the principal frame will be the eigenvector basis of the symmetric matri
 - **LA-5.** Projections are the operators with $P^2 = P$ (§3.13); orthogonal projections add $P = P^\top$. Gram–Schmidt produces orthonormal bases, for which the change-of-basis matrix satisfies $P^{-1} = P^\top$, so (3.6) becomes $P^\top AP$, which is what Example 4.4 used.
 - **LA-6.** The determinant is (3.8) generalized: the signed volume scaling of a map. $\det(AB) = \det A\det B$ is Theorem 3.7 read through volumes, and $\det(P^{-1}AP) = \det A$ makes "the determinant of an operator" meaningful, as Theorem 3.10 did for the trace.
 - **LA-7.** Diagonalization is Theorem 3.8 with $P$ chosen so that $P^{-1}AP$ is diagonal; the columns of $P$ are the eigenvectors. The eigenvalue invariance in §3.7 is the first line of that module. The shift matrix of Example 4.1 is a Jordan block, the building block of LA-11.
-- **LA-9.** The image of the unit circle under any $2\times 2$ map is an ellipse (`figures/unit_circle_images.png`); its semi-axes are the singular values and their directions come from the SVD. Rank is the number of nonzero singular values.
-- **LA-12.** $\mathcal{L}(V, \mathbb{R}) = V^*$ is the dual space (Theorem 3.19 with $m = 1$). "A tensor is an array that transforms like $P^{-1}AP$" is the physicist's definition; LA-12 proves it equivalent to the multilinear-map definition.
+- **LA-9.** The image of the unit circle under any invertible $2\times 2$ map is an ellipse (for a singular map, a degenerate one: a segment or a point; `figures/unit_circle_images.png` shows both); its semi-axes are the singular values and their directions come from the SVD. Rank is the number of nonzero singular values.
+- **LA-12.** $\mathcal{L}(V, \mathbb{R}) = V^*$ is the dual space (Theorem 3.19 with $m = 1$). A type-$(1,1)$ tensor (an operator) is an array that transforms like $P^{-1}AP$; a bilinear form, type $(0,2)$, transforms like $P^\top BP$ instead (LA-12 eq. (3.5)). The two laws agree when $P$ is orthogonal, which is why Example 4.4 could ignore the difference. LA-12 shows that the physicist's "an array that transforms like a tensor" definition is equivalent to the multilinear-map one.
 - **CM-7.** The inertia tensor is a symmetric operator on $\mathbb{R}^3$; the principal axes are the basis in which its matrix is diagonal. Example 4.4 is the two-dimensional version with stress instead of inertia.
 - **QM-4.** An observable is an operator; its matrix in the energy eigenbasis is diagonal; changing basis from position to momentum representation is a change of basis in the sense of (3.5), with $P$ unitary. The commutator $X \mapsto MX - XM$ of §3.1(h) is the map whose kernel is "observables that commute with $M$."
-- **ML-8, ML-9.** A linear layer in a neural network is a linear map $\mathbb{R}^n \to \mathbb{R}^m$ plus a shift; composing layers is (3.4); the Jacobian of a composition (LA-14, backpropagation) is a product of matrices for the same reason.
+- **ML-7.** A neural-network layer is a linear map $\mathbb{R}^n \to \mathbb{R}^m$ plus a shift, followed by a pointwise nonlinearity. Without the nonlinearity, composing layers is (3.4) (with the shifts composing into one shift), so the whole stack collapses to a single layer; that is why the nonlinearity is needed. ML-8 writes a convolution layer as a structured (Toeplitz) matrix, and ML-9's queries, keys and values are learned linear maps. The Jacobian of a composition (LA-14, backpropagation) is a product of matrices for the same reason as (3.4).
 
 ## 6. Exercises
 
@@ -542,7 +550,7 @@ See [exercises.md](exercises.md). A1–A6 drill the definition of linearity, com
 3. **Theorems 3.6 and 3.7** checked on random polynomials, on $D\circ D$, and on $D\circ J$ versus $J\circ D$ (Exercise B2).
 4. **`change_of_basis(P, A)`** returning $P^{-1}AP$; Example 4.2 computed and compared with the direct definition; trace, determinant, and eigenvalues shown invariant on random $P$ up to $5\times 5$.
 5. **Projection onto $y = 2x$** (Example 4.3): $P^2 = P$, kernel, image, $\operatorname{diag}(1, 0)$ in the adapted basis.
-6. **Grid deformations** for shear, rotation, projection, and a random map; the image of the unit circle (an ellipse; the code labels its semi-axes with `np.linalg.svd`, a preview of LA-9 and not something derived here); area of the image of the unit square versus $|ad - bc|$ by the shoelace formula.
+6. **Grid deformations** for shear, rotation, projection, and a random map; the image of the unit circle (an ellipse for an invertible map, a segment for the projection; the code labels its semi-axes with `np.linalg.svd`, a preview of LA-9 and not something derived here); area of the image of the unit square versus $|ad - bc|$ by the shoelace formula.
 7. **Rank–Nullity on 300 random maps** of chosen rank, with `np.linalg.matrix_rank` and `scipy.linalg.null_space`.
 8. **The stress tensor in a rotated frame** (Example 4.4) and Mohr's circle.
 
@@ -557,26 +565,25 @@ See [exercises.md](exercises.md). A1–A6 drill the definition of linearity, com
 - **The proof of Rank–Nullity feels circular.** "Extend a basis of the kernel to a basis of $V$": how do you know you can? Because of LA-3's basis extension theorem, which was proved by a different argument (adding vectors not in the span until you cannot, and showing this stops after at most $\dim V$ steps). The proof here is *layered*, not circular: it uses a previously proven fact about bases to prove a new fact about maps. The second confusion is in step 4: "the $\mathbf{v}_j$ are independent, so the $T\mathbf{v}_j$ are independent" is *false* in general (the kernel is precisely the collection of independence-destroying directions), and the proof never says it. It says: a relation among the $T\mathbf{v}_j$ pulls back to a vector in the kernel, and the $\mathbf{v}_j$ were chosen independent *of the kernel's basis*. Reread step 4 until you can reproduce it from the sentence "pull the relation back into $V$."
 - **Coordinate vectors in $\mathbb{R}^n$.** Because $[\mathbf{v}]_{\text{std}} = \mathbf{v}$, you have never had to distinguish a vector from its coordinates. The moment the basis is $(1, 1), (1, -1)$ the two come apart, and most errors in B3 are from adding a vector to a coordinate vector. Write the subscript $\mathcal{B}$ every time until the distinction is reflexive.
 - **Injective iff surjective only when dimensions agree.** Corollary 3.15 is a statement about *square* situations. Students apply it to $D: \mathcal{P}_3 \to \mathcal{P}_2$ and conclude it must be injective. It is not.
-- **Exercises that are harder than they look.** B5 ($AB = I \Rightarrow BA = I$) is three lines, but the three lines use Theorem 3.13, Corollary 3.15, and associativity in a specific order; most first attempts assume what they are proving. C2 needs a chain $\ker N \subsetneq \ker N^2 \subsetneq \cdots$ and the observation that strictly increasing subspaces have strictly increasing dimensions. "Your turn" item 3 in the project is mostly bookkeeping, but the non-orthogonal tilt will give you a non-orthogonal matrix for a rotation, which is correct and surprising: "orthogonal matrix" is a property of a matrix in an *orthonormal* basis, not of the map.
+- **Exercises that are harder than they look.** B5 ($AB = I \Rightarrow BA = I$) is three lines, but the three lines use Theorem 3.13, Corollary 3.15, and associativity in a specific order; most first attempts assume what they are proving. C2 needs a chain $\ker N \subsetneq \ker N^2 \subsetneq \cdots$ and the observation that strictly increasing subspaces have strictly increasing dimensions. "Your turn" item 3 in the project is mostly bookkeeping, but the skewed (non-orthonormal) basis will give you a non-orthogonal matrix for a rotation, which is correct and surprising: "orthogonal matrix" is a property of a matrix in an *orthonormal* basis, not of the map. Even an orthogonal basis with one vector of the wrong length breaks it.
 
 ## 9. Check yourself
 
 1. State the definition of a linear map. Give one linear map on $\mathcal{P}_2$ and one non-linear map on $\mathcal{P}_2$, each with a one-line justification.
 2. Why is a linear map determined by its values on a basis? Which two properties of a basis are used, and where?
-3. What is column $j$ of $[T]_{\mathcal{B},\mathcal{C}}$, in words? What is its shape?
-4. Write the formula $[T\mathbf{v}]_{\mathcal{C}} = [T]_{\mathcal{B},\mathcal{C}}[\mathbf{v}]_{\mathcal{B}}$ and derive it in four lines.
-5. Why is matrix multiplication defined by row-times-column? Answer with Theorem 3.7.
-6. Let $\mathcal{B}' = \big((2, 1), (1, 1)\big)$ in $\mathbb{R}^2$. Write $P$. Which way does it convert? Find $[\,(3, 2)\,]_{\mathcal{B}'}$.
-7. Derive $A' = P^{-1}AP$ by inserting the identity twice.
-8. Prove $\operatorname{tr}(XY) = \operatorname{tr}(YX)$. Why does this make "the trace of an operator" well defined?
-9. State and prove: $T$ is injective iff $\ker T = \{\mathbf{0}\}$.
-10. State Rank–Nullity and sketch its proof. Where does independence of the $T\mathbf{v}_j$ come from?
-11. $D: \mathcal{P}_4 \to \mathcal{P}_4$: what are the kernel, image, rank, nullity, and the smallest $k$ with $D^k = 0$?
-12. List six conditions equivalent to "$A$ is invertible" for a square matrix, and for two of them say which theorem connects them.
-13. What is $\dim\mathcal{L}(\mathcal{P}_3, \mathbb{R}^{2\times 2})$?
+3. What is column $j$ of $[T]_{\mathcal{B},\mathcal{C}}$, in words, and what shape is the matrix? Then write $[T\mathbf{v}]_{\mathcal{C}} = [T]_{\mathcal{B},\mathcal{C}}[\mathbf{v}]_{\mathcal{B}}$ and derive it in four lines.
+4. Why is matrix multiplication defined by row-times-column? Answer with Theorem 3.7.
+5. Let $\mathcal{B}' = \big((1, 2), (1, 3)\big)$ in $\mathbb{R}^2$. Write $P$. Which way does it convert? Find $[\,(2, 5)\,]_{\mathcal{B}'}$.
+6. Derive $A' = P^{-1}AP$ by inserting the identity twice.
+7. Prove $\operatorname{tr}(XY) = \operatorname{tr}(YX)$. Why does this make "the trace of an operator" well defined?
+8. State and prove: $T$ is injective iff $\ker T = \{\mathbf{0}\}$.
+9. State Rank–Nullity and sketch its proof. Where does independence of the $T\mathbf{v}_j$ come from?
+10. $D: \mathcal{P}_4 \to \mathcal{P}_4$: what are the kernel, image, rank, nullity, and the smallest $k$ with $D^k = 0$?
+11. List six conditions equivalent to "$A$ is invertible" for a square matrix, and for two of them say which theorem connects them.
+12. What is $\dim\mathcal{L}(\mathcal{P}_3, \mathbb{R}^{2\times 2})$?
 
 ## 10. Pair with
 
-- **Axler, *Linear Algebra Done Right*, 4th ed., ch. 3** (§3A–3D; §3E–3F are LA-12). Axler proves Theorems 3.2, 3.14, 3.17 and 3.19 in the same order as here, with cleaner notation and more examples of maps on function spaces. His proof of the Fundamental Theorem of Linear Maps is the one in §3.9. Read 3D for matrices of maps after you have done Example 4.1 by hand.
+- **Axler, *Linear Algebra Done Right*, 4th ed., ch. 3** (§3A–3D; §3F, duality, is LA-12; §3E, products and quotients of vector spaces, is optional). Axler proves Theorems 3.2, 3.14, 3.17 and 3.19 in the same order as here, with cleaner notation and more examples of maps on function spaces. His proof of the Fundamental Theorem of Linear Maps is the one in §3.9. Read 3D for matrices of maps after you have done Example 4.1 by hand.
 - **Strang, *Introduction to Linear Algebra*, §8.2–8.3** (the matrix of a linear transformation; the search for a good basis). Strang's §8.2 does the differentiation and integration matrices (Example 4.1 and Exercise B2) and is better than these notes on the "a different basis gives a different matrix" examples. §8.3 previews why diagonal (eigenvector) and orthogonal (SVD) bases are the ones worth searching for.
 - **3Blue1Brown, *Essence of Linear Algebra*, episodes 9–13.** Episode 13 (change of basis) is the one to watch twice; it animates (3.5) and $P^{-1}AP$ and uses the same "whose grid are we speaking" language as §2. Episodes 9–12 (dot products and duality, cross products, Cramer's rule) are the bridge toward LA-6 and LA-12; watch them once now for the pictures. Rewatch episodes 3, 4, 7 and 8 (transformations, composition, null space and column space, nonsquare matrices) if the grid-deformation picture of §2 is not yet automatic.

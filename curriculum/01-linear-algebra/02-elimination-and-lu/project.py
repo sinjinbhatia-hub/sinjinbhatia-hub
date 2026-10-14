@@ -193,8 +193,8 @@ print("Example 4.4: v =", v, "V; pivots =", np.diag(U), "= effective conductance
 # ## Part 3: RREF with a tolerance, and the three outcomes (Theorem 3.7)
 #
 # `rref` returns the reduced row echelon form and the pivot columns, treating
-# any candidate pivot below `tol` as zero. `classify` applies it to [A | b]:
-# 'none' if the augmented column is a pivot column, 'unique' if every column of
+# any candidate pivot with |pivot| <= `tol` as zero (the same test as
+# `lu_decompose`). `classify` applies it to [A | b]: 'none' if the augmented column is a pivot column, 'unique' if every column of
 # A is a pivot column, else 'infinite' with x_p and the special solutions s_f.
 
 
@@ -207,7 +207,7 @@ def rref(A, tol=1e-10):
         if r == m:
             break
         p = r + int(np.argmax(np.abs(R[r:, j])))
-        if abs(R[p, j]) < tol:
+        if abs(R[p, j]) <= tol:
             R[r:, j] = 0.0                       # numerically zero column below the staircase: free
             continue
         R[[r, p]] = R[[p, r]]
@@ -327,13 +327,25 @@ except np.linalg.LinAlgError:
     pass
 print("Part 4: Gauss–Jordan matches np.linalg.inv; Theorem 3.19 verified; singular A42 rejected.")
 
-# The case against inv(): (1) structure. Tridiagonal A has 3n-2 nonzeros; its inverse has n^2.
+# Example 4.3 up to signs: S A S = tridiag(-1, 2, -1) with S = diag(1, -1, 1) has the same pivots.
+S3 = np.diag([1.0, -1.0, 1.0])
+_, Ls, Us = lu_decompose(S3 @ A43 @ S3, pivot=False)
+assert np.allclose(S3 @ A43 @ S3, 2 * np.eye(3) - np.eye(3, k=1) - np.eye(3, k=-1))
+assert np.allclose(np.diag(Us), np.diag(U)) and np.allclose(Ls, S3 @ L @ S3)
+assert np.allclose(gauss_jordan_inverse(S3 @ A43 @ S3), np.array([[3, 2, 1], [2, 4, 2], [1, 2, 3]]) / 4)
+
+# The case against inv(): (1) structure. The n x n version of Example 4.3's tridiagonal matrix
+# has 3n-2 nonzeros; its inverse has n^2. The sign-flipped twin tridiag(-1, 2, -1) behaves the same.
 n = 50
-T = 2 * np.eye(n) - np.eye(n, k=1) - np.eye(n, k=-1)
+T = 2 * np.eye(n) + np.eye(n, k=1) + np.eye(n, k=-1)
+Sn = np.diag((-1.0) ** np.arange(n))
+assert np.allclose(Sn @ T @ Sn, 2 * np.eye(n) - np.eye(n, k=1) - np.eye(n, k=-1))
 P, L, U = lu_decompose(T, pivot=False)
+assert np.allclose(np.diag(U), np.diag(lu_decompose(Sn @ T @ Sn, pivot=False)[2]))   # same pivots
 nnz = lambda M: int(np.sum(np.abs(M) > 1e-14))
 assert nnz(T) == 3 * n - 2 and nnz(L) + nnz(U) - n == 3 * n - 2     # L and U are bidiagonal: same storage as T
 assert nnz(np.linalg.inv(T)) == n * n                               # the inverse is completely dense
+assert nnz(np.linalg.inv(Sn @ T @ Sn)) == n * n
 print(f"Never invert (structure): tridiagonal {n}x{n} has {nnz(T)} nonzeros, L and U together {nnz(L)+nnz(U)-n}, inverse {nnz(np.linalg.inv(T))}.")
 
 # (2) cost: time inv vs. a factor-and-solve (LAPACK for both, so the comparison is fair).
@@ -377,15 +389,27 @@ print("Example 4.5: without pivoting LU =", (L @ U).tolist(), " x =", x_bad, "; 
 
 exps = np.arange(1, 21)
 errs = np.array([pivot_experiment(10.0 ** -k) for k in exps])
-assert errs[-1, 0] > 0.5 and errs[:, 1].max() < 1e-12
+assert errs[:, 1].max() < 1e-15                                       # pivoted: rounding level throughout
+# Unpivoted: no jump. The error grows like 1/eps, between about 1e-18/eps and 1e-16/eps (machine
+# precision over eps), one decade per decade, until it saturates at exactly 1 (x1 computed as 0).
+ref = 1e-16 * 10.0 ** exps
+grow = exps <= 16
+assert np.all((errs[grow, 0] > 1e-3 * ref[grow]) & (errs[grow, 0] < 10 * ref[grow])), errs[:, 0]
+assert np.all(errs[exps >= 17, 0] == 1.0)
+slope = np.polyfit(exps[exps <= 15], np.log10(errs[exps <= 15, 0]), 1)[0]
+assert 0.7 < slope < 1.3, slope
+for k in (1, 8, 12, 16):
+    print(f"        eps = 1e-{k:<2d}: unpivoted error {errs[k - 1, 0]:.1e}, pivoted {errs[k - 1, 1]:.1e}")
 fig, ax = plt.subplots(figsize=(6.4, 4))
 ax.semilogy(exps, np.maximum(errs[:, 0], 1e-18), "o-", lw=2, ms=6, color="C1", label="no pivoting")
 ax.semilogy(exps, np.maximum(errs[:, 1], 1e-18), "s-", lw=2, ms=6, color="C0", label="partial pivoting")
+ax.semilogy(exps[grow], ref[grow], ":", lw=1.5, color="0.4", label=r"$10^{-16}/\varepsilon$")
 ax.axvline(16, color="0.6", lw=1, ls="--"); ax.text(16.2, 1e-9, "machine\nprecision", fontsize=8, color="0.4")
 ax.set_xlabel(r"$k$ in $\varepsilon = 10^{-k}$"); ax.set_ylabel(r"max error in $x$ (floored at $10^{-18}$)")
 ax.set_title(r"Elimination on $[[\varepsilon, 1],[1, 1]]\,x = (1, 2)$"); ax.grid(alpha=.3); ax.legend()
 fig.tight_layout(); fig.savefig(FIG / "pivoting_error.png", dpi=120); plt.close(fig)
-print("Part 5: pivoting_error.png saved; unpivoted error at eps=1e-20 is", errs[-1, 0])
+print(f"Part 5: pivoting_error.png saved; unpivoted error grows {slope:.2f} decades per decade of eps,",
+      "and is", errs[-1, 0], "at eps=1e-20")
 
 # %% [markdown]
 # ## Part 6: Operation counts (§3.7) and factor-once-solve-many timing
@@ -496,10 +520,19 @@ P, L, U = lu_decompose(wilkinson(4))
 assert np.allclose(P, np.eye(4)) and np.allclose(U[:, -1], [1, 2, 4, 8])
 for n in (10, 30):
     P, L, U = lu_decompose(wilkinson(n)); assert np.allclose(P, np.eye(n)) and np.isclose(np.abs(U).max(), 2.0 ** (n - 1))
-W60 = wilkinson(60); b60 = W60 @ np.ones(60)
-x60 = sla.lu_solve(sla.lu_factor(W60), b60)
-print(f"C1: Wilkinson n=60: max|U| = {np.abs(sla.lu(W60)[2]).max():.3g}, max|x-1| = {np.abs(x60-1).max():.3g}, "
-      f"rel. residual = {np.linalg.norm(W60@x60-b60)/np.linalg.norm(b60):.2g}")
+relres = lambda M, x, b: np.linalg.norm(M @ x - b) / np.linalg.norm(b)
+for n in (55, 60):
+    Wn = wilkinson(n); bn = Wn @ np.ones(n)
+    x_lapack = sla.lu_solve(sla.lu_factor(Wn), bn); x_own = solve(Wn, bn)
+    e_lapack, e_own = np.abs(x_lapack - 1).max(), np.abs(x_own - 1).max()
+    print(f"C1: Wilkinson n={n}: max|U| = {np.abs(sla.lu(Wn)[2]).max():.3g}; "
+          f"SciPy max|x-1| = {e_lapack:.3g}, rel. residual = {relres(Wn, x_lapack, bn):.2g}; "
+          f"our solve max|x-1| = {e_own:.3g}, rel. residual = {relres(Wn, x_own, bn):.2g}")
+    assert e_lapack >= 0.5 and relres(Wn, x_lapack, bn) > 1e-3       # visibly wrong, not rounding level
+    if n == 60:
+        assert e_own > 1 and relres(Wn, x_own, bn) > 0.05            # our row-oriented substitution fares worse
+W30 = wilkinson(30); x30 = solve(W30, W30 @ np.ones(30))
+assert np.allclose(x30, 1, atol=1e-12)                                # below n = 50 the growth is harmless
 # C2: Schur complements of the circuit matrix
 S1 = G[1:, 1:] - np.outer(G[1:, 0], G[0, 1:]) / G[0, 0]
 assert np.isclose(S1[0, 0], 5 / 6) and np.allclose(S1, [[5 / 6, -1 / 2], [-1 / 2, 3 / 2]])

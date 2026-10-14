@@ -223,6 +223,8 @@ $$v = x - \|x\|\mathbf{e}_1 \quad\Longrightarrow\quad Hx = \|x\|\mathbf{e}_1. \t
 2. $v^\top v = \|x\|^2 - 2\|x\|x_1 + \|x\|^2 = 2(\|x\|^2 - \|x\|x_1) = 2\,v^\top x$.
 3. $Hx = x - 2v\dfrac{v^\top x}{v^\top v} = x - 2v\cdot\dfrac12 = x - v = \|x\|\mathbf{e}_1$. ∎
 
+■ **What just happened.** One orthogonal matrix, built from one vector, zeroed every entry of $x$ but the first. The whole construction is "reflect across the perpendicular bisector of $x$ and its target"; the only choice left is which target, $+\|x\|\mathbf e_1$ or $-\|x\|\mathbf e_1$.
+
 **The sign.** Replacing $\|x\|\mathbf{e}_1$ by $-\|x\|\mathbf{e}_1$ gives an equally valid reflection with $v = x + \|x\|\mathbf{e}_1$. In exact arithmetic either works. In floating point only one is safe. The first component of $v$ is $x_1 \mp \|x\|$. If $x$ is nearly parallel to $\mathbf{e}_1$, then $\|x\| \approx |x_1|$ and the choice with a minus sign is a catastrophic cancellation: by (3.4) the computed $v_1$ can have relative error of order $\varepsilon\|x\|/|x_1 - \|x\||$, which can be $O(1)$. A wrong $v_1$ means a wrong *direction* for $v$, and $H$ depends only on the direction of $v$: the computed $H$ is still an exact reflection (Theorem 3.10 holds for whatever $v$ you have), but across the wrong hyperplane, so $Hx$ is not a multiple of $\mathbf{e}_1$. The project builds this failure: for $x = (1, 10^{-8}, 10^{-8})$ the bad sign leaves a residual of $1.4\times 10^{-8}$ in the entries that should be zero; the good sign leaves $5\times 10^{-25}$. The rule, which we adopt throughout:
 
 $$v = x + \operatorname{sign}(x_1)\|x\|\mathbf{e}_1, \qquad Hx = -\operatorname{sign}(x_1)\|x\|\mathbf{e}_1, \tag{3.13}$$
@@ -421,10 +423,10 @@ $$x_{k+1} = M^{-1}(N x_k + b) = x_k + M^{-1} r_k, \qquad r_k = b - Ax_k. \tag{3.
 **Derivation.**
 
 1. $e_{k+1} = x_{k+1} - x = M^{-1}N(x_k - x) = B e_k$, so $e_k = B^k e_0$. Convergence for every $e_0$ is the statement $B^k \to 0$.
-2. ($\Leftarrow$) Suppose $\rho(B) < 1$. Take the Jordan form $B = XJX^{-1}$ (LA-11 Theorem 3.10); then $B^k = XJ^kX^{-1}$ and it suffices that $J^k \to 0$ block by block. For a Jordan block $J_s(\lambda) = \lambda I + N_s$ with $N_s^s = 0$, LA-11 Theorem 3.17 gives $J_s(\lambda)^k = \sum_{i=0}^{s-1}\binom{k}{i}\lambda^{k-i}N_s^i$. Each term is bounded by $k^i|\lambda|^{k-i}$, and $k^i|\lambda|^k \to 0$ for $|\lambda| < 1$ because the exponential beats the polynomial. So every block, hence $J^k$, hence $B^k$, tends to zero.
+2. ($\Leftarrow$) Suppose $\rho(B) < 1$. Take the Jordan form $B = XJX^{-1}$ (LA-11 Theorem 3.10); then $B^k = XJ^kX^{-1}$ and it suffices that $J^k \to 0$ block by block. For a Jordan block $J_s(\lambda) = \lambda I + N_s$ with $N_s^s = 0$, LA-11 Theorem 3.17 gives $J_s(\lambda)^k = \sum_{i=0}^{s-1}\binom{k}{i}\lambda^{k-i}N_s^i$. Each term is bounded in norm by $k^i|\lambda|^{k-i}$ (since $\binom{k}{i} \le k^i$ and $\|N_s^i\| \le 1$), and for $0 < |\lambda| < 1$ this is $|\lambda|^{-i}\,k^i|\lambda|^k \to 0$ because the exponential beats the polynomial; for $\lambda = 0$, $J_s^k = N_s^k = 0$ once $k \ge s$. So every block, hence $J^k$, hence $B^k$, tends to zero.
 3. ($\Rightarrow$) Suppose $|\lambda| \ge 1$ for some eigenvalue with eigenvector $v$ (possibly complex). If $B^k e_0 \to 0$ for every real $e_0$ then, by linearity, also for every complex $e_0 = u + iw$. But $B^k v = \lambda^k v$ has $\|B^kv\| = |\lambda|^k\|v\| \ge \|v\|$, which does not tend to zero. Contradiction. ∎
 
-■ **What just happened.** The asymptotic error reduction per step is $\rho(B)$: the number of iterations to gain one decimal digit is $1/(-\log_{10}\rho)$. Note that $\|B\| < 1$ in some norm is sufficient but $\rho(B) < 1$ is the exact condition; a matrix can have $\|B\|_2 > 1$ and still $B^k \to 0$ (any Jordan block with $|\lambda| < 1$ and a large off-diagonal), in which case the error first grows and then decays.
+■ **What just happened.** The asymptotic error reduction per step is $\rho(B)$: the number of iterations to gain one decimal digit is $1/(-\log_{10}\rho)$. Note that $\|B\| < 1$ in some norm is sufficient but $\rho(B) < 1$ is the exact condition; a matrix can have $\|B\|_2 > 1$ and still $B^k \to 0$ (for example $\begin{pmatrix}0.5 & 10\\ 0 & 0.5\end{pmatrix}$, which is similar to a Jordan block with $\lambda = 0.5$ but has $\|B\|_2 > 10$), in which case the error first grows and then decays.
 
 **Jacobi on the model problem.** Here $D = (4/h^2)I$, so $B_J = I - D^{-1}A = I - (h^2/4)A$ has the *same eigenvectors* as $A$ with eigenvalues $1 - (h^2/4)\lambda_{jk} = 1 - \sin^2\frac{j\pi h}{2} - \sin^2\frac{k\pi h}{2} = \frac{\cos j\pi h + \cos k\pi h}{2}$. The largest in modulus is at $j = k = 1$ (and $j = k = N$, with the opposite sign):
 
@@ -528,6 +530,8 @@ Cost per step: one product $Ap_k$ ($2\,\mathrm{nnz}$ flops), two inner products 
 1. For any $y \in x_0 + \mathcal{K}_k$, write $y = x_k + d$ with $d \in \mathcal{K}_k$ (since $x_k \in x_0 + \mathcal{K}_k$ by Theorem 3.22(a)).
 2. $\langle e_k, d\rangle_A = e_k^\top Ad = (Ae_k)^\top d = r_k^\top d = 0$ by Theorem 3.22(b). So $e_k \perp_A \mathcal{K}_k$.
 3. $\|x_* - y\|_A^2 = \|e_k - d\|_A^2 = \|e_k\|_A^2 - 2\langle e_k, d\rangle_A + \|d\|_A^2 = \|e_k\|_A^2 + \|d\|_A^2 \ge \|e_k\|_A^2$, with equality only for $d = 0$. ∎
+
+■ **What just happened.** $x_k$ is the $A$-orthogonal projection of $x_*$ onto $x_0 + \mathcal K_k$: the error is $A$-orthogonal to everything CG could still have added, so no point of the Krylov space is closer in the $A$-norm. That is why CG's $A$-norm error can only decrease from step to step.
 
 The polynomial reading, which is how convergence is analyzed: every $x \in x_0 + \mathcal{K}_k$ has $x - x_0 = q(A)r_0$ for some polynomial $q$ of degree $< k$, hence $e = e_0 - q(A)Ae_0 = p(A)e_0$ with $p(t) = 1 - tq(t)$, a polynomial of degree $\le k$ with $p(0) = 1$. Expanding $e_0 = \sum c_ix_i$ in the orthonormal eigenbasis, $\|p(A)e_0\|_A^2 = \sum_i\lambda_ic_i^2p(\lambda_i)^2 \le \max_i p(\lambda_i)^2\,\|e_0\|_A^2$. Theorem 3.23 then gives
 
@@ -639,6 +643,8 @@ Steps 4 to 6 are exact algebra: $QQ^\top A = QB = (Q\hat U)\Sigma V^\top$. All t
 2. Each column of $G$ is $V_k^\top\omega$ for a standard Gaussian $\omega$, which is Gaussian with covariance $V_k^\top V_k = I_k$. So $G$ again has independent standard normal entries.
 3. $\det G$ is a polynomial in the $k^2$ entries and not identically zero, so it vanishes only on a set of measure zero: $G$ is invertible with probability $1$.
 4. Then $\Sigma_kG$ is invertible and $\operatorname{range}(Y) = \operatorname{range}(U_k) = \operatorname{range}(A)$, so $QQ^\top A = A$ exactly. ∎
+
+■ **What just happened.** Projected onto the fixed $k$-dimensional row space of $A$, a Gaussian $\Omega$ is again Gaussian and therefore almost surely of full rank, so $A\Omega$ sees all of $\operatorname{range}A$. Everything that follows is about making that statement quantitative when the rank is only approximately $k$.
 
 **Why it works, approximate case, and why oversample.** Now split $A = U_1\Sigma_1V_1^\top + U_2\Sigma_2V_2^\top$ into the top $k$ singular triples and the tail, and write $\Omega_1 = V_1^\top\Omega$ ($k\times(k+p)$) and $\Omega_2 = V_2^\top\Omega$. Then $Y = U_1\Sigma_1\Omega_1 + U_2\Sigma_2\Omega_2$: the part we want, polluted by the tail. HMT prove (their Theorem 9.1; deterministic, stated here) that if $\Omega_1$ has full row rank,
 

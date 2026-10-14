@@ -33,7 +33,7 @@ Conventions as in the notes: column vectors, $\mathbf{u}\cdot\mathbf{v} = \mathb
 $$\|\mathbf{u} + \mathbf{v}\|^2 + \|\mathbf{u} - \mathbf{v}\|^2 = 2\|\mathbf{u}\|^2 + 2\|\mathbf{v}\|^2.$$
 Interpret geometrically (what are the four lengths?). Then show that the $\ell^1$ norm does **not** satisfy this identity by finding a counterexample in $\mathbb{R}^2$. (Why this matters: in LA-8 you'll learn that a norm comes from an inner product *if and only if* it satisfies the parallelogram law.)
 
-**B7.** (Projection.) Let $\mathbf{v} \neq \mathbf{0}$. Define $f(t) = \|\mathbf{u} - t\mathbf{v}\|^2$.
+**B7.** (Projection.) Let $\mathbf{u}, \mathbf{v} \in \mathbb{R}^n$ with $\mathbf{v} \neq \mathbf{0}$. Define $f(t) = \|\mathbf{u} - t\mathbf{v}\|^2$.
 (a) Expand $f(t)$ and find the $t^*$ that minimizes it by calculus.
 (b) Show the residual $\mathbf{u} - t^*\mathbf{v}$ is orthogonal to $\mathbf{v}$.
 (c) Show $\|\mathbf{u}\|^2 = \|t^*\mathbf{v}\|^2 + \|\mathbf{u} - t^*\mathbf{v}\|^2$ (Pythagoras for the projection).
@@ -47,7 +47,7 @@ Interpret geometrically (what are the four lengths?). Then show that the $\ell^1
 
 **C2.** (Norm inequalities.) Prove that for all $\mathbf{v} \in \mathbb{R}^n$:
 $$\|\mathbf{v}\|_\infty \le \|\mathbf{v}\|_2 \le \|\mathbf{v}\|_1 \le \sqrt{n}\,\|\mathbf{v}\|_2 \le n\,\|\mathbf{v}\|_\infty.$$
-For each inequality, give a vector that achieves equality. (The middle one, $\|\mathbf{v}\|_1 \le \sqrt{n}\|\mathbf{v}\|_2$, is Cauchy–Schwarz in disguise: find the disguise.)
+For each inequality, give a vector that achieves equality. (The third inequality, $\|\mathbf{v}\|_1 \le \sqrt{n}\|\mathbf{v}\|_2$, is Cauchy–Schwarz in disguise: find the disguise.)
 
 **C3.** (A first matrix norm.) Define the Frobenius norm $\|A\|_F = \sqrt{\sum_{i,j} a_{ij}^2}$.
 (a) Show $\|A\|_F^2 = \sum_j \|\mathbf{a}_j\|^2$ (sum of squared column lengths) $= \operatorname{tr}(A^\top A)$, where $\operatorname{tr}$ is the sum of the diagonal entries.

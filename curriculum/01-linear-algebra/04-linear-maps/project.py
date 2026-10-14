@@ -8,7 +8,8 @@
 # composition = multiplication; (3) change of basis, the 90-degree rotation in
 # the basis {(1,1),(1,-1)}, and the similarity invariants trace and determinant
 # on random P; (4) the projection onto y = 2x with P^2 = P; (5) grid
-# deformations, the image of the unit circle (an ellipse: SVD preview), and
+# deformations, the image of the unit circle (an ellipse for an invertible
+# map, a segment for a rank-1 one: SVD preview), and
 # areas as |det|; (6) rank–nullity on random maps; (7) the 2D stress tensor in
 # a rotated frame and Mohr's circle.
 #
@@ -116,7 +117,7 @@ assert sympy_matrix_of_map(D_sym, mono_sym, mono_sym, x) == sp.Matrix(D_mono_exp
 assert sympy_matrix_of_map(D_sym, fact_sym, fact_sym, x) == sp.Matrix(shift.astype(int))
 print("SymPy agrees with matrix_of_map in both bases.")
 
-# Nilpotency (section 3.9): D^3 != 0 but D^4 = 0, as operators and as matrices.
+# Nilpotency (section 3.13): D^3 != 0 but D^4 = 0, as operators and as matrices.
 p_rand = rng.standard_normal(4)
 q = p_rand.copy()
 for _ in range(4):
@@ -209,6 +210,15 @@ def change_of_basis(P, A):
     return np.linalg.solve(P, A @ P)
 
 
+# Example 4.1 via Theorem 3.8: P has the factorial basis vectors as columns (in monomial
+# coordinates), P = diag(1, 1, 1/2, 1/6), and P^{-1} [D]_mono P must be the shift matrix.
+P_fact = np.column_stack(factorial)
+assert np.allclose(P_fact, np.diag([1, 1, 1 / 2, 1 / 6]))
+assert np.allclose(np.linalg.inv(P_fact), np.diag([1, 1, 2, 6]))
+assert np.allclose(D_mono @ P_fact, [[0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1 / 2], [0, 0, 0, 0]])
+assert np.allclose(change_of_basis(P_fact, D_mono), shift)
+print("Example 4.1: P^{-1} [D]_mono P with P = diag(1, 1, 1/2, 1/6) is the shift matrix.")
+
 A_rot = np.array([[0, -1], [1, 0]], float)          # rotation by +90 degrees, standard basis
 P_new = np.array([[1, 1], [1, -1]], float)          # columns = new basis vectors
 v = np.array([3.0, 1.0])
@@ -224,6 +234,8 @@ assert np.allclose(matrix_of_map(lambda u: A_rot @ u, list(P_new.T), list(P_new.
 assert np.linalg.det(P_new) < 0   # the new basis is left-handed: that is why the sign flipped
 assert np.allclose(P_new @ [3, 1], [4, 2])                           # P(3,1) is NOT the new coordinates
 assert np.allclose(P_new @ A_rot @ np.linalg.inv(P_new), A_rot_new)  # for this P the wrong order agrees by accident
+for M in (A_rot, A_rot_new):                                          # tr = 0, det = 1 in both bases
+    assert np.isclose(np.trace(M), 0) and np.isclose(np.linalg.det(M), 1)
 print("Example 4.2: P^{-1} A P =\n", A_rot_new.astype(int), " (det P = %g < 0 explains the apparent reversal)" % np.linalg.det(P_new))
 
 # Exercise B3: the symmetric matrix [[2,1],[1,2]] is diagonal in the same basis.
@@ -270,9 +282,10 @@ print("Example 4.3: P = (1/5)[[1,2],[2,4]], P^2 = P, ker = span(2,-1), im = span
 #
 # Section 2's picture: a linear map sends the square grid to a grid of
 # parallelograms (parallel, evenly spaced lines stay parallel and evenly
-# spaced; the origin stays put). Section 3.9: the image of the unit square has
-# area |ad - bc|, eq. (3.8). The image of the unit circle is an ellipse whose
-# semi-axes are the singular values of the matrix. That is the SVD, LA-9; here
+# spaced; the origin stays put). Section 3.13, Theorem 3.20: the image of the
+# unit square has area |ad - bc|, eq. (3.8). The image of the unit circle under
+# an invertible map is an ellipse whose semi-axes are the singular values of the
+# matrix (under a singular map it degenerates to a segment or a point). That is the SVD, LA-9; here
 # it is only drawn and compared, not derived.
 
 
@@ -302,7 +315,7 @@ def plot_grid_deformation(ax, M, title, extent=2.0, step=0.5):
 
 
 def rotation(theta):
-    """Rotation of the plane by theta (counterclockwise), eq. in section 3.9."""
+    """Rotation of the plane by theta (counterclockwise), R_theta of section 3.13."""
     c, s = np.cos(theta), np.sin(theta)
     return np.array([[c, -s], [s, c]])
 
@@ -351,7 +364,8 @@ assert np.isclose(np.linalg.det(reflection(np.pi / 6)), -1) and np.isclose(np.li
 assert np.isclose(np.linalg.det(shear(1.5)), 1)
 print("Part 5: area of the image of the unit square = |det| for rotation (1), reflection (1, det -1), shear (1), projection (0), [[2,1],[1,3]] (5).")
 
-# Image of the unit circle: an ellipse whose semi-axes are the singular values (LA-9 preview).
+# Image of the unit circle: an ellipse whose semi-axes are the singular values (LA-9 preview);
+# for the rank-1 projection the second singular value is 0 and the ellipse degenerates to a segment.
 th = np.linspace(0, 2 * np.pi, 400)
 circle = np.vstack([np.cos(th), np.sin(th)])
 fig, axes = plt.subplots(1, 3, figsize=(10.5, 3.6))
@@ -371,8 +385,9 @@ for ax, (name, M) in zip(axes, [("shear, k = 1.5", shear(1.5)), ("projection ont
     ax.set_aspect("equal"); ax.set_xlim(-2.6, 2.6); ax.set_ylim(-2.6, 2.6)
     ax.set_title(f"{name}: σ = ({s[0]:.2f}, {s[1]:.2f})", fontsize=10)
     ax.tick_params(labelsize=8)
+assert np.isclose(np.linalg.svd(P_proj, compute_uv=False)[1], 0)   # projection: a segment, not an ellipse
 axes[0].legend(fontsize=8, loc="lower left")
-fig.suptitle("The image of the unit circle is an ellipse (a preview of the SVD, LA-9)", fontsize=10)
+fig.suptitle("The image of the unit circle: an ellipse, or a segment for a singular map (a preview of the SVD, LA-9)", fontsize=10)
 fig.tight_layout()
 fig.savefig(FIG / "unit_circle_images.png", dpi=120)
 plt.close(fig)
@@ -470,13 +485,17 @@ print("Mohr's circle saved: centre (50, 0), radius 50.")
 #    columns, and compute `change_of_basis(P, Rz)`. It is a full 3x3 matrix
 #    with no zeros. Check the trace is still 1 + 2cos30° and that the result
 #    is orthogonal (P is orthogonal here, so P^{-1} = P^T). Then redo it with
-#    a non-orthogonal tilt such as b2 = (0, 1, 1): the trace survives but
-#    orthogonality of the matrix does not. Why?
+#    a skewed, non-orthogonal basis such as b1 = (1,0,0), b2 = (0,1,0),
+#    b3 = (0,1,1) (b3 leans 45 degrees toward b2): the trace survives but
+#    orthogonality of the matrix does not. Why? Finally try the orthogonal but
+#    unnormalized basis b1 = (1,0,0), b2 = (0,1,1), b3 = (0,-1,1): is the
+#    matrix orthogonal now?
 # 4. **A linearity check.** `matrix_of_map` assumes T is linear. Add a function
 #    `is_linear(T, basis, trials=20)` that tests T(a u + b v) = a T(u) + b T(v)
 #    on random a, b and random combinations of basis vectors. Run it on D, on
-#    the transpose map, and on the non-linear map p -> p^2 (coefficient-wise
-#    square). Explain why `matrix_of_map` on the non-linear map returns a
+#    the transpose map, and on the non-linear map that squares each
+#    coefficient, (c0, c1, c2, c3) -> (c0^2, c1^2, c2^2, c3^2) (not the
+#    polynomial product p*p). Explain why `matrix_of_map` on the non-linear map returns a
 #    matrix anyway, and what that matrix predicts wrongly.
 
 # %% [markdown]
@@ -508,10 +527,18 @@ Rz_tilt = change_of_basis(P_tilt, Rz)
 assert np.isclose(np.trace(Rz_tilt), 1 + 2 * np.cos(th30))
 assert np.allclose(Rz_tilt @ Rz_tilt.T, np.eye(3))              # orthogonal P keeps orthogonality
 assert np.count_nonzero(np.abs(Rz_tilt) > 1e-12) == 9           # no zeros left
-P_skew = np.array([[1, 0, 0], [0, 1, -1], [0, 1, 1.]])          # non-orthogonal tilt (b2 = (0,1,1) is not unit)
+P_skew = np.column_stack([[1, 0, 0], [0, 1, 0], [0, 1, 1.]])   # skewed basis: b2 . b3 = 1, not 0
+assert not np.allclose(P_skew.T @ P_skew, np.diag(np.diag(P_skew.T @ P_skew)))   # columns not orthogonal
 Rz_skew = change_of_basis(P_skew, Rz)
-assert np.isclose(np.trace(Rz_skew), 1 + 2 * np.cos(th30))
-print("Your turn 3: R_z(30°) in the tilted basis has trace %.4f = 1 + 2cos30° and no zero entries." % np.trace(Rz_tilt))
+assert np.isclose(np.trace(Rz_skew), 1 + 2 * np.cos(th30))      # trace survives
+assert not np.allclose(Rz_skew @ Rz_skew.T, np.eye(3))          # orthogonality does not
+P_scaled = np.column_stack([[1, 0, 0], [0, 1, 1], [0, -1, 1.]])  # orthogonal columns, not unit length
+assert np.allclose(P_scaled.T @ P_scaled, np.diag([1, 2, 2]))
+Rz_scaled = change_of_basis(P_scaled, Rz)
+assert np.isclose(np.trace(Rz_scaled), 1 + 2 * np.cos(th30))
+assert not np.allclose(Rz_scaled @ Rz_scaled.T, np.eye(3))      # rescaling alone breaks it too
+print("Your turn 3: R_z(30°) in the tilted basis has trace %.4f = 1 + 2cos30° and no zero entries;" % np.trace(Rz_tilt),
+      "in the skewed and the unnormalized bases the trace survives but the matrix is not orthogonal.")
 
 # %% [markdown]
 # ### Reference implementation for Exercise B8 (`is_linear`, `kernel_basis`, `image_basis`)
@@ -573,6 +600,9 @@ A_B3 = np.array([[2, 1], [1, 2.]])
 assert np.allclose(A_B3 @ P_A3, [[5, 3], [4, 3]])
 assert np.allclose(change_of_basis(P_A3, A_B3), [[1, 0], [3, 3]])
 assert np.allclose(P_A3 @ A_B3 @ np.linalg.inv(P_A3), [[1, 3], [0, 3]])
+# Notes section 9, Check yourself Q5: basis ((1,2),(1,3)), [(2,5)]_{B'} = (1, 1).
+P_cy = np.array([[1, 1], [2, 3.]])
+assert np.allclose(np.linalg.inv(P_cy), [[3, -1], [-2, 1]]) and np.allclose(np.linalg.solve(P_cy, [2, 5]), [1, 1])
 # A4: kernel and image of [[1,2,3],[2,4,6]].
 A_A4 = np.array([[1, 2, 3], [2, 4, 6.]])
 assert np.linalg.matrix_rank(A_A4) == 1 and null_space(A_A4).shape[1] == 2

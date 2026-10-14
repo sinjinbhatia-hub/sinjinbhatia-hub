@@ -49,7 +49,7 @@ Conventions as in the notes: bases are ordered lists; $[\mathbf{v}]_{\mathcal{B}
 **B4.** (Trace.)
 (a) Prove $\operatorname{tr}(XYZ) = \operatorname{tr}(ZXY)$ for square $X, Y, Z$, and give $2\times 2$ matrices with $\operatorname{tr}(XYZ) \neq \operatorname{tr}(YXZ)$.
 (b) Show that $I$ and $N = \begin{pmatrix} 1 & 1 \\ 0 & 1\end{pmatrix}$ have the same trace and determinant but are not similar.
-(c) Prove there are no $n\times n$ real matrices with $XY - YX = I$. (In QM-4 the position and momentum operators satisfy $[\hat x, \hat p] = i\hbar\,I$; this exercise is why they cannot be finite matrices.)
+(c) Prove there are no $n\times n$ real or complex matrices with $XY - YX = I$, or with $XY - YX = cI$ for any scalar $c \neq 0$. (In QM-4 the position and momentum operators satisfy $[\hat x, \hat p] = i\hbar\,I$; this exercise is why they cannot be finite matrices.)
 (d) Define the trace of an operator. Compute $\operatorname{tr}D$ for $D$ on $\mathcal{P}_3$, the trace of the projection of Example 4.3, and the trace of the transpose map on $\mathbb{R}^{2\times 2}$.
 
 **B5.** (One-sided inverses.)
@@ -67,7 +67,7 @@ Conventions as in the notes: bases are ordered lists; $[\mathbf{v}]_{\mathcal{B}
 (c) Let $S = \tfrac12(I + T)$, i.e. $S(A) = \tfrac12(A + A^\top)$. Show $S^2 = S$, identify its image and kernel, and check that $\operatorname{tr}[S]$ equals its rank. (C3 explains the last coincidence.)
 
 **B8.** (Code.) Extend `project.py`:
-(a) Write `is_linear(T, basis, trials=20)` that draws random scalars $a, b$ and random combinations $\mathbf{u}, \mathbf{v}$ of the basis vectors and checks $T(a\mathbf{u} + b\mathbf{v}) = aT\mathbf{u} + bT\mathbf{v}$ numerically. Run it on `D`, on the transpose map, and on the coefficient-wise square $p \mapsto p^2$. Explain why `matrix_of_map` returns a matrix for the non-linear map anyway, and what that matrix predicts wrongly.
+(a) Write `is_linear(T, basis, trials=20)` that draws random scalars $a, b$ and random combinations $\mathbf{u}, \mathbf{v}$ of the basis vectors and checks $T(a\mathbf{u} + b\mathbf{v}) = aT\mathbf{u} + bT\mathbf{v}$ numerically. Run it on `D`, on the transpose map, and on the map that squares each coefficient, $(c_0, c_1, c_2, c_3) \mapsto (c_0^2, c_1^2, c_2^2, c_3^2)$ (not the polynomial product $p\cdot p$). Explain why `matrix_of_map` returns a matrix for the non-linear map anyway, and what that matrix predicts wrongly.
 (b) Write `kernel_basis(T, basis_in, basis_out)` and `image_basis(T, basis_in, basis_out)` that return bases of $\ker T$ and $\operatorname{im}T$ as *ambient* vectors (polynomial coefficient vectors, flattened matrices), by computing `matrix_of_map`, taking `scipy.linalg.null_space` / `scipy.linalg.orth`, and converting coordinate vectors back to vectors. Apply both to $D$ on $\mathcal{P}_3$ and to $A \mapsto A - A^\top$. Assert that $T$ sends every returned kernel vector to zero and that the dimensions add to $\dim V$.
 (c) In a comment, explain why converting back uses `basis_in` for the kernel and `basis_out` for the image.
 
