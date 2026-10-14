@@ -3,13 +3,14 @@
 #
 # This script checks every number in the CM-1 notes and makes §3.11 visible.
 # Parts: (1) Euler vs RK4 vs symplectic Euler on the nonlinear pendulum for
-# 100 periods, plus the exact Euler energy-growth law (3.17); (2) the pendulum
+# 100 periods, plus the Euler energy-growth laws (3.17), (3.18); (2) the pendulum
 # phase portrait with its separatrix; (3) period vs amplitude: numerics vs the
 # elliptic integral (4.1) vs the series (4.2); (4) projectiles with linear and
 # quadratic drag; (5) the driven damped oscillator's resonance curve (3.10);
 # (6) the bead on the parabolic wire, eq. (3.14), with the normal force;
 # (7) the Atwood machine solved the Newtonian way at every step; (8) the
-# exploding shell and the rocket; (9) SymPy checks of the derivations.
+# exploding shell and the rocket; (9) SymPy checks of the derivations;
+# (10) the remaining numbers quoted in solutions.md.
 #
 # Run headless: `MPLBACKEND=Agg python3 project.py`. Figures go to ./figures/.
 
@@ -34,7 +35,8 @@ g = 9.81
 # ## Part 1: Three integrators on the nonlinear pendulum (§3.11)
 #
 # x'' = a(x) as the system (x, v)' = (v, a(x)). Euler inflates phase-space area
-# by 1 + h^2 ω^2 per step on the harmonic oscillator, eq. (3.17); symplectic
+# by 1 + h^2 ω^2 per step on the harmonic oscillator, eq. (3.17), and gains
+# ½h²(a² + V''v²) per step in general, eq. (3.18); symplectic
 # Euler has Jacobian determinant exactly 1 (exercise C2); RK4 is accurate but
 # not area-preserving. Pendulum: θ'' = -(g/l) sin θ, energy per unit mass
 # E = ½ l² θ'² + g l (1 - cos θ).
@@ -42,18 +44,15 @@ g = 9.81
 # **Build it yourself first:** write `euler_step`, `rk4_step`,
 # `symplectic_euler_step` for a generic a(x) before reading these.
 
-
 # %%
 def euler_step(a, x, v, h):
     """Explicit Euler for x'' = a(x): x_{n+1} = x_n + h v_n, v_{n+1} = v_n + h a(x_n). §3.11."""
     return x + h * v, v + h * a(x)
 
-
 def symplectic_euler_step(a, x, v, h):
     """Symplectic Euler: update v, then x with the NEW v. Area-preserving (C2). §3.11."""
     v_new = v + h * a(x)
     return x + h * v_new, v_new
-
 
 def rk4_step(a, x, v, h):
     """Classical fourth-order Runge–Kutta on (x, v)' = (v, a(x))."""
@@ -64,7 +63,6 @@ def rk4_step(a, x, v, h):
     return (x + h / 6 * (k1x + 2 * k2x + 2 * k3x + k4x),
             v + h / 6 * (k1v + 2 * k2v + 2 * k3v + k4v))
 
-
 def integrate(step, a, x0, v0, h, n):
     """Run `step` n times from (x0, v0); return arrays x, v of length n+1."""
     xs = np.empty(n + 1); vs = np.empty(n + 1)
@@ -74,13 +72,19 @@ def integrate(step, a, x0, v0, h, n):
         xs[i], vs[i] = x, v
     return xs, vs
 
-
 # (3.17) exactly, on the harmonic oscillator: E_N = (1 + h^2 ω^2)^N E_0.
 w_sho, h_sho, N_sho = 3.0, 0.01, 500
 xs, vs = integrate(euler_step, lambda x: -w_sho**2 * x, 1.0, 0.0, h_sho, N_sho)
 E_sho = 0.5 * vs**2 + 0.5 * w_sho**2 * xs**2
 assert np.allclose(E_sho, E_sho[0] * (1 + h_sho**2 * w_sho**2) ** np.arange(N_sho + 1), rtol=1e-10)
 print(f"(3.17) verified: Euler multiplies SHO energy by exactly {1 + h_sho**2 * w_sho**2:.6f} per step.")
+# The step used in §3.11 and below: h = T0/1000, so hω = 2π/1000. SHO with ω = 1 for 100 periods.
+hw = 2 * np.pi / 1000
+xs, vs = integrate(euler_step, lambda x: -x, 1.0, 0.0, hw, 100_000)
+E_r = vs**2 + xs**2                                                    # E/E0, since E0 = 1/2
+assert np.isclose(hw, 0.006283, atol=1e-6) and np.isclose(hw**2, 3.948e-5, rtol=1e-3)
+assert np.isclose(E_r[10_000], 1.484, atol=1e-3) and np.isclose(E_r[-1], 51.8, atol=0.05)
+print(f"§3.11: hω = {hw:.6f}, factor 1 + {hw**2:.3e}/step; SHO E/E0 = {E_r[10_000]:.3f} after 10 periods, {E_r[-1]:.1f} after 100")
 
 # Nonlinear pendulum, 100 periods, two step sizes.
 l_p = 1.0
@@ -101,25 +105,32 @@ for ax, steps_per_period in zip(axes, (1000, 100)):
         xs, vs = integrate(step, a_pend, theta0, 0.0, h, n)
         relerr = (E_pend(xs, vs) - E0) / E0
         results[(steps_per_period, name)] = relerr
+        if (steps_per_period, name) == (1000, "Euler"):
+            th_eu = xs
         ax.semilogy(t / T_exact, np.abs(relerr) + 1e-17, lw=0.8, label=name)
     ax.set_title(f"h = T0/{steps_per_period}: |E - E0| / E0 over 100 periods")
     ax.set_xlabel("time / period"); ax.grid(alpha=.3); ax.legend()
 axes[0].set_ylabel("relative energy error")
 fig.tight_layout(); fig.savefig(FIG / "pendulum_energy_three_integrators.png", dpi=120); plt.close(fig)
 
-# Fine step (1000/period): Euler blows up, RK4 drift is tiny, symplectic is bounded with no trend.
+# Fine step (1000/period). Euler: slower than geometric growth, (3.18), since V'' ∝ cos θ softens at
+# large swings, but it still crosses the separatrix E = 2gl and turns oscillation into rotation.
 eu, rk, sy = (results[(1000, k)] for k in ("Euler", "RK4", "symplectic Euler"))
 n10 = len(eu) // 10
-print(f"Euler after 10 periods: E/E0 = {1 + eu[n10]:.3f}; after 100 periods: E/E0 = {1 + eu[-1]:.1f}")
+per_sep = np.argmax(E0 * (1 + eu) > 2 * g * l_p) * (T0 / 1000) / T_exact     # first step past the separatrix
+print(f"Pendulum Euler: E/E0 = {1 + eu[n10]:.3f} after 10 periods; crosses the separatrix (E/E0 = {2*g*l_p/E0:.2f}) "
+      f"at period {per_sep:.1f}; after 100 periods E/E0 = {1 + eu[-1]:.2f} and θ = {th_eu[-1]:.0f} rad (spinning)")
 print(f"RK4 max |dE|/E0 = {np.abs(rk).max():.2e}; symplectic max |dE|/E0 = {np.abs(sy).max():.2e}")
-assert 1.3 < 1 + eu[n10] < 2.0, "Euler should look almost fine at 10 periods"
-assert 1 + eu[-1] > 10, "Euler should have blown up by 100 periods"
+assert np.isclose(1 + eu[n10], 1.41, atol=0.01), "Euler looks almost fine at 10 periods"
+assert 60 < per_sep < 62.5 and np.isclose(1 + eu[-1], 5.9, atol=0.05), "Euler pushes the bob over the top"
+assert np.abs(th_eu).max() > 100 * np.pi, "by period 100 the Euler 'pendulum' has made dozens of full turns"
 assert np.abs(rk).max() < 1e-6
 assert np.abs(sy).max() < 2e-2
 drift = abs(sy[-n10:].mean() - sy[:n10].mean())
 assert drift < 0.1 * np.abs(sy).max(), "symplectic energy error must not drift"
 # Coarse step (100/period): RK4 drift is now visible but still small; symplectic still bounded.
 rk_c, sy_c = results[(100, "RK4")], results[(100, "symplectic Euler")]
+print(f"h = T0/100: RK4 max |dE|/E0 = {np.abs(rk_c).max():.2e} (final {rk_c[-1]:+.2e}); symplectic max {np.abs(sy_c).max():.2e}")
 assert 1e-6 < np.abs(rk_c).max() < 1e-2, np.abs(rk_c).max()
 assert np.abs(sy_c).max() < 0.2
 assert abs(sy_c[-n10 // 10:].mean() - sy_c[: n10 // 10].mean()) < 0.1 * np.abs(sy_c).max()
@@ -128,7 +139,7 @@ h = T0 / 1000; n = int(round(10 * T_exact / h))
 xs, vs = integrate(rk4_step, a_pend, theta0, 0.0, h, n)
 ref = solve_ivp(lambda t, y: [y[1], a_pend(y[0])], [0, n * h], [theta0, 0.0], method="DOP853", rtol=1e-12, atol=1e-12)
 assert abs(xs[-1] - ref.y[0, -1]) < 1e-6
-print("Part 1 passed: Euler blows up, RK4 drifts slightly, symplectic Euler oscillates boundedly.")
+print("Part 1 passed: Euler turns oscillation into rotation, RK4 drifts slightly, symplectic Euler stays bounded.")
 
 # %% [markdown]
 # ## Part 2: Phase portrait of the pendulum (§2, §3.6)
@@ -142,7 +153,7 @@ EE = 0.5 * OM**2 + (g / l_p) * (1 - np.cos(TH))
 fig, ax = plt.subplots(figsize=(9, 4.5))
 ax.contour(TH, OM, EE, levels=np.linspace(0.5, 60, 24), colors="C0", linewidths=0.7)
 ax.contour(TH, OM, EE, levels=[2 * g / l_p], colors="r", linewidths=2)
-ax.plot([-np.pi, np.pi], [0, 0], "rx", ms=8); ax.plot([-2 * np.pi, 0, 2 * np.pi], [0, 0], "ko", ms=5)
+ax.plot([-np.pi, np.pi], [0, 0], "rx", ms=8); ax.plot([-2 * np.pi, 0, 2 * np.pi], [0, 0, 0], "ko", ms=5)
 ax.set_xlabel("θ"); ax.set_ylabel("θ-dot"); ax.set_title("Pendulum phase portrait; red = separatrix E = 2g/l")
 ax.set_xticks([-2 * np.pi, -np.pi, 0, np.pi, 2 * np.pi]); ax.set_xticklabels(["-2π", "-π", "0", "π", "2π"]); ax.grid(alpha=.3)
 fig.tight_layout(); fig.savefig(FIG / "pendulum_phase_portrait.png", dpi=120); plt.close(fig)
@@ -154,12 +165,10 @@ print("Part 2: phase portrait saved.")
 # Exact: T = 4 sqrt(l/g) K(k), k = sin(θ0/2), eq. (4.1). NOTE: `ellipk(m)`
 # takes the parameter m = k², not k. Series: T/T0 = 1 + θ0²/16 + 11 θ0⁴/3072.
 
-
 # %%
 def pendulum_period_elliptic(theta0, l=1.0):
     """Eq. (4.1): T = 4 sqrt(l/g) K(sin²(θ0/2)); ellipk takes m = k²."""
     return 4 * np.sqrt(l / g) * ellipk(np.sin(theta0 / 2) ** 2)
-
 
 def pendulum_period_numeric(theta0, l=1.0):
     """Period from solve_ivp: θ = 0 crossings occur at T/4 and 3T/4, so T = 2 (t2 - t1)."""
@@ -168,7 +177,6 @@ def pendulum_period_numeric(theta0, l=1.0):
                     events=lambda t, y: y[0], rtol=1e-11, atol=1e-13)
     te = sol.t_events[0]
     return 2 * (te[1] - te[0])
-
 
 deg = np.arange(5, 180, 5)
 th0 = np.radians(deg)
@@ -181,6 +189,11 @@ r90 = pendulum_period_elliptic(np.pi / 2) / T0; r30 = pendulum_period_elliptic(n
 assert np.isclose(r90, 1.18034, atol=1e-5) and np.isclose(r30, 1.01741, atol=1e-5)
 assert np.isclose(1 + (np.pi / 2) ** 2 / 16, 1.15421, atol=1e-5)
 assert np.isclose(1 + (np.pi / 2) ** 2 / 16 + 11 * (np.pi / 2) ** 4 / 3072, 1.17601, atol=1e-5)
+assert np.isclose(ellipk(0.5), 1.85407, atol=1e-5) and np.isclose(np.sin(np.pi / 12) ** 2, 0.06699, atol=1e-5)
+assert np.isclose(1 + (np.pi / 6) ** 2 / 16, 1.01713, atol=1e-5)                                 # 30°, one term
+s1 = 1 + (np.pi / 2) ** 2 / 16; s2 = s1 + 11 * (np.pi / 2) ** 4 / 3072                          # 90°, Ex. 4.2 and C1
+assert np.isclose((np.pi / 2) ** 4, 6.0881, atol=1e-4) and np.isclose(s2 - s1, 0.02180, atol=1e-5)
+assert np.isclose(1 - s1 / r90, 0.0221, atol=1e-4) and np.isclose(1 - s2 / r90, 0.0037, atol=1e-4)
 print(f"Example 4.2: T/T0 at 90° = {r90:.5f} (exact), {1 + (np.pi/2)**2/16:.5f} (1 term), "
       f"{1 + (np.pi/2)**2/16 + 11*(np.pi/2)**4/3072:.5f} (2 terms); at 30° = {r30:.5f}")
 
@@ -213,6 +226,8 @@ assert np.isclose(vx0 * tau, 42.426, atol=1e-3)
 assert np.isclose(t_f, 3.4032, atol=1e-4) and np.isclose(x_lin(t_f), 34.688, atol=1e-3)
 assert np.isclose(t_top, 1.4659, atol=1e-4) and np.isclose(y_lin(t_top), 13.666, atol=1e-3)
 assert np.isclose(v0**2 / g, 91.743, atol=1e-3) and np.isclose(2 * vy0 / g, 4.3248, atol=1e-4)
+assert np.isclose((vy0 + v_inf) * tau, 81.666, atol=1e-3) and np.isclose((vy0 + v_inf) / v_inf, 2.0812, atol=1e-4)
+assert np.isclose(vy0**2 / (2 * g), 22.94, atol=1e-2) and np.isclose(1 - x_lin(t_f) / (v0**2 / g), 0.62, atol=5e-3)
 sol = solve_ivp(lambda t, y: [y[2], y[3], -y[2] / tau, -g - y[3] / tau], [0, t_f], [0, 0, vx0, vy0],
                 rtol=1e-11, atol=1e-13, dense_output=True)
 tt = np.linspace(0, t_f, 200)
@@ -238,6 +253,7 @@ sf = solve_ivp(lambda t, y: [g - (c_q / m_q) * y[0] ** 2], [0, 12], [0.0], rtol=
 tt = np.linspace(0, 12, 100)
 assert np.allclose(sf.sol(tt)[0], s_inf * np.tanh(tt / tau_q), atol=1e-7)
 assert np.isclose(s_inf, 34.08, atol=0.01) and np.isclose(tau_q * np.arctanh(0.9), 5.114, atol=1e-3)
+assert np.isclose(tau_q, 3.474, atol=1e-3) and np.isclose(np.arctanh(0.9), 1.4722, atol=1e-4) and np.isclose(5 * g, 49.05)
 print(f"A3: terminal speed {s_inf:.2f} m/s, τ = {tau_q:.3f} s, 90% of terminal at t = {tau_q*np.arctanh(0.9):.3f} s")
 
 fig, ax = plt.subplots(figsize=(8, 4.5))
@@ -262,7 +278,6 @@ w0 = np.sqrt(k_o / m_o); gam = b_o / m_o; Q = w0 / gam
 A_an = lambda w: (F0 / m_o) / np.sqrt((w0**2 - w**2) ** 2 + gam**2 * w**2)       # (3.10)
 d_an = lambda w: np.arctan2(gam * w, w0**2 - w**2)                               # (3.10), δ in [0, π]
 
-
 def steady_state(w, t_end=20.0):
     """Numerical steady-state amplitude and phase lag of the driven oscillator at drive frequency w."""
     rhs = lambda t, y: [y[1], (F0 * np.cos(w * t) - b_o * y[1] - k_o * y[0]) / m_o]
@@ -273,7 +288,6 @@ def steady_state(w, t_end=20.0):
     s = 2 / (nper * Tw) * np.trapezoid(x * np.sin(w * t), t)
     return np.hypot(c, s), np.arctan2(s, c)
 
-
 assert np.isclose(w0, 10.0) and np.isclose(gam, 2.0) and np.isclose(Q, 5.0)
 assert np.isclose(A_an(w0), 0.05) and np.isclose(d_an(w0), np.pi / 2) and np.isclose(Q * F0 / k_o, 0.05)
 assert np.isclose(A_an(8.0), 0.02538, atol=1e-5) and np.isclose(d_an(8.0), 0.4182, atol=1e-4)
@@ -281,6 +295,8 @@ assert np.isclose(A_an(12.0), 0.01995, atol=1e-5) and np.isclose(d_an(12.0), 2.6
 w_max = np.sqrt(w0**2 - gam**2 / 2)
 assert np.isclose(w_max, 9.8995, atol=1e-4) and np.isclose(A_an(w_max), 0.050252, atol=1e-6)
 assert np.isclose(A_an(w_max), (F0 / m_o) / (gam * np.sqrt(w0**2 - gam**2 / 4)))
+assert np.isclose(np.sqrt(w0**2 - gam**2 / 4), 9.950, atol=1e-3)                                # ω1
+assert np.isclose(np.exp(-5), 0.0067, atol=1e-4) and np.isclose(np.exp(-15), 3e-7, atol=1e-8)   # transient e^{-γt/2}
 P_an = lambda w: 0.5 * b_o * w**2 * A_an(w) ** 2
 w_lo = brentq(lambda w: P_an(w) - 0.5 * P_an(w0), 1, w0); w_hi = brentq(lambda w: P_an(w) - 0.5 * P_an(w0), w0, 30)
 assert np.isclose(w_hi - w_lo, gam, atol=1e-8), "power FWHM should equal γ (B5c)"
@@ -312,11 +328,9 @@ print("Part 5 passed: numerical steady state matches (3.10) in amplitude and pha
 k_w, m_b, x0_b = 0.5, 0.2, 1.0
 xdd_bead = lambda x, v: -2 * k_w * x * (g + 2 * k_w * v**2) / (1 + 4 * k_w**2 * x**2)       # (3.14)
 
-
 def normal_force(x, v):
     """N along the trajectory, from step 6 of §3.10(b)."""
     return m_b * (g + 2 * k_w * (v**2 + x * xdd_bead(x, v))) * np.sqrt(1 + 4 * k_w**2 * x**2)
-
 
 bottom = lambda t, y: y[0]
 sb = solve_ivp(lambda t, y: [y[1], xdd_bead(y[0], y[1])], [0, 3.0], [x0_b, 0.0], events=bottom,
@@ -328,6 +342,7 @@ assert np.allclose(E_bead(xx, vv), E_bead(x0_b, 0.0), rtol=1e-9), "normal force 
 assert np.isclose(vb**2, 2 * g * k_w * x0_b**2, rtol=1e-8) and np.isclose(vb**2, 9.81, atol=1e-6)
 assert np.isclose(normal_force(xb, vb), 3.924, atol=1e-6) and np.isclose(normal_force(xb, vb), 2 * m_b * g)
 assert np.isclose(normal_force(x0_b, 0.0), 1.3873, atol=1e-4) and np.isclose(normal_force(x0_b, 0.0), m_b * g / np.sqrt(2))
+assert np.isclose(abs(vb), 3.132, atol=1e-3) and np.isclose(xdd_bead(x0_b, 0.0), -4.905)
 # Independent check: N - mg cos α = m v_tot² / ρ with ρ = (1 + f'²)^{3/2} / f'' and cos α = 1/sqrt(1 + f'²).
 fp = 2 * k_w * xx; v_tot2 = vv**2 * (1 + fp**2); rho = (1 + fp**2) ** 1.5 / (2 * k_w)
 assert np.allclose(normal_force(xx, vv) - m_b * g / np.sqrt(1 + fp**2), m_b * v_tot2 / rho, rtol=1e-8)
@@ -349,26 +364,23 @@ print("Part 6 passed.")
 # %%
 m1, m2 = 1.0, 1.5
 
-
 def atwood_unknowns(m1, m2):
     """Solve for (a1, a2, T) from Newton's equations plus the string constraint."""
     A = np.array([[m1, 0.0, -1.0], [0.0, m2, -1.0], [1.0, 1.0, 0.0]])
     return np.linalg.solve(A, [-m1 * g, -m2 * g, 0.0])
 
-
 def rk4_vec(f, t, y, h):
     k1 = f(t, y); k2 = f(t + h / 2, y + h / 2 * k1); k3 = f(t + h / 2, y + h / 2 * k2); k4 = f(t + h, y + h * k3)
     return y + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
-
 
 def atwood_rhs(t, y):
     a1, a2, T = atwood_unknowns(m1, m2)
     return np.array([y[1], a1, y[3], a2])
 
-
 a1, a2, T_at = atwood_unknowns(m1, m2)
 assert np.isclose(a1, (m2 - m1) * g / (m1 + m2)) and np.isclose(T_at, 2 * m1 * m2 * g / (m1 + m2))   # (3.16)
 assert np.isclose(a1, 1.962, atol=1e-6) and np.isclose(T_at, 11.772, atol=1e-6) and np.isclose(a2, -a1)
+assert m1 * g < T_at < m2 * g and np.isclose(m2 * g, 14.715)
 y = np.array([0.0, 0.0, 0.0, 0.0]); h = 0.01
 for i in range(200):
     y = rk4_vec(atwood_rhs, i * h, y, h)
@@ -409,6 +421,10 @@ h_B6 = u_r * t_b - (u_r * mf_r / beta) * np.log(m0_r / mf_r) - 0.5 * g * t_b**2
 assert np.isclose(sg.y[0, -1], dv_closed - g * t_b, rtol=1e-9) and np.isclose(sg.y[0, -1], 2421.3, atol=0.1)
 assert np.isclose(sg.y[1, -1], h_B6, rtol=1e-9) and np.isclose(h_B6, 54944, atol=1)
 assert u_r * beta > m0_r * g and np.isclose(u_r * beta, 29167, atol=1)
+assert np.isclose(g * t_b, 588.6) and np.isclose(beta, 11.67, atol=5e-3) and np.isclose(np.log(m0_r / mf_r), 1.2040, atol=1e-4)
+assert np.isclose(u_r * mf_r / beta, 64285.7, atol=0.1) and np.isclose(0.5 * g * t_b**2, 17658, atol=0.5)       # B6
+assert np.isclose(u_r * mf_r / beta * np.log(m0_r / mf_r), 77398.3, atol=0.1)
+assert np.isclose(u_r * (m0_r - mf_r) / 300.0, 5833, atol=1) and u_r * (m0_r - mf_r) / 300.0 < m0_r * g   # 5-minute burn
 print(f"Example 4.6 (rocket): Δv = {dv_closed:.1f} m/s in free space, {sg.y[0, -1]:.1f} m/s after a 60 s vertical burn; "
       f"burnout height {sg.y[1, -1]:.0f} m (B6); thrust {u_r*beta:.0f} N > weight {m0_r*g:.0f} N")
 print("Parts 7 and 8 passed.")
@@ -453,7 +469,7 @@ assert curl([Y, X, 0]) == sp.zeros(3, 1) and curl([-Y, X, 0]) == sp.Matrix([0, 0
 assert curl([2 * X * Y, X**2 + Z**2, 2 * Y * Z]) == sp.zeros(3, 1)                              # A2(c)
 Vc = -(X**2 * Y + Y * Z**2)
 assert [-sp.diff(Vc, s) for s in (X, Y, Z)] == [2 * X * Y, X**2 + Z**2, 2 * Y * Z]
-Fv = [-Y / (X**2 + Y**2), X / (X**2 + Y**2), 0]
+Fv = [-Y / (X**2 + Y**2), X / (X**2 + Y**2), sp.Integer(0)]
 assert sp.simplify(curl(Fv)) == sp.zeros(3, 1)                                                  # B2(a): curl-free...
 tt_ = sp.symbols("t", real=True)
 loop = sp.integrate(sp.simplify(sum(f.subs({X: sp.cos(tt_), Y: sp.sin(tt_)}) * d for f, d in zip(Fv, [-sp.sin(tt_), sp.cos(tt_), 0]))), (tt_, 0, 2 * sp.pi))
@@ -461,6 +477,29 @@ assert loop == 2 * sp.pi                                                        
 I_quartic = quad(lambda u: 1 / np.sqrt(1 - u**4), 0, 1)[0]
 assert np.isclose(I_quartic, Gamma(0.25) * Gamma(0.5) / (4 * Gamma(0.75))) and np.isclose(I_quartic, 1.31103, atol=1e-5)  # B4
 print(f"B4: ∫₀¹ du/√(1-u⁴) = {I_quartic:.5f}.  Part 9 passed: all symbolic identities hold.")
+
+# %% [markdown]
+# ## Part 10: Numbers quoted in solutions.md (A1, A5, B3, B4, B7)
+#
+# B7 is checked against its exact piecewise solution (each half-cycle is SHM about
+# x_c = ±μmg/k lasting π/ω0), not simulated: simulating it is "Your turn" item 1.
+
+# %%
+ms_ = np.array([2.0, 1.0, 3.0]); rs_ = np.array([[1, 0, 0], [0, 2, 0], [0, 0, -1.0]]); vv_ = np.array([[0, 3, 0], [-1, 0, 0], [2, 1, 0.0]])
+P_, R_, L_ = ms_ @ vv_, ms_ @ rs_ / ms_.sum(), np.cross(rs_, ms_[:, None] * vv_).sum(0)
+assert np.allclose(P_, [5, 9, 0]) and np.allclose(R_, [1 / 3, 1 / 3, -0.5]) and np.allclose(L_, [3, -6, 8])   # A1
+a5, _, T5 = atwood_unknowns(0.8, 1.2)                                                                           # A5
+assert np.isclose(a5, 1.962) and np.isclose(T5, 9.4176) and np.isclose(2 * T5, 18.835, atol=1e-3)
+assert np.isclose(2.0 * g - 2 * T5, 0.785, atol=1e-3) and np.isclose((0.8 - 1.2) * a5 / 2.0, -0.392, atol=1e-3)
+Vdw = lambda x: -x**2 / 2 + x**4 / 4                                                                            # B3(d)
+assert np.isclose(Vdw(2.0), 2.0) and np.isclose(np.sqrt(2 * (Vdw(2.0) - Vdw(0.0))), 2.0) and np.isclose(Vdw(-2.0), Vdw(2.0))
+T_q = lambda A: 4 / A * np.sqrt(1 / 2) * I_quartic                                                              # B4, m = α = 1
+assert np.allclose([T_q(1), T_q(2), T_q(4)], [3.708, 1.854, 0.927], atol=1e-3)
+assert np.allclose([Gamma(0.25), Gamma(0.5), Gamma(0.75)], [3.6256, 1.7725, 1.2254], atol=1e-4)
+dA = 2 * 0.1 * g / 100.0; A_n = 0.5 - dA * np.arange(30); n_stick = int(np.argmax(100.0 * A_n <= 0.1 * g))     # B7
+assert np.isclose(dA, 0.01962) and np.isclose(2 * dA, 0.03924) and np.allclose(A_n[1:4], [0.48038, 0.46076, 0.44114])
+assert n_stick == 25 and np.isclose(A_n[24], 0.0291, atol=1e-4) and np.isclose(A_n[25], 0.0095) and np.isclose(25 * np.pi / 10, 7.854, atol=1e-3)
+print(f"Part 10 passed: B7 sticks after {n_stick} half-cycles at |x| = {A_n[n_stick]:.4f} m, t = {n_stick * np.pi / 10:.3f} s")
 
 # %% [markdown]
 # ## Your turn

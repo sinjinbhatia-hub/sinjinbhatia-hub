@@ -66,9 +66,10 @@ def frequencies(w2, rel_tol=1e-9):
 
 
 def sign_fix(A):
-    """Flip each column so its largest-|entry| is positive (eigenvectors are defined up to sign)."""
+    """Flip each column so its largest-|entry| is positive (eigenvectors are defined up to sign).
+    Ties (e.g. an antisymmetric mode, +x and -x) go to the first such entry, so the rule is deterministic."""
     A = np.array(A, float)
-    idx = np.argmax(np.abs(A), axis=0)
+    idx = np.argmax(np.abs(A) >= np.abs(A).max(axis=0) * (1 - 1e-8), axis=0)
     s = np.sign(A[idx, np.arange(A.shape[1])]); s[s == 0] = 1
     return A * s
 
@@ -156,8 +157,9 @@ V_dp = -m * gs * l * (2 * sp.cos(th1) + sp.cos(th2))
 M_dp = sp.hessian(T_dp, (td1, td2)).subs({th1: 0, th2: 0}); K_dp = sp.hessian(V_dp, (th1, th2)).subs({th1: 0, th2: 0})
 assert M_dp == m * l**2 * sp.Matrix([[2, 1], [1, 1]]) and K_dp == m * gs * l * sp.diag(2, 1)
 lam_s = sp.symbols("lambda")
-roots = sp.solve(sp.expand((K_dp - lam_s * M_dp).det() / (m**2 * l**3 * gs)), lam_s)   # lambda = omega^2 l/g
-assert {sp.nsimplify(r) for r in roots} == {2 - sp.sqrt(2), 2 + sp.sqrt(2)}
+char_poly = sp.expand((K_dp - lam_s * (gs / l) * M_dp).det() / (m**2 * l**2 * gs**2))  # lambda = omega^2 l/g
+assert sp.simplify(char_poly - (lam_s**2 - 4 * lam_s + 2)) == 0                         # (3.6) for Example 4.4
+assert set(sp.solve(char_poly, lam_s)) == {2 - sp.sqrt(2), 2 + sp.sqrt(2)}
 M44 = np.array([[2.0, 1], [1, 1]]); K44 = g * np.diag([2.0, 1])            # m = l = 1
 w2, A44 = normal_modes(K44, M44); check_modes(K44, M44, w2, A44)
 assert np.allclose(w2 / g, [2 - SQ2, 2 + SQ2]) and np.allclose(w2 / g, [0.58579, 3.41421], atol=5e-6)
@@ -474,7 +476,7 @@ ax.set_title("CO2 given a push: vibration on top of drift, (3.13) with the zero 
 w2, A = normal_modes([[3.0, -2], [-2, 4]], np.diag([1.0, 2]))
 assert np.allclose(w2, [1, 4]) and np.allclose(sign_fix(A), np.c_[[1, 1] / SQ3, [2, -1] / np.sqrt(6)])
 # A2: double-pendulum shapes M-normalized; A^T K A = g diag(2 -+ sqrt2).
-assert np.allclose(sign_fix(A44), [[0.38268, 0.92388], [0.54120, -1.30656]], atol=5e-6)
+assert np.allclose(A44 * np.sign(A44[0]), [[0.38268, 0.92388], [0.54120, -1.30656]], atol=5e-6)   # first entries positive
 assert np.allclose(A44.T @ K44 @ A44, np.diag([5.7466, 33.4934]), atol=5e-4)
 # A3: M = [[1,2],[2,1]] is symmetric but not PD: v = (1,-1) gives -2; eigenvalues 3, -1.
 assert np.array([1, -1]) @ np.array([[1, 2], [2, 1]]) @ np.array([1, -1]) == -2 and np.allclose(np.linalg.eigvalsh([[1, 2], [2, 1]]), [-1, 3])
@@ -497,8 +499,7 @@ assert np.isclose(k_exact, 0.4508, atol=5e-5) and np.isclose(k_weak, 0.4234, ato
 # B1: Example 4.2 with a damper on mass 1 only: A^T C A is full. Rayleigh alpha=0.1, beta=0.05: zeta = (0.0827, 0.0710). Fit zeta = 0.02 twice.
 ACA = A42.T @ np.diag([1.0, 0]) @ A42
 assert np.allclose(ACA, [[(3 - SQ3) / 6, 1 / np.sqrt(6)], [1 / np.sqrt(6), (3 + SQ3) / 6]]) and np.allclose(ACA, [[0.21132, 0.40825], [0.40825, 0.78868]], atol=5e-6)
-om42 = np.sqrt(np.linalg.eigvalsh(np.linalg.solve(M42, K42) @ np.eye(2)) if False else np.array([0.63397, 2.36603]))
-om42 = np.sqrt(A42.T @ K42 @ A42).diagonal()
+om42 = np.sqrt(np.diag(A42.T @ K42 @ A42))
 zeta_b1 = (0.1 + 0.05 * om42**2) / (2 * om42); assert np.allclose(zeta_b1, [0.08270, 0.07096], atol=5e-6)
 beta_fit = 0.04 / (om42[0] + om42[1]); alpha_fit = 0.04 * om42[0] - beta_fit * om42[0]**2
 assert np.allclose((alpha_fit + beta_fit * om42**2) / (2 * om42), 0.02) and np.allclose([alpha_fit, beta_fit], [0.020986, 0.017135], atol=5e-7)
@@ -531,13 +532,36 @@ q_k, xi_k, xid_k = fit_initial_conditions([0, 0, 0.0], [1.0, 0, 0], (w2_co2, A_c
 assert np.allclose(np.abs(xid_k), [16 / np.sqrt(44), 16 / np.sqrt(32), 16 / norms_co2[2]]) and np.allclose(np.abs(xid_k), [2.41209, 2.82843, 1.47710], atol=5e-6)
 coef_x1 = A_co2[0] * xid_k; assert np.allclose(coef_x1, [4 / 11, 0.5, 3 / 22]) and np.allclose(coef_x1, [0.36364, 0.5, 0.13636], atol=5e-6)
 assert np.allclose(A_co2[1] * xid_k, [4 / 11, 0, -4 / 11])
-# B7: double pendulum released from (0.1, 0): xi = (0.13066, 0.054120), E_1 = E_2 = 0.04905 exactly half each.
-q_d, xi_d, _ = fit_initial_conditions([0.1, 0.0], [0, 0.0], (np.array([2 - SQ2, 2 + SQ2]) * g, A44, M44))
-E_d = 0.5 * np.array([2 - SQ2, 2 + SQ2]) * g * xi_d**2
-assert np.allclose(np.abs(xi_d), [0.13066, 0.054120], atol=5e-6) and np.allclose(E_d, 0.04905) and np.isclose(E_d[0], E_d[1])
+# B7 (reference solution): double pendulum (m = l = 1) released from (theta0, 0) at rest.
+# Linear: xi = (0.13066, 0.054120) for theta0 = 0.1, E_1 = E_2 = g theta0^2 / 2 exactly. Exact (CM-3) equations:
+# [[2, c], [c, 1]] theta'' = (-w2^2 s - 2 g sin th1, w1^2 s - g sin th2), c = cos(th1 - th2), s = sin(th1 - th2).
+def double_pendulum_rhs(t, y):
+    t1, t2, w1, w2 = y; c, s = np.cos(t1 - t2), np.sin(t1 - t2)
+    acc = np.linalg.solve([[2.0, c], [c, 1.0]], [-w2**2 * s - 2 * g * np.sin(t1), w1**2 * s - g * np.sin(t2)])
+    return [w1, w2, acc[0], acc[1]]
+
+
+modes44 = (np.array([2 - SQ2, 2 + SQ2]) * g, A44, M44); t_d = np.linspace(0, 10, 2001); b7 = {}
+for th0 in (0.1, 1.0):
+    q_d, xi_d, _ = fit_initial_conditions([th0, 0.0], [0, 0.0], modes44)
+    E_d = 0.5 * modes44[0] * xi_d**2
+    assert np.allclose(E_d, g * th0**2 / 2) and np.isclose(E_d.sum(), 0.5 * np.array([th0, 0]) @ K44 @ np.array([th0, 0]))
+    sol = solve_ivp(double_pendulum_rhs, (0, 10), [th0, 0, 0, 0], t_eval=t_d, method="DOP853", rtol=1e-10, atol=1e-12)
+    Xi, Xid = sol.y[:2].T @ M44 @ A44, sol.y[2:].T @ M44 @ A44              # project the exact motion onto the modes
+    E_t = 0.5 * (Xid**2 + modes44[0] * Xi**2)
+    b7[th0] = (np.abs(q_d(t_d) - sol.y[:2].T).max() / th0, np.ptp(E_t[:, 0]) / E_t[0, 0], xi_d)
+assert np.allclose(np.abs(b7[0.1][2]), [0.13066, 0.054120], atol=5e-6) and np.isclose(g * 0.1**2 / 2, 0.04905)
+assert 0.15 < b7[0.1][0] < 0.2 and b7[0.1][1] < 0.01 and b7[1.0][0] > 1 and b7[1.0][1] > 0.5
+print(f"B7: max|exact - modal|/theta0 over 10 s = {b7[0.1][0]:.3f} (0.1 rad), {b7[1.0][0]:.3f} (1.0 rad); "
+      f"relative swing of E_1 = {b7[0.1][1]:.4f}, {b7[1.0][1]:.3f}")
 # B8: K^{-1} = A Omega^{-2} A^T; static response to F = e1 is (3/4, 1/2, 1/4); mode 2 has a node at mass 2.
 assert np.allclose(np.linalg.inv(K3), A3 @ np.diag(1 / w2_3) @ A3.T) and np.allclose(np.linalg.solve(K3, [1, 0, 0]), [0.75, 0.5, 0.25])
-assert np.allclose(np.abs(A3[:, 1]), [1 / SQ2, 0, 1 / SQ2]) and np.allclose(1 / (2 * zeta3 * w2_3) * np.abs(A3[0] * A3[0]), [np.abs(A3[0, j])**2 / (2 * zeta3[j] * w2_3[j]) for j in range(3)])
+assert np.allclose(A3[0]**2 / w2_3, [0.42678, 0.25, 0.07322], atol=5e-6)            # modal pieces of the static 3/4
+assert np.allclose(np.abs(A3[:, 1]), [1 / SQ2, 0, 1 / SQ2]) and np.allclose(zeta3, [0.016892, 0.014142, 0.014651], atol=5e-7)
+peak_exact = np.abs(receptance(w2_3, A3, zeta3, np.array([1.0, 0, 0]), om3)[:, 0])  # |q_1| driven at mass 1, at omega = omega_j
+peak_single = A3[0]**2 / (2 * zeta3 * w2_3)                                          # one-mode estimate
+assert np.allclose(peak_exact, [12.649, 8.853, 2.557], atol=5e-4) and np.allclose(peak_single, [12.632, 8.839, 2.499], atol=5e-4)
+print(f"B8: peaks |q_1(omega_j)| = {peak_exact.round(3)}, single-mode estimates {peak_single.round(3)}")
 # C1: 5x5 lattice: K = K1 (x) I + I (x) K1, omega^2_{jl} = s_j + s_l; 13 distinct values, multiplicity 5 at 4 omega_0^2, lowest 2(2 - sqrt3).
 K1 = 2 * np.eye(5) - np.eye(5, k=1) - np.eye(5, k=-1); K_lat = np.kron(K1, np.eye(5)) + np.kron(np.eye(5), K1)
 s = 4 * np.sin(np.arange(1, 6) * np.pi / 12)**2; lam_lat = np.sort(np.add.outer(s, s).ravel())
@@ -549,13 +573,17 @@ ksf, ksr, ktf, ktr = 45e3, 35e3, 200e3, 200e3
 B_car = np.array([[1, a_f, -1, 0], [1, -b_r, 0, -1], [0, 0, 1, 0], [0, 0, 0, 1]], float)   # elongations: front susp, rear susp, front tyre, rear tyre
 K_car = spring_K(B_car, [ksf, ksr, ktf, ktr]); M_car = np.diag([mb, Ib, mf, mr])
 w2_car, A_car = normal_modes(K_car, M_car); check_modes(K_car, M_car, w2_car, A_car, tol=1e-6)
-f_car = np.sqrt(w2_car) / (2 * np.pi); shapes_car = sign_fix(A_car) / np.abs(A_car).max(axis=0)
-k_eff_f, k_eff_r = ksf * ktf / (ksf + ktf), ksr * ktr / (ksr + ktr)
+f_car = np.sqrt(w2_car) / (2 * np.pi); shapes_car = A_car / A_car[np.abs(A_car).argmax(axis=0), np.arange(4)]
+k_eff_f, k_eff_r = ksf * ktf / (ksf + ktf), ksr * ktr / (ksr + ktr)                      # suspension and tyre in series
 f_bounce, f_pitch = np.sqrt((k_eff_f + k_eff_r) / mb) / (2 * np.pi), np.sqrt((k_eff_f * a_f**2 + k_eff_r * b_r**2) / Ib) / (2 * np.pi)
 f_hop_f, f_hop_r = np.sqrt((ksf + ktf) / mf) / (2 * np.pi), np.sqrt((ksr + ktr) / mr) / (2 * np.pi)
-print(f"C2 car: f = {f_car.round(3)} Hz; one-DOF estimates bounce {f_bounce:.3f}, pitch {f_pitch:.3f}, hop {f_hop_f:.3f}/{f_hop_r:.3f} Hz")
-print("C2 car shapes (columns = modes; rows z, theta, z_f, z_r; scaled to max 1):\n", shapes_car.round(4))
-assert np.allclose(f_car, [1.165, 1.336, 8.303, 9.219], atol=5e-3) and np.isclose(K_car[0, 1], ksf * a_f - ksr * b_r)
+x_node = -shapes_car[0, :2] / shapes_car[1, :2]                                           # body point that stays still, m ahead of CG
+print(f"C2 car: f = {f_car.round(3)} Hz; one-DOF estimates bounce {f_bounce:.3f}, pitch {f_pitch:.3f}, hop {f_hop_f:.3f}/{f_hop_r:.3f} Hz; "
+      f"body-mode nodes at x = {x_node.round(3)} m")
+print("C2 car shapes (columns = modes; rows z [m], theta [rad], z_f, z_r [m]; largest entry 1):\n", shapes_car.round(4))
+assert np.allclose(K_car[0], [ksf + ksr, ksf * a_f - ksr * b_r, -ksf, -ksr]) and np.isclose(K_car[0, 1], -3000)
+assert np.allclose(f_car, [1.170, 1.261, 8.323, 9.237], atol=5e-4) and np.allclose([f_bounce, f_pitch, f_hop_f, f_hop_r], [1.185, 1.252, 8.304, 9.222], atol=5e-4)
+assert np.allclose(x_node, [-3.170, 0.474], atol=5e-4) and np.allclose(shapes_car[:2, :2], [[1, -0.4741], [0.3155, 1]], atol=5e-4)
 # C3: Caughey series C = M sum_l c_l (M^{-1}K)^l decouples: A^T C A = sum_l c_l Omega^{2l}; fit zeta = (0.02, 0.03, 0.05) on the 3-DOF chain.
 Vand = np.vander(w2_3, 3, increasing=True); c_l = np.linalg.solve(Vand, 2 * np.array([0.02, 0.03, 0.05]) * om3)
 MinvK3 = np.linalg.solve(M3, K3); C_caughey = M3 @ sum(c * np.linalg.matrix_power(MinvK3, l) for l, c in enumerate(c_l))

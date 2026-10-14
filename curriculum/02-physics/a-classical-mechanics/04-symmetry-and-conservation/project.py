@@ -729,6 +729,7 @@ sol_rod = solve_ivp(lambda t_, s: [s[1], w_r**2 * s[0]], (0, t1), [r0_r, 0.0], m
 assert np.allclose(sol_rod.y[:, -1], [r1, rd1], rtol=1e-8)
 print(f"B5  rod (m = {m_r}, ω = {w_r}, r₀ = {r0_r}): at t = 1 s  r = {r1:.5f} m, ṙ = {rd1:.5f} m/s, "
       f"h = {h_rod_num:.4f} J, E(0) = {E_rod_0:.4f} J, E(1 s) = {E_rod_1:.5f} J, motor power = {P_motor:.4f} W")
+print(f"    cosh 2 = {np.cosh(2):.5f}, sinh 2 = {np.sinh(2):.5f}, cosh 4 = {np.cosh(4):.4f}, sinh 4 = {np.sinh(4):.4f}")
 
 # --- B6: quartic period in closed form; T(A) ∝ A^{-1}; Kepler ⟨1/r⟩ = 1/a.
 from scipy.special import gamma as Gamma
@@ -743,6 +744,7 @@ Tq_avg, Vq_avg = time_average(Tq, tq), time_average(Vq, tq)
 assert np.isclose(Tq_avg, 2 / 3 * 0.25, rtol=1e-6) and np.isclose(Vq_avg, 1 / 12, rtol=1e-6)
 print(f"B6  quartic: T(1) = {T_quartic_exact:.6f} = √(2π)Γ(1/4)/Γ(3/4), T(2) = {period_quad(4, 2.0):.6f}; "
       f"⟨T⟩ = {Tq_avg:.6f} = 2E/3, ⟨V⟩ = {Vq_avg:.6f} = E/3;  Kepler ⟨1/r⟩ = {inv_r_avg:.6f} = 1/a, ⟨r⟩ = {r_avg:.6f} = a(1 + e²/2)")
+print(f"    Γ(1/4) = {Gamma(0.25):.6f}, Γ(3/4) = {Gamma(0.75):.6f}, √(2π) = {np.sqrt(2 * np.pi):.6f}")
 
 # --- B7: A² = m²κ² + 2mEL² along the orbit; e from E and L.
 A2 = np.sum(A**2, axis=1); L2 = np.sum(Lv**2, axis=1)
@@ -771,6 +773,7 @@ print("B8  ε            =", eps_list)
 print("    measured [°] =", np.round(adv_meas, 3))
 print("    1st order [°]=", np.round(adv_pred, 3))
 print("    rel. error   =", np.round(rel_err, 4), f"  ≈ {c_fit:.1f}·ε  (least-squares line through the origin)")
+print(f"    first-order formula off by 1% at ε ≈ {0.01 / c_fit:.5f}, by 10% at ε ≈ {0.1 / c_fit:.4f} (linear extrapolation)")
 fig, (axl, axr) = plt.subplots(1, 2, figsize=(10, 4))
 axl.plot(eps_list, adv_meas, "o", color=C[0], label="measured")
 axl.plot(eps_list, adv_pred, "-", color=C[1], label="6πκεm²/L⁴")
@@ -879,6 +882,8 @@ print(f"C3  ℓ² = {ell2_in}: reaches r = 0.05 at t = {t_in:.4f} (predicted {t_
       f"= {th_in / (2 * np.pi):.2f} turns (Binet: arccosh(20)/λ = {th_in_pred:.3f})")
 print(f"    ℓ² = {ell2_out}: reaches r = 20 at t = {t_out:.3f} (predicted {t_out_pred:.3f}) after θ = {th_out:.4f} rad "
       f"(Binet {th_out_pred:.4f}); r → ∞ at θ∞ = π/(2λ') = {th_inf:.4f} rad")
+print(f"    λ = √(2mc/ℓ² − 1) = {lam_in:.6f} (ℓ² = {ell2_in}),  λ' = √(1 − 2mc/ℓ²) = {lam_out:.6f} (ℓ² = {ell2_out}), "
+      f"arccosh 20 = {np.arccosh(20):.6f}, arccos 0.05 = {np.arccos(0.05):.6f}")
 fig, (axi, axo2) = plt.subplots(1, 2, figsize=(10, 4.6))
 axi.plot(x_in, y_in, color=C[0], lw=0.8); axi.plot(0, 0, "k*"); axi.set_aspect("equal")
 axi.set_title(f"V = −c/r², ℓ² = {ell2_in} < 2mc: spiral into the centre")
@@ -910,6 +915,7 @@ x20_pred = np.exp(-gam_n * 10) * (np.cos(Om_n * 20) + gam_n / (2 * Om_n) * np.si
 assert np.isclose(xd[-1], x20_pred, atol=1e-9)
 print(f"C4  damped oscillator (m = k = 1, γ = 0.2, x₀ = 1, ẋ₀ = 0): Q = {Qd[0]:.6f} at t = 0, {Qd[-1]:.6f} at t = 20 "
       f"(|ΔQ| ≤ {np.abs(Qd - 0.5).max():.1e}); h ranges over [{hd.min():.4f}, {hd.max():.4f}]; x(20) = {xd[-1]:.6f}")
+print(f"    Ω = √(1 − γ²/4) = {Om_n:.6f}, γ/(2Ω) = {gam_n / (2 * Om_n):.6f}, e^(−2) = {np.exp(-2):.6f}")
 
 # %%
 # --- Further checks behind the written solutions (A1, A2, A3, A4, A6c, B1e, B2e, B3a/e, B4c/d, C1f, C3e, C4c/d).
@@ -983,6 +989,10 @@ Q_def, F_def = noether_charge_quasi(L_grav, [x, y, z], [vx, vy, vz], K=K_def)
 assert sp.simplify(F_def + m * g * t * y) == 0
 assert sp.simplify(Q_def - (m * (y * vz - z * vy) + m * g * (t * y - t**2 * vy / 2))) == 0
 assert on_shell_dt(Q_def, L_grav, [x, y, z], [vx, vy, vz], [ax, ay, az]) == 0
+Q_defy, F_defy = noether_charge_quasi(L_grav, [x, y, z], [vx, vy, vz], K=[z + g * t**2 / 2, 0, -x])   # about ŷ
+assert sp.simplify(F_defy - m * g * t * x) == 0
+assert sp.simplify(Q_defy - (m * (z * vx - x * vz) + m * g * (t**2 * vx / 2 - t * x))) == 0
+assert on_shell_dt(Q_defy, L_grav, [x, y, z], [vx, vy, vz], [ax, ay, az]) == 0
 print("B1  gravity: surviving Galilean generators", surviving, "+ h  (8 of 10);")
 print("    deformed x-rotation K = (0, −z − gt²/2, y): F =", F_def, ", Q =", sp.factor(Q_def))
 

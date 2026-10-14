@@ -699,3 +699,75 @@ Not symmetric. Interpretation: believing the coin is 90/10 when it is fair costs
 
 *Gaussians,* by (3.32). $D(\mathcal{N}(0,1)\,\|\,\mathcal{N}(1, 2^2)) = \ln\tfrac21 + \frac{1 + 1}{2\cdot4} - \tfrac12 = 0.6931 + 0.25 - 0.5 = 0.4431$ nats. $D(\mathcal{N}(1, 4)\,\|\,\mathcal{N}(0, 1)) = \ln\tfrac12 + \frac{4 + 1}{2\cdot1} - \tfrac12 = -0.6931 + 2.5 - 0.5 = 1.3069$ nats. The wide distribution sees the narrow one as very wrong (it puts almost no mass where the wide one lives); the narrow one sees the wide one as merely diffuse. The project verifies both closed forms by Monte Carlo: sample $X\sim f_1$, average $\log f_1(X) - \log f_2(X)$.
 
+## 5. Why it matters and where it connects
+
+- **ST-1** is built on four results from here. The likelihood of iid data is a product because the joint density of independent variables factors (Theorem 3.4). The MLE is consistent because the average log-likelihood obeys the law of large numbers (Theorem 3.34), and asymptotically normal because of the CLT (3.24). Maximizing likelihood is minimizing $D(p_{\text{data}}\,\|\,q_\theta)$ by (3.30). The Cramér–Rao bound is Cauchy–Schwarz in the inner product $\mathbb{E}[UV]$ of Theorem 3.17.
+- **ST-3** takes Theorem 3.29 and (3.23) and replaces the population inner product $\mathbb{E}[UV]$ by the sample dot product. The normal equations are the orthogonality condition (3.22) restricted to linear functions. $R^2$ is the explained-variance fraction from Eve's law (3.21).
+- **ST-5** generalizes Theorem 3.12 and the Gamma–Poisson posterior of §3.5 to every exponential family.
+- **ST-6 and SM-6.** Metropolis–Hastings is Theorem 3.41 applied to a proposal-and-accept chain (exercise B10). MCMC averages are justified by the ergodic statement in Theorem 3.40. The factor $(1+\lambda_2)/(1-\lambda_2)$ in exercise B7 is the integrated autocorrelation time, which ST-6 turns into the effective sample size. SM-6 runs the same algorithm on the Ising model.
+- **ST-8.** Equation (3.19) is the Kalman measurement update: $\mathbf{X}_1$ is the state, $\mathbf{X}_2$ the measurement, $\Sigma_{12}\Sigma_{22}^{-1}$ the gain, and the Schur complement the posterior covariance.
+- **ML-1.** The target of squared-error learning is the regression function $\mathbb{E}[Y\mid X]$ (Theorem 3.29). The Pythagoras step in that proof is the first half of the bias–variance decomposition. The cross-entropy loss is (3.30).
+- **ML-4.** In Gaussian-process regression, the posterior mean and covariance at test points are (3.19), with $\Sigma$ the kernel Gram matrix.
+- **ML-6.** PCA finds the eigenvectors of $\Sigma$ (the remark after Theorem 3.19, and the long axis in Example 4.4). The mixture in exercise B3 is a two-component Gaussian mixture, and $P(Z = 1\mid Y = 3)$ in B3(d) is an E-step responsibility. EM never decreases the likelihood because of Gibbs' inequality (Theorem 3.45).
+- **ML-10 and SM-7.** The KL term in a VAE loss is the formula of exercise C1 with $\Sigma_2 = I$. The gap between the log-likelihood and the ELBO is a KL divergence, so it is $\ge 0$ by Theorem 3.45.
+- **SM-4.** The exponential calculation at the end of §3.13, with $x$ replaced by microstate energy, is the derivation of the Boltzmann distribution. Exercise C3 is the discrete version: the multiplier $\beta$ there plays the role of $1/k_BT$. The partition function is the normalizer $\sum_i e^{-\beta E_i}$.
+- **LA links used here.** The spectral theorem from LA-8 gives the Gaussian ellipses. Cholesky and the Schur complement are from LA-10. Perron–Frobenius and power iteration come from LA-7 (PageRank). Orthogonal projection from LA-5 is conditional expectation.
+
+## 6. Exercises
+
+See [exercises.md](exercises.md). **A1–A5** are drills: a table that is uncorrelated but dependent, covariance algebra, Exponential order statistics and Poisson sums, a bivariate normal conditional, and entropies and KLs to compute by hand. **B1–B10** are the module: Box–Muller run backwards and the Cauchy ratio (B1), the vector best linear predictor (B2), Adam and Eve on a Gaussian mixture (B3), Beta–Binomial updating (B4), Gaussian marginals without a Gaussian joint (B5), Chebyshev against the CLT (B6), a law of large numbers for a Markov chain (B7), periodicity and the lazy walk (B8), conditioning and entropy (B9), and Metropolis (B10, which needs code). **B2, B3, B7 and B10 are essential.** **C1–C3** are the multivariate Gaussian KL, the mutual information of a Gaussian pair, and maximum entropy with a mean constraint (Jaynes' die).
+
+## 7. Coding project
+
+`project.py` builds every object in the module and asserts every number quoted in §4 and in the solutions. It runs in about 20 seconds.
+
+1. **Discrete joint tables.** The script has `marginal`, `conditional`, `joint_moments`, and the conditional mean and variance by row. It reproduces Example 4.1 in floating point and Eve's law exactly in SymPy rationals ($7/30 + 1/60 = 1/4$).
+2. **Box–Muller.** It implements (3.6), checks the Jacobian determinant 2 symbolically, and draws a QQ plot against `scipy.stats.norm.ppf` (figure `box_muller_qq.png`). It also runs B1: the radius is Rayleigh and $Z_1/Z_2$ is Cauchy.
+3. **Sums and order statistics.** It convolves two Uniform densities numerically to get the triangle, checks that Exponentials sum to a Gamma (watch SciPy's *scale* $= 1/\text{rate}$ convention), that Uniform order statistics are Beta, and the Beta–Binomial posterior of B4.
+4. **Covariance algebra and the two counterexamples** ($X, X^2$, and $(X, SX)$).
+5. **The multivariate normal.** Cholesky sampling with the sample covariance asserted against $\Sigma$, then contours with the eigenvectors drawn at length $\sqrt{5.991\,\lambda_i}$ (figure `mvn_contours.png`). Mahalanobis $d^2$ is checked against $\chi^2_2$, and a slice at $|x_2 - 1| < 0.05$ is compared with (3.19).
+6. **Conditional expectation.** It estimates $\mathbb{E}[Y\mid X]$ by binning. The residual is uncorrelated with $X$, $X^2$, $\sin 5X$ and $e^X$, while the best line's residual is correlated with $X^2$ (figure `conditional_expectation.png`). Also here: B2's vector predictor, B3's mixture, and Galton's heights (figure `galton.png`).
+7. **Limit theorems.** CLT histograms for Uniform, Exponential, Bernoulli(0.1) and Pareto(1.5) at $n = 1, 2, 5, 30$ (figure `clt_histograms.png`). The exact sup error $\sup_x|F_n - \Phi|$ is plotted against $n$ on log axes (figure `clt_error_vs_n.png`). Its slope is $-\tfrac12$ for the skewed cases, as Berry–Esseen predicts, and $-1$ for the symmetric Uniform; Pareto(1.5) has no slope. The continuity correction, B6 and B7 are checked here too.
+8. **Markov chains.** `stationary(P)` returns the eigenvector of $P^\top$, and `simulate_chain` runs a chain. For the weather chain, the mixing curve has slope $\ln\lambda_2$ (figure `markov_mixing.png`). The script then checks detailed balance on the weather chain and shows it failing on a circulating chain. It also covers the graph walk with $\boldsymbol\pi \propto$ degree, B8's bipartite walk and its lazy fix, B10's Metropolis chain, and PageRank by power iteration.
+9. **Information theory.** The Bernoulli entropy curve (figure `bernoulli_entropy.png`), and Gibbs and $H(p,q) = H(p) + D(p\|q)$ on 1000 random pairs. KLs between Gaussians in closed form are compared with Monte Carlo and with SymPy integration. Entropies are compared at equal variance (Gaussian > Laplace > Uniform > Exponential), and A5, B9, C1–C3 are checked.
+
+**Build it yourself first:** `marginal` and `conditional` (Part 1), `box_muller` (Part 2), `sample_mvn` and `mvn_conditional` (Part 5), and `stationary` (Part 8). Each is under ten lines. If your `mvn_conditional` disagrees with the slice, you have $\Sigma_{12}$ and $\Sigma_{21}$ crossed.
+
+**Your turn** (end of the script) has four tasks. First, the return probability of a 2D random walk, which is recurrent but slow; then 3D, which returns with probability about 0.34. Second, the entropy of B3's mixture by Monte Carlo, which must come out below $2.249$ nats by Theorem 3.46. Third, $I(X;Y) = -\tfrac12\ln(1-\rho^2)$ across $\rho$, then $I(X; X^2)$ by histogram, to see mutual information detect what covariance misses. Fourth, Metropolis with a continuous target.
+
+## 8. Where you'll struggle
+
+- **Jacobians.** You will use the Jacobian of the wrong map, or drop the absolute value. The rule: it is $\partial(\text{old})/\partial(\text{new})$, because you substitute the old variables *out*. If $\partial(\text{new})/\partial(\text{old})$ is easier to compute, compute it and take the reciprocal of its determinant. Then check two things every time: that the result integrates to 1, and that the new *domain* is right. Most wrong answers in exercise B1 come from the domain, not the determinant. Theorem 3.11 is worth redoing from a blank page.
+- **The MVN conditional derivation is long.** It is the longest derivation in the module and you will not hold it in your head on first reading. Do it once in 2D with scalars, completing the square in $x_1$ by hand, and then once with blocks. Memorize the three facts in the "What just happened" after (3.19), not the algebra. ST-8 makes you do it again, and the second time is when it sticks.
+- **$\mathbb{E}[Y\mid X]$ as a random variable** takes about a week to settle. The fix is a type discipline. First write the function $g(x) = \mathbb{E}[Y\mid X = x]$ as an ordinary function, then substitute $X$. Ask of every expression "is this a number or a random variable?" Adam's law is LOTUS applied to $g$; once you see that, it stops being mysterious.
+- **Eve's law: you will swap the terms.** Say "expected conditional variance plus variance of the conditional expectation." Check with two extremes. If $Y \perp X$, the second term is 0. If $Y = X$, the first term is 0.
+- **Row versus column vectors for chains.** Here $\boldsymbol\pi P$ uses rows and rows of $P$ sum to 1. LA-7 used columns. `np.linalg.eig(P)` returns *right* eigenvectors, so for a stationary distribution you must call it on `P.T`. If your "stationary distribution" has negative entries or does not satisfy `pi @ P == pi`, this is why.
+- **"KL is a distance."** It is not: it is asymmetric (Example 4.7) and fails the triangle inequality. It is infinite when $q = 0$ somewhere $p > 0$. Always say which argument holds the truth. ML minimizes $D(p_{\text{data}}\,\|\,q_\theta)$, while variational inference minimizes $D(q\,\|\,p)$, and the two behave differently (ML-10).
+- **Differential entropy can be negative**, and it changes under rescaling. Neither is a bug. If a quantity must be invariant, use KL or mutual information, which are.
+- **The CLT is about standardized sums**, not about your data becoming normal. "$n = 30$ is enough" is folklore. The project's Bernoulli(0.1) panel is still visibly skewed at $n = 30$, and the Pareto(1.5) panel never converges.
+- **Exercises harder than they look.** B2: do not differentiate with respect to a matrix; use the orthogonality trick of Theorem 3.29. B7(c): the double sum over $|s - t|$ needs care at the diagonal. B8: you need to say *why* the distance stays at 1, not only observe it. C3: the multiplier has no closed form, so you need a root-finder.
+
+## 9. Check yourself
+
+1. Given a joint PMF table, how do you get $p_X$, $p_{Y|X}(\cdot\mid x)$, and test independence? Which single cell suffices to refute it?
+2. Why does $f(x,y) = 2$ on $0 < x < y < 1$ fail characterization (c) of Theorem 3.4?
+3. Write the 2D change-of-variables formula. Which Jacobian goes in, and why the absolute value?
+4. What is the distribution of the sum of $n$ iid $\mathrm{Exponential}(\lambda)$? Of the $k$-th smallest of $n$ iid Uniforms?
+5. Prove $|\rho| \le 1$ in three lines. Which inner product did you use?
+6. Give a pair that is uncorrelated but dependent. Why can't it be jointly Gaussian?
+7. Write the density of $\mathcal{N}(\boldsymbol\mu, \Sigma)$. What are the axes and semi-axes of its level sets?
+8. State (3.19) from memory. Which part does not depend on $\mathbf{x}_2$?
+9. State Adam's and Eve's laws. What is $\mathbb{E}[Y\mid X]$ the orthogonal projection of, onto what?
+10. Prove the weak law of large numbers in two lines. Where is independence used?
+11. State the CLT precisely. What step of the MGF proof is cited, not proved? Name a distribution for which the CLT fails.
+12. What is a stationary distribution, as an eigenvector statement? Prove detailed balance implies stationarity.
+13. Show $D(p\|q) \ge 0$ using Jensen. Why is cross-entropy minimization the same as maximum likelihood?
+14. Which density maximizes entropy at fixed variance? At fixed mean on $[0, \infty)$?
+
+## 10. Pair with
+
+- **Blitzstein & Hwang, *Introduction to Probability*, 2nd ed. (free at probabilitybook.net), ch. 7–11.** The chapters map to this module as follows: ch. 7 is joint distributions and covariance, ch. 8 transformations, convolutions, Beta, Gamma and order statistics, ch. 9 conditional expectation, ch. 10 inequalities and limit theorems, ch. 11 Markov chains. Their story proofs (bank–post office, Beta–Gamma) are better than any algebra. Their ch. 9 is the best treatment of $\mathbb{E}[Y\mid X]$ as a random variable at this level. Do the end-of-chapter problems.
+- **Harvard Stat 110, lectures 16–30 on YouTube**, plus 31–33 for Markov chains. Lectures 19–22 cover joint distributions, covariance and transformations, 23–25 Beta, Gamma and order statistics, 25–27 conditional expectation, and 28–30 inequalities, LLN, CLT and the multivariate normal. Watch the lectures on conditional expectation even if you skip the rest.
+- **MacKay, *Information Theory, Inference, and Learning Algorithms* (free online), ch. 1–2 and 8.** Ch. 2 defines entropy, KL and Gibbs' inequality with many small examples. Ch. 8 covers joint and conditional entropy and mutual information with diagrams. MacKay explains *why* entropy measures information (compression) far better than §3.13 has room for.
+- **Bishop, *Pattern Recognition and Machine Learning*, §2.3.** This is the Gaussian conditional and marginal derived through the precision matrix $\Sigma^{-1}$ rather than the block LDU of §3.8. Reading both derivations is the best way to make (3.19) stick. §2.3.3 (Bayes' theorem for linear-Gaussian models) is the bridge to ST-8 and ML-4.
+- **Optional:** Levin & Peres, *Markov Chains and Mixing Times* (free online), ch. 1–4, for the full convergence theorem behind Theorem 3.40.

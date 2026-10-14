@@ -319,6 +319,11 @@ eq_b = (l2 * th2.diff(t, 2) + l1 * th1.diff(t, 2) * sp.cos(Delta)
 sub_acc = [(th1.diff(t, 2), a1), (th2.diff(t, 2), a2)]
 assert sp.simplify(eq_a.subs(sub_acc)) == 0 and sp.simplify(eq_b.subs(sub_acc)) == 0
 print("Example 4.4: SymPy accelerations satisfy (4.10a) and (4.10b) identically")
+# held straight (theta1 = theta2 = vt): (4.10b) forces vt_dd = -g sin(vt)/(l1+l2); (4.10a) keeps a residual m1 g l2 sin(vt)/(l1+l2)
+vt = sp.Function("vartheta")(t)
+straight = [(th1.diff(t, 2), -g * sp.sin(vt) / (l1 + l2)), (th2.diff(t, 2), -g * sp.sin(vt) / (l1 + l2)), (th1, vt), (th2, vt)]
+assert sp.simplify(eq_b.subs(straight)) == 0
+assert sp.simplify(eq_a.subs(straight) - m1 * g * l2 * sp.sin(vt) / (l1 + l2)) == 0
 
 # (b) normal modes: Hessians at the hanging equilibrium
 qd_syms = [sp.Symbol("theta1_d"), sp.Symbol("theta2_d")]
@@ -571,7 +576,7 @@ fig.tight_layout(); fig.savefig(FIG / "rayleigh.png", dpi=120); plt.close(fig)
 # 1. **Slowly varying length (Exercise C3, adiabatic invariant).** ℓ(t) = 1 + 0.02 t for
 #    0 ≤ t ≤ 50 s, θ(0) = 0.1 rad at rest. Derive ℓθ̈ + 2ℓ̇θ̇ + g sinθ = 0 (it is *not*
 #    θ̈ = −(g/ℓ)sinθ), integrate, and plot E/ω with E = ½mℓ²θ̇² + ½mgℓθ² and ω = √(g/ℓ)
-#    at the turning points. It should be flat to about 1% while E itself drops by about 16%.
+#    at the turning points. It should be flat to well under 1% while E itself drops by about 30%.
 #    Also plot θ_max ℓ^{3/4}.
 # 2. **Bead on a rotating parabolic wire (Exercise B4).** L = ½m(1 + k²r²)ṙ² + ½m(ω² − gk)r².
 #    Build the rhs with `lagrangian_to_eom`, then integrate for ω² < gk, = gk, > gk. There is
@@ -589,7 +594,8 @@ fig.tight_layout(); fig.savefig(FIG / "rayleigh.png", dpi=120); plt.close(fig)
 
 # %% [markdown]
 # ## Reference solutions to the coded exercises (B2d, B4, B7c, C2d, C3d)
-# Every number quoted in `solutions.md` for these exercises is printed here.
+# Every number quoted in `solutions.md` for these exercises is printed here. The final cell
+# checks the symbolic results of the pen-and-paper exercises (A3, A4, B1, B3, B5, B6, B8, C1–C3).
 
 # %%
 # --- B2(d): pendulum tension by the multiplier DAE, drift, and Baumgarte stabilization
@@ -771,6 +777,82 @@ mu_B5 = np.array([1 / (1 + r_B5), 1 / (1 - r_B5)])
 assert np.allclose(mu_B5, [2 - np.sqrt(2), 2 + np.sqrt(2)])
 print(f"A5: dE/dt(0) = -c v^2 = {dEdt_A5:.2f} W (E(0) = {0.5*1*1**2 + 0.5*4*1**2:.2f} J).  "
       f"B5: mu_-+ for m1 = m2: {mu_B5[0]:.4f}, {mu_B5[1]:.4f} = 2 -+ sqrt2")
+
+# %%
+# --- Symbolic checks of the pen-and-paper solutions (each line mirrors a result in solutions.md)
+Z = lambda e: sp.simplify(e) == 0                                   # noqa: E731
+Zm = lambda A: sp.simplify(A) == sp.zeros(*A.shape)                 # noqa: E731
+# A3: constant horizontal force: Q = F ell cos(theta); same EOM as V = -F x; equilibrium tan(theta) = F/(m g)
+Fh = sp.symbols("F", positive=True)
+Q_A3 = (sp.Matrix([Fh, 0]).T * sp.Matrix([ell * sp.sin(th), -ell * sp.cos(th)]).diff(th))[0]
+a3 = lagrangian_to_eom(L_pend, [th], t, Q=[Q_A3], build_rhs=False)
+assert Z(Q_A3 - Fh * ell * sp.cos(th)) and Z(a3.acc[0] - lagrangian_to_eom(L_pend + Fh * ell * sp.sin(th), [th], t, build_rhs=False).acc[0])
+assert Z(a3.acc[0].subs(th, sp.atan(Fh / (m * g))))
+# A4: J^T diag(M, m, m) J is the wedge mass matrix, det = m (M + m sin^2 alpha)
+Xs, ss_, hh = sp.symbols("X s h")
+J_A4 = sp.Matrix([Xs, Xs + ss_ * sp.cos(alpha), hh - ss_ * sp.sin(alpha)]).jacobian([Xs, ss_])
+M_A4 = J_A4.T * sp.diag(Mw, m, m) * J_A4
+assert Zm(M_A4 - M_wedge_hand) and Z(M_A4.det() - m * (Mw + m * sp.sin(alpha)**2)) and Z(M_A4.trace() - (Mw + 2 * m))
+# B1(c): cancellation of dots (3.7) and interchange (3.8) for the rotating hoop, with the explicit vector
+r_h = sp.Matrix([R * sp.sin(th) * sp.cos(w * t), R * sp.sin(th) * sp.sin(w * t), -R * sp.cos(th)])
+assert Zm(r_h.diff(t).diff(th.diff(t)) - r_h.diff(th)) and Zm(r_h.diff(t).diff(th) - r_h.diff(th).diff(t))
+assert Zm(r_h.diff(th).diff(t) - (R * th.diff(t) * sp.Matrix([-sp.sin(th) * sp.cos(w * t), -sp.sin(th) * sp.sin(w * t), sp.cos(th)])
+                                   + R * w * sp.cos(th) * sp.Matrix([-sp.sin(w * t), sp.cos(w * t), 0])))
+# B3: massive pulley. Unknowns xdd1 = a1 (xdd2 = -a1, phidd = a1/Rp) and the two multipliers
+Ip, Rp, la1, la2, a1s = sp.symbols("I R_p lambda1 lambda2 a1")
+s3 = sp.solve([m1 * a1s - m1 * g - la1 - la2, -m2 * a1s - m2 * g - la1, Ip * a1s / Rp + Rp * la2], [a1s, la1, la2], dict=True)[0]
+D3 = m1 + m2 + Ip / Rp**2
+assert Z(s3[a1s] - (m1 - m2) * g / D3) and Z(s3[la1] + m2 * g * (2 * m1 + Ip / Rp**2) / D3) and Z(s3[la2] + Ip * (m1 - m2) * g / (Rp**2 * D3))
+assert Z(-(s3[la1] + s3[la2]) - m1 * (g - s3[a1s])) and Z(-s3[la1] - m2 * (g + s3[a1s]))          # T1, T2 from Newton
+assert Z(s3[la1].subs(Ip, 0) + 2 * m1 * m2 * g / (m1 + m2))                                         # I -> 0 gives (4.4)
+# B5: general masses, ell1 = ell2: det(K - mu (g/ell) M0) = 0 at mu = 1/(1 -+ sqrt(m2/(m1+m2)))
+mu = sp.symbols("mu")
+M0g = ell**2 * sp.Matrix([[m1 + m2, m2], [m2, m2]]); Kg = g * ell * sp.diag(m1 + m2, m2)
+char = (Kg - mu * g / ell * M0g).det()
+assert all(Z(char.subs(mu, 1 / (1 - sgn * sp.sqrt(m2 / (m1 + m2))))) for sgn in (1, -1))
+# B6: V_eff'' at the conical equilibrium = m ell^2 phid0^2 (1 + 3 cos^2 theta0)
+t0 = sp.symbols("theta0", positive=True)
+Veff6 = pphi**2 / (2 * m * ell**2 * sp.sin(t0)**2) - m * g * ell * sp.cos(t0)
+pphi0 = m * ell**2 * sp.sin(t0)**2 * sp.sqrt(g / (ell * sp.cos(t0)))
+assert Z(Veff6.diff(t0).subs(pphi, pphi0)) and Z(Veff6.diff(t0, 2).subs(pphi, pphi0) - m * g * ell * (1 + 3 * sp.cos(t0)**2) / sp.cos(t0))
+# B8(a): inertially fixed point seen from the rotating frame: Coriolis = -2 w^2 r', centrifugal = +w^2 r' (per unit mass)
+r0s = sp.symbols("r0", positive=True)
+rp8 = sp.Matrix([r0s * sp.cos(w * t), -r0s * sp.sin(w * t), 0]); om8 = sp.Matrix([0, 0, w])
+cor8 = -2 * om8.cross(rp8.diff(t)); cen8 = -om8.cross(om8.cross(rp8))
+assert Zm(cor8 + 2 * w**2 * rp8) and Zm(cen8 - w**2 * rp8) and Zm(rp8.diff(t, 2) - cor8 - cen8)
+# C1(c): rolling disk, Lagrange–d'Alembert with a1 = (1,0,0,-R cos th), a2 = (0,1,0,-R sin th) and the constraints differentiated
+Ith, Iph, thv, thdv, phdv = sp.symbols("I_theta I_phi theta theta_d phi_d")
+xdd, ydd, thdd, phdd, l1s, l2s = sp.symbols("xdd ydd thdd phdd l1 l2")
+eqC1 = [m * xdd - l1s, m * ydd - l2s, Ith * thdd, Iph * phdd + R * sp.cos(thv) * l1s + R * sp.sin(thv) * l2s,
+        xdd - R * phdd * sp.cos(thv) + R * phdv * thdv * sp.sin(thv), ydd - R * phdd * sp.sin(thv) - R * phdv * thdv * sp.cos(thv)]
+sC1 = sp.solve(eqC1, [xdd, ydd, thdd, phdd, l1s, l2s], dict=True)[0]
+assert sC1[thdd] == 0 and Z(sC1[phdd]) and Z(sC1[l1s] + m * R * phdv * thdv * sp.sin(thv)) and Z(sC1[l2s] - m * R * phdv * thdv * sp.cos(thv))
+# C1(d): skate on an incline. Substituting ydot = xdot tan(theta) into L and varying gives I thdd = m xd^2 sec^2 tan  (wrong)
+Isk, beta = sp.symbols("I beta", positive=True)
+xk, thk = sp.Function("x")(t), sp.Function("theta")(t)
+L_vak = half * m * (xk.diff(t)**2 + (xk.diff(t) * sp.tan(thk))**2) + half * Isk * thk.diff(t)**2 + m * g * xk * sp.sin(beta)
+vak = lagrangian_to_eom(L_vak, [xk, thk], t, build_rhs=False)
+assert Z(vak.acc[1] - m * xk.diff(t)**2 * sp.tan(thk) / (Isk * sp.cos(thk)**2))
+# C2(a): vertically driven pivot; (c) Kapitza's effective potential and the averaged fast force
+y_v = a * sp.cos(gam * t) - ell * sp.cos(th)
+L_vert = half * m * ((ell * sp.sin(th)).diff(t)**2 + y_v.diff(t)**2) - m * g * y_v
+assert Z(lagrangian_to_eom(L_vert, [th], t, build_rhs=False).acc[0] + (g - a * gam**2 * sp.cos(gam * t)) * sp.sin(th) / ell)
+Th, u = sp.symbols("Theta u")
+xi = -(a / ell) * sp.cos(u) * sp.sin(Th)                                   # fast response, u = gamma t
+avg_force = a * gam**2 / ell * sp.integrate(sp.cos(u) * xi * sp.cos(Th), (u, 0, 2 * sp.pi)) / (2 * sp.pi)
+VK = -m * g * ell * sp.cos(Th) + m * a**2 * gam**2 / 4 * sp.sin(Th)**2
+assert Z(-(g / ell) * sp.sin(Th) + avg_force + VK.diff(Th) / (m * ell**2))
+assert Z(VK.diff(Th, 2).subs(Th, sp.pi) - (m * a**2 * gam**2 / 2 - m * g * ell))
+# C3(a): ell(t) pendulum keeps the full T (with ½ m elld^2): same EOM; (c) exact dE/dt for the linearized motion
+lf = sp.Function("ell")(t)
+rv3 = lf * sp.Matrix([sp.sin(th), -sp.cos(th)])
+L_var = half * m * rv3.diff(t).dot(rv3.diff(t)) - m * g * rv3[1]
+c3 = lagrangian_to_eom(L_var, [th], t, build_rhs=False)
+assert Z(c3.acc[0] + (2 * lf.diff(t) * th.diff(t) + g * sp.sin(th)) / lf)
+E3 = half * m * lf**2 * th.diff(t)**2 + half * m * g * lf * th**2
+dE3 = E3.diff(t).subs(th.diff(t, 2), -(2 * lf.diff(t) * th.diff(t) + g * th) / lf)
+assert Z(dE3 - lf.diff(t) / lf * (half * m * g * lf * th**2 - m * lf**2 * th.diff(t)**2))
+print("Symbolic checks of solutions A3, A4, B1(c), B3, B5, B6, B8(a), C1(c,d), C2(a,c), C3(a,c) passed")
 
 # %%
 if __name__ == "__main__":

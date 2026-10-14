@@ -19,6 +19,7 @@
 # Run headless: `MPLBACKEND=Agg python3 project.py`. Figures go to ./figures/.
 
 # %%
+import math
 import time
 import numpy as np
 import matplotlib
@@ -283,6 +284,9 @@ post = stats.beta(a0 + k_s, b0 + n_tr - k_s)
 w_prior = (a0 + b0) / (a0 + b0 + n_tr)
 assert np.isclose(post.mean(), 2 / 3) and np.isclose(post.mean(), w_prior * a0 / (a0 + b0) + (1 - w_prior) * k_s / n_tr)
 assert np.isclose(post.std(), 0.1307, atol=5e-5) and np.isclose(post.sf(0.5), 0.8867, atol=5e-5)
+# Beta(8, 4) is the 8th smallest of 11 Uniforms (Theorem 3.9): P(p > 1/2) = P(Bin(11, 1/2) <= 7) = 227/256
+assert np.isclose(post.sf(0.5), stats.binom.cdf(7, 11, 0.5)) and np.isclose(post.sf(0.5), 227 / 256)
+assert sum(comb(11, j, exact=True) for j in range(8, 12)) == 232
 print(f"B4: posterior Beta(8,4): mean {post.mean():.4f}, sd {post.std():.4f}, P(p > 1/2 | data) = {post.sf(0.5):.4f}; "
       f"weights {w_prior:.4f} on prior mean, {1 - w_prior:.4f} on 7/10")
 
@@ -532,7 +536,7 @@ fig, ax = plt.subplots(figsize=(5.5, 5.5))
 ax.scatter(Pp[:5000], Cc[:5000], s=3, alpha=.3, color="gray")
 hh = np.linspace(60, 76, 2)
 ax.plot(hh, icpt_g + slope_g * hh, "C3", lw=2, label="E[C | P]: slope 0.5")
-ax.plot(Cc.mean() - slope_rev * Pp.mean() + slope_rev * hh * 0 + (hh - Cc.mean()) / slope_rev + Pp.mean(), hh, "C0", lw=2, label="E[P | C]: slope 0.5 the other way")
+ax.plot(Pp.mean() + slope_rev * (hh - Cc.mean()), hh, "C0", lw=2, label="E[P | C]: slope 0.5 the other way")
 ax.plot(hh, hh, "k:", lw=1, label="C = P")
 ax.plot([73, 73], [60, 76], "k--", lw=.8); ax.plot(73, 70.5, "ko", ms=6)
 ax.set_xlabel("mid-parent height (in)"); ax.set_ylabel("child height (in)"); ax.set_xlim(60, 76); ax.set_ylim(60, 76)
@@ -606,7 +610,7 @@ def irwin_hall_cdf(x, n):
     for kk in range(n + 1):
         term = (-1) ** kk * comb(n, kk, exact=True) * np.clip(x - kk, 0, None) ** n
         out += term
-    return np.clip(out / float(np.math.factorial(n)) if hasattr(np, "math") else out / float(__import__("math").factorial(n)), 0, 1)
+    return np.clip(out / math.factorial(n), 0, 1)
 
 
 def ks_irwin_hall_vs_normal(n):
@@ -653,7 +657,17 @@ cheb = 0.0025 / 0.01; clt_b6 = 2 * stats.norm.sf(2); exact_b6 = stats.binom.cdf(
 cc_b6 = 2 * stats.norm.cdf((40.5 - 50) / 5)
 assert np.isclose(cheb, 0.25) and np.isclose(clt_b6, 0.0455, atol=5e-5) and np.isclose(exact_b6, 0.0569, atol=5e-5) and np.isclose(cc_b6, 0.0574, atol=5e-5)
 assert 0.25 / (0.01 * 0.05) == 500
-print(f"B6: Chebyshev {cheb:.4f}; CLT {clt_b6:.4f}; CLT with correction {cc_b6:.4f}; exact {exact_b6:.4f}; Chebyshev needs n >= 500 for 0.05")
+n_clt = int(np.ceil((stats.norm.ppf(0.975) / 0.2) ** 2))                    # 2(1 - Phi(0.2 sqrt n)) <= 0.05
+assert n_clt == 97 and np.isclose((1.96 / 0.2) ** 2, 96.04)
+assert exact_b6 < 0.25 / 4                                                  # Chebyshev is off by a factor > 4
+print(f"B6: Chebyshev {cheb:.4f}; CLT {clt_b6:.4f}; CLT with correction {cc_b6:.4f}; exact {exact_b6:.4f}; "
+      f"for 0.05 Chebyshev needs n >= 500, the CLT n >= {n_clt}")
+# B6(d): Berry–Esseen for Bernoulli(0.1): rho_3 / sigma^3 = (0.9 * 0.1^3 + 0.1 * 0.9^3) / 0.3^3
+ratio_be = (0.9 * 0.1**3 + 0.1 * 0.9**3) / 0.3**3
+err100 = ks_binomial_vs_normal(100, 0.1)
+assert np.isclose(ratio_be, 2.7333, atol=5e-5) and np.isclose(0.4748 * ratio_be / 10, 0.1298, atol=5e-5)
+assert np.isclose(err100, 0.0832, atol=5e-5) and err100 < 0.4748 * ratio_be / 10
+print(f"B6(d): Berry–Esseen bound for Bern(0.1), n = 100: {0.4748 * ratio_be / 10:.4f}; actual sup error {err100:.4f}")
 
 # Exercise B7: law of large numbers for a two-state Markov chain with a = 0.2, b = 0.3 (lambda_2 = 0.5)
 a_c, b_c = 0.2, 0.3
@@ -672,7 +686,8 @@ for kk in range(1, 6):
 running = np.cumsum(xc) / np.arange(1, Tn + 2)
 assert abs(running[-1] - pi2[1]) < 0.01
 var_bound = var_x / Tn * (1 + lam2) / (1 - lam2)
-print(f"B7: two-state chain, lambda_2 = {lam2}: Cov(X_0, X_k)/Var = {[round(np.mean((xc[:-kk] - .4) * (xc[kk:] - .4)) / var_x, 3) for kk in range(1, 4)]} "
+assert np.isclose(var_x, 0.24) and np.isclose(var_x * (1 + lam2) / (1 - lam2), 0.72)          # Var(Xbar_n) <= 0.72 / n
+print(f"B7: two-state chain, lambda_2 = {lam2}: Cov(X_0, X_k)/Var = {[round(float(np.mean((xc[:-kk] - .4) * (xc[kk:] - .4)) / var_x), 3) for kk in range(1, 4)]} "
       f"(0.5^k); running mean {running[-1]:.4f} -> pi_1 = 0.4; Var(Xbar) <= {var_bound:.2e}")
 
 # %% [markdown]
@@ -764,9 +779,12 @@ assert np.allclose(pi_p, [1 / 6, 1 / 3, 1 / 3, 1 / 6])
 ev_p = np.sort(np.linalg.eigvals(Pp4).real)
 assert np.allclose(ev_p, [-1, -0.5, 0.5, 1])                                  # -1 is the bipartite signature
 pt = np.array([1.0, 0, 0, 0])
-for _ in range(20):
+for t in range(1, 21):
     pt = pt @ Pp4
-assert np.isclose(np.abs(pt - pi_p).sum(), 1.0, atol=1e-9)                    # never converges: support alternates
+    assert np.abs(pt - pi_p).sum() >= 1 - 1e-12                               # never converges: support alternates
+    if t == 2:
+        assert np.allclose(pt, [0.5, 0, 0.5, 0]) and np.isclose(np.abs(pt - pi_p).sum(), 1.0)
+assert np.isclose(np.abs(pt - pi_p).sum(), 1.0, atol=1e-9)
 Plazy = 0.5 * (np.eye(4) + Pp4)
 assert np.allclose(stationary(Plazy), pi_p) and np.allclose(np.sort(np.linalg.eigvals(Plazy).real), [0, 0.25, 0.75, 1])
 pl = np.array([1.0, 0, 0, 0])
@@ -774,7 +792,7 @@ for _ in range(20):
     pl = pl @ Plazy
 assert np.abs(pl - pi_p).sum() < 0.01
 print(f"B8: path graph eigenvalues {ev_p}; after 20 steps from vertex 1, ||pi_t - pi||_1 = {np.abs(pt - pi_p).sum():.3f} (walk) "
-      f"vs {np.abs(pl - pi_p).sum():.4f} (lazy walk, eigenvalues {np.sort(np.linalg.eigvals(Plazy).real)})")
+      f"vs {np.abs(pl - pi_p).sum():.4f} (lazy walk, eigenvalues {np.round(np.sort(np.linalg.eigvals(Plazy).real), 4) + 0.0})")
 
 # Exercise B10: Metropolis on {1,...,5} with target pi_k proportional to k, nearest-neighbour proposals
 target_unnorm = np.arange(1, 6, dtype=float)                     # only ratios are ever used
@@ -787,6 +805,8 @@ for i in range(5):
     P_met[i, i] = 1 - P_met[i].sum()
 assert np.allclose(P_met.sum(axis=1), 1) and detailed_balance_gap(P_met, pi_true) < 1e-12
 assert np.allclose(pi_true @ P_met, pi_true) and np.allclose(stationary(P_met), pi_true)
+assert np.allclose(P_met, [[1 / 2, 1 / 2, 0, 0, 0], [1 / 4, 1 / 4, 1 / 2, 0, 0], [0, 1 / 3, 1 / 6, 1 / 2, 0],
+                           [0, 0, 3 / 8, 1 / 8, 1 / 2], [0, 0, 0, 2 / 5, 3 / 5]])
 
 
 def metropolis_discrete(log_target, n_states, steps, rng, x0=0):
