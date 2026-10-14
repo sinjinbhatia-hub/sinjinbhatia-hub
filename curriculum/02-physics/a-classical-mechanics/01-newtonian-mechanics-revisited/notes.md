@@ -2,7 +2,7 @@
 
 **Time:** ~6 hours · **Prerequisites:** ODEs (and a first mechanics course, which this module assumes you passed) · **Unlocks:** CM-2, and through it CM-3 to CM-8
 
-> **Conventions in this module.** SI units throughout; $g = 9.81\ \mathrm{m/s^2}$. Vectors are bold: $\mathbf{r} = (x, y, z)$, with $y$ pointing **up** wherever gravity appears, so gravitational potential energy is $V = mgy$. A dot is a time derivative: $\dot{x} = dx/dt$, $\ddot{x} = d^2x/dt^2$. Momentum is $\mathbf{p} = m\mathbf{v} = m\dot{\mathbf{r}}$ and Newton's second law is written $\mathbf{F} = \dot{\mathbf{p}}$. Potential energy is $V$ (not $U$), with $\mathbf{F} = -\nabla V$; kinetic energy is $T = \tfrac12 m v^2$; total energy $E = T + V$. Angular momentum about the origin is $\mathbf{L} = \mathbf{r}\times\mathbf{p}$ and torque is $\boldsymbol{\tau} = \mathbf{r}\times\mathbf{F}$. The pendulum angle $\theta$ is measured from the **downward** vertical. For the damped oscillator we write $\ddot{x} + \gamma\dot{x} + \omega_0^2 x = (F_0/m)\cos\omega t$ with $\gamma = b/m$ and $\omega_0^2 = k/m$; Taylor's $\beta$ is our $\gamma/2$. The quality factor is $Q = \omega_0/\gamma$.
+> **Conventions in this module.** SI units throughout; $g = 9.81\ \mathrm{m/s^2}$. Vectors are bold: $\mathbf{r} = (x, y, z)$, with $y$ pointing **up** wherever gravity appears, so gravitational potential energy is $V = mgy$. A dot is a time derivative: $\dot{x} = dx/dt$, $\ddot{x} = d^2x/dt^2$. Momentum is $\mathbf{p} = m\mathbf{v} = m\dot{\mathbf{r}}$ and Newton's second law is written $\mathbf{F} = \dot{\mathbf{p}}$. Potential energy is $V$ (not $U$), with $\mathbf{F} = -\nabla V$; kinetic energy is $T = \tfrac12 m v^2$; total energy $E = T + V$. The letter $T$ is overloaded, as in every mechanics book: in §3.10 and exercise C3 it is a string or rod **tension**, and in §3.6, Example 4.2, B4 and C1 it is a **period** ($T_{\text{period}}$, the small-angle period $T_0$, ratios $T/T_0$). Each use is defined where it is introduced. Angular momentum about the origin is $\mathbf{L} = \mathbf{r}\times\mathbf{p}$ and torque is $\boldsymbol{\tau} = \mathbf{r}\times\mathbf{F}$. The pendulum angle $\theta$ is measured from the **downward** vertical. For the damped oscillator we write $\ddot{x} + \gamma\dot{x} + \omega_0^2 x = (F_0/m)\cos\omega t$ with $\gamma = b/m$ and $\omega_0^2 = k/m$; Taylor's $\beta$ is our $\gamma/2$. The quality factor is $Q = \omega_0/\gamma$.
 
 ## 0. Where this sits
 
@@ -16,7 +16,7 @@ Newton's *Principia* (1687) gave three laws and the law of gravitation, and with
 
 The trouble starts the moment something is not free. A bead slides on a curved wire. A pendulum bob hangs from a rod. A wheel rolls without slipping. In each case the body is forced to stay on a surface or a curve, and whatever holds it there (the wire pushing on the bead, the rod pulling the bob) is a force you did not choose and do not know in advance. It is whatever it has to be to keep the body on the surface. Newton's method requires you to introduce this unknown **constraint force**, write $\mathbf{F} = \dot{\mathbf{p}}$ in Cartesian components with the constraint force included, and then solve simultaneously for the motion *and* for the force, in coordinates ($x$, $y$, $z$) that have nothing to do with the geometry of the problem. For a pendulum you want the angle. Newton hands you $x(t)$, $y(t)$, and a tension $T(t)$ you were never interested in, coupled by the algebraic condition $x^2 + y^2 = \ell^2$.
 
-Newton himself handled such problems (Book I, Section X of the *Principia* treats bodies moving on given surfaces and the pendulum), but by geometric arguments tailored to each case. Huygens had already found in 1673 that a pendulum swinging on a cycloid is exactly isochronous, again by geometry. There was no general machine. Making one took a century. Jacob Bernoulli's analysis of the compound pendulum (1703) and Johann Bernoulli's principle of virtual velocities (1717) contained the key idea: the forces of constraint do no work in any displacement the constraint allows, so if you project Newton's equations onto the allowed directions, the constraint forces vanish from the problem. D'Alembert made this systematic in his *Traité de dynamique* (1743): write $\mathbf{F} - \dot{\mathbf{p}} = 0$ and treat $-\dot{\mathbf{p}}$ as a fictitious extra force, so that every dynamics problem becomes a statics problem, and apply virtual work. Euler, in parallel, was the one who first wrote Newton's second law as the differential equations $m\ddot{x} = F_x$ and so on (1750) and who worked out rigid-body motion.
+Newton himself handled such problems (Book I, Section X of the *Principia* treats bodies moving on given surfaces and the pendulum), but by geometric arguments tailored to each case. Huygens had already shown, in his *Horologium Oscillatorium* (1673), that a pendulum swinging on a cycloid is exactly isochronous, again by geometry. There was no general machine. Making one took a century. Jacob Bernoulli's analysis of the compound pendulum (1703) and Johann Bernoulli's principle of virtual velocities (1717) contained the key idea: the forces of constraint do no work in any displacement the constraint allows, so if you project Newton's equations onto the allowed directions, the constraint forces vanish from the problem. D'Alembert's *Traité de dynamique* (1743) supplied the other half: in modern language, write $\mathbf{F} - \dot{\mathbf{p}} = 0$ and treat $-\dot{\mathbf{p}}$ as a fictitious extra force, so that every dynamics problem becomes a statics problem. Feeding that statics problem to the principle of virtual work, so that the constraint forces drop out, is the combination Lagrange later made systematic (it now goes by the name d'Alembert's principle, or the Lagrange–d'Alembert principle). Euler, in parallel, was the one who first wrote Newton's second law as the differential equations $m\ddot{x} = F_x$ and so on (1750) and who worked out rigid-body motion.
 
 Lagrange finished it. His *Mécanique analytique* (1788) opens by boasting that the book contains no diagrams: the whole of mechanics has been reduced to analysis. You pick *any* coordinates that describe the configuration (an angle, an arc length, a relative separation), as many as there are genuine freedoms, and the equations of motion follow from a single scalar function by a fixed recipe. Constraint forces never appear. Hamilton (1834–35) then showed that the recipe is equivalent to a single statement about the whole path: the motion makes a certain integral stationary. That is where CM-2 begins.
 
@@ -70,7 +70,7 @@ Read that again. It is not a special case of the second law ($\mathbf{F} = 0 \Ri
 $$\mathbf{F} = \dot{\mathbf{p}} = \frac{d}{dt}(m\mathbf{v}). \tag{3.1}$$
 For constant mass this is $\mathbf{F} = m\ddot{\mathbf{r}}$. We write it as (3.1) for two reasons: it is the form that survives into relativity and quantum mechanics, and it is the form you need when mass changes (§3.9), where the naive $\mathbf{F} = m\mathbf{a}$ produces wrong answers.
 
-**Third law.** If body 1 exerts a force $\mathbf{F}_{21}$ on body 2, then body 2 exerts $\mathbf{F}_{12} = -\mathbf{F}_{21}$ on body 1. In its **strong form** the two forces also lie along the line joining the bodies (they are *central*). Gravity and electrostatics obey the strong form. Magnetic forces between moving charges obey neither: two charges moving at right angles to each other can have $\mathbf{F}_{12}$ and $\mathbf{F}_{21}$ that are not even antiparallel. Momentum is still conserved, because the field carries momentum (EM-6, Poynting's theorem). For this module all internal forces obey the strong third law.
+**Third law.** If body 1 exerts a force $\mathbf{F}_{21}$ on body 2, then body 2 exerts $\mathbf{F}_{12} = -\mathbf{F}_{21}$ on body 1. In its **strong form** the two forces also lie along the line joining the bodies (they are *central*). Gravity and electrostatics obey the strong form. Magnetic forces between moving charges obey neither: two charges moving at right angles to each other can have $\mathbf{F}_{12}$ and $\mathbf{F}_{21}$ that are not even antiparallel. Momentum is still conserved, because the field carries momentum (EM-6: the field momentum density $\mathbf{g} = \varepsilon_0\mathbf{E}\times\mathbf{B}$ and the Maxwell stress tensor). For this module all internal forces obey the strong third law.
 
 **Galilean relativity.** Let frame $S'$ move at constant velocity $\mathbf{u}$ relative to inertial frame $S$: $\mathbf{r}' = \mathbf{r} - \mathbf{u}t$, $t' = t$.
 
@@ -78,7 +78,7 @@ For constant mass this is $\mathbf{F} = m\ddot{\mathbf{r}}$. We write it as (3.1
 
 1. $\dot{\mathbf{r}}' = \dot{\mathbf{r}} - \mathbf{u}$. Velocities differ by the constant $\mathbf{u}$.
 2. $\ddot{\mathbf{r}}' = \ddot{\mathbf{r}}$. Accelerations are identical.
-3. If the force depends only on relative positions $\mathbf{r}_i - \mathbf{r}_j$ and relative velocities $\dot{\mathbf{r}}_i - \dot{\mathbf{r}}_j$ (true for every fundamental force), it is also unchanged. So $\mathbf{F}' = m\ddot{\mathbf{r}}'$ holds in $S'$ exactly when it holds in $S$. ∎
+3. If the force depends only on relative positions $\mathbf{r}_i - \mathbf{r}_j$ and relative velocities $\dot{\mathbf{r}}_i - \dot{\mathbf{r}}_j$ (true for gravity, electrostatics, springs, and contact forces; *not* for the magnetic force, which depends on each charge's own velocity, and that mismatch is where special relativity starts), it is also unchanged. So $\mathbf{F}' = m\ddot{\mathbf{r}}'$ holds in $S'$ exactly when it holds in $S$. ∎
 
 ■ **What just happened.** Every frame moving uniformly relative to an inertial frame is inertial. There is no experiment within mechanics that detects absolute velocity. Energy and momentum are *not* invariant under this change (a body at rest in $S'$ has kinetic energy in $S$), but the *laws* are, and in particular the work–energy theorem and the conservation laws hold in every inertial frame.
 
@@ -100,7 +100,7 @@ $$\dot{\mathbf{P}} = \mathbf{F}^{\text{ext}} \equiv \sum_i \mathbf{F}_i^{\text{e
 4. By the third law each bracket is $\mathbf{0}$. The double sum vanishes.
 5. The left side of step 2 is $\frac{d}{dt}\sum_i m_i\dot{\mathbf{r}}_i = \dot{\mathbf{P}}$, and also $M\ddot{\mathbf{R}}$ by the definition of $\mathbf{R}$ (the masses are constant). ∎
 
-■ **What just happened.** The center of mass of any system moves exactly as a single particle of mass $M$ would under the net external force alone. Internal forces, however violent (an explosion, Example 4.1), cannot move the center of mass. If $\mathbf{F}^{\text{ext}} = \mathbf{0}$, $\mathbf{P}$ is conserved. Step 4 is where "internal forces cancel" lives; it is one line, and it uses the third law and nothing else.
+■ **What just happened.** The center of mass of any system moves exactly as a single particle of mass $M$ would under the net external force alone. Internal forces, however violent (an explosion, Example 4.1), cannot change the motion of the center of mass. If $\mathbf{F}^{\text{ext}} = \mathbf{0}$, $\mathbf{P}$ is conserved. Step 4 is where "internal forces cancel" lives; it is one line, and it uses the third law and nothing else.
 
 ### 3.3 Angular momentum and torque
 
@@ -166,13 +166,13 @@ Let $\mathbf{F}(\mathbf{r})$ be a force field that depends on position only (not
 1. The $z$-component of $\nabla\times\mathbf{F}$ is $\partial_x F_y - \partial_y F_x = -\partial_x\partial_y V + \partial_y\partial_x V$.
 2. For $V$ with continuous second derivatives, mixed partials commute (Clairaut), so this is $0$. Same for the other two components. ∎
 
-**About (b) $\Rightarrow$ (a).** Stokes' theorem says $\oint_C\mathbf{F}\cdot d\mathbf{r} = \iint_S(\nabla\times\mathbf{F})\cdot d\mathbf{A}$ for any surface $S$ in $D$ bounded by $C$. If $D$ is simply connected such a surface always exists, and (b) makes the right side zero. Stokes' theorem itself is proved in EM-1 (the vector calculus toolkit), and the full statement that a curl-free field on a simply connected region is a gradient is the first half of EM-1's Helmholtz theorem. Without simple connectivity it is false: the field $\mathbf{F} = (-y, x, 0)/(x^2 + y^2)$ on $\mathbb{R}^3$ minus the $z$-axis has $\nabla\times\mathbf{F} = \mathbf{0}$ everywhere it is defined, but $\oint\mathbf{F}\cdot d\mathbf{r} = 2\pi$ around the unit circle (exercise B2). The hole matters.
+**About (b) $\Rightarrow$ (a).** Stokes' theorem says $\oint_C\mathbf{F}\cdot d\mathbf{r} = \iint_S(\nabla\times\mathbf{F})\cdot d\mathbf{A}$ for any surface $S$ in $D$ bounded by $C$. If $D$ is simply connected such a surface always exists, and (b) makes the right side zero. Stokes' theorem itself is derived in EM-1 (the vector calculus toolkit), and EM-1's section on potentials uses it to prove the full statement that a curl-free field on a simply connected region is a gradient, completing Theorem 3.3. Without simple connectivity it is false: the field $\mathbf{F} = (-y, x, 0)/(x^2 + y^2)$ on $\mathbb{R}^3$ minus the $z$-axis has $\nabla\times\mathbf{F} = \mathbf{0}$ everywhere it is defined, but $\oint\mathbf{F}\cdot d\mathbf{r} = 2\pi$ around the unit circle (exercise B2). The hole matters.
 
 ■ **What just happened.** Three different-looking statements are one property. The useful direction in practice is (b): compute a curl to decide whether a potential exists, then find $V$ by integrating. Two things that are *not* conservative in this sense, and are routinely misdescribed: drag (depends on velocity) and the magnetic force (depends on velocity; it does no work, but it has no $V(\mathbf{r})$). Time-dependent forces are also excluded.
 
 **Theorem 3.4 (Energy conservation).** If a particle moves under a conservative force $\mathbf{F} = -\nabla V$ plus possibly other forces $\mathbf{F}_{\text{nc}}$, then $E = T + V$ obeys
 $$\dot{E} = \mathbf{F}_{\text{nc}}\cdot\dot{\mathbf{r}}. \tag{3.5}$$
-In particular $E$ is constant when $\mathbf{F}_{\text{nc}} = \mathbf{0}$, and also when $\mathbf{F}_{\text{nc}}$ is always perpendicular to the velocity (a frictionless constraint force, a magnetic force).
+In particular $E$ is constant when $\mathbf{F}_{\text{nc}} = \mathbf{0}$, and also when $\mathbf{F}_{\text{nc}}$ is always perpendicular to the velocity (the force from a frictionless constraint that does not move, a magnetic force). A *moving* constraint, such as a shaken pivot (exercise C3) or a spinning hoop (CM-3 Example 4.3), can do work, and then $E$ changes even without friction.
 
 **Derivation.**
 1. $\dot{T} = \mathbf{F}\cdot\dot{\mathbf{r}} = (-\nabla V + \mathbf{F}_{\text{nc}})\cdot\dot{\mathbf{r}}$ by §3.4.
@@ -189,7 +189,7 @@ The motion is confined to where $V(x) \le E$. Points where $V(x) = E$ are **turn
 
 **Period of oscillation.** If the particle is trapped between turning points $x_1 < x_2$, the time from $x_1$ to $x_2$ is, from (3.6) with the $+$ sign, $\int dx/\dot{x}$, and the full period is twice that:
 $$T_{\text{period}} = 2\int_{x_1}^{x_2}\frac{dx}{\sqrt{\tfrac{2}{m}(E - V(x))}} = \sqrt{2m}\int_{x_1}^{x_2}\frac{dx}{\sqrt{E - V(x)}}. \tag{3.7}$$
-The integrand blows up at both ends like $1/\sqrt{x - x_1}$, which is integrable. For $V = \tfrac12 kx^2$ you can check that (3.7) gives $2\pi\sqrt{m/k}$ independent of $E$ (exercise A4 route); for anything else, the period depends on amplitude. Example 4.2 does the pendulum.
+The integrand blows up at both ends, like $1/\sqrt{x - x_1}$ near $x_1$ and $1/\sqrt{x_2 - x}$ near $x_2$, which is integrable provided $V'(x_i) \neq 0$ at the turning points (expand $E - V$ to first order there). When a turning point sits at a maximum of $V$, $V' = 0$ there, the integrand goes like $1/|x - x_i|$, and the time diverges: on the separatrix the particle takes forever to reach the top. For $V = \tfrac12 kx^2$ you can check that (3.7) gives $2\pi\sqrt{m/k}$ independent of $E$ (exercise A4 route); for anything else, the period depends on amplitude. Example 4.2 does the pendulum.
 
 **Reading the phase portrait from $V$.** Phase-space trajectories are the curves $\tfrac12 m\dot{x}^2 + V(x) = E$. At each $x$, $\dot{x} = \pm\sqrt{2(E - V)/m}$: the curve is widest where $V$ is lowest. A minimum $x_0$ of $V$ is an **equilibrium**; nearby trajectories are closed loops around $(x_0, 0)$. A maximum $x_m$ is also an equilibrium, but trajectories near it are hyperbola-like: the curve with $E = V(x_m)$ passes through $(x_m, 0)$ and is the separatrix, dividing trajectories that turn back from those that pass over. Everything else about the motion (direction of travel: clockwise, since $\dot{x} > 0$ in the upper half-plane means $x$ increases) follows. The project draws this for the pendulum, where $V(\theta) = mg\ell(1 - \cos\theta)$, the maxima are at $\theta = \pm\pi$, and the separatrix is $E = 2mg\ell$.
 
@@ -210,6 +210,8 @@ A body of mass $m$ falling through a fluid, $y$ up, with velocity $v = \dot{y}$ 
 
 **Linear drag** $\mathbf{F}_{\text{drag}} = -b\mathbf{v}$. Newton: $m\dot{v} = -mg - bv$. Define $\tau = m/b$ and $v_\infty = mg/b = g\tau$.
 
+▶ **Try it first.** Find the velocity at which the net force vanishes, then write the equation for the deviation $v + v_\infty$ from it. What first-order ODE is left?
+
 1. Rewrite: $\dot{v} = -(v + v_\infty)/\tau$. This is linear with constant coefficients.
 2. The solution with $v(0) = v_0$: $v(t) = -v_\infty + (v_0 + v_\infty)e^{-t/\tau}$. (Check: $\dot{v} = -(v_0 + v_\infty)e^{-t/\tau}/\tau = -(v + v_\infty)/\tau$. ✓)
 3. As $t \to \infty$, $v \to -v_\infty$: the **terminal velocity**, where drag balances weight. The approach is exponential with time constant $\tau$.
@@ -223,6 +225,8 @@ The horizontal range can never exceed $x_\infty = v_{x0}\tau$: the trajectory ha
 1. Terminal speed where $\dot{s} = 0$: $s_\infty = \sqrt{mg/c}$. Write $m\dot{s} = mg(1 - s^2/s_\infty^2)$.
 2. Separate: $\displaystyle\int\frac{ds}{1 - s^2/s_\infty^2} = g\,t$. The left side is $s_\infty\operatorname{artanh}(s/s_\infty)$.
 3. So $s(t) = s_\infty\tanh(t/\tau)$ with $\tau = s_\infty/g$. ∎
+
+■ **What just happened.** Both drag laws give a terminal velocity where drag balances weight. Linear drag approaches it exponentially, $e^{-t/\tau}$; quadratic drag approaches it as $\tanh$, which is also exponential at late times ($1 - \tanh u \approx 2e^{-2u}$). The difference that matters is in two dimensions.
 
 Unlike linear drag, quadratic drag does not separate into independent $x$ and $y$ equations for a projectile ($|\mathbf{v}| = \sqrt{v_x^2 + v_y^2}$ couples them), and there is no closed form. The project integrates it numerically.
 
@@ -283,6 +287,8 @@ Pivot at the origin, rod of length $\ell$, bob of mass $m$ at $(x, y)$ with $y$ 
 $$m\ddot{x} = -\frac{T}{\ell}x, \qquad m\ddot{y} = -\frac{T}{\ell}y - mg, \qquad x^2 + y^2 = \ell^2.$$
 Two differential equations and one algebraic equation for three unknowns. The algebraic one must be differentiated to be useful.
 
+▶ **Try it first.** Before reading on, try to get a single equation for the motion with $T$ gone, working only in $x$ and $y$. Note where you get stuck, and what you would need to introduce to get unstuck.
+
 1. Differentiate the constraint: $x\dot{x} + y\dot{y} = 0$. Again: $\dot{x}^2 + \dot{y}^2 + x\ddot{x} + y\ddot{y} = 0$, i.e. $x\ddot{x} + y\ddot{y} = -v^2$ where $v^2 = \dot{x}^2 + \dot{y}^2$.
 2. Multiply the $x$-equation by $x$, the $y$-equation by $y$, and add: $m(x\ddot{x} + y\ddot{y}) = -\dfrac{T}{\ell}(x^2 + y^2) - mgy = -T\ell - mgy$.
 3. Insert step 1: $-mv^2 = -T\ell - mgy$, so
@@ -294,11 +300,13 @@ We now know the tension in terms of the state, but we still have two coupled sec
 $$\ddot{\theta} = -\frac{g}{\ell}\sin\theta. \tag{3.13}$$
 7. Multiply the first by $-\sin\theta$, the second by $\cos\theta$, and add: $m\ell\dot{\theta}^2 = T - mg\cos\theta$, so $T = m\ell\dot{\theta}^2 + mg\cos\theta$, which agrees with (3.12) since $y = -\ell\cos\theta$ and $v^2 = \ell^2\dot{\theta}^2$. ∎
 
-Seven steps, two of them pure algebra to make an unknown we never wanted cancel out, and the decisive move (step 4) was to abandon Cartesian coordinates for the angle, which Newton's formulation gave us no hint to do. **CM-3 does this in three lines.**
+■ **What just happened.** Seven steps, two of them pure algebra to make an unknown we never wanted cancel out, and the decisive move (step 4) was to abandon Cartesian coordinates for the angle, which Newton's formulation gave us no hint to do. **CM-3 does this in three lines.**
 
 #### (b) A bead on a frictionless parabolic wire
 
 Wire $y = kx^2$, $k > 0$, gravity down, bead of mass $m$. The wire exerts a normal force $\mathbf{N} = N\hat{\mathbf{n}}$ with $\hat{\mathbf{n}} = (-2kx, 1)/\sqrt{1 + 4k^2x^2}$ (perpendicular to the tangent $(1, 2kx)$). Unknowns: $x(t)$, $y(t)$, $N(t)$.
+
+▶ **Try it first.** Follow the pendulum's recipe: write both Cartesian components of Newton's law, differentiate the constraint twice, and eliminate $N$. Predict what the normal force at the bottom must be from the circular-motion formula $N - mg = mv^2/\rho$.
 
 1. Newton: $m\ddot{x} = -\dfrac{2kx\,N}{\sqrt{1 + 4k^2x^2}}$, $\quad m\ddot{y} = \dfrac{N}{\sqrt{1 + 4k^2x^2}} - mg$. Constraint: $y = kx^2$.
 2. Abbreviate $\lambda = N/\sqrt{1 + 4k^2x^2}$ so that $m\ddot{x} = -2kx\lambda$ and $m\ddot{y} = \lambda - mg$.
@@ -309,7 +317,7 @@ $$\ddot{x} = -\frac{2kx\left(g + 2k\dot{x}^2\right)}{1 + 4k^2x^2}. \tag{3.14}$$
 6. The normal force, from steps 2 and 4: $N = \lambda\sqrt{1 + 4k^2x^2} = m\left[g + 2k(\dot{x}^2 + x\ddot{x})\right]\sqrt{1 + 4k^2x^2}$, with $\ddot{x}$ from (3.14). At the bottom ($x = 0$, so $\ddot{x} = 0$):
 $$N_{\text{bottom}} = m\left(g + 2k\dot{x}^2\right). \tag{3.15}$$ ∎
 
-Check (3.15): the radius of curvature of $y = kx^2$ at the origin is $1/(2k)$, so $N - mg = mv^2/\rho = 2kmv^2$. ✓ Equation (3.14) is a one-dimensional equation in $x$, which is what we wanted, but the route there went through an unknown $N$, a unit normal, and an auxiliary $\lambda$. **CM-3 does this in three lines**, and the $\dot{x}^2$ term, which looks mysterious here, comes out automatically from the kinetic energy $\tfrac12 m(1 + 4k^2x^2)\dot{x}^2$.
+■ **What just happened.** Check (3.15): the radius of curvature of $y = kx^2$ at the origin is $1/(2k)$, so $N - mg = mv^2/\rho = 2kmv^2$. ✓ Equation (3.14) is a one-dimensional equation in $x$, which is what we wanted, but the route there went through an unknown $N$, a unit normal, and an auxiliary $\lambda$. **CM-3 does this in three lines**, and the $\dot{x}^2$ term, which looks mysterious here, comes out automatically from the kinetic energy $\tfrac12 m(1 + 4k^2x^2)\dot{x}^2$.
 
 #### (c) The Atwood machine
 
@@ -320,7 +328,7 @@ Masses $m_1$ and $m_2$ hang from a massless string over a massless frictionless 
 3. Subtract the equations after substituting: $m_1\ddot{y}_1 + m_2\ddot{y}_1 = (T - m_1 g) - (T - m_2 g)$, i.e.
 $$\ddot{y}_1 = \frac{m_2 - m_1}{m_1 + m_2}\,g, \qquad T = m_1(g + \ddot{y}_1) = \frac{2m_1m_2}{m_1 + m_2}\,g. \tag{3.16}$$ ∎
 
-This one is easy, but notice the pattern: one more unknown ($T$) than there are freedoms, and one algebraic step to eliminate it. With two pulleys and three masses you have two tensions, three constraint relations, and a $5\times 5$ linear system. **CM-3 does this in three lines**, for any number of pulleys.
+■ **What just happened.** This one is easy, but notice the pattern: one more unknown ($T$) than there are freedoms, and one algebraic step to eliminate it. With two pulleys and three masses (the double Atwood machine: $m_1$ on one side of a fixed pulley, a massless movable pulley carrying $m_2$ and $m_3$ on the other) you have four accelerations (three masses and the movable pulley), two tensions, three Newton equations, two string constraints, and a force balance on the massless pulley ($T_1 = 2T_2$): a $6\times 6$ linear system. The project solves it. **CM-3 does this in three lines**, for any number of pulleys.
 
 #### Generalized coordinates, informally
 
@@ -347,7 +355,7 @@ which is exactly $h^2\omega^2E_n$ when $V = \tfrac12\omega^2x^2$. For the pendul
 
 **RK4** (classical fourth-order Runge–Kutta) evaluates $a$ four times per step and has local error $O(h^5)$. The default of `scipy.integrate.solve_ivp`, RK45 (Dormand–Prince), is an adaptive cousin. It is excellent for a few hundred periods, but it does not preserve phase-space area either; the energy drifts, slowly and steadily, and over long enough runs the drift wins.
 
-**Symplectic Euler:** $v_{n+1} = v_n + ha(x_n)$, then $x_{n+1} = x_n + hv_{n+1}$. One tiny change: use the *updated* velocity for the position step. The map is now $(x, v) \mapsto (x + hv + h^2a(x),\ v + ha(x))$, whose Jacobian has determinant exactly 1 for *any* $a(x)$ (exercise C2). It preserves phase-space area, like the true flow. Its energy error is $O(h)$ but does *not* accumulate: the energy oscillates around the true value and stays bounded forever. This is the simplest **symplectic integrator**; CM-8 explains why "preserves the symplectic structure" is the right property to ask for, and the Störmer–Verlet (leapfrog) method you will meet there is the second-order version, used in every molecular dynamics code and in the Hamiltonian Monte Carlo of ST-6. The project runs all three on the pendulum for 100 periods.
+**Symplectic Euler:** $v_{n+1} = v_n + ha(x_n)$, then $x_{n+1} = x_n + hv_{n+1}$. One tiny change: use the *updated* velocity for the position step. The map is now $(x, v) \mapsto (x + hv + h^2a(x),\ v + ha(x))$, whose Jacobian has determinant exactly 1 for *any* $a(x)$ (exercise C2). It preserves phase-space area, like the true flow. Its energy error is $O(h)$ but does *not* accumulate: the energy oscillates around the true value and stays in a band of width $O(h)$. For the harmonic oscillator that band holds forever, exactly (exercise C2 finds the conserved modified energy); for nonlinear forces the same bound holds over times exponentially long in $1/h$ (backward error analysis, Hairer–Lubich–Wanner ch. IX), which in practice means forever. This is the simplest **symplectic integrator**; CM-8 explains why "preserves the symplectic structure" is the right property to ask for, and the Störmer–Verlet (leapfrog) method you will meet there is the second-order version, the standard integrator in molecular dynamics and the one inside the Hamiltonian Monte Carlo of ST-6. The project runs all three on the pendulum for 100 periods.
 
 ## 4. Worked examples
 
@@ -402,7 +410,7 @@ $m = 1$ kg, $k = 100$ N/m, $b = 2$ kg/s, $F_0 = 1$ N. Then $\omega_0 = 10$ rad/s
 
 *Off resonance.* At $\omega = 8$: $A = 1/\sqrt{36^2 + 16^2} = 1/\sqrt{1552} = 0.02538$ m, $\delta = \arctan(16/36) = 0.4182$ rad $= 23.96°$. At $\omega = 12$: $A = 1/\sqrt{44^2 + 24^2} = 0.01995$ m, $\delta = \pi - \arctan(24/44) = 2.6422$ rad $= 151.4°$ (second quadrant, because $\omega_0^2 - \omega^2 < 0$).
 
-*Transient.* Decays as $e^{-\gamma t/2} = e^{-t}$; after 5 s it is $0.7\%$ of its initial size, after 15 s it is $3\times 10^{-7}$. The project integrates from rest for 20 s, measures the steady-state amplitude over the last 2 s, and overlays it on (3.10) across $\omega \in [2, 20]$. The power curve's full width at half maximum comes out as $2.000$ s$^{-1}$ $= \gamma$.
+*Transient.* Decays as $e^{-\gamma t/2} = e^{-t}$; after 5 s it is $0.7\%$ of its initial size, after 15 s it is $3\times 10^{-7}$. The project integrates from rest for 20 s, measures the steady-state amplitude and phase over the last whole drive periods (about 2 s; one full period at the lowest frequencies), and overlays it on (3.10) across $\omega \in [2, 20]$. The power curve's full width at half maximum comes out as $2.000$ s$^{-1}$ $= \gamma$.
 
 ### Example 4.5: The bead on the parabolic wire, with the normal force at the bottom
 
@@ -420,17 +428,17 @@ The project integrates (3.14), computes $N(t)$ along the trajectory from step 6 
 
 *Atwood.* $m_1 = 1.0$ kg, $m_2 = 1.5$ kg. From (3.16): $\ddot{y}_1 = 0.5\times 9.81/2.5 = 1.962$ m/s$^2$ (the lighter mass rises), $T = 2\times 1.5\times 9.81/2.5 = 11.772$ N. Sanity: $T$ lies between $m_1 g = 9.81$ N and $m_2 g = 14.715$ N, as it must (it has to lift $m_1$ and fail to hold $m_2$).
 
-*Rocket.* $m_0 = 1000$ kg, final mass $300$ kg, exhaust speed $u = 2500$ m/s. From step 6 of §3.9: $\Delta v = 2500\ln(1000/300) = 2500\times 1.2040 = 3009.9$ m/s. If the burn is vertical and takes 60 s, subtract $gt = 588.6$ m/s: $2421.3$ m/s. Lift-off check: $|\dot{m}| = 700/60 = 11.67$ kg/s, thrust $u|\dot{m}| = 29{,}167$ N versus initial weight $9810$ N. ✓ If instead the burn took 5 minutes, the thrust would be $5833$ N and the rocket would sit on the pad burning fuel.
+*Rocket.* $m_0 = 1000$ kg, final mass $300$ kg, exhaust speed $u = 2500$ m/s. From step 6 of §3.9: $\Delta v = 2500\ln(1000/300) = 2500\times 1.2040 = 3009.9$ m/s. If the burn is vertical and takes 60 s, subtract $gt = 588.6$ m/s: $2421.3$ m/s. Lift-off check: $|\dot{m}| = 700/60 = 11.67$ kg/s, thrust $u|\dot{m}| = 29{,}167$ N versus initial weight $9810$ N. ✓ If instead the burn took 5 minutes, the thrust would be $5833$ N, less than the weight, and the rocket would sit on the pad burning fuel for $173.7$ s, until its mass had dropped to $u|\dot{m}|/g = 594.6$ kg (exercise B6(b)), wasting more than half the propellant before it moved.
 
 ## 5. Why it matters and where it connects
 
 - **CM-2** takes the hint from §3.10: there should be a formulation that projects out constraint forces automatically. Hamilton's principle is that formulation, and the Euler–Lagrange equation it produces is derived in F6 (calculus of variations) and applied in CM-2.
-- **CM-3** redoes the pendulum (3.13), the bead (3.14), and the Atwood machine (3.16) from $L = T - V$ in generalized coordinates. Keep this module's derivations; you will compare line counts. Lagrange multipliers in CM-3 recover the tension (3.12) and the normal force (3.15) when you *do* want them.
+- **CM-3** redoes the pendulum (3.13) as its Example 4.1 and the Atwood machine (3.16) as its Example 4.2, from $L = T - V$ in generalized coordinates; its Exercise B4 spins the parabolic wire $z = \tfrac12 kr^2$ about its axis, and setting the spin to zero gives back the bead (3.14) (CM-3's $k$ is twice ours). Keep this module's derivations; you will compare line counts. Lagrange multipliers (CM-3 §3.8) recover the tension (3.12) when you *do* want it (CM-3 Exercise B2), and the same recipe gives the normal force (3.15).
 - **CM-4** turns the three assumptions in §3.2–3.5 (third law, central forces, existence of $V$) into three symmetries (translation, rotation, time translation) via Noether's theorem.
 - **CM-5** uses $\dot{\mathbf{L}} = \boldsymbol{\tau}$ with a central force, (3.3), to reduce the two-body problem to one dimension, then applies (3.6) and (3.7) to the effective potential to get Kepler orbits.
 - **CM-6** generalizes (3.8): for $n$ coordinates, $V''(x_0)$ becomes the Hessian matrix $K$ and the kinetic energy gives a mass matrix $M$; normal-mode frequencies solve $\det(K - \omega^2 M) = 0$, a generalized eigenproblem (LA-8).
 - **CM-8** is phase space taken seriously: Liouville's theorem is the exact version of "the true flow preserves area" from §3.11, and symplectic integrators are the numerical methods that respect it.
-- **EM-1** proves Stokes' theorem and the Helmholtz theorem, closing the (b) $\Rightarrow$ (a) gap in Theorem 3.3. **EM-6** shows where the momentum goes when the third law fails for magnetic forces.
+- **EM-1** derives Stokes' theorem and uses it to prove that a curl-free field on a simply connected region is a gradient, closing the (b) $\Rightarrow$ (a) gap in Theorem 3.3; the Helmholtz theorem there goes further. **EM-6** shows where the momentum goes when the third law fails for magnetic forces: into the field, with momentum density $\varepsilon_0\mathbf{E}\times\mathbf{B}$.
 - **F3**: the complex amplitude $\tilde{A}/F_0$ of (3.10) is the transfer function; the response to an arbitrary force is its convolution with the oscillator's Green's function.
 - **LA-7**: the Euler map in §3.11 is a $2\times 2$ matrix; its eigenvalues have modulus $\sqrt{1 + h^2\omega^2} > 1$, which is a second way to see (3.17).
 - **ST-6**: Hamiltonian Monte Carlo integrates Hamilton's equations with leapfrog precisely because of the area-preservation property introduced in §3.11.
@@ -483,7 +491,7 @@ See [exercises.md](exercises.md). A1–A5 are drills: center of mass, curl tests
 
 ## 10. Pair with
 
-- **Taylor, *Classical Mechanics*, ch. 1–4.** Ch. 1 states the laws with the care this module aims for; §1.5 on the third law and its failure for magnetism is the source of the §3.1 teaser. Ch. 2 on drag is more thorough than §3.7 (quadratic drag with both components, Taylor's Fig. 2.9). Ch. 3 has the rocket (§3.2) and the CM theorem; ch. 4 has the conservative-force conditions and the one-dimensional energy method. Taylor's ch. 5 (oscillations) is the full version of §3.8 if you want the overdamped and critically damped cases too.
-- **Morin, *Introduction to Classical Mechanics*, ch. 1–5.** For problems. Morin's are harder and more inventive than Taylor's; do the starred ones in ch. 3 (oscillations) and ch. 5 (conservation of energy and momentum) if you want to be sure you are not fooling yourself. His §5.8 does the rocket with the same sign warning.
-- **Feynman Lectures, vol. I, ch. 9–14.** Ch. 9 ("Newton's Laws of Dynamics") integrates a planetary orbit by hand with Euler-like steps and is the best thing ever written on what a differential equation *is*. Ch. 10 on momentum conservation, ch. 13–14 on work and potential energy, say in words what §3.4–3.5 say in symbols.
+- **Taylor, *Classical Mechanics*, ch. 1–4.** Ch. 1 states the laws with the care this module aims for; §1.5 on the third law and its failure for magnetism is the source of the §3.1 teaser. Ch. 2 on drag is more thorough than §3.7 (quadratic drag with both components, solved numerically). Ch. 3 has the rocket (§3.2) and the CM theorem; ch. 4 has the conservative-force conditions and the one-dimensional energy method. Taylor's ch. 5 (oscillations) is the full version of §3.8 if you want the overdamped and critically damped cases too.
+- **Morin, *Introduction to Classical Mechanics*, ch. 1–5.** For problems. Morin's are harder and more inventive than Taylor's; do the starred ones in ch. 3 (using $F = ma$), ch. 4 (oscillations), and ch. 5 (conservation of energy and momentum) if you want to be sure you are not fooling yourself. Ch. 5 also treats rocket motion; compare its bookkeeping with §3.9.
+- **Feynman Lectures, vol. I, ch. 9–14.** Ch. 9 ("Newton's Laws of Dynamics") integrates an oscillator and then a planetary orbit by hand, stepping the velocity at the half-steps between position updates: that is the leapfrog (Störmer–Verlet) scheme of §3.11's last paragraph, not Euler, and the chapter is the best thing ever written on what a differential equation *is*. Ch. 10 on momentum conservation, ch. 13–14 on work and potential energy, say in words what §3.4–3.5 say in symbols.
 - **Hairer, Lubich & Wanner, *Geometric Numerical Integration*, ch. I** (only if §3.11 hooked you). The first chapter does exactly the Euler/symplectic-Euler/Störmer–Verlet comparison on the pendulum and the Kepler problem, with pictures.

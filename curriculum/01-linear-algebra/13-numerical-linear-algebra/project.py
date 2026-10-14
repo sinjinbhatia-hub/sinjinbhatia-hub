@@ -1228,6 +1228,8 @@ assert abs(R6s[1, 1]) < 1e-14 and np.isclose(R6s[0, 0], np.sqrt(4 + 2 * np.sqrt(
 assert np.allclose(A1s, np.diag([2 + np.sqrt(2), 2 - np.sqrt(2)]), atol=1e-14)
 Asw = np.array([[0.0, 1.0], [1.0, 0.0]]); Qsw, Rsw = qr_positive(Asw)
 assert np.allclose(Rsw, np.eye(2)) and np.allclose(Rsw @ Qsw, Asw) and wilkinson_shift(Asw) == -1.0
+Qw, Rw = qr_positive(Asw + np.eye(2)); A1w = Rw @ Qw - np.eye(2)          # one step with the Wilkinson shift μ = −1
+assert np.allclose(A1w, np.diag([1.0, -1.0])) and abs(Rw[1, 1]) < 1e-15
 print(f"B6: R = {np.round(R6s, 4).tolist()}, A₁ = {np.round(A1s, 6).tolist()}; [[0,1],[1,0]] is a fixed point of unshifted QR; its Wilkinson shift is −1")
 
 # B7: steepest descent on Example 4.5's system: two steps, the zigzag, and the Kantorovich factor.
@@ -1266,7 +1268,7 @@ below = max(np.abs(np.tril(h, -2)).max() for h in hist8) / np.abs(A8n).max()
 diag_err = np.abs(np.diag(hist8[-1]) - np.array([6.0, 5, 4, 3, 2, 1])).max()
 assert rec8 < 1e-14 and np.allclose(Q8.T @ Q8, np.eye(6)) and below < 1e-12 and diag_err < 1e-9
 print(f"B8: ‖QHQᵀ − A‖/‖A‖ = {rec8:.1e}; max entry below the subdiagonal over 150 QR steps = {below:.1e} (relative); "
-      f"diag(A₁₅₀) − (6,…,1) max = {diag_err:.1e}")
+      f"diag(A₁₅₀) − (6,…,1) max = {diag_err:.1e}; slowest rate (5/6)^150 = {(5 / 6) ** 150:.1e}")
 
 # C1: an SPD matrix on which Jacobi diverges and Gauss–Seidel converges.
 aC = 0.8; AC = (1 - aC) * np.eye(3) + aC * np.ones((3, 3))

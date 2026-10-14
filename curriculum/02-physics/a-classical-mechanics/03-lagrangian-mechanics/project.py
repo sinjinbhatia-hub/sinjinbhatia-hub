@@ -210,6 +210,7 @@ assert np.isclose(w0, 4.4294, atol=5e-5) and np.isclose(W, 8.8589, atol=5e-5)
 assert np.isclose(th_star, 1.3181, atol=5e-5) and np.isclose(np.degrees(th_star), 75.52, atol=5e-3)
 assert np.isclose(np.sin(th_star), np.sqrt(15) / 4) and np.isclose(np.sin(th_star), 0.96825, atol=5e-6)
 assert np.isclose(Omega, np.sqrt(15) / 2 * w0) and np.isclose(Omega, 8.5776, atol=5e-5)
+assert np.isclose(np.sqrt(15) / 2, 1.9365, atol=5e-5)                               # Omega / omega0
 assert np.isclose(2 * np.pi / Omega, 0.7325, atol=5e-5) and np.isclose(2 * np.pi / w0, 1.4185, atol=5e-5)
 assert np.isclose(Omega**2, W**2 - w0**4 / W**2)                                   # (4.8)
 print(f"Example 4.3: omega0 = {w0:.4f}, omega = {W:.4f}, theta* = {th_star:.4f} rad = {np.degrees(th_star):.2f} deg, "
@@ -445,13 +446,19 @@ assert sp.simplify(p_phi.diff(t).subs([(th.diff(t, 2), sph.acc[0]), (ph.diff(t, 
 pphi = sp.symbols("p_phi")
 th_dd_eff = pphi**2 * sp.cos(th) / (m**2 * ell**4 * sp.sin(th)**3) - g / ell * sp.sin(th)   # (4.16)/(m ell^2)
 assert sp.simplify(sph.acc[0].subs(ph.diff(t), pphi / (m * ell**2 * sp.sin(th)**2)) - th_dd_eff) == 0
+# the trap: substituting p_phi into L flips the centrifugal sign; L - p_phi*phid (minus the Routhian) does not
+Veff_sph = pphi**2 / (2 * m * ell**2 * sp.sin(th)**2) - m * g * ell * sp.cos(th)                 # (4.16)
+phid_of_p = pphi / (m * ell**2 * sp.sin(th)**2)
+assert sp.simplify(L_sph.subs(ph.diff(t), phid_of_p) - (half * m * ell**2 * th.diff(t)**2 + Veff_sph + 2 * m * g * ell * sp.cos(th))) == 0
+assert sp.simplify((L_sph - pphi * ph.diff(t)).subs(ph.diff(t), phid_of_p) - (half * m * ell**2 * th.diff(t)**2 - Veff_sph)) == 0
 
 th0 = np.radians(40.0)
 phid0 = np.sqrt(G / np.cos(th0))                        # conical pendulum, ell = 1
 Om_B6 = phid0 * np.sqrt(1 + 3 * np.cos(th0)**2)
 print(f"Example 4.7 / B6: theta0 = 40 deg: cos = {np.cos(th0):.5f}, g/(ell cos) = {G/np.cos(th0):.4f}, 1 + 3cos^2 = "
       f"{1 + 3*np.cos(th0)**2:.5f}; phi_dot0 = {phid0:.4f} rad/s, Omega = {Om_B6:.4f} rad/s, Omega/phi_dot0 = {Om_B6/phid0:.4f}, "
-      f"2pi/Omega = {2*np.pi/Om_B6:.4f} s; azimuth advance per theta-period = {360*phid0/Om_B6:.1f} deg")
+      f"2pi/Omega = {2*np.pi/Om_B6:.4f} s; azimuth advance per theta-period = {360*phid0/Om_B6:.1f} deg "
+      f"(precession {360*phid0/Om_B6 - 180:.1f} deg per outermost point)")
 assert 1 < Om_B6 / phid0 < 2
 # conical motion: theta stays constant
 sol_c = solve_ivp(sph.rhs, (0, 5), [th0, 0.0, 0.0, phid0], t_eval=np.linspace(0, 5, 501), **TIGHT)

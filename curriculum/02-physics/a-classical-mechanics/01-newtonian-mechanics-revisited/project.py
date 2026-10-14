@@ -125,6 +125,7 @@ assert np.isclose(1 + eu[n10], 1.41, atol=0.01), "Euler looks almost fine at 10 
 assert 60 < per_sep < 62.5 and np.isclose(1 + eu[-1], 5.9, atol=0.05), "Euler pushes the bob over the top"
 assert np.abs(th_eu).max() > 100 * np.pi, "by period 100 the Euler 'pendulum' has made dozens of full turns"
 assert np.abs(rk).max() < 1e-6
+assert 5e-11 < np.abs(rk).max() < 1e-10, "§3.7 of the notes' project list: RK4 max error ≈ 7e-11 at h = T0/1000"
 assert np.abs(sy).max() < 2e-2
 drift = abs(sy[-n10:].mean() - sy[:n10].mean())
 assert drift < 0.1 * np.abs(sy).max(), "symplectic energy error must not drift"

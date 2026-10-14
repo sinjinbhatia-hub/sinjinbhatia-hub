@@ -74,15 +74,30 @@ On $x > 0$ take $V = -\arctan(y/x)$. Check: $\partial_xV = -\dfrac{1}{1 + y^2/x^
 (c) The separatrix passes through the unstable equilibrium $(0, 0)$ in phase space, so its energy is $E = V(0) = 0$. Phase portrait: two centers at $(\pm 1, 0)$, each surrounded by closed loops (oscillation in one well, $-\tfrac14 < E < 0$); the separatrix $\tfrac12\dot{x}^2 = \tfrac12x^2 - \tfrac14x^4$, i.e. $\dot{x} = \pm x\sqrt{1 - x^2/2}$, is a figure-eight through the origin with lobes reaching $x = \pm\sqrt{2}$; outside it ($E > 0$) are large closed loops that visit both wells, with $\dot{x} \neq 0$ at $x = 0$. All loops run clockwise ($\dot{x} > 0$ in the upper half-plane). Sketch:
 
 ```
-   x-dot
-     |      ____________
-     |    /   ______     \        E > 0
-     |   /  /  ___  \     \
-     |  |  |  (   )  |     |      inner loops: E < 0
-     |   \  \_/   \_/     /       figure-eight: E = 0
-     |    \______________/
-  ---+---------+----+----+------ x
-   -sqrt2     -1    0    1    sqrt2
+                          x-dot
+                            |
+       ooooooooooooo        |        ooooooooooooo
+      oo            ooooooooooooooooo            oo
+    oo    *****             |             *****    oo
+    o   **     ****         |         ****     **   o
+   o  **   ...     ***      |      ***     ...   **  o
+   o  *  ..   ...     ***   |   ***     ...   ..  *  o
+   o *  .        .       *******       .        .  * o
+--o--*--.---C----.----------*----------.----C---.--*--o-- x
+   o *  .        .       *******       .        .  * o
+   o  *  ..   ...     ***   |   ***     ...   ..  *  o
+   o  **   ...     ***      |      ***     ...   **  o
+    o   **     ****         |         ****     **   o
+    oo    *****             |             *****    oo
+      oo            ooooooooooooooooo            oo
+       ooooooooooooo        |        ooooooooooooo
+                            |
+    -√2    -1               0               1      √2
+
+o: E = 0.35 > 0, one orbit around both wells
+*: E = 0, the separatrix, a figure-eight through the saddle (0, 0)
+.: E = -0.17, one closed loop in each well
+C: the centers (±1, 0), E = -1/4
 ```
 
 (d) $E = V(2) = -2 + 4 = 2$. At $x = 0$: $\tfrac12v^2 + 0 = 2$, $v = 2$ m/s. Turning point: $V(x) = 2 \Rightarrow x^4 - 2x^2 - 8 = 0 \Rightarrow x^2 = \dfrac{2 \pm\sqrt{4 + 32}}{2} = 4$ (the other root is negative), so $x = -2$. Symmetric, as expected from $V(-x) = V(x)$.
@@ -93,7 +108,7 @@ Substitute $x = Au$, $dx = A\,du$, $\sqrt{A^4 - A^4u^4} = A^2\sqrt{1 - u^4}$:
 $$T = \frac{2\sqrt{2m}\,A}{\sqrt{\alpha}\,A^2}\int_0^1\frac{du}{\sqrt{1 - u^4}} = \frac{2\sqrt{2}}{A}\sqrt{\frac{m}{\alpha}}\,I = \frac{4}{A}\sqrt{\frac{m}{2\alpha}}\,I,$$
 since $2\sqrt2 = 4/\sqrt2$. ∎ The same substitution in $V = \alpha|x|^n$ gives $T \propto A\cdot A^{-n/2} = A^{1 - n/2}$: constant for $n = 2$, $1/A$ for $n = 4$.
 
-(b) $I = \dfrac{\Gamma(1/4)\Gamma(1/2)}{4\Gamma(3/4)} = \dfrac{3.6256\times 1.7725}{4\times 1.2254} = 1.31103$ (the project confirms by quadrature). Why faster at larger amplitude: $x^4$ is flatter than a parabola near the origin and much steeper far out, so a large-amplitude particle spends its time where the restoring force per unit displacement ($V'/x = \alpha x^2$) is large, and it is whipped back faster than a harmonic oscillator would be. The pendulum's $V = mg\ell(1 - \cos\theta)$ is the opposite: *flatter* than a parabola at large angles (the restoring force $mg\sin\theta$ saturates), so large swings are slower.
+(b) $I = \dfrac{\Gamma(1/4)\Gamma(1/2)}{4\Gamma(3/4)} = \dfrac{3.6256\times 1.7725}{4\times 1.2254} = 1.31103$ (the project confirms by quadrature). Why faster at larger amplitude: $x^4$ is flatter than a parabola near the origin and much steeper far out, so a large-amplitude particle spends its time where the restoring force per unit displacement ($V'/x = 4\alpha x^2$) is large, and it is whipped back faster than a harmonic oscillator would be. The pendulum's $V = mg\ell(1 - \cos\theta)$ is the opposite: *flatter* than a parabola at large angles (the restoring force $mg\sin\theta$ saturates), so large swings are slower.
 
 (c) Reference code (goes under "Your turn" in `project.py`):
 
@@ -113,7 +128,7 @@ Doubling $A$ halves $T$: $T(1) = 3.708$ s, $T(2) = 1.854$ s, $T(4) = 0.927$ s (w
 
 (b) $F = F_0\cos\omega t$ and $\dot{x} = -\omega A\sin(\omega t - \delta) = -\omega A(\sin\omega t\cos\delta - \cos\omega t\sin\delta)$. So $F\dot{x} = -F_0\omega A\left[\cos\omega t\sin\omega t\cos\delta - \cos^2\omega t\sin\delta\right]$. Over a period $\langle\cos\omega t\sin\omega t\rangle = 0$ and $\langle\cos^2\omega t\rangle = \tfrac12$, giving $\langle F\dot{x}\rangle = \tfrac12F_0\omega A\sin\delta$. Dissipation: $\langle b\dot{x}^2\rangle = b\omega^2A^2\langle\sin^2(\omega t - \delta)\rangle = \tfrac12b\omega^2A^2$. They are equal iff $F_0\sin\delta = b\omega A$. Using $A = (F_0/m)/\sqrt{D}$ with $D = (\omega_0^2 - \omega^2)^2 + \gamma^2\omega^2$: $b\omega A = (b/m)\omega F_0/\sqrt{D} = F_0\gamma\omega/\sqrt{D} = F_0\sin\delta$. ✓ In steady state the drive supplies exactly what the damper eats, as it must, since $\langle dE/dt\rangle = 0$.
 
-(c) $\langle P\rangle = \tfrac12b\omega^2A^2 = \dfrac{F_0^2\gamma}{2m}\cdot\dfrac{\omega^2}{(\omega_0^2 - \omega^2)^2 + \gamma^2\omega^2}$ (using $b/m^2 = \gamma/m$). At $\omega = \omega_0$ this is $P_{\max} = F_0^2/(2m\gamma)$. Half maximum: $\dfrac{\omega^2}{(\omega_0^2 - \omega^2)^2 + \gamma^2\omega^2} = \dfrac{1}{2\gamma^2}$, i.e. $(\omega_0^2 - \omega^2)^2 = \gamma^2\omega^2$, i.e. $\omega_0^2 - \omega^2 = \pm\gamma\omega$. These are two quadratics, $\omega^2 \pm\gamma\omega - \omega_0^2 = 0$, with positive roots $\omega_\pm = \dfrac{\mp\gamma + \sqrt{\gamma^2 + 4\omega_0^2}}{2}$. Their difference is $\omega_+ - \omega_- = \gamma$ **exactly**, for any damping; the weak-damping approximation is not even needed for the width (it is needed to say the half-power points are *symmetric* about $\omega_0$: $\omega_\pm \approx \omega_0 \pm\gamma/2$ when $\gamma \ll \omega_0$, from $\sqrt{\gamma^2 + 4\omega_0^2} \approx 2\omega_0$). Alternatively, with the approximation $\omega_0^2 - \omega^2 \approx 2\omega_0(\omega_0 - \omega)$ near the peak, the half-power condition becomes $2\omega_0|\omega_0 - \omega| = \gamma\omega_0$, so $|\omega_0 - \omega| = \gamma/2$. The project's `brentq` on Example 4.4 finds the half-power frequencies at $9.0499$ and $11.0499$ rad/s: width $2.0000 = \gamma$. ✓
+(c) $\langle P\rangle = \tfrac12b\omega^2A^2 = \dfrac{F_0^2\gamma}{2m}\cdot\dfrac{\omega^2}{(\omega_0^2 - \omega^2)^2 + \gamma^2\omega^2}$ (using $b/m^2 = \gamma/m$). At $\omega = \omega_0$ this is $P_{\max} = F_0^2/(2m\gamma)$. Half maximum: $\dfrac{\omega^2}{(\omega_0^2 - \omega^2)^2 + \gamma^2\omega^2} = \dfrac{1}{2\gamma^2}$, i.e. $(\omega_0^2 - \omega^2)^2 = \gamma^2\omega^2$, i.e. $\omega_0^2 - \omega^2 = \pm\gamma\omega$. These are two quadratics. The $+$ sign gives $\omega^2 + \gamma\omega - \omega_0^2 = 0$, whose positive root is the lower half-power point $\omega_- = \dfrac{-\gamma + \sqrt{\gamma^2 + 4\omega_0^2}}{2}$; the $-$ sign gives $\omega^2 - \gamma\omega - \omega_0^2 = 0$, whose positive root is the upper one, $\omega_+ = \dfrac{\gamma + \sqrt{\gamma^2 + 4\omega_0^2}}{2}$. Their difference is $\omega_+ - \omega_- = \gamma$ **exactly**, for any damping; the weak-damping approximation is not even needed for the width (it is needed to say the half-power points are *symmetric* about $\omega_0$: $\omega_\pm \approx \omega_0 \pm\gamma/2$ when $\gamma \ll \omega_0$, from $\sqrt{\gamma^2 + 4\omega_0^2} \approx 2\omega_0$). Alternatively, with the approximation $\omega_0^2 - \omega^2 \approx 2\omega_0(\omega_0 - \omega)$ near the peak, the half-power condition becomes $2\omega_0|\omega_0 - \omega| = \gamma\omega_0$, so $|\omega_0 - \omega| = \gamma/2$. The project's `brentq` on Example 4.4 finds the half-power frequencies at $9.0499$ and $11.0499$ rad/s: width $2.0000 = \gamma$. ✓
 
 **B6.** (a) $m(t) = m_0 - \beta t$ and $\dot{m} = -\beta$. From (3.11) with gravity: $m\dot{v} = u\beta - mg$, so $\dot{v} = \dfrac{u\beta}{m_0 - \beta t} - g$. Integrate from $0$ with $v(0) = 0$: $v = -u\ln(m_0 - \beta t) + u\ln m_0 - gt = u\ln\dfrac{m_0}{m_0 - \beta t} - gt$. ∎
 

@@ -2,7 +2,7 @@
 
 **Time:** ~12 hours · **Prerequisites:** CM-4 (generalized momenta, cyclic coordinates, the energy function) · **Unlocks:** SM-3 (Liouville and ensembles), QM-4 (commutators from Poisson brackets), QM-9 (path integrals, the classical limit), QC-9 (Hamiltonian simulation)
 
-> **Conventions in this module.** Generalized coordinates are $q = (q_1, \dots, q_n)$ and their conjugate momenta are $p_i = \partial L/\partial \dot q_i$, exactly as in CM-4. The Hamiltonian is $H(q, p, t) = \sum_i p_i \dot q_i - L$. Hamilton's equations are $\dot q_i = \partial H/\partial p_i$, $\dot p_i = -\partial H/\partial q_i$. The Poisson bracket is $\{F, G\} = \sum_i \left(\frac{\partial F}{\partial q_i}\frac{\partial G}{\partial p_i} - \frac{\partial F}{\partial p_i}\frac{\partial G}{\partial q_i}\right)$, so that $\{q, p\} = +1$ (some books, including older editions of Landau, use the opposite sign; check before copying a formula). Phase space is the set of points $z = (q, p) \in \mathbb{R}^{2n}$. The symplectic matrix is written in sans-serif, $\mathsf{J} = \begin{pmatrix} 0 & I \\ -I & 0 \end{pmatrix}$, because the italic $J = \oint p\,dq$ is reserved for the action variable; both names are standard and I will not rename either. The angle variable $w$ conjugate to $J$ advances by exactly $1$ per period, so the frequency $\nu = \partial H/\partial J$ is in cycles per unit time and $\omega = 2\pi\nu$. $L$ with no index is the Lagrangian; $L_x, L_y, L_z$ are components of angular momentum and $L^2 = L_x^2 + L_y^2 + L_z^2$. $\epsilon_{ijk}$ is the Levi-Civita symbol with $\epsilon_{xyz} = 1$. Sums are written out; no summation convention. The pendulum's angle $\theta$ is measured from the downward vertical, so $V = -mgl\cos\theta$ and the hanging rest point is $\theta = 0$. $\hbar = h/2\pi$.
+> **Conventions in this module.** Generalized coordinates are $q = (q_1, \dots, q_n)$ and their conjugate momenta are $p_i = \partial L/\partial \dot q_i$, exactly as in CM-4. The Hamiltonian is $H(q, p, t) = \sum_i p_i \dot q_i - L$. Hamilton's equations are $\dot q_i = \partial H/\partial p_i$, $\dot p_i = -\partial H/\partial q_i$. The Poisson bracket is $\{F, G\} = \sum_i \left(\frac{\partial F}{\partial q_i}\frac{\partial G}{\partial p_i} - \frac{\partial F}{\partial p_i}\frac{\partial G}{\partial q_i}\right)$, so that $\{q, p\} = +1$ (Landau & Lifshitz use the opposite sign; check before copying a formula). Phase space is the set of points $z = (q, p) \in \mathbb{R}^{2n}$. The symplectic matrix is written in sans-serif, $\mathsf{J} = \begin{pmatrix} 0 & I \\ -I & 0 \end{pmatrix}$, because the italic $J = \oint p\,dq$ is the action variable; both names are standard. The angle variable $w$ conjugate to $J$ advances by exactly $1$ per period, so the frequency $\nu = \partial H/\partial J$ is in cycles per unit time and $\omega = 2\pi\nu$. $L$ with no index is the Lagrangian; $L_x, L_y, L_z$ are components of angular momentum and $L^2 = L_x^2 + L_y^2 + L_z^2$. $\epsilon_{ijk}$ is the Levi-Civita symbol with $\epsilon_{xyz} = 1$. Sums are written out; no summation convention. The pendulum's angle $\theta$ is measured from the downward vertical, so $V = -mgl\cos\theta$ and the hanging rest point is $\theta = 0$. $\hbar = h/2\pi$, with $h$ Planck's constant except in §3.11, where $h$ is a time step. Electric charge is $q_e$, to keep $q$ for coordinates.
 
 ## 0. Where this sits
 
@@ -12,9 +12,9 @@ What it makes possible: SM-3's ensembles rest on Liouville's theorem (§3.5); QM
 
 ## 1. The problem that forced this idea
 
-Lagrange's equations are $n$ second-order ordinary differential equations in the $n$ configuration variables $q_i$. They are coordinate-free, they absorb constraints, and by 1800 they were the best tool anyone had. But they have a defect that bothered the astronomers of the early nineteenth century: when you perturb a solved problem (a planet, whose orbit you know exactly, now tugged by Jupiter), the perturbation equations for the orbital elements come out in a strange symmetric form that Lagrange's framework does not explain. Lagrange (1808) and Poisson (1809) both found this form while working on planetary perturbations, and Poisson, in the course of it, defined a bracket of two functions of the coordinates and momenta that reappears throughout this module. Neither of them saw it as the foundation of mechanics. They saw it as a trick for perturbation theory.
+Lagrange's equations are $n$ second-order ODEs in the configuration variables $q_i$. They are coordinate-free, they absorb constraints, and by 1800 they were the best tool anyone had. But when astronomers perturbed a solved problem (a planet's known orbit, now tugged by Jupiter), the equations for the orbital elements came out in a strange symmetric form that Lagrange's framework did not explain. Lagrange (1808) and Poisson (1809) both found it, and Poisson defined along the way the bracket of two functions of coordinates and momenta that runs through this module. Both saw it as a trick for perturbation theory, not a foundation.
 
-William Rowan Hamilton came to it from optics. In 1827, at age twenty-one, he had shown that all of geometrical optics could be packed into a single function (his *characteristic function*), from which every ray could be recovered by differentiation. Light rays are the paths that make an integral stationary (Fermat's principle, CM-2). Mechanical trajectories are also paths that make an integral stationary (Hamilton's principle, CM-2). So Hamilton asked: is there a characteristic function for mechanics? In two papers, *On a General Method in Dynamics* (1834) and its *Second Essay* (1835), he answered yes, and along the way rewrote Lagrange's $n$ second-order equations as $2n$ first-order equations,
+William Rowan Hamilton came to it from optics. In 1827, at age twenty-one, he had shown that all of geometrical optics could be packed into a single function (his *characteristic function*), from which every ray could be recovered by differentiation. Light rays make an integral stationary (Fermat's principle, CM-2); so do mechanical trajectories (Hamilton's principle, CM-2). So Hamilton asked: is there a characteristic function for mechanics? In two papers, *On a General Method in Dynamics* (1834) and its *Second Essay* (1835), he answered yes, and along the way rewrote Lagrange's $n$ second-order equations as $2n$ first-order equations,
 $$
 \dot q_i = \frac{\partial H}{\partial p_i}, \qquad \dot p_i = -\frac{\partial H}{\partial q_i},
 $$
@@ -22,13 +22,13 @@ in which the coordinates and the momenta appear on exactly the same footing. The
 
 Three things happened to this reformulation within a decade, and a fourth took ninety years.
 
-**(a) It made the geometry of motion visible.** A state of the system is now a point $(q, p)$ in a $2n$-dimensional space, and Hamilton's equations are a vector field on that space. The whole history of a system is a curve; the whole set of possible histories is a flow, like a fluid. Questions that are invisible in configuration space (where trajectories cross each other constantly) become obvious in phase space (where they never do).
+**(a) It made the geometry of motion visible.** A state is a point $(q, p)$ in a $2n$-dimensional space, Hamilton's equations are a vector field on it, and the set of all histories is a flow, like a fluid. Trajectories that cross constantly in configuration space never cross in phase space.
 
-**(b) The flow preserves a structure.** Joseph Liouville, in an 1838 note on a different subject (the variation of arbitrary constants in a system of ordinary differential equations), proved that for equations of Hamilton's form the flow carries any region of phase space to a region of the same volume. Jacobi noticed what it meant for mechanics. Boltzmann (1868–1871), Maxwell (1879), and finally Gibbs (1902, who named it the "conservation of density-in-phase") turned it into the foundation of statistical mechanics: it is the reason you are allowed to say "all accessible microstates are equally likely" and have the statement stay true as time passes. Liouville's theorem is a corollary of something stronger, which Hamilton's equations also preserve and which was only named in the twentieth century: the *symplectic form*.
+**(b) The flow preserves a structure.** Joseph Liouville, in an 1838 note on the variation of arbitrary constants, proved that for equations of Hamilton's form the flow carries any region to a region of the same volume. Boltzmann (1868–1871), Maxwell (1879) and Gibbs (1902, who called it "conservation of density-in-phase") made it the foundation of statistical mechanics: it is why "all accessible microstates are equally likely" stays true as time passes. It is a corollary of something stronger that Hamilton's equations preserve, named only in the twentieth century: the *symplectic form*.
 
-**(c) It gave Jacobi a method that solved problems Lagrange could not.** Carl Gustav Jacob Jacobi (1837) simplified Hamilton's optics-inspired construction into a single first-order partial differential equation for a generating function $S(q, t)$, now the Hamilton–Jacobi equation. When that equation can be separated, the problem is solved by quadratures. Jacobi used it to find the geodesics on an ellipsoid (1838) and to handle the motion of a particle attracted by two fixed centers, problems where the Lagrangian equations give you nothing you can integrate. In his Königsberg lectures on dynamics (1842–43) he also proved the identity that now carries his name, and with it the theorem Poisson had stated in 1809: the bracket of two conserved quantities is conserved.
+**(c) It gave Jacobi a method that solved problems Lagrange could not.** Carl Gustav Jacob Jacobi (1837) reduced Hamilton's construction to one first-order PDE for a function $S(q, t)$, the Hamilton–Jacobi equation; when it separates, the problem is solved by quadratures. He used it for the geodesics on an ellipsoid (1838) and for a particle attracted by two fixed centers. In his Königsberg lectures (1842–43) he proved the identity that carries his name, and with it Poisson's 1809 theorem that the bracket of two conserved quantities is conserved.
 
-**(d) It turned out to be the classical shadow of quantum mechanics.** In September 1925 Paul Dirac read Heisenberg's first paper on the new mechanics, in which the "quantum" variables $x$ and $p$ fail to commute: $xp - px \neq 0$. By his own account, during a Sunday walk he remembered a structure from his classical mechanics course that had the same shape, could not recall its definition, and had to wait for the libraries to open on Monday to check it. It was the Poisson bracket. His paper *The Fundamental Equations of Quantum Mechanics* (November 1925) proposed that every Poisson bracket of classical mechanics becomes a commutator divided by $i\hbar$. Hamilton's equations become Heisenberg's. Every conservation law of this module is a conservation law of QM-4 with hats on. Jacobi's identity, Poisson's theorem, and the angular-momentum algebra of §3.6 are inherited unchanged.
+**(d) It turned out to be the classical shadow of quantum mechanics.** In September 1925 Paul Dirac read Heisenberg's first paper, in which $xp - px \neq 0$. By his own account, on a Sunday walk he remembered a classical structure of the same shape, could not recall its definition, and had to wait for the library to open on Monday. It was the Poisson bracket. His paper *The Fundamental Equations of Quantum Mechanics* (November 1925) made every Poisson bracket a commutator divided by $i\hbar$. Hamilton's equations become Heisenberg's, and Jacobi's identity, Poisson's theorem and the angular-momentum algebra of §3.6 carry over unchanged.
 
 This is the module where mechanics stops being about forces and starts being about structure. The equations of motion do not change. What changes is what you are able to see in them.
 
@@ -36,7 +36,7 @@ This is the module where mechanics stops being about forces and starts being abo
 
 ### Phase space is the space of states
 
-Newton's second law needs two numbers per degree of freedom to start: a position and a velocity. Hamilton's version uses a position $q$ and a momentum $p$. The pair $(q, p)$ is the complete state: give it to me at one instant and the entire future and past are determined. So the natural place to draw the motion is not the $q$-axis (configuration space), where the particle slides back and forth over the same ground and its trajectory crosses itself, but the $(q, p)$-plane, where each state is one point and each history is one curve.
+The pair $(q, p)$ is the complete state: give it at one instant and the whole future and past are determined. So draw the motion not on the $q$-axis, where the particle slides back and forth over the same ground, but in the $(q, p)$-plane, where each state is one point and each history one curve.
 
 Here is the pendulum, $H = \frac{p^2}{2ml^2} - mgl\cos\theta$, drawn this way:
 
@@ -55,33 +55,33 @@ Here is the pendulum, $H = \frac{p^2}{2ml^2} - mgl\cos\theta$, drawn this way:
           -pi          0           pi
 ```
 
-(The project draws the real thing as `phase_portraits.png`.) Three features you will meet again and again. A **fixed point** where the vector field vanishes: the bottom of the swing $(0, 0)$ is *elliptic* (nearby orbits circle it), the top $(\pm\pi, 0)$ is *hyperbolic* (nearby orbits approach along one direction and leave along another). A **separatrix**, the curve through the hyperbolic point that divides qualitatively different motions (swinging back and forth versus going over the top). And the fact that **trajectories never cross**: each point has one velocity vector, so one curve through it. That last fact is the uniqueness theorem for ODEs, and it is what makes the picture a *flow*.
+(The project draws the real thing as `phase_portraits.png`.) Three features recur. **Fixed points**, where the vector field vanishes: the bottom $(0, 0)$ is *elliptic* (nearby orbits circle it), the top $(\pm\pi, 0)$ is *hyperbolic* (orbits approach along one direction and leave along another). The **separatrix** through the hyperbolic point divides swinging from going over the top. And **trajectories never cross**: each point has one velocity vector (ODE uniqueness), which is what makes the picture a *flow*.
 
 ### The flow is a fluid, and the fluid is incompressible
 
 Think of the vector field $(\dot q, \dot p)$ as the velocity field of a fluid filling phase space. Put a drop of ink in (a small cloud of nearby initial conditions) and watch it be carried along. It stretches, it folds, it wraps around the elliptic point into a long thin spiral. Here is what you should guess it does not do: change its area.
 
-Why guess that? Try the two systems you can solve in your head. The free particle, $H = p^2/2m$: $\dot q = p/m$, $\dot p = 0$. Points with large $p$ move right faster; the drop is sheared into a parallelogram. A shear preserves area. The harmonic oscillator, $H = \frac{p^2}{2m} + \frac12 m\omega^2 q^2$: in units where the ellipses are circles, the flow is a rigid rotation at angular speed $\omega$. A rotation preserves area. Now look at the general equations: $\dot q = \partial H/\partial p$ and $\dot p = -\partial H/\partial q$. The rate at which the fluid expands is its divergence, $\partial\dot q/\partial q + \partial\dot p/\partial p$. Compute it with Hamilton's equations and watch what happens to the mixed partial derivatives. You should be able to guess the answer before §3.5 states it, and it is the whole of Liouville's theorem.
+Why guess that? The free particle, $H = p^2/2m$, has $\dot q = p/m$, $\dot p = 0$: points with large $p$ move right faster, and the drop is sheared, which preserves area. The harmonic oscillator, in units where its ellipses are circles, rotates the drop rigidly, which preserves area. In general the fluid's expansion rate is its divergence, $\partial\dot q/\partial q + \partial\dot p/\partial p$. Put in $\dot q = \partial H/\partial p$, $\dot p = -\partial H/\partial q$ and watch the mixed partials. That is the whole of Liouville's theorem (§3.5).
 
 ### Conserved quantities are functions constant along the flow
 
-A conserved quantity $F(q, p)$ is a function whose level sets contain whole trajectories: the flow is tangent to the surface $F = \text{const}$. For one degree of freedom, $H$ itself is conserved and the level sets of $H$ *are* the trajectories (that is why the phase portrait above is a contour plot). How fast does an arbitrary $F$ change along the flow? By the chain rule, $\dot F = \frac{\partial F}{\partial q}\dot q + \frac{\partial F}{\partial p}\dot p = \frac{\partial F}{\partial q}\frac{\partial H}{\partial p} - \frac{\partial F}{\partial p}\frac{\partial H}{\partial q}$. That combination is going to get a name: the Poisson bracket $\{F, H\}$.
+A conserved quantity $F(q, p)$ has level sets made of whole trajectories. For one degree of freedom the level sets of $H$ *are* the trajectories, which is why the phase portrait is a contour plot. How fast does an arbitrary $F$ change along the flow? By the chain rule, $\dot F = \frac{\partial F}{\partial q}\dot q + \frac{\partial F}{\partial p}\dot p = \frac{\partial F}{\partial q}\frac{\partial H}{\partial p} - \frac{\partial F}{\partial p}\frac{\partial H}{\partial q}$. That combination is going to get a name: the Poisson bracket $\{F, H\}$.
 
 ### The Poisson bracket is "how fast does $F$ change along the flow generated by $G$"
 
 Nothing in the expression above cared that $H$ was *the* Hamiltonian. Any function $G(q, p)$ defines its own vector field $(\partial G/\partial p, -\partial G/\partial q)$ and its own flow, and $\{F, G\}$ is the rate of change of $F$ along $G$'s flow. Take $G = p$: the flow is $\dot q = 1$, $\dot p = 0$, a uniform translation in $q$, and $\{F, p\} = \partial F/\partial q$, the rate of change of $F$ under translation. Take $G = L_z = xp_y - yp_x$: the flow (you will check this in §3.6) is a rotation about the $z$-axis. Take $G = H$: the flow is time evolution. Momentum *generates* translations, angular momentum *generates* rotations, the Hamiltonian *generates* time evolution.
 
-Now use the one obvious property of the bracket, antisymmetry: $\{F, G\} = -\{G, F\}$. It says: $F$ is constant along $G$'s flow if and only if $G$ is constant along $F$'s flow. With $G = H$: a quantity $F$ is conserved under time evolution if and only if $H$ is unchanged by the flow $F$ generates, that is, if and only if $F$ generates a symmetry of $H$. That is Noether's theorem (CM-4), and in this language it is a one-line consequence of a minus sign. You should guess that every structural fact about symmetry and conservation is going to look like this: short, symmetric, and about brackets.
+Now use antisymmetry, $\{F, G\} = -\{G, F\}$: $F$ is constant along $G$'s flow iff $G$ is constant along $F$'s. With $G = H$: $F$ is conserved iff $H$ is unchanged by the flow $F$ generates, i.e. iff $F$ generates a symmetry of $H$. That is Noether's theorem (CM-4) as a one-line consequence of a minus sign.
 
 ### A canonical transformation is a change of coordinates that keeps the fluid incompressible
 
-In Lagrangian mechanics you can change coordinates $q \to Q(q)$ freely. In Hamiltonian mechanics there are twice as many coordinates, and a change $(q, p) \to (Q, P)$ that mixes them is allowed too, as long as Hamilton's equations keep their form in the new variables. Which changes are those? The guess from the fluid picture: for one degree of freedom, exactly the area-preserving maps of the plane. Checking whether a map is area-preserving is a $2\times 2$ determinant. For $n$ degrees of freedom the right condition is a little stronger than volume-preserving, and it is the condition that the bracket $\{Q, P\}$, computed in the old coordinates, still equals $1$.
+In Hamiltonian mechanics a change of variables $(q, p) \to (Q, P)$ may mix coordinates and momenta, as long as Hamilton's equations keep their form. Which changes are those? The guess from the fluid picture: for one degree of freedom, exactly the area-preserving maps of the plane, which a $2\times 2$ determinant tests. Equivalently, the bracket $\{Q, P\}$ computed in the old coordinates still equals $1$. For $n$ degrees of freedom the condition is a little stronger than volume preservation.
 
 ### The Legendre transform describes a curve by its slopes instead of its points
 
-A convex curve $y = f(v)$ can be described by listing its points, or by listing its tangent lines. A tangent line is determined by its slope $p$ and its $y$-intercept, so "the intercept as a function of the slope" is a complete description of the curve. The Legendre transform is that function (with a sign). Passing from $L(q, \dot q)$ to $H(q, p)$ is exactly this: you stop describing the system by a point on the curve $L$-versus-$\dot q$ and start describing it by the slope $p = \partial L/\partial\dot q$. One identity of the Legendre transform is that the derivative of the new function gives back the old variable, and that identity, applied to $H$, is the first of Hamilton's equations: $\partial H/\partial p = \dot q$. The second one is Euler–Lagrange in disguise.
+A convex curve $y = f(v)$ can be described by its points or by its tangent lines. A tangent line is fixed by its slope $p$ and its intercept, so "intercept as a function of slope" describes the curve completely; the Legendre transform is that function (with a sign). Passing from $L(q, \dot q)$ to $H(q, p)$ is exactly this: describe the system by the slope $p = \partial L/\partial\dot q$ instead of the point $\dot q$. The derivative of the new function gives back the old variable, and applied to $H$ that identity is the first Hamilton equation, $\partial H/\partial p = \dot q$. The second is Euler–Lagrange in disguise.
 
-If you can guess, by now, that the divergence of the Hamiltonian vector field is zero, that $\dot F = \{F, H\}$, that $\{q, p\} = 1$ is what canonical transformations preserve, and that $\partial H/\partial p = \dot q$ is a property of the Legendre transform rather than of physics, you have the module. Everything below is making those guesses precise and then using them.
+If you can now guess that the Hamiltonian vector field is divergence-free, that $\dot F = \{F, H\}$, that canonical transformations preserve $\{q, p\} = 1$, and that $\partial H/\partial p = \dot q$ is a property of the Legendre transform rather than of physics, you have the module. The rest makes those guesses precise.
 
 ## 3. Formal development
 
@@ -175,7 +175,7 @@ $$
 3. Collect: $\displaystyle\delta S = \int\sum_i\Big[\Big(\dot q_i - \frac{\partial H}{\partial p_i}\Big)\delta p_i - \Big(\dot p_i + \frac{\partial H}{\partial q_i}\Big)\delta q_i\Big]dt.$
 4. $\delta q_i$ and $\delta p_i$ are independent and arbitrary, so both brackets vanish: Hamilton's equations (3.5). ∎
 
-■ **What just happened.** In (3.7) the momenta are not derived from the velocities; they are independent variables, and $\dot q = \partial H/\partial p$ comes *out* of the variation instead of going in. The integrand contains no $\dot p$, which is why no endpoint condition on $p$ was needed. This is the form of the action that QM-9's path integral is built on: inserting complete sets of position and momentum eigenstates between short time steps produces $\int\mathcal{D}q\,\mathcal{D}p\;\exp\!\big(\tfrac{i}{\hbar}\int(p\dot q - H)\,dt\big)$, and the configuration-space form $\int\mathcal{D}q\,e^{iS[q]/\hbar}$ is what remains after the Gaussian $p$-integrals are done.
+■ **What just happened.** In (3.7) the momenta are not derived from the velocities; they are independent variables, and $\dot q = \partial H/\partial p$ comes *out* of the variation instead of going in. The integrand contains no $\dot p$, which is why no endpoint condition on $p$ was needed. QM-9's path integral is built on this form: $\int\mathcal{D}q\,\mathcal{D}p\;\exp\!\big(\tfrac{i}{\hbar}\int(p\dot q - H)\,dt\big)$, which becomes $\int\mathcal{D}q\,e^{iS[q]/\hbar}$ after the Gaussian $p$-integrals.
 
 ### 3.4 Phase space, the flow, and five examples
 
@@ -193,7 +193,7 @@ The right side is a vector field on phase space, the **Hamiltonian vector field*
 $$
 H = \frac{p_r^2}{2m} + \frac{p_\phi^2}{2mr^2} + V(r).
 $$
-$\phi$ is cyclic, so $\dot p_\phi = -\partial H/\partial\phi = 0$ and $p_\phi = \ell$ is constant. Freeze it: $H$ is a one-degree-of-freedom Hamiltonian in $(r, p_r)$ with effective potential $V_{\text{eff}} = V + \ell^2/2mr^2$, the CM-5 reduction. The angle is recovered afterwards from $\dot\phi = \partial H/\partial p_\phi = \ell/mr^2$. In the Hamiltonian picture every cyclic coordinate drops out this cleanly; in the Lagrangian picture $\dot\phi$ still sits inside $L$ and substituting $\ell$ for it before varying gives the wrong equations (Goldstein's Routhian, §8.3, is the fix, and it is a partial Legendre transform). Example 4.2 does this for the spherical pendulum.
+$\phi$ is cyclic, so $\dot p_\phi = -\partial H/\partial\phi = 0$ and $p_\phi = \ell$ is constant. Freeze it: $H$ is a one-degree-of-freedom Hamiltonian in $(r, p_r)$ with effective potential $V_{\text{eff}} = V + \ell^2/2mr^2$, the CM-5 reduction. The angle follows from $\dot\phi = \partial H/\partial p_\phi = \ell/mr^2$. In the Lagrangian picture you may not substitute $\ell$ for $\dot\phi$ before varying (Goldstein's Routhian, §8.3, a partial Legendre transform, is the fix); in the Hamiltonian picture a cyclic coordinate drops out cleanly. Example 4.2 does this for the spherical pendulum.
 
 **Pendulum.** $H = \frac{p^2}{2ml^2} - mgl\cos\theta$, $\theta$ from the downward vertical. Fixed points, where $\nabla H = 0$: $(0, 0)$, a minimum of $H$ (elliptic), and $(\pm\pi, 0)$, saddles (hyperbolic). The separatrix is the level set through the saddle, $E_s = H(\pi, 0) = mgl$. Below it, libration (closed curves around the origin); above it, rotation ($p$ never changes sign). Example 4.3 computes the separatrix curve, the area inside it, and the motion along it; Exercise C1 computes the period, which diverges logarithmically as $E \to E_s$.
 
@@ -220,7 +220,7 @@ The value is kinetic plus electrostatic energy, but as a function on phase space
    Equality of mixed partials, and nothing else.
 2. Let $D_t = \Phi_t(D)$. Its volume changes at the rate at which the boundary moves outward: $\frac{d}{dt}\operatorname{vol}(D_t) = \oint_{\partial D_t}\dot z\cdot\hat{\mathbf{n}}\,dA$ (each boundary patch sweeps out volume at the rate normal velocity times area). By the divergence theorem this equals $\int_{D_t}\nabla\cdot\dot z\,dV$, which is zero by step 1. ∎
 
-Step 2 is the transport argument that gives the continuity equation in fluid mechanics; here the fluid has velocity field $\mathsf{J}\nabla H$ and is incompressible. The project transports a disk of 5000 points under the pendulum flow and watches it stretch into a spiral arm while its area stays put (`liouville_blob.png`). Note what is *not* claimed: the shape is not preserved, and the diameter of the blob grows without bound. Only the volume is fixed.
+■ **What just happened.** The Hamiltonian fluid is incompressible because mixed partials commute; step 2 is the transport argument of fluid mechanics. The project carries a disk of 5000 points along the pendulum flow (`liouville_blob.png`): it shears into an ever longer, thinner spiral arm, because orbits at different energies have different periods, while its area stays put. Shape is not preserved; only volume is.
 
 **The Liouville equation.** Put a density on phase space: $\rho(z, t)\,d^{2n}z$ is the probability of finding the system in the volume element $d^{2n}z$. Conservation of probability is the continuity equation $\partial\rho/\partial t + \nabla\cdot(\rho\dot z) = 0$. Expand: $\nabla\cdot(\rho\dot z) = \dot z\cdot\nabla\rho + \rho\,\nabla\cdot\dot z = \dot z\cdot\nabla\rho$ by (3.10). So
 $$
@@ -228,9 +228,9 @@ $$
 $$
 in the bracket notation of (3.12) below. Equivalently $d\rho/dt = 0$ along trajectories: the density is carried along the flow unchanged, like dye in an incompressible fluid.
 
-**Why statistical mechanics is possible.** A stationary ensemble has $\partial\rho/\partial t = 0$, i.e. $\{\rho, H\} = 0$. Any $\rho = f(H)$ qualifies, because $\{f(H), H\} = f'(H)\{H, H\} = 0$. The microcanonical ensemble of SM-3, $\rho \propto \delta(H - E)$, uniform on the energy surface, is such an $f$; so is SM-4's canonical $\rho \propto e^{-\beta H}$. Liouville's theorem is what makes "all accessible microstates are equally likely" a *consistent* assumption: if it is true at $t = 0$ it stays true. Without volume preservation a uniform density would bunch up as it flowed and the assumption would contradict itself. Nothing here says the uniform density is *reached* from a non-uniform start; that is the ergodic problem, which is hard, and SM-3 is honest about it.
+**Why statistical mechanics is possible.** A stationary ensemble has $\{\rho, H\} = 0$. Any $\rho = f(H)$ qualifies, since $\{f(H), H\} = f'(H)\{H, H\} = 0$: SM-3's microcanonical $\rho \propto \delta(H - E)$, uniform on the energy surface, and SM-4's canonical $\rho \propto e^{-\beta H}$. Liouville's theorem makes "all accessible microstates are equally likely" a *consistent* assumption: true at $t = 0$, true forever. Without volume preservation a uniform density would bunch up as it flowed. Nothing here says the uniform density is *reached* from a non-uniform start; that is the ergodic problem, and SM-3 is honest about it.
 
-**Poincaré recurrence (stated).** If the accessible region of phase space has finite volume (bounded motion at fixed energy), then for almost every initial point and every neighbourhood $U$ of it, the trajectory returns to $U$ infinitely often. Poincaré's proof (1890) uses only Liouville: the images $\Phi_{k\tau}(U)$, $k = 1, 2, \dots$, all have the same volume, so they cannot all be disjoint inside a region of finite volume; two overlap, and running the flow backward shows that $U$ meets a later image of itself. Zermelo used it in 1896 against Boltzmann's $H$-theorem. The resolution (recurrence times for $10^{23}$ particles that dwarf the age of the universe) is SM-3's business.
+**Poincaré recurrence (stated).** If the accessible region of phase space has finite volume (bounded motion at fixed energy), then for almost every initial point and every neighbourhood $U$ of it, the trajectory returns to $U$ infinitely often. Poincaré's proof (1890) uses only Liouville: the images $\Phi_{k\tau}(U)$, $k = 1, 2, \dots$, all have the same volume, so they cannot all be disjoint in a finite volume; two overlap, and running the flow backward shows $U$ meets a later image of itself. Zermelo (1896) turned it against Boltzmann's $H$-theorem; the resolution (recurrence times that dwarf the age of the universe) is SM-3's business.
 
 ### 3.6 Poisson brackets
 
@@ -252,6 +252,8 @@ $$
 2. Second derivatives of $F$ come only from the last two brackets. Write $D_G = \{\,\cdot\,, G\} = \sum_i\big(\frac{\partial G}{\partial p_i}\partial_{q_i} - \frac{\partial G}{\partial q_i}\partial_{p_i}\big)$, a first-order differential operator. By (i), $\{G, \{K, F\}\} = D_GD_KF$ and $\{K, \{F, G\}\} = -D_KD_GF$, so these terms are $(D_GD_K - D_KD_G)F$.
 3. For first-order operators $X = \sum_\alpha a_\alpha\partial_\alpha$, $Y = \sum_\beta b_\beta\partial_\beta$, the second-derivative part of $XYF$ is $\sum_{\alpha\beta}a_\alpha b_\beta\,\partial_\alpha\partial_\beta F$, symmetric under $X \leftrightarrow Y$ by equality of mixed partials. It cancels in $XY - YX$. So (3.13) has no second derivatives of $F$.
 4. (3.13) is invariant under $F \to G \to K \to F$, so it has none of $G$ or $K$ either. By step 1, every term cancels. ∎
+
+■ **What just happened.** Jacobi says the commutator $D_GD_K - D_KD_G$ is again a bracket operator, $-D_{\{G, K\}}$: the bracket of two generators is a generator. Poisson's theorem below is the payoff.
 
 **Theorem 3.5 (Time evolution).** Along a solution of (3.5), for any $F(q, p, t)$,
 $$
@@ -280,9 +282,9 @@ Example 4.4 derives $\{L_x, L_y\} = L_z$; cyclic relabelling $x \to y \to z$ map
 
 **Generators.** Any $G(q, p)$ defines a flow $dz/d\lambda = \mathsf{J}\nabla G$ along which $dF/d\lambda = \{F, G\}$. So
 $$
-\{F, p_j\} = \frac{\partial F}{\partial q_j}, \qquad \{x, L_z\} = -y, \quad \{y, L_z\} = x, \qquad \{F, H\} = \dot F: \tag{3.18}
+\{F, p_j\} = \frac{\partial F}{\partial q_j}, \qquad \{x, L_z\} = -y, \quad \{y, L_z\} = x, \qquad \{F, H\} = \dot F, \tag{3.18}
 $$
-$p_j$ generates translation in $q_j$, $L_z$ generates counterclockwise rotation about $z$, $H$ generates time evolution. By antisymmetry, $\{F, H\} = 0$ says both "$F$ is conserved" and "$H$ is invariant under $F$'s flow": Noether's theorem (CM-4) without a Lagrangian.
+so $p_j$, $L_z$ and $H$ generate translation, counterclockwise rotation about $z$, and time evolution. By antisymmetry, $\{F, H\} = 0$ says both "$F$ is conserved" and "$H$ is invariant under $F$'s flow" (Noether, §2).
 
 **The quantum dictionary.** Dirac's 1925 rule replaces phase-space functions by operators and
 $$
@@ -297,7 +299,7 @@ $$
 | conserved iff $\{F, H\} = 0$ | conserved iff $[\hat A, \hat H] = 0$ |
 | $p$ generates translations | $e^{-ia\hat p/\hbar}$ translates by $a$ |
 
-It is consistent because the commutator also obeys (i)–(iv), with Leibniz in the order-sensitive form $[\hat A\hat B, \hat C] = \hat A[\hat B, \hat C] + [\hat A, \hat C]\hat B$ (which is why (iii) was written that way). Every theorem above that used only (i)–(iv) holds in quantum mechanics with no new proof. What fails is applying (3.19) to *every* function: $qp$ has no unique operator, and Groenewold (1946) proved no rule satisfies (3.19) for all polynomials.
+It is consistent because the commutator also obeys (i)–(iv), with Leibniz in the order-sensitive form $[\hat A\hat B, \hat C] = \hat A[\hat B, \hat C] + [\hat A, \hat C]\hat B$; every theorem above that used only (i)–(iv) holds in QM with no new proof. It is not a rule for *every* function: $qp$ has no unique operator, and Groenewold (1946) proved no rule satisfies (3.19) for all polynomials.
 
 ### 3.7 Canonical transformations
 
@@ -316,11 +318,13 @@ $$
 2. By (3.12), $\{Z_a, Z_b\} = (\nabla_zZ_a)^\top\mathsf{J}\nabla_zZ_b = (M\mathsf{J}M^\top)_{ab}$, and (3.15) says this matrix is $\mathsf{J}$. So (b) ⇔ $M\mathsf{J}M^\top = \mathsf{J}$.
 3. Invert $M\mathsf{J}M^\top = \mathsf{J}$ with $\mathsf{J}^{-1} = -\mathsf{J}$: $M^{-\top}\mathsf{J}M^{-1} = \mathsf{J}$; multiply by $M^\top$ on the left and $M$ on the right to get (3.20). Reversible. ∎
 
+■ **What just happened.** All three tests say the Jacobian preserves $\mathsf{J}$. By hand, checking brackets is usually fastest; in code, (3.20) is (Part 7).
+
 **One degree of freedom.** For $M = \begin{pmatrix} a & b\\ c & d\end{pmatrix}$, multiplying out gives $M^\top\mathsf{J}M = (ad - bc)\mathsf{J}$, and $ad - bc = \frac{\partial Q}{\partial q}\frac{\partial P}{\partial p} - \frac{\partial Q}{\partial p}\frac{\partial P}{\partial q} = \{Q, P\}$. So canonical ⇔ $\{Q, P\} = 1$ ⇔ $\det M = 1$ ⇔ area-preserving, the guess of §2. For $n > 1$, (3.20) implies $|\det M| = 1$ but is stronger: it preserves the sum of oriented areas projected onto the $(q_i, p_i)$ planes (the symplectic form).
 
-**The flow is canonical.** Let $M(t) = \partial\Phi_t/\partial z$ and $S$ the Hessian of $H$. Differentiating $\dot z = \mathsf{J}\nabla H$ gives $\dot M = \mathsf{J}SM$, $M(0) = I$, so
+**The flow is canonical.** Let $M(t) = \partial\Phi_t/\partial z$ and let $\mathsf{S} = \nabla\nabla^\top H$ be the (symmetric) Hessian. Differentiating $\dot z = \mathsf{J}\nabla H$ gives $\dot M = \mathsf{J}\mathsf{S}M$, $M(0) = I$, so
 $$
-\tfrac{d}{dt}\big(M^\top\mathsf{J}M\big) = M^\top S\mathsf{J}^\top\mathsf{J}M + M^\top\mathsf{J}^2SM = M^\top SM - M^\top SM = 0.
+\tfrac{d}{dt}\big(M^\top\mathsf{J}M\big) = M^\top\mathsf{S}\mathsf{J}^\top\mathsf{J}M + M^\top\mathsf{J}^2\mathsf{S}M = M^\top\mathsf{S}M - M^\top\mathsf{S}M = 0.
 $$
 This is the structure stronger than volume promised in §1(b); Liouville is its determinant.
 
@@ -406,7 +410,9 @@ $$
 $$
 ∎
 
-At the 1911 Solvay conference Lorentz asked whether a pendulum whose string is slowly shortened stays in a quantum state; Einstein answered that $E/\nu$ is unchanged. Ehrenfest (1916) made it a principle: only adiabatic invariants may be quantized. Hence the old quantum theory's **Bohr–Sommerfeld rule** $\oint p\,dq = nh$ (QM-1). For the oscillator it gives $E = n\hbar\omega$; the correct $(n + \frac12)\hbar\omega$ needs QM-8's turning-point correction.
+■ **What just happened.** Averaged over a period, energy follows frequency, $E \propto \omega$, and the orbit's phase-space area stays put.
+
+At the 1911 Solvay conference Lorentz asked about a pendulum whose string is slowly shortened; Einstein answered that $E/\nu$ is unchanged. Ehrenfest (1916) made it a principle: only adiabatic invariants may be quantized. Hence the **Bohr–Sommerfeld rule** $\oint p\,dq = nh$ (QM-1). For the oscillator it gives $E = n\hbar\omega$; the correct $(n + \frac12)\hbar\omega$ needs QM-8's turning-point correction.
 
 ### 3.10 The Hamilton–Jacobi equation
 
@@ -424,13 +430,15 @@ H\Big(q, \frac{\partial S}{\partial q}, t\Big) + \frac{\partial S}{\partial t} =
 $$
 4. Given a **complete integral** $S(q, \alpha, t)$ with $n$ independent constants, solve $\beta_i = \partial S/\partial\alpha_i$ for $q(t; \alpha, \beta)$; then $p = \partial S/\partial q$. ∎
 
+■ **What just happened.** Solving $2n$ ODEs became finding one function $S$ and doing algebra. It pays off when (3.28) separates.
+
 **Separation.** If $H$ has no explicit $t$, $S = W(q, \alpha) - Et$ turns (3.28) into
 $$
 H\Big(q, \frac{\partial W}{\partial q}\Big) = E, \tag{3.29}
 $$
 and $W$ is the function of §3.9. If $H$ is a sum of pieces each involving one $q_i$, $W = \sum_iW_i(q_i)$ reduces it to $n$ single integrals.
 
-**$S$ is the action.** Along a solution, $\frac{dS}{dt} = \sum_i\frac{\partial S}{\partial q_i}\dot q_i + \frac{\partial S}{\partial t} = \sum_ip_i\dot q_i - H = L$. So $S$ is CM-2's action $\int L\,dt$, viewed as a function of the endpoint, and $\partial S/\partial q = p$: momentum is the gradient of the action. For $H = p^2/2m + V$ the velocity $\nabla S/m$ is normal to the surfaces $S = \text{const}$: trajectories are rays of a wavefront, Hamilton's optical picture. Example 4.6 solves the oscillator this way.
+**$S$ is the action.** Along a solution, $\frac{dS}{dt} = \sum_i\frac{\partial S}{\partial q_i}\dot q_i + \frac{\partial S}{\partial t} = \sum_ip_i\dot q_i - H = L$. So $S$ is CM-2's action $\int L\,dt$ as a function of the endpoint, and $\partial S/\partial q = p$: momentum is the gradient of the action. For $H = p^2/2m + V$ the velocity $\nabla S/m$ is normal to the surfaces $S = \text{const}$, so trajectories are the rays of a wavefront: Hamilton's optics. Example 4.6 solves the oscillator this way.
 
 **The capstone: Schrödinger's equation contains (3.28).**
 
@@ -452,7 +460,7 @@ which is (3.28) for $H = p^2/2m + V$. ∎
 
 ### 3.11 Symplectic integrators, integrability, chaos
 
-RK4 is accurate per step but its step map is not canonical, so the energy error accumulates over many periods. A **symplectic integrator** is a canonical map; backward error analysis (Hairer, Lubich & Wanner, *Geometric Numerical Integration*, ch. IX) shows it is, up to exponentially small terms, the exact flow of a modified Hamiltonian $\tilde H = H + O(h^r)$, $r$ the order. It conserves $\tilde H$, so $H$ oscillates within $O(h^r)$ forever.
+RK4's step map is not canonical, so its energy error accumulates. A **symplectic integrator** is a canonical map; backward error analysis (Hairer, Lubich & Wanner, *Geometric Numerical Integration*, ch. IX) shows it is, up to exponentially small terms, the exact flow of a modified Hamiltonian $\tilde H = H + O(h^r)$, $r$ the order. It conserves $\tilde H$, so $H$ stays within $O(h^r)$ forever.
 
 For $H = T(p) + V(q)$, **symplectic Euler** is kick then drift:
 $$
@@ -462,7 +470,7 @@ The kick is the exact time-$h$ flow of $V$ alone, Jacobian $\begin{pmatrix}1 & 0
 $$
 p_{n+\frac12} = p_n - \tfrac{h}{2}V'(q_n), \qquad q_{n+1} = q_n + h\,T'(p_{n+\frac12}), \qquad p_{n+1} = p_{n+\frac12} - \tfrac{h}{2}V'(q_{n+1}). \tag{3.32}
 $$
-Pendulum from $\theta_0 = 2$ rad, 50 steps per period, $10^4$ periods: RK4's relative energy error grows roughly linearly to $0.257$; Verlet's never exceeds $0.018$ (and is $0.0019$ at the end). Verlet's 1967 argon simulations used (3.32); Wisdom and Holman (1991) built solar-system integrators on the same splitting; it is also inside ST-6's Hamiltonian Monte Carlo and QC-9's Trotter formula.
+Pendulum from $\theta_0 = 2$ rad, 50 steps per period, $10^4$ periods: RK4's relative energy error grows roughly linearly to $0.257$; Verlet's never exceeds $0.018$ (and is $0.0019$ at the end). Verlet's 1967 argon simulations used (3.32), Wisdom and Holman (1991) built solar-system integrators on the same splitting, and ST-6's HMC and QC-9's Trotter formula reuse it.
 
 **Integrability and chaos.** $n$ degrees of freedom with $n$ independent conserved quantities whose mutual brackets vanish make a system *integrable*. **Liouville–Arnold theorem (stated; Arnold ch. 10):** each compact connected level set is then an $n$-torus carrying action-angle variables with $H = H(J_1, \dots, J_n)$. Every 1-DOF system, Kepler and the symmetric top are integrable. The double pendulum has two degrees of freedom but only one conserved quantity, and at high energy it is chaotic. The KAM theorem (Kolmogorov 1954, Arnold 1963, Moser 1962): under small perturbations most tori survive, deformed, while those with nearly rational frequency ratios break into island chains and chaotic layers (Exercise C3).
 
@@ -486,7 +494,7 @@ $\phi$ is cyclic, $p_\phi$ is constant, and $\theta$ moves in $V_{\text{eff}} = 
 
 *Small oscillations about it:* $V_{\text{eff}}'' = \frac{p_\phi^2(\sin^2\theta + 3\cos^2\theta)}{ml^2\sin^4\theta} + mgl\cos\theta$. The equilibrium condition gives $\frac{p_\phi^2}{ml^2\sin^4\theta_0} = \frac{mgl}{\cos\theta_0}$, so $V_{\text{eff}}''(\theta_0) = \frac{mgl(1 + 3\cos^2\theta_0)}{\cos\theta_0}$ and $\Omega^2 = \frac{V_{\text{eff}}''}{ml^2} = \frac{g}{l}\frac{1 + 3\cos^2\theta_0}{\cos\theta_0}$.
 
-*Numbers* ($m = 1$ kg, $l = 1$ m, $g = 9.81$ m/s², $\theta_0 = \pi/6$): $p_\phi = \sqrt{9.81\times 0.0625/0.8660} = 0.841413$ kg m²/s; $\dot\phi = \sqrt{9.81/0.8660} = 3.36565$ rad/s (one revolution in $1.86686$ s); $\Omega = 6.0675$ rad/s; $\Omega/\dot\phi = \sqrt{3.25} = 1.8028$. The ratio is irrational, so a perturbed conical orbit traces a rosette. The project integrates Hamilton's equations: $\theta$ stays at $\theta_0$ to $10^{-12}$, and the measured $\Omega$ is $6.0673$.
+*Numbers* ($m = 1$ kg, $l = 1$ m, $g = 9.81$ m/s², $\theta_0 = \pi/6$): $p_\phi = \sqrt{9.81\times 0.0625/0.8660} = 0.841413$ kg m²/s; $\dot\phi = \sqrt{9.81/0.8660} = 3.36565$ rad/s (one revolution in $1.86686$ s); $\Omega = 6.0675$ rad/s; $\Omega/\dot\phi = \sqrt{3.25} = 1.8028$. The ratio is irrational, so a perturbed conical orbit traces a rosette. Integrating Hamilton's equations, the project keeps $\theta = \theta_0$ to $10^{-12}$ and measures $\Omega = 6.0673$.
 
 ### Example 4.3: The pendulum's separatrix
 
@@ -525,7 +533,7 @@ In the other direction, the Jacobian of $(Q, P) \mapsto (q, p)$ has determinant 
 3. Invert: $q = A\sin\omega(t + \beta)$, and $p = \partial S/\partial q = W' = \sqrt{2mE}\cos\omega(t + \beta)$.
 4. In full, $W = \frac{q}{2}\sqrt{2mE - m^2\omega^2q^2} + \frac{E}{\omega}\arcsin\frac{q}{A}$.
 
-No ODE was solved: one separation, one integral, one inversion. The project checks symbolically that $S = W - Et$ satisfies the PDE, then with $m = 1.3$, $\omega = 0.7$, $E = 2.0$, $\beta = 0.3$ checks along the trajectory that $\partial S/\partial q = p(t)$ to $10^{-9}$, that $\partial S/\partial E$ stays at $0.300000$, and that $S - S(0) = \int L\,dt$ to $10^{-5}$.
+No ODE was solved. The project checks the PDE symbolically, then, with $m = 1.3$, $\omega = 0.7$, $E = 2.0$, $\beta = 0.3$, checks along the trajectory that $\partial S/\partial q = p(t)$ to $10^{-9}$, $\partial S/\partial E = 0.300000$ throughout, and $S - S(0) = \int L\,dt$ to $10^{-5}$.
 
 ### Example 4.7: A pendulum whose length halves
 
@@ -539,7 +547,7 @@ The project integrates the exact equations with $l$ decreasing linearly. Slow: a
 
 ## 5. Why it matters and where it connects
 
-- **SM-3, SM-4:** $\{f(H), H\} = 0$ in (3.11) makes $\delta(H - E)$ and $e^{-\beta H}$ stationary; $d^{2n}z$ is the measure microstates are counted in. **SM-2:** $F = U - TS$ is §3.1's transform.
+- **SM-2, SM-3, SM-4:** $F = U - TS$ is §3.1's transform; $\{f(H), H\} = 0$ in (3.11) makes $\delta(H - E)$ and $e^{-\beta H}$ stationary.
 - **QM-4:** the dictionary (3.19), Heisenberg's equation from (3.14), the algebra (3.17), and $(\hat{\mathbf{p}} - q_e\mathbf{A})^2/2m$ from (3.9). Unitary transformations are the quantum canonical transformations.
 - **QM-1, QM-8, QM-9:** Bohr–Sommerfeld (§3.9); WKB is (3.30) plus $\hbar^2A_{qq}/A$; the path integral starts from (3.7).
 - **QC-9, ST-6:** Trotterization and Hamiltonian Monte Carlo are the splitting (3.31)–(3.32). HMC accepts with $\min(1, e^{-\Delta H})$ and no Jacobian factor because Verlet preserves volume.
@@ -551,9 +559,9 @@ See [exercises.md](exercises.md). A1–A6 are drills. B1–B8 are the module; B1
 
 ## 7. Coding project
 
-`project.py` (about 15 s) checks every number in §3–§4 and the solutions, and saves eight figures: phase portraits (oscillator, pendulum with separatrix, double well $V = -x^2/2 + x^4/4$); the Legendre tangent lines; the Liouville blob (5000 interior points and a 4000-point boundary under the pendulum flow; at $t = 24$ the shoelace area ratio is $0.999998$ for symplectic Euler, $0.960$ for RK45, $1.202$ for explicit Euler); the signature figure `energy_drift.png` (RK4 vs Verlet, $10^4$ periods); the pendulum's $J(E)$ and $T = dJ/dE$; adiabatic invariance; $S(q, t)$; and WKB. In between, a SymPy `poisson_bracket` checks (3.15), (3.17), Jacobi and conservation laws, and a canonical checker evaluates $M^\top\mathsf{J}M - \mathsf{J}$.
+`project.py` (about 15 s) checks every number in §3–§4 and in the solutions, and saves nine figures: phase portraits (oscillator, pendulum with separatrix, double well $V = -x^2/2 + x^4/4$); Legendre tangent lines; the Liouville blob (5000 interior points and a 4000-point boundary under the pendulum flow; at $t = 24$ the shoelace area ratio is $0.999998$ for symplectic Euler, $0.960$ for RK45, $1.202$ for explicit Euler); the signature figure `energy_drift.png` (RK4 vs Verlet, $10^4$ periods); the pendulum's $J(E)$ and $T = dJ/dE$; adiabatic invariance; $S(q, t)$; WKB; and the standard map (C3). A SymPy `poisson_bracket` checks (3.15), (3.17), Jacobi and conservation laws; a canonical checker evaluates $M^\top\mathsf{J}M - \mathsf{J}$; Part 13 checks the exercises.
 
-**Build it yourself:** before reading Parts 4–5, write `symplectic_euler_step` and `verlet_pendulum` from (3.31)–(3.32) and reproduce `energy_drift.png`. If your Verlet curve drifts, you have a full kick at both ends or the kick and drift out of order. "Your turn" asks for a 4th-order symplectic method, Kepler action-angle variables, and the standard map.
+**Build it yourself:** before reading Parts 4–5, write `symplectic_euler_step` and `verlet_pendulum` from (3.31)–(3.32) and reproduce `energy_drift.png`. If your Verlet curve drifts, you used a full kick at both ends. "Your turn" asks for a 4th-order symplectic method, Kepler action-angle variables, and the standard map.
 
 ## 8. Where you'll struggle
 
@@ -561,7 +569,7 @@ See [exercises.md](exercises.md). A1–A6 are drills. B1–B8 are the module; B1
 - **Canonical momentum is not $mv$.** In a magnetic field $\mathbf{p} = m\mathbf{v} + q_e\mathbf{A}$ (3.9). On a rotating hoop (B4) $H \ne T + V$. Compute $p = \partial L/\partial\dot q$ and $H = \sum p\dot q - L$ every time.
 - **Signs flip between books.** Landau's bracket is minus (3.12); generating-function tables differ. Anchor everything to $\{q, p\} = +1$ and $\dot p = -\partial H/\partial q$, and re-derive a table entry from (3.22) rather than trusting memory.
 - **Canonical transformations and generating functions stay abstract for most students.** The realistic target: brackets and Liouville fluent, a canonical map recognizable by $\{Q, P\} = 1$ or (3.20), Hamilton–Jacobi done once (Example 4.6, B7). Learn type 2 by deriving (3.23); look up the rest.
-- **Liouville is about volume, not shape.** The blob becomes a long filament and looks as if it grew. Measure it.
+- **Liouville is about volume, not shape.** The filament in `liouville_blob.png` looks as if it grew. Measure it.
 - **The WKB page is a preview.** Follow its five steps and keep the slogan ($S$ is the phase); the turning-point matching is QM-8's.
 
 ## 9. Check yourself
@@ -581,8 +589,8 @@ See [exercises.md](exercises.md). A1–A6 are drills. B1–B8 are the module; B1
 
 ## 10. Pair with
 
-- **Taylor, *Classical Mechanics*, ch. 13.** Gentle; Liouville done carefully; good phase-portrait problems.
-- **Goldstein, Poole & Safko, ch. 8–10.** The reference for canonical transformations, generating functions, Hamilton–Jacobi and action-angle variables (including Kepler). Use it as the lookup table.
+- **Taylor, *Classical Mechanics*, ch. 13.** Gentle; good phase-portrait problems.
+- **Goldstein, Poole & Safko, ch. 8–10.** The reference for canonical transformations, generating functions, Hamilton–Jacobi and action-angle variables (Kepler included); use it as the lookup table.
 - **Landau & Lifshitz, *Mechanics*, §40–52.** The shortest complete treatment: Jacobi (§42), Liouville (§46), Hamilton–Jacobi (§47–48), adiabatic invariants (§49–51). Opposite bracket sign.
 - **MIT 8.09 (OCW), Hamiltonian lectures.** Canonical transformations and Hamilton–Jacobi at course pace.
 - **Arnold, *Mathematical Methods of Classical Mechanics*, ch. 8 (optional).** The coordinate-free symplectic picture; why (3.20) is the right condition.

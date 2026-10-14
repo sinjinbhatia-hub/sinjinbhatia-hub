@@ -12,7 +12,7 @@ This module is the probability that everything downstream shares. F5 builds join
 
 ## 1. The problem that forced this idea
 
-Probability started as a question about gambling debts. In 1654 the Chevalier de Méré put two problems to Blaise Pascal. One was the **problem of points**: two players stake money on a sequence of fair rounds, the first to win (say) five rounds takes the pot, and the game is interrupted at 4–3. How should the pot be split? Pascal wrote to Pierre de Fermat, and over the summer of 1654 they solved it two different ways. Fermat enumerated the possible continuations of the game and counted which ones each player wins. Pascal reasoned backwards from the final round: the value of a position is the average of the values of the positions it leads to. That backward recursion is the first use of what this module calls *expectation*, and Fermat's enumeration is the first use of *equally likely outcomes*. Christiaan Huygens learned of the correspondence and in 1657 published *De ratiociniis in ludo aleae*, the first textbook on the subject, built around the idea of the fair price of a gamble.
+Probability started as a question about gambling debts. In 1654 the Chevalier de Méré put two problems to Blaise Pascal. One was the **problem of points**: two players stake money on a sequence of fair rounds, the first to win (say) five rounds takes the pot, and the game is interrupted at 4–3. How should the pot be split? Pascal wrote to Pierre de Fermat, and over the summer of 1654 they solved it two different ways. Fermat enumerated the possible continuations of the game and counted which ones each player wins. Pascal reasoned backwards from the final round: the value of a position is the average of the values of the positions it leads to. That backward recursion is an early form of what this module calls *expectation*, and Fermat's enumeration is the method of *equally likely outcomes* (Cardano and Galileo had already counted dice outcomes this way, but Pascal and Fermat turned it on a question no one could settle by intuition). Christiaan Huygens heard about the problems on a visit to Paris and in 1657 published *De ratiociniis in ludo aleae*, the first textbook on the subject, built around the idea of the fair price of a gamble.
 
 The next pressure came from money that was not on a table. Governments sold annuities and needed to price them; Edmond Halley published a life table in 1693 for that purpose, and Abraham de Moivre, whose *Doctrine of Chances* (1718) was the standard text on games, turned the same methods on life annuities in *Annuities upon Lives* (1725). In 1713 Jacob Bernoulli's *Ars Conjectandi* appeared posthumously with the first limit theorem: if you repeat a trial with success probability $p$ many times, the observed fraction of successes will, with probability as close to 1 as you like, be as close to $p$ as you like. This is the **weak law of large numbers**, and it is the bridge between a probability (an abstract weight) and a frequency (something you can measure). De Moivre followed in 1733 with the observation that the binomial distribution, for large $n$, is shaped like $e^{-x^2}$: the first appearance of the Normal curve. Pierre-Simon Laplace's *Théorie analytique des probabilités* (1812) systematized all of it, including the rule for updating probabilities on evidence that we now call Bayes' theorem (Thomas Bayes's own version was published posthumously in 1763).
 
@@ -281,7 +281,7 @@ The first toss landing heads is evidence that you hold the biased coin, which ra
 
 ### 3.7 The classic traps, with full solutions
 
-Each of these is a correct application of §3.5. Each one feels wrong. Work every one with pencil; the roadmap's prediction is that you will get at least two wrong on first contact, and that is normal.
+Each of these is a correct application of §3.5. Each one feels wrong. Work every one with pencil. The roadmap's warning is that your intuition for conditional probability stays wrong until you have done fifty problems; expect to get at least two of these five wrong on first contact, and treat that as normal.
 
 **Trap 1: Monty Hall.** Three doors, one car, two goats. You pick door 1. The host, who knows where the car is, opens one of the other two doors to reveal a goat; if both hide goats he picks between them with equal probability. He opens door 3. Should you switch to door 2?
 
@@ -307,7 +307,7 @@ About 1%. In a population of a million: 100 are sick and 99 of them test positiv
 
 (iii) "You meet one of the two children, chosen at random, and it is a boy." Now the sample space includes which child you met. $P(\text{met a boy}) = 1/2$ by symmetry; $P(BB \cap \text{met a boy}) = P(BB) = 1/4$; so $P(BB \mid \text{met a boy}) = 1/2$.
 
-Three phrasings, two answers. The information "at least one boy" in (i) is *less* than the information in (ii) or (iii), where a specific child has been identified; less information, more uncertainty, lower probability of $BB$. Exercise C1 adds "born on a Tuesday" and gets $13/27$.
+Three phrasings, two answers. In (i) the conditioning event keeps both mixed families $BG$ and $GB$ next to $BB$, so $BB$ gets one share in three. In (ii) and (iii) a *specific* child has been identified as a boy: (ii) rules out $GB$ entirely, and in (iii) each mixed family produces "met a boy" only half the time, so its weight is halved. Either way $BB$'s share rises to $1/2$. Exercise C1 adds "born on a Tuesday" and gets $13/27$.
 
 **Trap 4: Simpson's paradox.** A treatment can be better in every subgroup and worse overall. The standard example is the kidney-stone data of Charig et al. (1986), as usually quoted:
 
@@ -322,7 +322,7 @@ and the *weights* $P(L \mid A) = 263/350 = 0.75$ versus $P(L \mid B) = 80/350 = 
 
 **Trap 5: The prosecutor's fallacy.** A forensic match has probability one in a million for a random innocent person. The prosecutor says: "the probability the defendant is innocent is one in a million." That confuses $P(\text{match} \mid \text{innocent}) = 10^{-6}$ with $P(\text{innocent} \mid \text{match})$. If the defendant was found by searching a database of a city of 10 million with no other evidence, the prior is $P(\text{guilty}) = 10^{-7}$ and Bayes gives
 $$P(\text{guilty} \mid \text{match}) = \frac{1 \cdot 10^{-7}}{1\cdot 10^{-7} + 10^{-6}(1 - 10^{-7})} \approx \frac{10^{-7}}{10^{-7} + 10^{-6}} = \frac{1}{11}.$$
-About ten innocent people in the city also match. The 1999 conviction of Sally Clark in England rested partly on a 1-in-73-million figure for two infant deaths in one family being presented as the probability of her innocence (the figure also wrongly assumed independence of the deaths); the Royal Statistical Society protested publicly in 2001 and the conviction was quashed in 2003. The fix is the same as Trap 2: the likelihood is not the posterior.
+About ten innocent people in the city also match. The 1999 conviction of Sally Clark in England rested partly on a 1-in-73-million figure for two infant deaths in one family, which invited exactly this misreading as the probability of her innocence (the figure also wrongly assumed independence of the deaths); the Royal Statistical Society protested publicly in 2001 and the conviction was quashed in 2003. The fix is the same as Trap 2: the likelihood is not the posterior.
 
 ### 3.8 Random variables, PMF, CDF
 
@@ -458,11 +458,13 @@ where $j = k - 1$ and the last sum is (3.2) again. Same answer, five times the w
 
 **Mean, two ways.** *Via the series.* Differentiate $\sum_{k \ge 0} q^k = \frac{1}{1-q}$ with respect to $q$ (allowed inside the radius of convergence): $\sum_{k\ge1} kq^{k-1} = \frac{1}{(1-q)^2}$. Then
 $$\mathbb{E}[X] = \sum_{k \ge 0} k q^k p = pq\sum_{k\ge1} k q^{k-1} = \frac{pq}{(1-q)^2} = \frac{pq}{p^2} = \frac{q}{p}.$$
-*Via first-step conditioning.* Condition on the first trial (LOTP for expectations, which is linearity applied to $X = X I_{S} + X I_{S^c}$ with $S$ = first trial succeeds). If it succeeds, $X = 0$. If it fails, we have used one failure and the remaining trials are a fresh sequence of independent $\mathrm{Bern}(p)$ trials, so the number of *further* failures is again $\mathrm{Geom}(p)$ and $X = 1 + X'$ with $X' \sim \mathrm{Geom}(p)$. Therefore
+*Via first-step conditioning.* Let $S$ be the event that the first trial succeeds, and let $X'$ be the number of failures among trials $2, 3, \dots$ before the first success *among those trials*. Those trials are a fresh sequence of independent $\mathrm{Bern}(p)$ trials, so $X' \sim \mathrm{Geom}(p)$, and $X'$ is independent of $I_{S^c}$ because it depends only on trials $2, 3, \dots$. If the first trial succeeds, $X = 0$; if it fails, $X = 1 + X'$. So, as functions on $\Omega$,
+$$X = X I_S + X I_{S^c} = 0 + (1 + X')\,I_{S^c}.$$
+Take expectations with linearity, then Theorem 3.13 on the independent pair $(1 + X', I_{S^c})$: $\mathbb{E}[X] = \mathbb{E}[1 + X']\,P(S^c) = q\,(1 + \mathbb{E}[X'])$, and $\mathbb{E}[X'] = \mathbb{E}[X]$ because they have the same distribution. Since $\mathbb{E}[X]$ is finite (the series proof showed it), we may subtract:
 $$\mathbb{E}[X] = p\cdot 0 + q\,(1 + \mathbb{E}[X]) \;\Longrightarrow\; \mathbb{E}[X](1 - q) = q \;\Longrightarrow\; \mathbb{E}[X] = \frac{q}{p}.$$
-The series proof is calculus. The first-step proof is one line of algebra once you see that the process restarts. First-step analysis is how Pascal solved the problem of points, how F5 computes hitting times of Markov chains, and how Exercise C2 finds the expected wait for $HH$.
+The series proof is calculus. The first-step proof is one line of algebra once you see that the process restarts. First-step analysis is how Pascal solved the problem of points, the standard way to compute expected hitting times of Markov chains, and how Exercise C2 finds the expected wait for $HH$.
 
-**Variance.** Same first-step trick on $X^2$: $\mathbb{E}[X^2] = p\cdot 0 + q\,\mathbb{E}[(1 + X')^2] = q\,(1 + 2\mathbb{E}[X] + \mathbb{E}[X^2])$, so $\mathbb{E}[X^2](1 - q) = q + 2q^2/p$, giving $\mathbb{E}[X^2] = \frac{q}{p} + \frac{2q^2}{p^2} = \frac{pq + 2q^2}{p^2}$. By (3.17),
+**Variance.** Same first-step trick on $X^2 = (1 + X')^2 I_{S^c}$: $\mathbb{E}[X^2] = p\cdot 0 + q\,\mathbb{E}[(1 + X')^2] = q\,(1 + 2\mathbb{E}[X] + \mathbb{E}[X^2])$ (again finite, by the series $\sum k^2 q^k p$), so $\mathbb{E}[X^2](1 - q) = q + 2q^2/p$, giving $\mathbb{E}[X^2] = \frac{q}{p} + \frac{2q^2}{p^2} = \frac{pq + 2q^2}{p^2}$. By (3.17),
 $$\operatorname{Var}(X) = \frac{pq + 2q^2}{p^2} - \frac{q^2}{p^2} = \frac{pq + q^2}{p^2} = \frac{q(p + q)}{p^2} = \frac{q}{p^2}.$$
 
 #### Negative Binomial
@@ -482,7 +484,7 @@ Deriving these from (3.22) directly is miserable. The story makes them two lines
 
 **PMF derived.** All $\binom{N}{n}$ unordered samples are equally likely. The samples with exactly $k$ white balls are formed by choosing $k$ of the $w$ white and $n - k$ of the $b$ black:
 $$P(X = k) = \frac{\binom{w}{k}\binom{b}{n-k}}{\binom{N}{n}}, \qquad \max(0, n - b) \le k \le \min(w, n). \tag{3.23}$$
-It sums to 1 by Vandermonde's identity, Theorem 3.2(b), with $m = w$, $r = n$.
+It sums to 1 by Vandermonde's identity, Theorem 3.2(b), read with $w$ "men", $b$ "women", and committee size $n$.
 
 **Mean via indicators.** Let $I_j$ be the indicator that the $j$-th ball drawn is white. By symmetry the $j$-th ball drawn is equally likely to be any of the $N$ balls (imagine drawing all $N$ in a random order and reading off position $j$), so $P(I_j = 1) = w/N$. Then $\mathbb{E}[X] = \sum_{j=1}^n w/N = n\,\frac{w}{N}$. The indicators are dependent (drawing a white ball first makes a white second ball less likely), and linearity does not care.
 
@@ -506,13 +508,15 @@ The first factor is a product of $k$ terms $(n - j)/n \to 1$. The third is the d
 $$P(X = k) = \frac{e^{-\lambda}\lambda^k}{k!}, \qquad k = 0, 1, 2, \dots \tag{3.24}$$
 It sums to 1 because $\sum_k \lambda^k/k! = e^\lambda$. We write $X \sim \mathrm{Pois}(\lambda)$. Example 4.6 checks the limit numerically for $n = 1000$, $p = 0.003$.
 
+■ **What just happened.** We held the expected count $np = \lambda$ fixed and let the number of chances grow. Three limits did all the work: the falling factorial over $n^k$ tends to 1, $(1 - \lambda/n)^n \to e^{-\lambda}$, and $(1 - \lambda/n)^{-k} \to 1$. What survives depends on $\lambda$ alone, which is why $n$ and $p$ drop out of the answer: this is guess 2 of §2.
+
 **Mean and variance.**
 $$\mathbb{E}[X] = \sum_{k\ge0} k\,\frac{e^{-\lambda}\lambda^k}{k!} = e^{-\lambda}\lambda\sum_{k \ge 1}\frac{\lambda^{k-1}}{(k-1)!} = e^{-\lambda}\lambda e^{\lambda} = \lambda.$$
 For the variance, compute the *factorial moment* $\mathbb{E}[X(X-1)]$ instead of $\mathbb{E}[X^2]$, because $k(k-1)/k! = 1/(k-2)!$ cancels cleanly:
 $$\mathbb{E}[X(X-1)] = \sum_{k \ge 2} k(k-1)\frac{e^{-\lambda}\lambda^k}{k!} = e^{-\lambda}\lambda^2\sum_{k\ge2}\frac{\lambda^{k-2}}{(k-2)!} = \lambda^2.$$
 Then $\mathbb{E}[X^2] = \mathbb{E}[X(X-1)] + \mathbb{E}[X] = \lambda^2 + \lambda$ and $\operatorname{Var}(X) = \lambda^2 + \lambda - \lambda^2 = \lambda$. Mean equals variance: a diagnostic. Count data with variance much larger than the mean is *overdispersed* and not Poisson (ST-4).
 
-**The Poisson paradigm.** If $A_1, \dots, A_n$ are events with small probabilities $p_j$, and they are independent or only weakly dependent, then the number that occur is approximately $\mathrm{Pois}(\lambda)$ with $\lambda = \sum_j p_j$. The derivation above is the independent, equal-$p_j$ case; F5 sketches the general one. Applied to birthdays: $\binom{k}{2}$ pair-events each with probability $1/365$, weakly dependent, so the number of matching pairs is approximately $\mathrm{Pois}\big(\binom{k}{2}/365\big)$ and $P(\text{no match}) \approx e^{-\binom{k}{2}/365}$, which is (3.3) again, now with a reason.
+**The Poisson paradigm.** If $A_1, \dots, A_n$ are events with small probabilities $p_j$, and they are independent or only weakly dependent, then the number that occur is approximately $\mathrm{Pois}(\lambda)$ with $\lambda = \sum_j p_j$. The derivation above is the independent, equal-$p_j$ case. The general statement, with an explicit error bound, is the Chen–Stein method; it is beyond this curriculum, and we use the paradigm as an approximation rule. Applied to birthdays: $\binom{k}{2}$ pair-events each with probability $1/365$, weakly dependent, so the number of matching pairs is approximately $\mathrm{Pois}\big(\binom{k}{2}/365\big)$ and $P(\text{no match}) \approx e^{-\binom{k}{2}/365}$, which is (3.3) again, now with a reason.
 
 #### Discrete Uniform
 
@@ -545,7 +549,7 @@ Consequences. $\int_{-\infty}^\infty f_X = 1$ (that is $F(\infty) = 1$). $P(a < 
 
 **Density is not probability.** $f_X(x)$ is not $P(X = x)$; that is 0. The probability is the *area*: $P(x < X < x + \epsilon) \approx f_X(x)\,\epsilon$. A density can exceed 1 ($X \sim \mathrm{Unif}(0, 1/2)$ has $f = 2$ on its support). A density has units of $1/[X]$: if $X$ is a time in seconds, $f_X$ is "per second," and only $f_X(x)\,dx$ is dimensionless. Every time you write a density, ask what its units are. This catches most errors in change-of-variables (F5).
 
-**Expectation and LOTUS.** $\mathbb{E}[X] = \int x f_X(x)\,dx$ and $\mathbb{E}[g(X)] = \int g(x) f_X(x)\,dx$, when the integrals converge absolutely. The heuristic: chop the line into bins of width $dx$, put mass $f_X(x)\,dx$ at $x$, and apply the discrete definitions; the Riemann sums converge to the integrals. A rigorous proof of continuous LOTUS needs the measure-theoretic definition of $\mathbb{E}$ and is the one place in this module where we point elsewhere (Billingsley §16, or F5's sketch). Theorems 3.8, 3.11–3.14 and Definition 3.12 then hold verbatim for continuous variables, with the same proofs read through LOTUS.
+**Expectation and LOTUS.** $\mathbb{E}[X] = \int x f_X(x)\,dx$ and $\mathbb{E}[g(X)] = \int g(x) f_X(x)\,dx$, when the integrals converge absolutely. The heuristic: chop the line into bins of width $dx$, put mass $f_X(x)\,dx$ at $x$, and apply the discrete definitions; the Riemann sums converge to the integrals. A rigorous proof of continuous LOTUS needs the measure-theoretic definition of $\mathbb{E}$; we take the heuristic and point to Billingsley §16 for the proof. Theorems 3.8, 3.11–3.14 and Definition 3.12 then hold verbatim for continuous variables, with the same proofs read through LOTUS.
 
 #### Uniform
 
@@ -603,7 +607,7 @@ A component that has lasted 3000 hours is, as far as its remaining life goes, as
 
 ■ **What just happened.** The functional equation $G(s + t) = G(s)G(t)$ forces an exponential, exactly as $h(s + t) = h(s) + h(t)$ with continuity forces a linear function. Among continuous positive distributions, "no memory" and "exponential" are the same thing. Exercise C3 does the discrete version: no memory on $\{0, 1, 2, \dots\}$ forces the Geometric, which is why the Geometric is the discrete shadow of the Exponential.
 
-**Exponential and the Poisson process (stated; F5 proves it).** Suppose events occur in time so that the number in any interval of length $t$ is $\mathrm{Pois}(\lambda t)$ and counts in disjoint intervals are independent. Then the waiting time $T_1$ to the first event satisfies $P(T_1 > t) = P(\text{no events in } [0, t]) = e^{-\lambda t}$, so $T_1 \sim \mathrm{Expo}(\lambda)$; and the gaps between successive events are i.i.d. $\mathrm{Expo}(\lambda)$. Conversely, i.i.d. exponential gaps produce Poisson counts. The rate $\lambda$ is the same number in both descriptions: events per unit time.
+**Exponential and the Poisson process (stated, not proved here; Blitzstein §5.6 develops it, and F5 Theorem 3.8 uses it to get the Gamma distribution of the $n$-th arrival time).** Suppose events occur in time so that the number in any interval of length $t$ is $\mathrm{Pois}(\lambda t)$ and counts in disjoint intervals are independent. Then the waiting time $T_1$ to the first event satisfies $P(T_1 > t) = P(\text{no events in } [0, t]) = e^{-\lambda t}$, so $T_1 \sim \mathrm{Expo}(\lambda)$; and the gaps between successive events are i.i.d. $\mathrm{Expo}(\lambda)$. Conversely, i.i.d. exponential gaps produce Poisson counts. The rate $\lambda$ is the same number in both descriptions: events per unit time.
 
 ### 3.12 The Normal distribution
 
@@ -625,7 +629,7 @@ $$I^2 = \int_0^{2\pi}\!\int_0^\infty e^{-r^2/2}\,r\,dr\,d\theta.$$
 3. The extra factor $r$ is what makes the inner integral elementary: with $u = r^2/2$, $du = r\,dr$, $\int_0^\infty e^{-r^2/2}r\,dr = \int_0^\infty e^{-u}du = 1$.
 4. $I^2 = \int_0^{2\pi} 1\,d\theta = 2\pi$, and $I > 0$, so $I = \sqrt{2\pi}$. ∎
 
-■ **What just happened.** One copy of the integral is impossible; the product of two copies is a rotationally symmetric integral over the plane, and rotational symmetry hands you the Jacobian factor $r$ that makes it trivial. Example 4.8 checks it numerically. The trick reappears when you compute $\Gamma(1/2)$ in §3.13 and when F5 normalizes the multivariate Gaussian.
+■ **What just happened.** One copy of the integral is impossible; the product of two copies is a rotationally symmetric integral over the plane, and rotational symmetry hands you the Jacobian factor $r$ that makes it trivial. Example 4.8 checks it numerically. The trick reappears when you compute $\Gamma(1/2)$ in §3.13, and the result normalizes F5's multivariate Gaussian (F5 eq. 3.16 is a product of $k$ copies of it).
 
 **Mean and variance of $Z$.** $\mathbb{E}[Z] = \frac{1}{\sqrt{2\pi}}\int z e^{-z^2/2}dz = 0$: the integrand is odd and the integral converges absolutely ($\int |z|e^{-z^2/2}dz = 2$, by the substitution $u = z^2/2$ on each half). For the variance, $\operatorname{Var}(Z) = \mathbb{E}[Z^2] - 0$, and by LOTUS
 $$\mathbb{E}[Z^2] = \frac{1}{\sqrt{2\pi}}\int_{-\infty}^\infty z\cdot\big(z e^{-z^2/2}\big)dz.$$
@@ -645,9 +649,9 @@ The absolute derivative is the factor by which $g^{-1}$ stretches a small interv
 
 **The 68–95–99.7 rule.** $P(|Z| \le 1) = \Phi(1) - \Phi(-1) = 2\Phi(1) - 1 = 0.6827$; $P(|Z| \le 2) = 0.9545$; $P(|Z| \le 3) = 0.9973$. For any Normal: 68% of the mass within one $\sigma$ of the mean, 95% within two, 99.7% within three. (Here $\Phi(-z) = 1 - \Phi(z)$ by the symmetry of $\varphi$.) The project checks these from $\Phi$ and from samples.
 
-**$\Phi$ has no closed form.** Liouville proved (1835) that $e^{-z^2}$ has no elementary antiderivative, so $\Phi$ is a new special function. It is tabulated and computed numerically (`scipy.stats.norm.cdf`), and written in terms of the error function as $\Phi(z) = \tfrac12\big(1 + \operatorname{erf}(z/\sqrt2)\big)$. You will never "solve for $x$" in $\Phi(x) = 0.99$ by algebra; you invert numerically ($z_{0.99} = 2.326$).
+**$\Phi$ has no closed form.** Liouville's theory of integration in finite terms (1830s) shows that $e^{-z^2}$ has no elementary antiderivative, so $\Phi$ is a new special function. It is tabulated and computed numerically (`scipy.stats.norm.cdf`), and written in terms of the error function as $\Phi(z) = \tfrac12\big(1 + \operatorname{erf}(z/\sqrt2)\big)$. You will never "solve for $x$" in $\Phi(x) = 0.99$ by algebra; you invert numerically ($z_{0.99} = 2.326$).
 
-**Why the Normal is everywhere (preview of F5).** The **central limit theorem**: if $X_1, X_2, \dots$ are i.i.d. with mean $\mu$ and finite variance $\sigma^2$, then $\dfrac{X_1 + \cdots + X_n - n\mu}{\sigma\sqrt n} \to \mathcal{N}(0, 1)$ in distribution as $n \to \infty$. Whatever the $X_i$ look like (dice, Bernoullis, exponentials), their standardized sum looks Normal. De Moivre saw the Binomial case in 1733. F5 proves the general case with the MGFs of §3.14: the MGF of the standardized sum tends to $e^{t^2/2}$, and uniqueness finishes it. Measurement errors, heights, and the thermal velocity of a gas molecule (Maxwell 1860) are all sums of many small independent contributions.
+**Why the Normal is everywhere (preview of F5).** The **central limit theorem**: if $X_1, X_2, \dots$ are i.i.d. with mean $\mu$ and finite variance $\sigma^2$, then $\dfrac{X_1 + \cdots + X_n - n\mu}{\sigma\sqrt n} \to \mathcal{N}(0, 1)$ in distribution as $n \to \infty$. Whatever the $X_i$ look like (dice, Bernoullis, exponentials), their standardized sum looks Normal. De Moivre saw the Binomial case in 1733. F5 proves the general case with the MGFs of §3.14: the MGF of the standardized sum tends to $e^{t^2/2}$, and a *continuity theorem* (the limit version of the uniqueness Theorem 3.23, which F5 cites rather than proves) turns convergence of MGFs into convergence of distributions. Measurement errors and heights are sums of many small independent contributions, which is why they look Normal. (Maxwell's 1860 velocity distribution is also Normal in each component, but he reached it by a symmetry argument, not by the CLT.)
 
 ### 3.13 Gamma and Beta (densities and normalizing constants only; F5 does the rest)
 
@@ -685,10 +689,10 @@ $$M_X(t) = \sum_{n=0}^\infty \mathbb{E}[X^n]\,\frac{t^n}{n!}.$$
 **Derivation.**
 
 1. $e^{tX} = \sum_{n\ge0} \frac{t^n X^n}{n!}$ for every outcome.
-2. Take expectations and exchange $\mathbb{E}$ with the sum: $M_X(t) = \sum_n \frac{t^n}{n!}\mathbb{E}[X^n]$. (The exchange is legitimate when $M_X$ is finite near 0; the series then converges absolutely and the justification is the dominated convergence theorem, which is the second and last place this module points to measure theory.)
+2. Take expectations and exchange $\mathbb{E}$ with the sum: $M_X(t) = \sum_n \frac{t^n}{n!}\mathbb{E}[X^n]$. (The exchange is legitimate when $M_X$ is finite near 0; the series then converges absolutely and the justification is the dominated convergence theorem, from measure theory; we cite it.)
 3. A power series $\sum_n c_n t^n$ convergent near 0 has $c_n = M^{(n)}(0)/n!$ (Taylor). Matching coefficients, $\mathbb{E}[X^n]/n! = M_X^{(n)}(0)/n!$. ∎
 
-■ **What just happened.** All the moments of $X$ are packed into one function, and differentiation unpacks them. In practice the Taylor-coefficient route is often faster than differentiating: Exercise B8 reads $\mathbb{E}[Z^4] = 3$ straight off the series of $e^{t^2/2}$. The logarithm $K_X(t) = \ln M_X(t)$ is the *cumulant generating function*; $K'(0) = \mathbb{E}[X]$ and $K''(0) = \operatorname{Var}(X)$ (check: $K' = M'/M$, $K'' = (M''M - M'^2)/M^2$, evaluate at $t = 0$ where $M = 1$). In SM-4 the partition function is $\ln Z(\beta) = K_E(-\beta)$ for the energy, and $\langle E\rangle = -\partial_\beta \ln Z$, $\operatorname{Var}(E) = \partial^2_\beta \ln Z$ are exactly these two identities.
+■ **What just happened.** All the moments of $X$ are packed into one function, and differentiation unpacks them. In practice the Taylor-coefficient route is often faster than differentiating: Exercise B8 reads $\mathbb{E}[Z^4] = 3$ straight off the series of $e^{t^2/2}$. The logarithm $K_X(t) = \ln M_X(t)$ is the *cumulant generating function*; $K'(0) = \mathbb{E}[X]$ and $K''(0) = \operatorname{Var}(X)$ (check: $K' = M'/M$, $K'' = (M''M - M'^2)/M^2$, evaluate at $t = 0$ where $M = 1$). At any other $t$ the same two derivatives, $K'(t) = \mathbb{E}[Xe^{tX}]/M(t)$ and $K''(t)$, are the mean and variance of the *tilted* distribution with PMF proportional to $e^{tx}P(X = x)$. In SM-4, with $E$ the energy of a microstate drawn uniformly from $N$ microstates, the partition function is $Z(\beta) = \sum_i e^{-\beta E_i} = N\,M_E(-\beta)$, so $\ln Z(\beta) = \ln N + K_E(-\beta)$. The Boltzmann distribution is the tilt with $t = -\beta$, and $\langle E\rangle = -\partial_\beta \ln Z$, $\operatorname{Var}(E) = \partial^2_\beta \ln Z$ are these two identities evaluated at $t = -\beta$.
 
 **Theorem 3.21 (Five MGFs).**
 
@@ -722,13 +726,15 @@ using $(1 + c/n)^n \to e^c$. The MGFs converge to the Poisson MGF, which (by a c
 
 ### 3.15 How to solve a probability problem
 
-1. **Name things in symbols before computing anything.** "Let $D$ be the event the part is defective; let $X$ be the number of defective parts in the sample." Half of all errors in this subject are ambiguities in the English that symbols would have exposed (Trap 3).
-2. **Write down exactly what is asked** as $P(\cdot)$, $P(\cdot \mid \cdot)$, or $\mathbb{E}[\cdot]$.
-3. **Condition on what you wish you knew.** If knowing $B$ would make the problem easy, use LOTP (3.11) over a partition, or first-step analysis. If you know $B$ and want $A$ but the problem gives you $P(B \mid A)$, use Bayes (3.10).
-4. **Look for symmetry and indicators.** "Expected number of ..." is almost always $\sum_j P(A_j)$. "Probability that the $j$-th draw is ..." is almost always the same as for the first draw.
-5. **Recognize a named distribution from its story**, then look up the mean and variance instead of recomputing.
-6. **Sanity-check.** Probabilities lie in $[0, 1]$. Take $p \to 0$, $p \to 1$, $n \to \infty$ and see if the answer does something sensible. Check units of any density. Check $\sum p(x) = 1$.
-7. **Simulate.** Ten lines of NumPy with $10^5$ trials settle most disputes to two decimals. The project is a template. If the simulation and the formula disagree, the formula is usually wrong, but check that the simulation implements the *same* conditioning (Monty Hall with a random host is a different simulation from Monty Hall with a knowing host).
+> **The checklist.** Run it on every problem in this module, in this order.
+>
+> 1. **Name things in symbols before computing anything.** "Let $D$ be the event the part is defective; let $X$ be the number of defective parts in the sample." Half of all errors in this subject are ambiguities in the English that symbols would have exposed (Trap 3).
+> 2. **Write down exactly what is asked** as $P(\cdot)$, $P(\cdot \mid \cdot)$, or $\mathbb{E}[\cdot]$.
+> 3. **Condition on what you wish you knew.** If knowing $B$ would make the problem easy, use LOTP (3.11) over a partition, or first-step analysis. If you know $B$ and want $A$ but the problem gives you $P(B \mid A)$, use Bayes (3.10).
+> 4. **Look for symmetry and indicators.** "Expected number of ..." is almost always $\sum_j P(A_j)$. "Probability that the $j$-th draw is ..." is almost always the same as for the first draw.
+> 5. **Recognize a named distribution from its story**, then look up the mean and variance instead of recomputing.
+> 6. **Sanity-check.** Probabilities lie in $[0, 1]$. Take $p \to 0$, $p \to 1$, $n \to \infty$ and see if the answer does something sensible. Check units of any density. Check $\sum p(x) = 1$.
+> 7. **Simulate.** Ten lines of NumPy with $10^5$ trials settle most disputes to two decimals. The project is a template. If the simulation and the formula disagree, the formula is usually wrong, but check that the simulation implements the *same* conditioning (Monty Hall with a random host is a different simulation from Monty Hall with a knowing host).
 
 ## 4. Worked examples
 
@@ -811,16 +817,16 @@ A bearing's time to failure $T$ (hours) is modeled as $\mathrm{Expo}(\lambda)$ w
 1. $P(T > 3000) = e^{-3000/2000} = e^{-1.5} = 0.2231$.
 2. $P(T \le 500) = 1 - e^{-0.25} = 0.2212$. More than a fifth of bearings fail in the first quarter of their mean life.
 3. Median: $\ln 2/\lambda = 0.6931 \times 2000 = 1386$ h. Half of all bearings fail before $1386$ h even though the *mean* is $2000$ h; the mean is dragged up by the long tail.
-4. Memorylessness: $P(T > 6000 \mid T > 3000) = P(T > 3000) = 0.2231$. A bearing that has run 3000 h has, under this model, exactly the survival prospects of a new one. For a real bearing that is false (wear), and the Weibull distribution of ST-4 and the Gamma of F5 exist to fix it. The Exponential is correct for failures caused by external random shocks at a constant rate, not for wear-out.
+4. Memorylessness: $P(T > 6000 \mid T > 3000) = P(T > 3000) = 0.2231$. A bearing that has run 3000 h has, under this model, exactly the survival prospects of a new one. For a real bearing that is false (wear), and wear-out models with an increasing failure rate exist to fix it: the Weibull distribution of reliability engineering, or a Gamma with shape $a > 1$ (§3.13, F5 §3.5). The Exponential is correct for failures caused by external random shocks at a constant rate, not for wear-out.
 5. Standard deviation $= 1/\lambda = 2000$ h, equal to the mean. If your failure data has a standard deviation much smaller than the mean, the failure mechanism is not memoryless.
 
 The project asserts items 1–4 and simulates $10^5$ lifetimes to confirm the conditional survival in item 4 to within sampling error.
 
 ## 5. Why it matters and where it connects
 
-- **F5** starts from this module's Definition 3.7 and builds joint PMFs and PDFs, covariance and correlation (Definition 3.12 done properly, with $|\operatorname{Cov}(X,Y)| \le \sigma_X\sigma_Y$ as Cauchy–Schwarz from LA-1 Theorem 3.11 applied to the inner product $\langle X, Y\rangle = \mathbb{E}[XY]$), conditional expectation (first-step analysis from §3.10 made general), the change-of-variables formula that gives Theorem 3.19's Beta normalizing constant, the multivariate Normal, and the laws of large numbers and the CLT. The CLT proof is Theorem 3.22 plus Theorem 3.23 plus a Taylor expansion of the cumulant generating function.
+- **F5** starts from this module's Definition 3.7 and builds joint PMFs and PDFs, covariance and correlation (Definition 3.12 done properly, with $|\operatorname{Cov}(X,Y)| \le \sigma_X\sigma_Y$ as Cauchy–Schwarz from LA-1 Theorem 3.11 applied to the inner product $\langle X, Y\rangle = \mathbb{E}[XY]$), conditional expectation (first-step analysis from §3.10 made general), the two-dimensional change-of-variables formula that proves the Beta normalizing constant $B(a, b) = \Gamma(a)\Gamma(b)/\Gamma(a+b)$ stated in §3.13 (F5 Theorem 3.11), the multivariate Normal, and the laws of large numbers and the CLT. The CLT proof is Theorem 3.22 plus a second-order Taylor expansion of the MGF plus a continuity theorem (the limit version of Theorem 3.23), which F5 cites.
 - **SM-3** is §3.2 and §3.10. The multiplicity of an Einstein solid is the stars-and-bars count $\binom{n+k-1}{k}$ of Theorem 3.3; a two-state paramagnet has $\binom{N}{k}$ microstates with $k$ spins up, a Binomial; Boltzmann's $S = k_B\ln\Omega$ is the log of a binomial coefficient, and Stirling's formula turns it into the entropy of a Bernoulli. The fact that fluctuations scale as $\sqrt{N}$ while means scale as $N$ is $\operatorname{Var}(\mathrm{Bin}) = npq$ next to $\mathbb{E}[\mathrm{Bin}] = np$.
-- **SM-4** reads §3.14 backwards: the partition function $Z(\beta) = \sum_i e^{-\beta E_i}$ is the MGF of the energy at $t = -\beta$ (up to the counting measure), $\ln Z$ is a cumulant generating function, and $\langle E\rangle = -\partial_\beta\ln Z$, $\operatorname{Var}(E) = \partial_\beta^2\ln Z = k_B T^2 C_V$ are the two identities after Theorem 3.20.
+- **SM-4** reads §3.14 backwards: the partition function $Z(\beta) = \sum_{i=1}^N e^{-\beta E_i}$ is $N$ times the MGF, at $t = -\beta$, of the energy of a uniformly chosen microstate, so $\ln Z$ is a cumulant generating function up to the constant $\ln N$, and $\langle E\rangle = -\partial_\beta\ln Z$, $\operatorname{Var}(E) = \partial_\beta^2\ln Z = k_B T^2 C_V$ are the two identities after Theorem 3.20, evaluated at $t = -\beta$.
 - **ST-1** takes every PMF and PDF in §3.10–3.13, fixes the data, and views it as a function of the parameter: the likelihood. Maximum likelihood for $\mathrm{Bin}$, $\mathrm{Pois}$, $\mathrm{Expo}$, $\mathcal{N}$ is one derivative of the formulas here. Fisher information is the variance of a score, computed by LOTUS. Unbiasedness is a statement about $\mathbb{E}$ of an estimator, and the bias–variance decomposition of MSE is equation (3.17) with a shifted origin.
 - **ST-2** uses Theorem 3.15(b): under the null hypothesis a $p$-value is $\mathrm{Unif}(0, 1)$. The Kolmogorov–Smirnov test in the project is the first hypothesis test you will have run.
 - **ST-5** is §3.5 and §3.7 at scale: Bayes' theorem with the prior a density ($\mathrm{Beta}(a, b)$ on a Binomial $p$, §3.13), the two-coins example (§3.6) as the model of "data independent given the parameter," and Monty Hall's lesson that the *mechanism* producing the evidence is part of the model.
@@ -834,7 +840,7 @@ See [exercises.md](exercises.md). **A1–A5** are drills: de Méré's dice, two 
 
 ## 7. Coding project
 
-`project.py` is a `Simulator`-style script: a seeded `numpy.random.default_rng`, exact formulas implemented from the notes, and every claim checked against simulation or against `scipy.stats`.
+`project.py` is one script in ten `# %%` parts: a seeded `numpy.random.default_rng`, exact formulas implemented from the notes, and every claim checked against simulation or against `scipy.stats`.
 
 1. **Monte Carlo of the traps.** Birthday problem: simulated match frequency against the exact product for $k = 1, \dots, 60$, with the $e^{-k(k-1)/730}$ approximation overlaid (figure). Monty Hall: $10^5$ games, switch vs stay, asserted within $3\sigma$ of $2/3$ and $1/3$; plus the random-host variant giving $1/2$. The matching problem: mean fixed points $\to 1$, $P(\text{none}) \to 1/e$. The base-rate example: simulate two million patients and read off the positive predictive value.
 2. **Exact PMFs from the formulas** (3.20)–(3.24) for Binomial, Geometric, Negative Binomial, Hypergeometric, Poisson, asserted against `scipy.stats` (watch the convention differences, commented in the code); means and variances computed from the PMFs and asserted against the table in §3.10; empirical histograms from `rng` overlaid on the PMFs (figure). Examples 4.9 and 4.10 asserted.
@@ -845,6 +851,7 @@ See [exercises.md](exercises.md). **A1–A5** are drills: de Méré's dice, two 
 7. **MGF numerically.** The sample MGF $\hat M(t) = \frac1N\sum_i e^{tX_i}$ for $\mathrm{Pois}(2)$, its first three derivatives at 0 by central finite differences, compared with $\mathbb{E}[X] = 2$, $\mathbb{E}[X^2] = 6$, $\mathbb{E}[X^3] = 22$ (the exact values are obtained by differentiating $e^{\lambda(e^t - 1)}$ with SymPy). The Binomial-sum and Poisson-limit MGF identities are checked symbolically.
 8. **Law of large numbers** running means for $\mathrm{Bern}(0.3)$ (converges) and standard Cauchy (does not; figure). The Cauchy has no mean, so there is nothing to converge to.
 9. **Linearity on dependent variables.** $X$ uniform on $\{-1, 0, 1\}$, $Y = X^2$: $\mathbb{E}[X + Y] = \mathbb{E}X + \mathbb{E}Y$ exactly and by simulation; also $\operatorname{Cov}(X, Y) = 0$ despite dependence; and a dependent pair (heads and tails counts) where $\operatorname{Var}(X + Y) = 0 \ne \operatorname{Var}X + \operatorname{Var}Y$.
+10. **Exercise numbers.** Every number in `solutions.md` that can be computed is asserted or printed here: exact fractions for A3, A4, B2, B5, enumeration of the 196 Tuesday-boy families (C1), the $HH$/$HT$ waits (C2), $\lfloor T\rfloor$ for C3, and brute force over all permutations for C4.
 
 **Build it yourself first:** before reading Part 2, write `binom_pmf(k, n, p)`, `hgeom_pmf(k, w, b, n)`, and `pois_pmf(k, lam)` from (3.20), (3.23), (3.24) using `math.comb` and `math.exp`, and `expo_sample(lam, size, rng)` from Example 4.7. Then compare.
 

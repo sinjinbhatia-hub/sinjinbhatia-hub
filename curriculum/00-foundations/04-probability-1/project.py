@@ -86,6 +86,7 @@ def posterior(prior, sens=0.99, spec=0.99):
 p1 = posterior(1e-4); p2 = posterior(p1); p3 = posterior(p2)
 assert round(p1, 6) == 0.009804 and round(p2, 4) == 0.4950 and round(p3, 3) == 0.990
 assert round(0.99e-4 + 0.01 * 0.9999, 6) == 0.010098
+assert [round(0.99 * p1, 6), round(0.01 * (1 - p1), 6)] == [0.009706, 0.009902]  # Example 4.2, second test
 assert [round(9999 / 99), round(99**2 / 9999, 2), round(99**3 / 9999)] == [101, 0.98, 97]  # odds after 1, 2, 3 positives
 M = 2_000_000
 sick = rng.random(M) < 1e-4
@@ -137,6 +138,10 @@ for arm, strata in simpson.items():
     print(f"  Simpson arm {arm}: small {strata[0][0]/strata[0][1]:.0%}, large {strata[1][0]/strata[1][1]:.0%},"
           f" all {s/n_:.0%}, P(large | arm) = {strata[1][1]/n_:.2f}")
 assert [round(263 / 350, 2), round(80 / 350, 2)] == [0.75, 0.23]
+rate = {arm: [x / y for x, y in strata] + [sum(x for x, _ in strata) / sum(y for _, y in strata)]
+        for arm, strata in simpson.items()}
+assert all(rate["A"][j] > rate["B"][j] for j in (0, 1)) and rate["A"][2] < rate["B"][2]  # Simpson's reversal
+assert [round(100 * v) for v in rate["A"] + rate["B"]] == [93, 73, 78, 87, 69, 83]
 assert abs(1e-7 / (1e-7 + 1e-6 * (1 - 1e-7)) - 1 / 11) < 1e-6
 assert 40 + sum(2 ** 40 / 2 ** n for n in range(41, 200)) == 41.0  # capped St Petersburg
 
@@ -229,6 +234,8 @@ fig.savefig(FIG / "defects_hgeom_vs_binom.png", dpi=120); plt.close(fig)
 lam_b = 1 / 2000
 assert round(math.exp(-3000 * lam_b), 4) == 0.2231 and round(1 - math.exp(-500 * lam_b), 4) == 0.2212
 assert round(math.log(2) / lam_b) == 1386
+surv = lambda x: math.exp(-lam_b * x)                                  # (3.26)
+assert math.isclose(surv(6000) / surv(3000), surv(3000)) and round(surv(6000) / surv(3000), 4) == 0.2231  # Thm 3.16
 life = rng.exponential(1 / lam_b, 100_000); alive = life > 3000
 check((life[alive] > 6000).mean(), math.exp(-1.5), prop_se(0.2231, alive.sum()), label="P(T>6000 | T>3000)")
 
@@ -244,6 +251,7 @@ for k, (bv, pv) in table.items():
     assert round(bb, 6) == bv and round(pp, 6) == pv
     print(f"  k={k}: Bin {bb:.6f}  Pois {pp:.6f}  diff {bb - pp:+.6f}")
 assert round(1000 * math.log(0.997), 4) == -3.0045
+assert round(1 - binom_pmf(0, 1000, 0.003) / pois_pmf(0, 3), 4) == round(3 * 0.003 / 2, 4) == 0.0045  # rel. error at k=0
 
 
 def tv_bin_pois(n, lam=3.0):
@@ -352,6 +360,14 @@ assert sp.simplify(sp.integrate(sp.exp(tr * zz - zz**2 / 2), (zz, -sp.oo, sp.oo)
 assert [sp.series(sp.exp(t**2 / 2), t, 0, 7).removeO().coeff(t, j) * sp.factorial(j) for j in (2, 4, 6)] == [1, 3, 15]
 assert [sp.series(1 / (1 - t / lam_s), t, 0, 4).removeO().coeff(t, j) * sp.factorial(j) for j in (1, 2, 3)] \
     == [1 / lam_s, 2 / lam_s**2, 6 / lam_s**3]                                   # Expo: n!/lam^n
+# §3.14 / SM-4: for E uniform on N microstates, ln Z(beta) = ln N + K_E(-beta), and K', K'' at t = -beta are
+# the mean and variance of the Boltzmann (tilted) distribution, i.e. <E> = -d lnZ/d beta, Var E = d^2 lnZ/d beta^2.
+bt, tv_ = sp.symbols("beta t_v", real=True); Ev = [0, 1, 1, 3]
+Zb = sum(sp.exp(-bt * e) for e in Ev); Kt = sp.log(sum(sp.exp(tv_ * e) for e in Ev) / len(Ev))
+mB = sum(e * sp.exp(-bt * e) for e in Ev) / Zb; vB = sum(e**2 * sp.exp(-bt * e) for e in Ev) / Zb - mB**2
+assert sp.simplify(sp.log(Zb) - sp.log(len(Ev)) - Kt.subs(tv_, -bt)) == 0
+assert sp.simplify(sp.diff(Kt, tv_).subs(tv_, -bt) - mB) == 0 and sp.simplify(-sp.diff(sp.log(Zb), bt) - mB) == 0
+assert sp.simplify(sp.diff(Kt, tv_, 2).subs(tv_, -bt) - vB) == 0 and sp.simplify(sp.diff(sp.log(Zb), bt, 2) - vB) == 0
 X = rng.poisson(2.0, 1_000_000).astype(float)
 Mhat = lambda s: np.exp(s * X).mean()
 hh = 1e-2
@@ -391,11 +407,17 @@ print("Part 9: linearity on dependent variables")
 vals = np.array([-1, 0, 1]); pX = np.full(3, Fr(1, 3))
 EX = sum(pX * vals); EY = sum(pX * vals ** 2); EXY = sum(pX * vals ** 3)
 assert EX == 0 and EY == Fr(2, 3) and sum(pX * (vals + vals ** 2)) == EX + EY and EXY - EX * EY == 0
-assert pX[1] != pX[1] * pX[1]   # P(X=0, Y=0) = P(X=0) = 1/3, but P(X=0)P(Y=0) = 1/9: dependent
+# Dependence (Definition 3.7 fails): joint P(X=x, Y=y) vs product of marginals, Y = X^2.
+joint = {(x, y): sum(pk for v, pk in zip(vals, pX) if v == x and v * v == y) for x in vals for y in (0, 1)}
+pY = {y: sum(pk for v, pk in zip(vals, pX) if v * v == y) for y in (0, 1)}
+assert pY == {0: Fr(1, 3), 1: Fr(2, 3)} and joint[(0, 0)] == Fr(1, 3) and pX[1] * pY[0] == Fr(1, 9)
+assert any(joint[(x, y)] != pk * pY[y] for x, pk in zip(vals, pX) for y in (0, 1))
 xs_ = rng.choice(vals, 100_000); check((xs_ + xs_ ** 2).mean(), 2 / 3, (xs_ + xs_ ** 2).std() / math.sqrt(1e5),
                                        label="E[X + X^2]")
 heads = rng.binomial(10, 0.5, 100_000); tails = 10 - heads
 assert np.var(heads + tails) == 0 and abs(np.var(heads) - 2.5) < 0.05 and abs(np.cov(heads, tails)[0, 1] + 2.5) < 0.05
+vX, cXY = 10 * Fr(1, 2) * Fr(1, 2), -Fr(5, 2)                       # B8(c): exact, via (3.19)
+assert vX + vX + 2 * cXY == 0 and vX + vX - 2 * cXY == 4 * vX == 10   # Var(X+Y) = 0, Var(X-Y) = Var(2X-10) = 10
 
 # %% [markdown]
 # ## Part 10: Numbers in the exercise solutions

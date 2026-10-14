@@ -228,7 +228,7 @@ e_list = rng.uniform(0.0, 0.8, size=10)
 T_meas = []
 for a, e in zip(a_list, e_list):
     rp = a * (1 - e)
-    vp = np.sqrt((k / mu) * (2 / rp - 1 / a))           # vis-viva (3.19) at perihelion
+    vp = np.sqrt((k / mu) * (2 / rp - 1 / a))           # vis-viva (3.18) at perihelion
     T_th = kepler_period(a, mu, k)
     s = integrate_orbit((rp, 0), (0, vp), kepler_accel(k, mu), 2.6 * T_th,
                         events=perihelion_event, n_out=50)
@@ -310,6 +310,13 @@ E42 = -0.3
 e42 = ecc_from_E_ell(E42, ell, mu, k); c42 = ell**2 / (mu * k)
 a42 = -k / (2 * E42); b42 = a42 * np.sqrt(1 - e42**2)
 assert abs(a42 - c42 / (1 - e42**2)) < 1e-12
+# Launch at r = 1, phi = 0 with transverse speed ell/(mu r) = 1 and outward radial speed from E:
+vr42 = np.sqrt(2 * (E42 + k) / mu - ell**2 / mu**2)
+s42 = integrate_orbit((1.0, 0.0), (vr42, ell / mu), kepler_accel(k, mu), kepler_period(a42, mu, k), n_out=800)
+c_f, e_f, phi_p42 = fit_conic(s42.y[0], s42.y[1])
+assert abs(c_f - c42) < 1e-8 and abs(e_f - e42) < 1e-8 and abs(phi_p42 + np.pi / 2) < 1e-8
+print(f"Part 3, Ex 4.2: launch r=1, phi=0, v_r = {vr42:.4f}, v_phi = 1 -> fitted c = {c_f:.6f}, e = {e_f:.6f}, "
+      f"perihelion at phi = {np.degrees(phi_p42):.4f} deg, so r = 1/(1 - {e42:.4f} sin phi)")
 print(f"Part 3, Ex 4.2: E={E42}, ell=1: e = {e42:.4f}, c = {c42:.4f}, r_p = {c42/(1+e42):.4f}, r_a = {c42/(1-e42):.4f}, "
       f"a = {a42:.4f}, b = {b42:.4f}, T = {kepler_period(a42, mu, k):.3f}, v_p = {ell/(mu*c42/(1+e42)):.4f}, v_a = {ell/(mu*c42/(1-e42)):.4f}")
 print("Part 3: turning points from the quadratic match c/(1±e); energy conserved to 1e-8 on all four conics.")
@@ -531,13 +538,21 @@ assert abs(np.angle(np.exp(1j * (ang_A - np.arctan2(yr[i_min], xr[i_min]))))) < 
 # |A|^2 = mu^2 k^2 + 2 mu E ell^2  (reproduces the energy–eccentricity relation)
 assert abs(A_mag**2 - (mu2**2 * k2**2 + 2 * mu2 * E_rel * ell_rel**2)) < 1e-10
 print(f"Part 7: LRL vector constant to 1e-8; |A|/(mu k) = {A_mag/(mu2*k2):.6f} = e; direction {np.degrees(ang_A):.2f} deg = perihelion direction {np.degrees(phi_peri_fit):.2f} deg")
+# |A| = mu k e across circle, ellipses, parabola, hyperbola (mu = k = 1, launched from perihelion r_p = 1)
+for e_t in (0.0, 0.3, 0.6, 0.9, 1.0, 1.5):
+    s_t = integrate_orbit((1.0, 0.0), (0.0, np.sqrt(1 + e_t)), kepler_accel(k, mu), 6.0, n_out=400)
+    x_, y_, vx_, vy_ = s_t.y
+    l_t = mu * (x_ * vy_ - y_ * vx_)
+    A_t = np.hypot(mu * l_t * vy_ - mu * k * x_ / np.hypot(x_, y_), -mu * l_t * vx_ - mu * k * y_ / np.hypot(x_, y_))
+    assert np.max(np.abs(A_t / (mu * k) - e_t)) < 1e-8, (e_t, A_t[:3])
+print("        |A|/(mu k) = e to 1e-8 along orbits with e = 0, 0.3, 0.6, 0.9, 1 (parabola), 1.5 (hyperbola)")
 
 # %% [markdown]
 # ## Part 8: Hohmann transfer, LEO to GEO, with two impulsive burns
 #
 # SI units, Earth $GM = 3.986004418\times10^{14}$ m$^3$/s$^2$. Start on a circular
 # orbit at $r_1 = 6771$ km (400 km altitude). Burn 1 raises the speed to the
-# perigee speed of the transfer ellipse ($a_t = (r_1+r_2)/2$, vis-viva (3.19));
+# perigee speed of the transfer ellipse ($a_t = (r_1+r_2)/2$, vis-viva (3.18));
 # coast half a period to apogee; burn 2 raises the speed to the circular speed
 # at $r_2 = 42164$ km. We simulate it and check the final orbit is circular.
 

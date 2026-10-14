@@ -15,7 +15,8 @@
 # (10) the Hamilton–Jacobi function of the oscillator checked against the
 # PDE and against p along a trajectory, (11) WKB: |psi|^2 ~ 1/p vs the exact
 # n = 20 oscillator state, (12) symplectic Euler as two shears and its exactly
-# conserved modified Hamiltonian.
+# conserved modified Hamiltonian, (13) checks for every number quoted in the
+# exercise solutions.
 #
 # Run headless: `MPLBACKEND=Agg python3 project.py`. Figures go to ./figures/.
 
@@ -145,6 +146,13 @@ assert np.allclose(H_pend(th_test, p_sep(th_test), m, l, g), E_sep)
 area_sep, _ = quad(lambda th: 2 * p_sep(th), -np.pi, np.pi)           # upper + lower branch
 assert np.isclose(area_sep, 16 * m * l * np.sqrt(g * l), rtol=1e-10)
 print(f"Example 4.3: separatrix energy E_s = m g l = {E_sep:.2f} J; enclosed area = 16 m l sqrt(g l) = {area_sep:.3f}")
+# Motion on the separatrix: sin(theta/2) = tanh(w0 t) solves theta_dot = 2 w0 cos(theta/2), reaching pi only as t -> inf.
+w0 = np.sqrt(g / l); ts_ = np.linspace(-2, 2, 4001)
+th_sx = 2 * np.arcsin(np.tanh(w0 * ts_))
+dth_num = np.gradient(th_sx, ts_, edge_order=2)
+assert np.allclose(dth_num, 2 * w0 * np.cos(th_sx / 2), rtol=2e-3, atol=1e-6)
+t_sym = sp.symbols("t", real=True)
+assert sp.simplify(sp.diff(2 * sp.asin(sp.tanh(t_sym)), t_sym) - 2 * sp.cos(sp.asin(sp.tanh(t_sym)))) == 0
 
 # %% [markdown]
 # ## Part 3: Spherical pendulum reduced by p_phi (Example 4.2)
@@ -324,7 +332,7 @@ def rk4_pendulum(th, p, h, n, every):
 
 
 def verlet_pendulum(th, p, h, n, every):
-    """Störmer–Verlet (3.30): half kick, drift, half kick."""
+    """Störmer–Verlet (3.32): half kick, drift, half kick."""
     out = []
     for i in range(n):
         p -= 0.5 * h * sin(th)
@@ -543,7 +551,7 @@ for E in Es:
     assert np.isclose(T_c, T_m, rtol=1e-7), (E, T_c, T_m)
     dE = 1e-5
     dJdE = (action_closed(E + dE) - action_closed(E - dE)) / (2 * dE)
-    assert np.isclose(dJdE, T_c, rtol=1e-6), (E, dJdE, T_c)          # nu = dE/dJ = 1/T  (3.24)
+    assert np.isclose(dJdE, T_c, rtol=1e-6), (E, dJdE, T_c)          # nu = dE/dJ = 1/T  (3.25)
     print(f"   {E:5.2f}   {Jn_:9.5f}   {Jc:9.5f}   {T_c:8.5f}   {T_m:8.5f}    {T_c/dJdE:.7f}")
 # Small-amplitude limit: J -> 2 pi E_osc / omega with E_osc = E + mgl, omega = sqrt(g/l)
 E_small = -m * g * l + 1e-4
@@ -648,7 +656,7 @@ ax.grid(alpha=.3); ax.legend()
 fig.tight_layout(); fig.savefig(FIG / "hamilton_jacobi_S.png", dpi=120); plt.close(fig)
 
 # %% [markdown]
-# ## Part 11: WKB — the classical density 1/p vs the exact n = 20 oscillator state (§3.10, Example 4.8)
+# ## Part 11: WKB — the classical density 1/p vs the exact n = 20 oscillator state (§3.10)
 #
 # With m = omega = hbar = 1 and E = n + 1/2, the WKB amplitude gives
 # |psi|^2 ∝ 1/p(q) = 1/sqrt(A^2 - q^2), normalized to rho_cl = 1/(pi sqrt(A^2 - q^2)).
@@ -669,7 +677,7 @@ P_cl = 2 / np.pi * np.arcsin(0.5)                      # = 1/3 exactly
 P_q = np.trapezoid(rho_q[mask], xq[mask])
 assert np.isclose(P_cl, 1 / 3)
 assert abs(P_q - P_cl) < 0.02, (P_q, P_cl)
-print(f"Example 4.8 (WKB): P(|q| < A/2): classical 1/p density = {P_cl:.4f}, exact n = 20 state = {P_q:.4f}")
+print(f"§3.10 (WKB): P(|q| < A/2): classical 1/p density = {P_cl:.4f}, exact n = 20 state = {P_q:.4f}")
 fig, ax = plt.subplots(figsize=(8, 4.2))
 ax.plot(xq, rho_q, lw=.9, label=rf"$|\psi_{{{n_q}}}(q)|^2$ exact")
 ax.plot(xq, rho_cl, "C3", lw=2, label=r"classical $\rho \propto 1/p(q)$")
@@ -722,7 +730,138 @@ sq, sp_, mm, tt_ = 0.7, 0.4, 1.0, 3.0
 Sig0 = np.diag([sq**2, sp_**2]); Mfree = np.array([[1, tt_ / mm], [0, 1]])
 Sig_t = Mfree @ Sig0 @ Mfree.T
 assert np.isclose(Sig_t[0, 0], sq**2 + sp_**2 * tt_**2 / mm**2) and np.isclose(np.linalg.det(Sig_t), np.linalg.det(Sig0))
-print("  B6: free-particle Gaussian shears (sigma_q^2 grows as sigma_p^2 t^2/m^2) but det(covariance) is constant.")
+print(f"  B6: sigma_q^2(t=3) = {Sig_t[0, 0]:.4f} (from {sq**2:.2f}), cov(q,p) = {Sig_t[0, 1]:.4f}, "
+      f"det Sigma = {np.linalg.det(Sig_t):.4f} = {np.linalg.det(Sig0):.4f} at t = 0")
+
+# %% [markdown]
+# ## Part 13: Checks for the exercise solutions
+#
+# Every number quoted in solutions.md is computed here (B2, B3, B6 are in Parts 6 and 12).
+
+# %%
+v_, p_, c_, m_ = sp.symbols("v p c m", positive=True)
+# A1(a): f = v^4/4 -> g = (3/4) p^(4/3);  A1(b): f = -m c^2 sqrt(1 - v^2/c^2) -> H = sqrt(p^2 c^2 + m^2 c^4)
+assert sp.simplify(p_ * p_**sp.Rational(1, 3) - (p_**sp.Rational(1, 3))**4 / 4 - sp.Rational(3, 4) * p_**sp.Rational(4, 3)) == 0
+v_of_p = p_ / (m_ * sp.sqrt(1 + p_**2 / (m_**2 * c_**2)))                     # inverts p = m v / sqrt(1 - v^2/c^2)
+assert sp.simplify(m_ * v_of_p / sp.sqrt(1 - v_of_p**2 / c_**2) - p_) == 0
+H_rel = sp.simplify(p_ * v_of_p + m_ * c_**2 * sp.sqrt(1 - v_of_p**2 / c_**2))
+assert sp.simplify(H_rel - sp.sqrt(p_**2 * c_**2 + m_**2 * c_**4)) == 0
+# A3: {q^2, p^2} = 4qp and {qp, H_osc} = p^2/m - m w^2 q^2 = 2(T - V)
+assert poisson_bracket(q**2, p**2, [q], [p]) == 4 * q * p
+assert sp.simplify(poisson_bracket(q * p, p**2 / (2 * m_s) + m_s * w_s**2 * q**2 / 2, [q], [p]) - (p**2 / m_s - m_s * w_s**2 * q**2)) == 0
+# A4: determinants of five maps
+al = sp.symbols("alpha", real=True)
+maps_A4 = {"rotation": [q * sp.cos(al) - p * sp.sin(al), q * sp.sin(al) + p * sp.cos(al)], "scaling": [2 * q, p / 2],
+           "Q=q^2,P=p/2q": [q**2, p / (2 * q)], "Q=q,P=p+q^2": [q, p + q**2], "Q=p,P=q": [p, q]}
+dets_A4 = {k_: sp.simplify(sp.Matrix([[sp.diff(Z, zz) for zz in (q, p)] for Z in v]).det()) for k_, v in maps_A4.items()}
+assert dets_A4 == {"rotation": 1, "scaling": 1, "Q=q^2,P=p/2q": 1, "Q=q,P=p+q^2": 1, "Q=p,P=q": -1}
+# A5: V = x^3/3 - x: fixed points x = +-1, separatrix energy 2/3, loop spans [-1, 2]
+xs = sp.symbols("x", real=True); V5 = xs**3 / 3 - xs
+assert set(sp.solve(sp.diff(V5, xs), xs)) == {-1, 1} and V5.subs(xs, -1) == sp.Rational(2, 3) and V5.subs(xs, 1) == -sp.Rational(2, 3)
+assert sp.factor(V5 - sp.Rational(2, 3)) == (xs - 2) * (xs + 1)**2 / 3
+# A6: oscillator m = 2 kg, w = 3 rad/s, amplitude 0.5 m
+E6 = 0.5 * 2 * 3**2 * 0.5**2; J6 = 2 * np.pi * E6 / 3; h_planck = 6.62607015e-34
+assert np.isclose(E6, 2.25)
+print(f"A6: E = {E6:.2f} J, J = 2 pi E / w = {J6:.4f} J s, nu = {3/(2*np.pi):.4f} Hz, n = J/h = {J6/h_planck:.3e}")
+# B1: Hamilton's equations for |p - qA|^2/2m + q phi give m dv/dt = q(E + v x B) (general A, phi)
+tq, mq, qe = sp.symbols("t m q_e", positive=True)
+X3, P3 = sp.symbols("x1:4", real=True), sp.symbols("P1:4", real=True)
+A3f = [sp.Function(f"A{i}")(*X3, tq) for i in range(3)]; phif = sp.Function("phi")(*X3, tq)
+Hq = sum((P3[i] - qe * A3f[i])**2 for i in range(3)) / (2 * mq) + qe * phif
+vel = [sp.diff(Hq, P3[i]) for i in range(3)]
+Ef = [-sp.diff(phif, X3[i]) - sp.diff(A3f[i], tq) for i in range(3)]
+Bf = [sp.diff(A3f[2], X3[1]) - sp.diff(A3f[1], X3[2]), sp.diff(A3f[0], X3[2]) - sp.diff(A3f[2], X3[0]),
+      sp.diff(A3f[1], X3[0]) - sp.diff(A3f[0], X3[1])]
+for i in range(3):
+    j, k_ = (i + 1) % 3, (i + 2) % 3
+    dmv = -sp.diff(Hq, X3[i]) - qe * (sum(sp.diff(A3f[i], X3[jj]) * vel[jj] for jj in range(3)) + sp.diff(A3f[i], tq))
+    assert sp.simplify(dmv - qe * (Ef[i] + vel[j] * Bf[k_] - vel[k_] * Bf[j])) == 0
+print("B1: Hamilton's equations for (3.9) reproduce the Lorentz force (symbolic, arbitrary A and phi).")
+# B3: A^2 + B^2 + L^2 = H^2 for the 2D isotropic oscillator
+assert sp.expand(A2**2 + B2**2 + L2d**2 - H2**2) == 0
+# B4: bead on a hoop rotating at Omega: H = p^2/(2mR^2) - m R^2 Om^2 sin^2/2 - m g R cos; H - (T + V) = -m R^2 Om^2 sin^2
+R_, Om, gq, thq, thd = sp.symbols("R Omega g theta thetadot", positive=True)
+Lh = mq * R_**2 * (thd**2 + Om**2 * sp.sin(thq)**2) / 2 + mq * gq * R_ * sp.cos(thq)
+ph = sp.diff(Lh, thd); Hh = sp.simplify(ph * thd - Lh)
+TV = mq * R_**2 * (thd**2 + Om**2 * sp.sin(thq)**2) / 2 - mq * gq * R_ * sp.cos(thq)
+assert sp.simplify(Hh - TV + mq * R_**2 * Om**2 * sp.sin(thq)**2) == 0
+Vh = -mq * R_**2 * Om**2 * sp.sin(thq)**2 / 2 - mq * gq * R_ * sp.cos(thq)
+assert sp.simplify(sp.diff(Vh, thq) - mq * R_ * sp.sin(thq) * (gq - R_ * Om**2 * sp.cos(thq))) == 0
+assert sp.simplify(sp.diff(Vh, thq, 2).subs(thq, 0) - mq * R_ * (gq - R_ * Om**2)) == 0
+# B5: F1 = (1/2) m w q^2 cot Q generates (3.21)
+F1 = m_s * w_s * q**2 / 2 * sp.cot(Q)
+p_F1, P_F1 = sp.diff(F1, q), -sp.diff(F1, Q)
+assert sp.simplify(P_F1.subs(q, q_of) - P) == 0 and sp.simplify(p_F1.subs(q, q_of) - p_of) == 0
+# B7: free particle. S = m (q - q0)^2 / 2t solves H-J and equals the action of the straight path.
+q0s, tt7 = sp.symbols("q0 t", positive=True)
+S7 = m_s * (q - q0s)**2 / (2 * tt7)
+assert sp.simplify(sp.diff(S7, q)**2 / (2 * m_s) + sp.diff(S7, tt7)) == 0
+tau_ = sp.symbols("tau", positive=True)
+assert sp.simplify(sp.integrate(m_s / 2 * ((q - q0s) / tt7)**2, (tau_, 0, tt7)) - S7) == 0   # L is constant on the path
+print("A1, A3, A4, A5, B3, B4, B5, B7 symbolic checks passed.")
+
+
+# %%
+def energy_errors(steps, periods):
+    """Return (RK4 final, Verlet max) relative energy errors for the theta0 = 2 pendulum (Exercise B8)."""
+    hh = T_pend / steps; n = periods * steps
+    e_r = rk4_pendulum(th_amp, 0.0, hh, n, n)[-1]
+    e_v = verlet_pendulum(th_amp, 0.0, hh, n, 1)
+    return abs(e_r - E0) / abs(E0), np.max(np.abs(e_v - E0)) / abs(E0)
+
+
+(r50, v50), (r100, v100) = energy_errors(50, 1000), energy_errors(100, 1000)
+print(f"B8: 10^3 periods. RK4 final error {r50:.3e} -> {r100:.3e} (ratio {r50/r100:.1f}); "
+      f"Verlet max error {v50:.3e} -> {v100:.3e} (ratio {v50/v100:.2f})")
+assert 3.8 < v50 / v100 < 4.2 and 25 < r50 / r100 < 40
+yv = sp.symbols("y", real=True)
+R4 = 1 + yv * sp.I + (yv * sp.I)**2 / 2 + (yv * sp.I)**3 / 6 + (yv * sp.I)**4 / 24
+assert sp.expand(R4 * sp.conjugate(R4)) == sp.expand(1 - yv**6 / 72 + yv**8 / 576)      # |R(iy)|^2 for RK4
+
+# C1: log divergence of the period, T ~ 2 sqrt(l/g) ln(32 m g l / (E_s - E))  (m = g = l = 1)
+for Ec in (0.99, 0.999):
+    T_ex = period_closed(Ec); T_as = 2 * np.log(32 / (1 - Ec))
+    print(f"C1: E = {Ec}: T = 4K(k) = {T_ex:.4f}, asymptotic 2 ln(32/(1-E)) = {T_as:.4f}")
+    assert abs(T_ex - T_as) < 0.02
+k2s = sp.symbols("k", positive=True)
+Jk = sp.elliptic_e(k2s**2) - (1 - k2s**2) * sp.elliptic_k(k2s**2)              # sympy uses the parameter m = k^2
+assert abs(float((sp.diff(Jk, k2s) - k2s * sp.elliptic_k(k2s**2)).subs(k2s, 0.6))) < 1e-12     # dJ/dk = 16 k K(k)
+
+# C2: Kepler radial action and the degenerate frequencies (m = k = 1, E = -0.3, l = 0.8)
+mk, kk, Ek, lk = 1.0, 1.0, -0.3, 0.8
+r1, r2 = np.sort(np.roots([2 * mk * Ek, 2 * mk * kk, -lk**2]).real)
+Jr_num = 2 * quad(lambda r: np.sqrt(max(2 * mk * (Ek + kk / r) - lk**2 / r**2, 0.0)), r1, r2, limit=200)[0]
+Jr_cl = np.pi * kk * np.sqrt(2 * mk / abs(Ek)) - 2 * np.pi * lk
+assert np.isclose(Jr_num, Jr_cl, rtol=1e-9)
+T_kep = np.pi * kk * np.sqrt(2 * mk) / (2 * abs(Ek)**1.5)
+ev_peri = lambda t, yy: yy[1]; ev_peri.direction = 1                           # p_r crosses 0 upward: perihelion
+sk = solve_ivp(lambda t, yy: [yy[1] / mk, lk**2 / (mk * yy[0]**3) - kk / yy[0]**2, lk / (mk * yy[0]**2)],
+               (0, 3 * T_kep), [r2, 0.0, 0.0], events=ev_peri, dense_output=True, rtol=1e-11, atol=1e-12)
+t_peri = sk.t_events[0]; dphi = sk.sol(t_peri[1])[2] - sk.sol(t_peri[0])[2]
+assert np.isclose(t_peri[1] - t_peri[0], T_kep, rtol=1e-7) and np.isclose(dphi, 2 * np.pi, rtol=1e-7)
+print(f"C2: r in [{r1:.5f}, {r2:.5f}], J_r numeric {Jr_num:.5f} = closed form {Jr_cl:.5f}; "
+      f"radial period {t_peri[1]-t_peri[0]:.4f} = 1/nu = {T_kep:.4f}; phi advances {dphi/np.pi:.6f} pi per radial period")
+
+# C3: standard map p' = p + K sin(theta), theta' = theta + p'. Jacobian det = 1; KAM confinement vs diffusion.
+thm, pm, Km = sp.symbols("theta p K", real=True)
+Msm = sp.Matrix([[sp.diff(e, z) for z in (thm, pm)] for e in (thm + pm + Km * sp.sin(thm), pm + Km * sp.sin(thm))])
+assert sp.simplify(Msm.det()) == 1
+rng_sm = np.random.default_rng(1)
+spread = {}
+fig, axs = plt.subplots(1, 3, figsize=(15, 4.6))
+for ax, Kv in zip(axs, (0.5, 0.97, 1.5)):
+    th_m = rng_sm.uniform(0, 2 * np.pi, 50); p_m = rng_sm.uniform(0, 2 * np.pi, 50); p_start = p_m.copy()
+    pts_th, pts_p, mx = [], [], 0.0
+    for _ in range(2000):
+        p_m = p_m + Kv * np.sin(th_m); th_m = (th_m + p_m) % (2 * np.pi)
+        mx = max(mx, np.max(np.abs(p_m - p_start))); pts_th.append(th_m); pts_p.append(p_m % (2 * np.pi))
+    spread[Kv] = mx
+    ax.scatter(np.concatenate(pts_th), np.concatenate(pts_p), s=.05, color="k")
+    ax.set_title(f"standard map, K = {Kv}: max |p - p0| = {mx:.2f}"); ax.set_xlabel(r"$\theta$"); ax.set_ylabel("p mod 2π")
+fig.tight_layout(); fig.savefig(FIG / "standard_map.png", dpi=110); plt.close(fig)
+assert spread[0.5] < 2 * np.pi and spread[0.97] < 2 * np.pi and spread[1.5] > 4 * np.pi
+print("C3: max |p_n - p_0| over 50 orbits x 2000 kicks: " + ", ".join(f"K = {k_}: {v:.2f}" for k_, v in spread.items())
+      + f"  (2 pi = {2*np.pi:.2f}); Greene's literature threshold K_c = 0.9716")
 
 # %% [markdown]
 # ## Your turn
@@ -745,7 +884,7 @@ print("  B6: free-particle Gaussian shears (sigma_q^2 grows as sigma_p^2 t^2/m^2
 # 4. **Liouville with a density estimate.** Replace the boundary-polygon area in
 #    Part 4 with a 2D histogram of the 5000 interior points; verify that the
 #    maximum density is (approximately) invariant under the symplectic map and
-#    grows under explicit Euler? (No: it falls. Say why.)
+#    falls under explicit Euler. Say why it falls rather than rises.
 
 # %%
 if __name__ == "__main__":
