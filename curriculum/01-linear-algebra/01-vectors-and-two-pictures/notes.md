@@ -230,7 +230,7 @@ The hypothesis "$\mathbb{R}^2$ or $\mathbb{R}^3$" matters: those are the spaces 
    $$\|\mathbf{u} - \mathbf{v}\|^2 = (\mathbf{u} - \mathbf{v})\cdot(\mathbf{u} - \mathbf{v}) = \mathbf{u}\cdot\mathbf{u} - 2\,\mathbf{u}\cdot\mathbf{v} + \mathbf{v}\cdot\mathbf{v} = \|\mathbf{u}\|^2 - 2\,\mathbf{u}\cdot\mathbf{v} + \|\mathbf{v}\|^2.$$
 3. Set the two expressions equal and cancel $\|\mathbf{u}\|^2 + \|\mathbf{v}\|^2$ from both sides: $-2\,\mathbf{u}\cdot\mathbf{v} = -2\|\mathbf{u}\|\|\mathbf{v}\|\cos\theta$. Divide by $-2$. ∎
 
-■ **What just happened.** The dot product, defined purely algebraically, computes an angle. In particular $\mathbf{u}\cdot\mathbf{v} = 0$ exactly when $\cos\theta = 0$, i.e., the vectors are **perpendicular** (we say **orthogonal**). This is the start of LA-5.
+■ **What just happened.** The dot product, defined purely algebraically, computes an angle. In particular $\mathbf{u}\cdot\mathbf{v} = 0$ exactly when $\cos\theta = 0$, i.e., the vectors are **perpendicular**. In any $\mathbb{R}^n$ we take $\mathbf{u}\cdot\mathbf{v} = 0$ as the definition of **orthogonal**. This is the start of LA-5.
 
 **Theorem 3.11 (Cauchy–Schwarz inequality).** For all $\mathbf{u}, \mathbf{v} \in \mathbb{R}^n$,
 $$|\mathbf{u}\cdot\mathbf{v}| \le \|\mathbf{u}\|\|\mathbf{v}\|,$$
@@ -269,9 +269,15 @@ Cauchy–Schwarz is what guarantees the right side lies in $[-1, 1]$, so that $\
 The Euclidean norm isn't the only way to measure length. Two others you'll meet constantly:
 
 - **$\ell^1$ norm:** $\|\mathbf{v}\|_1 = |v_1| + \cdots + |v_n|$ (Manhattan distance). Central to lasso regression in ST-3 and sparsity in ML.
-- **$\ell^\infty$ norm:** $\|\mathbf{v}\|_\infty = \max_i |v_i|$. Central to error bounds in LA-13.
+- **$\ell^\infty$ norm:** $\|\mathbf{v}\|_\infty = \max_i |v_i|$. The natural norm for componentwise error bounds in numerical work; the matrix norm it induces (largest absolute row sum) gives the condition number $\kappa_\infty$ in LA-13 Exercise A3.
 
-All three satisfy: $\|\mathbf{v}\| \ge 0$ with equality only at $\mathbf{0}$; $\|c\mathbf{v}\| = |c|\,\|\mathbf{v}\|$; and the triangle inequality. Any function with those three properties is called a **norm**. The unit "balls" $\{\mathbf{v} : \|\mathbf{v}\| \le 1\}$ are a disk ($\ell^2$), a diamond ($\ell^1$), and a square ($\ell^\infty$) in $\mathbb{R}^2$. The project draws them.
+All three satisfy: $\|\mathbf{v}\| \ge 0$ with equality only at $\mathbf{0}$; $\|c\mathbf{v}\| = |c|\,\|\mathbf{v}\|$; and the triangle inequality. Any function with those three properties is called a **norm**. The first two are immediate from the formulas. The triangle inequality for $\|\cdot\|_2$ is Theorem 3.12. For the other two it comes from the scalar fact $|a + b| \le |a| + |b|$, applied entry by entry:
+
+1. For each $i$, $|u_i + v_i| \le |u_i| + |v_i|$.
+2. Sum over $i$: $\|\mathbf{u} + \mathbf{v}\|_1 \le \|\mathbf{u}\|_1 + \|\mathbf{v}\|_1$.
+3. Instead bound each right side by its maximum: $|u_i + v_i| \le \|\mathbf{u}\|_\infty + \|\mathbf{v}\|_\infty$ for every $i$, so the largest left side is too: $\|\mathbf{u} + \mathbf{v}\|_\infty \le \|\mathbf{u}\|_\infty + \|\mathbf{v}\|_\infty$. ∎
+
+The unit balls $\{\mathbf{v} : \|\mathbf{v}\| \le 1\}$ are a disk ($\ell^2$), a diamond ($\ell^1$), and a square ($\ell^\infty$) in $\mathbb{R}^2$. The project draws their boundaries, the unit spheres $\{\mathbf{v} : \|\mathbf{v}\| = 1\}$.
 
 ### 3.7 Lines and planes as spans plus a shift
 

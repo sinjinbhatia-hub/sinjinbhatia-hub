@@ -779,7 +779,7 @@ See [exercises.md](exercises.md). **A1–A6** are drills: spacing of doubles, a 
 
 ## 7. Coding project
 
-`project.py` runs in about 20 seconds (single-threaded BLAS, set at the top so the CG-versus-dense timing is fair) and asserts every number quoted in these notes and in the solutions.
+`project.py` runs in about 20 seconds (single-threaded BLAS, set at the top so the CG-versus-dense timing is fair) and asserts the numbers quoted in these notes and in the solutions, to the precision quoted (timings, and a few illustrative values such as the table of Wilkinson roots, are printed rather than asserted).
 
 1. **Floating point.** Finds the gap $2^{-52}$ by halving, checks the rounding model (3.2) against exact rational arithmetic on 8,000 operations (worst $|\delta| = 1.109\times10^{-16}$), and reproduces Example 4.1 with Python's `decimal` at 8 digits.
 2. **Conditioning and stability.** Example 4.2; `np.linalg.solve` across $\kappa = 1$ to $10^{12}$ (figure `forward_vs_kappa.png`: backward error flat at $\varepsilon$, forward error along $\kappa\varepsilon$); growth factors $2^{n-1}$ for Wilkinson's matrix versus $4.2$ for a random one.

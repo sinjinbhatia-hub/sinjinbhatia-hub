@@ -1247,7 +1247,7 @@ print(f"B5: largest Ritz value nondecreasing and smallest nonincreasing over k =
 # B5(c): κ ≥ 574 means (3.30) cannot guarantee 1e-8 in fewer than 229 steps; actual CG on this grid (N = 100 row above): ≈ 300.
 rho574 = (np.sqrt(574) - 1) / (np.sqrt(574) + 1); k574 = math.ceil(np.log(1e-8 / 2) / np.log(rho574))
 it_N100 = int(res[res[:, 0] == 100, 3][0])
-assert round(rho574, 3) == 0.920 and k574 == 229 and abs(it_N100 - 300) <= 10
+assert round(rho574, 3) == 0.920 and k574 == 229 and abs(it_N100 - 297) <= 3
 print(f"   κ ≥ 574 ⇒ ρ ≥ {rho574:.3f}, (3.30) needs k ≥ {k574} for 1e-8; measured CG on N = 100: {it_N100} iterations")
 
 # B6: a shifted QR step with an exact eigenvalue as shift deflates at once; the Rayleigh shift stalls on [[0,1],[1,0]].
