@@ -68,7 +68,7 @@ $$P = \frac13\begin{pmatrix}2 & -1 & -1\\-1 & 2 & -1\\-1 & -1 & 2\end{pmatrix}.$
 
 (d) Write $P = \tfrac13M$. $M^2$, first row: $(4 + 1 + 1,\ -2 - 2 + 1,\ -2 + 1 - 2) = (6, -3, -3) = 3\,(2, -1, -1)$; by the symmetry of $M$ (each row is a cyclic shift of the others) every row of $M^2$ is $3$ times the corresponding row of $M$, so $M^2 = 3M$ and $P^2 = \tfrac19\cdot3M = P$ ✓. $\operatorname{tr}P = \tfrac13(2 + 2 + 2) = 2 = \dim S$.
 
-Trace lemma: $\operatorname{tr}(XY) = \sum_i(XY)_{ii} = \sum_i\sum_j x_{ij}y_{ji} = \sum_j\sum_i y_{ji}x_{ij} = \sum_j(YX)_{jj} = \operatorname{tr}(YX)$. ∎ Now with $X = A$ ($m\times n$) and $Y = (A^\top A)^{-1}A^\top$ ($n\times m$): $\operatorname{tr}\big(A(A^\top A)^{-1}A^\top\big) = \operatorname{tr}\big((A^\top A)^{-1}A^\top A\big) = \operatorname{tr}(I_n) = n$. ∎ So the trace of a projection matrix is the dimension of the subspace it projects onto (in LA-7 you will see why: its eigenvalues are $1$, $n$ times, and $0$, $m - n$ times).
+Trace lemma (this is LA-4 Theorem 3.10; we re-prove it): $\operatorname{tr}(XY) = \sum_i(XY)_{ii} = \sum_i\sum_j x_{ij}y_{ji} = \sum_j\sum_i y_{ji}x_{ij} = \sum_j(YX)_{jj} = \operatorname{tr}(YX)$. ∎ Now with $X = A$ ($m\times n$) and $Y = (A^\top A)^{-1}A^\top$ ($n\times m$): $\operatorname{tr}\big(A(A^\top A)^{-1}A^\top\big) = \operatorname{tr}\big((A^\top A)^{-1}A^\top A\big) = \operatorname{tr}(I_n) = n$. ∎ So the trace of a projection matrix is the dimension of the subspace it projects onto. LA-4 Exercise C3(b) already explains why: in a basis made of a basis of $C(P)$ followed by a basis of $N(P)$, a projection has matrix $\operatorname{diag}(1, \dots, 1, 0, \dots, 0)$ with $\operatorname{rank}P$ ones, and the trace does not depend on the basis. In LA-7's language (Theorem 3.4, trace equals the sum of the eigenvalues), the eigenvalues of $P$ are $1$, $n$ times, and $0$, $m - n$ times.
 
 **B5.** (a) $A = \mathbf{1}$ (the $m\times1$ column of ones). $A^\top A = \mathbf{1}^\top\mathbf{1} = m$, $A^\top\mathbf{b} = \sum_ib_i$. Normal equation: $mC = \sum_ib_i$, $C = \bar b$. ∎ The mean is the orthogonal projection of the data onto the line of constant vectors.
 
@@ -86,7 +86,7 @@ So $\nabla f = 2(A^\top A\mathbf{x} - A^\top\mathbf{b}) = 2A^\top(A\mathbf{x} - 
 
 (b) $f(\mathbf{x} + h\mathbf{d}) = \|A\mathbf{x} - \mathbf{b} + hA\mathbf{d}\|^2 = \|A\mathbf{x} - \mathbf{b}\|^2 + 2h\,(A\mathbf{d})^\top(A\mathbf{x} - \mathbf{b}) + h^2\|A\mathbf{d}\|^2$. The coefficient of $h$ is the directional derivative $\nabla f(\mathbf{x})^\top\mathbf{d}$, and $(A\mathbf{d})^\top(A\mathbf{x} - \mathbf{b}) = \mathbf{d}^\top A^\top(A\mathbf{x} - \mathbf{b})$. Since this holds for every $\mathbf{d}$, $\nabla f = 2A^\top(A\mathbf{x} - \mathbf{b})$. ∎ The $h^2$ coefficient, $\|A\mathbf{d}\|^2 = \tfrac12\mathbf{d}^\top(2A^\top A)\mathbf{d} \ge 0$, is the Hessian form.
 
-(c) Yes, a minimizer exists. The projection $\mathbf{p}$ of $\mathbf{b}$ onto $C(A)$ exists regardless of independence (Theorem 3.7(b)), and $\mathbf{p} \in C(A)$ means $\mathbf{p} = A\hat{\mathbf{x}}$ for some $\hat{\mathbf{x}}$; by Theorem 3.14 this $\hat{\mathbf{x}}$ minimizes $f$. It is not unique: if $A\mathbf{z} = \mathbf{0}$ then $A(\hat{\mathbf{x}} + \mathbf{z}) = \mathbf{p}$ too. Conversely any minimizer $\mathbf{x}^*$ has $A\mathbf{x}^* = \mathbf{p}$ (the closest point is unique), so $A(\mathbf{x}^* - \hat{\mathbf{x}}) = \mathbf{0}$. The set of minimizers is the affine subspace $\hat{\mathbf{x}} + N(A)$, of dimension $n - \operatorname{rank}A$. The normal equations $A^\top A\mathbf{x} = A^\top\mathbf{b}$ are still consistent (by B3, $A^\top\mathbf{b} \in C(A^\top) = C(A^\top A)$), they just have many solutions. LA-9's pseudoinverse picks the one of smallest norm, which is the one in $C(A^\top)$.
+(c) Yes, a minimizer exists. The projection $\mathbf{p}$ of $\mathbf{b}$ onto $C(A)$ exists regardless of independence (Theorem 3.7(b)), and $\mathbf{p} \in C(A)$ means $\mathbf{p} = A\hat{\mathbf{x}}$ for some $\hat{\mathbf{x}}$; by Theorem 3.14 this $\hat{\mathbf{x}}$ minimizes $f$. It is not unique: if $A\mathbf{z} = \mathbf{0}$ then $A(\hat{\mathbf{x}} + \mathbf{z}) = \mathbf{p}$ too. Conversely any minimizer $\mathbf{x}^*$ has $A\mathbf{x}^* = \mathbf{p}$ (the closest point is unique), so $A(\mathbf{x}^* - \hat{\mathbf{x}}) = \mathbf{0}$. The set of minimizers is the affine subspace $\hat{\mathbf{x}} + N(A)$, of dimension $n - \operatorname{rank}A$. The normal equations $A^\top A\mathbf{x} = A^\top\mathbf{b}$ are still consistent (by B3, $A^\top\mathbf{b} \in C(A^\top) = C(A^\top A)$), they have many solutions. LA-9's pseudoinverse picks the one of smallest norm, which is the one in $C(A^\top)$.
 
 **B7.** (a) $(Q_1Q_2)^\top(Q_1Q_2) = Q_2^\top Q_1^\top Q_1Q_2 = Q_2^\top IQ_2 = I$. For the inverse, $Q^{-1} = Q^\top$, and $(Q^\top)^\top Q^\top = QQ^\top = I$ (square orthogonal matrices satisfy both $Q^\top Q = I$ and $QQ^\top = I$). ∎
 
@@ -111,9 +111,11 @@ def least_squares_weighted(A, b, w):
 assert np.allclose(least_squares_weighted(A2, y2, np.ones(4)), xh2)        # weights 1: Example 4.2 again
 xw = least_squares_weighted(A2, y2, [1, 1, 1e6, 1])
 assert abs((A2 @ xw)[2] - y2[2]) < 1e-5                                    # the line passes through (2, 2)
+c5w = least_squares_weighted(A5, V5, [1, 1, 1, 1, 1, 10])                  # Example 4.5, last reading weighted 10
+assert np.allclose(c5w, [2377 / 4700, 7367 / 9400, 233 / 9400])
 ```
 
-With the huge weight, the fit is $C + 2D = 2$ to five decimals: the third residual is forced to (nearly) zero and the other three points share what freedom is left (one parameter). For Example 4.5 with $w = (1, 1, 1, 1, 1, 10)$, the last reading (which had residual $+0.05$) is pulled toward the curve: the coefficients move from $(0.5, 0.8, 0.02)$ to about $(0.506, 0.784, 0.025)$, the sixth residual shrinks from $+0.050$ to $+0.006$, and the others grow (the fifth goes from $-0.070$ to $-0.087$). The weighted residual is no longer orthogonal to the columns of $A$; it is orthogonal to them in the $W$-inner product, $A^\top W\mathbf{r} = \mathbf{0}$. Check your numbers against the script.
+With the huge weight, the fit is $C + 2D = 2$ to five decimals: the third residual is forced to (nearly) zero and the other three points share what freedom is left (one parameter). For Example 4.5 with $w = (1, 1, 1, 1, 1, 10)$, solving $A^\top WA\,\hat{\mathbf{x}} = A^\top W\mathbf{V}$ exactly gives $(c_0, c_1, c_2) = \big(\tfrac{2377}{4700}, \tfrac{7367}{9400}, \tfrac{233}{9400}\big) \approx (0.5057, 0.7837, 0.0248)$, up from $(0.5, 0.8, 0.02)$ in $c_0$ and $c_2$ and down in $c_1$. The last reading (which had residual $+0.05$) is pulled toward the curve: the residuals become $(-0.0557, 0.0757, 0.0477, -0.0400, -0.0872, 0.0060)$. The sixth shrinks from $+0.050$ to $+0.006$; the first, second, third and fifth grow in size (the fifth from $-0.070$ to $-0.087$); the fourth stays at $-0.040$, because the change in the fitted quadratic happens to vanish at $u = 3$ (it is $\tfrac{1}{9400}(54 - 153u + 45u^2)$, and $54 - 459 + 405 = 0$). The weighted residual is no longer orthogonal to the columns of $A$; it is orthogonal to them in the $W$-inner product, $A^\top W\mathbf{r} = \mathbf{0}$. The last cell of `project.py` asserts these values against the exact fractions and prints them.
 
 ## C. Challenge
 
@@ -157,7 +159,9 @@ assert sp.expand(P4 - (35*x**4 - 30*x**2 + 3)/8) == 0
 ```
 The output is $p_4 = x^4 - \tfrac67x^2 + \tfrac{3}{35}$, and $p_4(1) = \tfrac{8}{35}$, so $\tfrac{35}{8}p_4 = \tfrac18(35x^4 - 30x^2 + 3) = P_4$ ✓. Gram–Schmidt on monomials with this inner product *is* the Legendre family; with the weight $e^{-x^2}$ on $\mathbb{R}$ it gives Hermite polynomials (QM-3's oscillator), and with $1/\sqrt{1 - x^2}$ it gives Chebyshev.
 
-**C3.** (a) $y'(t) = Ae^{-\gamma t}(-\gamma\cos\omega t - \omega\sin\omega t)$. Setting $y' = 0$: $\tan\omega t = -\gamma/\omega$. The solutions are $\omega t_k = k\pi - \arctan(\gamma/\omega)$, spaced by $\pi$; the maxima of $y$ are the ones with even $k$ (positive $\cos$). At each, $\cos\omega t_k = \cos(-\arctan(\gamma/\omega)) = \dfrac{1}{\sqrt{1 + \gamma^2/\omega^2}} = \dfrac{\omega}{\sqrt{\omega^2 + \gamma^2}}$ (for even $k$; the sign is fixed by $\cos(k\pi) = 1$), the same number at every peak. So $y_k = y(t_k) = A'e^{-\gamma t_k}$ with $A' = A\omega/\sqrt{\omega^2 + \gamma^2}$, and $\ln y_k = \ln A' - \gamma t_k$ exactly: a straight line in $t_k$ with slope $-\gamma$. Design matrix columns $\mathbf{1}$ and $\mathbf{t}_{\text{peaks}}$; unknowns $(\ln A', -\gamma)$. (The classical log decrement $\delta = \ln(y_k/y_{k+1}) = \gamma\cdot2\pi/\omega$ is the same slope estimated from two peaks; least squares uses all of them.)
+**C3.** (a) $y'(t) = -Ae^{-\gamma t}(\gamma\cos\omega t + \omega\sin\omega t)$ (take $A > 0$). Write $\varphi = \arctan(\gamma/\omega)$, so $\sin\varphi = \gamma/\sqrt{\omega^2 + \gamma^2}$ and $\cos\varphi = \omega/\sqrt{\omega^2 + \gamma^2}$. The angle-addition formula gives $\gamma\cos\omega t + \omega\sin\omega t = \sqrt{\omega^2 + \gamma^2}\,\sin(\omega t + \varphi)$, so
+$$y'(t) = -A\sqrt{\omega^2 + \gamma^2}\,e^{-\gamma t}\sin(\omega t + \varphi).$$
+Setting $y' = 0$: $\sin(\omega t + \varphi) = 0$, equivalently $\tan\omega t = -\gamma/\omega$. The solutions are $\omega t_k = k\pi - \varphi$, spaced by $\pi$. Which are maxima? The sign of $y'$ is the sign of $-\sin(\omega t + \varphi)$. As $\omega t + \varphi$ increases through $k\pi$ with $k$ even, $\sin$ goes from negative to positive, so $y'$ goes from positive to negative: a local maximum. With $k$ odd, $\sin$ goes from positive to negative, $y'$ from negative to positive: a local minimum. So the maxima are the critical points with even $k$. At each, $\cos\omega t_k = \cos(k\pi - \varphi) = \cos\varphi = \dfrac{\omega}{\sqrt{\omega^2 + \gamma^2}}$ (using $\cos k\pi = 1$ and $\sin k\pi = 0$ for even $k$), the same number at every peak. So $y_k = y(t_k) = A'e^{-\gamma t_k}$ with $A' = A\omega/\sqrt{\omega^2 + \gamma^2}$, and $\ln y_k = \ln A' - \gamma t_k$ exactly: a straight line in $t_k$ with slope $-\gamma$. Design matrix columns $\mathbf{1}$ and $\mathbf{t}_{\text{peaks}}$; unknowns $(\ln A', -\gamma)$. (The classical log decrement $\delta = \ln(y_k/y_{k+1}) = \gamma\cdot2\pi/\omega$ is the same slope estimated from two peaks; least squares uses all of them.)
 
 (b)
 ```python
@@ -193,9 +197,51 @@ The bias: near a maximum the signal is flat over tens of samples, so the largest
     print(f"noise {noise}: kept {keep.sum()} peaks; unweighted gamma_hat = {-slope_u:.3f}, "
           f"weighted gamma_hat = {-slope_w:.3f}, weighted intercept = {lnA_w:.3f} (ln A = {np.log(A0):.3f})")
 ```
-(Indented to sit inside the loop of (b).) With seed 1: at $\sigma = 0.01$ all 20 samples are kept and $\hat\gamma = 0.152$ unweighted, $0.151$ weighted, intercept $0.695$ against $\ln A = 0.693$. At $\sigma = 0.1$ only 13 samples survive the $3\sigma$ cut; unweighted $\hat\gamma = 0.133$, weighted $\hat\gamma = 0.145$ with intercept $0.696$. Sampling at known times removes the bias; weighting then handles the unequal noise. (At $t_k = kT$ the intercept is $\ln A$, not $\ln A'$, because these are the cosine maxima rather than the true peaks; the difference is $\ln A' - \ln A = -0.0003$ here, invisible.)
+(Indented to sit inside the loop of (b).) With seed 1: at $\sigma = 0.01$ all 20 samples are kept and $\hat\gamma = 0.152$ unweighted, $0.151$ weighted, intercept $0.695$ against $\ln A = 0.693$. At $\sigma = 0.1$ only 13 samples survive the $3\sigma$ cut; unweighted $\hat\gamma = 0.133$, weighted $\hat\gamma = 0.145$ with intercept $0.696$. (At $t_k = kT$ the intercept is $\ln A$, not $\ln A'$, because these are the cosine maxima rather than the true peaks; the difference is $\ln A' - \ln A = -0.0003$ here, invisible.)
 
-Why $w_k = y_k^2$: if the sample is $y_k + \delta_k$ with $\delta_k$ of fixed standard deviation $\sigma$, then $\ln(y_k + \delta_k) = \ln y_k + \ln(1 + \delta_k/y_k) \approx \ln y_k + \delta_k/y_k$. The error in the fitted quantity has standard deviation $\sigma/y_k$: small peaks are noisy in log space. The right weight is the inverse variance (ST-3, Gauss–Markov with unequal variances), $w_k \propto y_k^2/\sigma^2$, i.e. $w_k = y_k^2$ up to a constant that does not change the minimizer. Scaling row $k$ by $\sqrt{w_k} = y_k$ is exactly B8. The remaining gap at $\sigma = 0.1$ ($0.145$ versus $0.15$) is what thirteen noisy points can do; the full signal, fitted nonlinearly (ML-2's Gauss–Newton), would do better.
+Why $w_k = y_k^2$: if the sample is $y_k + \delta_k$ with $\delta_k$ of fixed standard deviation $\sigma$, then $\ln(y_k + \delta_k) = \ln y_k + \ln(1 + \delta_k/y_k) \approx \ln y_k + \delta_k/y_k$. The error in the fitted quantity has standard deviation $\sigma/y_k$: small peaks are noisy in log space. The right weight is the inverse variance (ST-3, Gauss–Markov with unequal variances), $w_k \propto y_k^2/\sigma^2$, i.e. $w_k = y_k^2$ up to a constant that does not change the minimizer. Scaling row $k$ by $\sqrt{w_k} = y_k$ is exactly B8.
+
+**Bias or bad luck?** One seed cannot tell a biased estimator from an unlucky draw, so repeat the whole experiment over 4000 seeds and look at the mean and spread of $\hat\gamma$. The code below also includes the remedy discussed after the table.
+```python
+idx = np.round(np.arange(20) * T / (t[1] - t[0])).astype(int)
+tk_all = t[idx]
+
+def log_fits(y, noise):
+    """Unweighted and y²-weighted log-line fits to the samples at t_k = kT that survive the 3σ cut."""
+    yk = y[idx]; keep = yk > 3 * noise
+    Ak = np.c_[np.ones(keep.sum()), tk_all[keep]]
+    g_u = -least_squares_qr(Ak, np.log(yk[keep]))[0][1]
+    g_w = -least_squares_weighted(Ak, np.log(yk[keep]), yk[keep] ** 2)[1]
+    return g_u, g_w
+
+def fit_exp_gn(tk, yk, A=1.0, g=0.1, iters=30):
+    """Gauss–Newton for min Σ (y_k − A e^{−g t_k})²: linearize in (A, g), solve a linear least-squares problem, repeat."""
+    for _ in range(iters):
+        f = A * np.exp(-g * tk)
+        J = np.c_[np.exp(-g * tk), -tk * f]            # ∂f/∂A, ∂f/∂g
+        dA, dg = least_squares_qr(J, yk - f)[0]
+        A, g = A + dA, g + dg
+    return g
+
+for noise in (0.01, 0.1):
+    est = []
+    for seed in range(4000):
+        rng_mc = np.random.default_rng(seed)
+        y = A0 * np.exp(-gamma * t) * np.cos(omega * t) + noise * rng_mc.standard_normal(t.size)
+        est.append([*log_fits(y, noise), fit_exp_gn(tk_all, y[idx])])
+    est = np.array(est)
+    print(noise, est.mean(axis=0).round(4), est.std(axis=0).round(4))   # unweighted, weighted, Gauss–Newton
+```
+Mean $\pm$ standard deviation of $\hat\gamma$ (true value $0.15$):
+
+| $\sigma$ | log fit, unweighted | log fit, weighted $y_k^2$ | Gauss–Newton, no cut |
+|---|---|---|---|
+| $0.01$ | $0.1501 \pm 0.0019$ | $0.1499 \pm 0.0008$ | $0.1500 \pm 0.0008$ |
+| $0.1$ | $0.131 \pm 0.014$ | $0.138 \pm 0.009$ | $0.150 \pm 0.008$ |
+
+At $\sigma = 0.01$, sampling at known times has removed the peak-picking bias of (b) completely, and weighting cuts the spread by more than half. At $\sigma = 0.1$ a new bias appears: the log fits come out low by about $1.3$ standard deviations, unweighted and weighted alike. That is not thirteen points being noisy; it is systematic. Its source is the $3\sigma$ cut. The clean signal at $t_k = 11, 12, 13$ is $0.38, 0.33, 0.28$, right at the threshold $0.3$, so whether a late sample survives depends on its noise, and the survivors are mostly the ones whose noise was positive. That lifts the late log-values, flattens the line, and lowers $\hat\gamma$: the same mechanism as in (b), now produced by truncation instead of by picking maxima. Weighting reduces the damage, because it gives the late points little say, but cannot remove it.
+
+The remedy is to stop truncating, and that means stopping taking logs, since the log of a sample at or below zero does not exist. Fit $y_k \approx Ae^{-\gamma t_k}$ to all twenty samples directly, by nonlinear least squares. Gauss–Newton (ML-2, and §1's outer loop) does it: linearize the model in $(A, \gamma)$ about the current guess, solve the linear least-squares problem for the correction with this module's QR, and repeat. The last column of the table shows it unbiased at both noise levels, with a spread no larger than the weighted log fit's.
 
 **C4.** (a) Claim: in exact arithmetic, after subtracting the components along $\mathbf{q}_1, \dots, \mathbf{q}_{i-1}$, the current vector is $\mathbf{v}^{(i)} = \mathbf{a}_j - \sum_{l<i}r_{lj}\mathbf{q}_l$ with every $r_{lj} = \mathbf{q}_l^\top\mathbf{a}_j$. Base case $i = 1$: $\mathbf{v}^{(1)} = \mathbf{a}_j$ and $r_{1j} = \mathbf{q}_1^\top\mathbf{a}_j$ in both versions. Inductive step: assume it for $i$. Modified computes $r_{ij} = \mathbf{q}_i^\top\mathbf{v}^{(i)} = \mathbf{q}_i^\top\mathbf{a}_j - \sum_{l<i}r_{lj}\,\mathbf{q}_i^\top\mathbf{q}_l = \mathbf{q}_i^\top\mathbf{a}_j$, because $\mathbf{q}_i^\top\mathbf{q}_l = 0$ for $l < i$. So $r_{ij}$ agrees with classical, and $\mathbf{v}^{(i+1)} = \mathbf{v}^{(i)} - r_{ij}\mathbf{q}_i$ has the claimed form. ∎ The only thing the proof used is $\mathbf{q}_i^\top\mathbf{q}_l = 0$ *exactly*. In floating point that inner product is $\sim\varepsilon$, not $0$, and classical never gets to correct for it.
 
@@ -207,13 +253,32 @@ Why $w_k = y_k^2$: if the sample is $y_k + \delta_k$ with $\delta_k$ of fixed st
 
 The line where classical fails is $r_{23} = \mathbf{q}_2^\top\mathbf{a}_3 = 0$. In exact arithmetic $\mathbf{q}_2^\top\mathbf{a}_3 = \mathbf{q}_2^\top(\mathbf{a}_3 - r_{13}\mathbf{q}_1)$ because $\mathbf{q}_2 \perp \mathbf{q}_1$; but the computed $\mathbf{q}_1$ is not a unit vector to within $\varepsilon^2$ and the computed $\mathbf{q}_2$ is only orthogonal to it to within $\varepsilon$, so the two expressions differ by $\varepsilon/\sqrt2$, which is the *entire* size of the component that needed removing. Classical throws away the information that modified keeps. Numerically (`eps = 1e-8`, the matrix above): `gram_schmidt_classical` gives $\mathbf{q}_2^\top\mathbf{q}_3 = 0.5$ and `gram_schmidt_modified` gives $\mathbf{q}_2^\top\mathbf{q}_3 \approx 10^{-16}$.
 
-(c) Suppose the first pass returns $Q_1$ with $Q_1^\top Q_1 = I + E$. The columns of $Q_1$ span $C(A)$ (each is a combination of the $\mathbf{a}$'s), so a second pass is Gram–Schmidt on a matrix with the *same* column space but a much better condition number: $\kappa(Q_1)$ is roughly $1 + \|E\|$ when $E$ is small, versus $\kappa(A) \approx 1.6\times10^{13}$ for $H_{10}$. The second pass subtracts from each column its components along the earlier, now nearly orthonormal, columns; those components are exactly the residual non-orthogonality $E$, and no subtraction involves nearly equal quantities, so nothing is lost. By the §3.8 estimate the second pass leaves $\|Q_2^\top Q_2 - I\| \approx \kappa(Q_1)^2\varepsilon$.
+(c) Suppose the first pass returns $Q_1$ with $Q_1^\top Q_1 = I + E$. The columns of $Q_1$ span $C(A)$ (each is a combination of the $\mathbf{a}$'s), so a second pass is Gram–Schmidt on a matrix with the *same* column space but a much better condition number than $A$'s $1.6\times10^{13}$ for $H_{10}$. How much better depends on $E$. The eigenvalues of $Q_1^\top Q_1$ are the squared singular values of $Q_1$, and they lie between $1 - \|E\|$ and $1 + \|E\|$ (2-norm), so when $\|E\| < 1$,
+$$\kappa(Q_1)^2 \le \frac{1 + \|E\|}{1 - \|E\|}.$$
+The second pass subtracts from each column its components along the earlier columns, which are now the residual non-orthogonality $E$ rather than the whole of $\mathbf{a}_j$. By the §3.8 estimate with $\kappa(Q_1)$ in place of $\kappa(A)$, the second pass leaves $\|Q_2^\top Q_2 - I\| \lesssim c\,\kappa(Q_1)^2\varepsilon$. So two passes reach $\varepsilon$ only if $\kappa(Q_1) = O(1)$, which by the inequality above means the first pass must have lost much less than $1$.
 
-For $H_{10}$ the first pass is so bad ($\|Q_1^\top Q_1 - I\| = 3.5$) that $Q_1$ is itself poorly conditioned: $\kappa(Q_1) \approx 2\times10^7$, so the estimate predicts at worst $\sim 10^{-2}$ after two passes; observed is $4.5\times10^{-5}$ (the bound is pessimistic). Now $\kappa(Q_2) \approx 1$, and the third pass gives $7\times10^{-16}$. So $H_{10}$ needs three passes, not two:
+For $H_{10}$ the first pass loses everything ($\|Q_1^\top Q_1 - I\| = 3.0$), so the inequality says nothing and $Q_1$ is itself badly conditioned: $\kappa(Q_1) = 2.3\times10^7$. The estimate then predicts $\kappa(Q_1)^2\varepsilon \approx (2.3\times10^7)^2 \times 1.1\times10^{-16} \approx 0.06$, of order $10^{-1}$, after two passes; observed is $3.2\times10^{-5}$ (the bound is pessimistic, as it was for $H_{10}$ in §3.8). Now $\kappa(Q_2) \approx 1.00003$, and the third pass gives $4\times10^{-16}$. So $H_{10}$ needs three passes, not two:
 ```python
 Q, _ = gram_schmidt_classical(sla.hilbert(10))
 for k in range(1, 4):
-    print(k, np.linalg.norm(Q.T @ Q - np.eye(10)))    # 3.5e+00, 4.5e-05, 6.9e-16
+    print(k, np.linalg.norm(Q.T @ Q - np.eye(10), 2))    # 3.0e+00, 3.2e-05, 4.2e-16
     Q, _ = gram_schmidt_classical(Q)
 ```
-The folk theorem "twice is enough" (Kahan; Parlett, *The Symmetric Eigenvalue Problem*) assumes the first pass leaves $\kappa(Q_1) \lesssim 1/\sqrt\varepsilon \approx 10^8$, so that one more pass reaches $\varepsilon$. $H_{10}$ sits right at that edge; $H_{12}$ ($\kappa(Q_1) \approx 10^{11}$) is past it and goes $5.5 \to 1.4 \to 5\times10^{-13} \to 9\times10^{-16}$. Each pass costs as much as the first, which is why Householder, which never loses orthogonality in the first place, is the production method (LA-13). Note also $A = Q_1R_1 = (Q_2R_2)R_1$, so the product $R_2R_1$ of the passes is the $R$ of $A$: reorthogonalization buys a good $Q$, not a different factorization.
+$H_{12}$ ($\kappa(Q_1) \approx 1.6\times10^{11}$) needs four: $5.0 \to 1.0 \to 3.5\times10^{-13} \to 5\times10^{-16}$.
+
+The slogan "twice is enough" is about a different arrangement. Kahan's version (published in Parlett, *The Symmetric Eigenvalue Problem*, 1980) reorthogonalizes a single vector against a set that is already orthonormal, with a test for when a second pass is needed. For a whole factorization the corresponding result is for CGS2: orthogonalize *each column twice* against the $\mathbf{q}$'s already accepted, before moving on to the next column. Giraud, Langou, Rozložník and van den Eshof (*Numerische Mathematik*, 2005) prove that CGS2 gives $\|Q^\top Q - I\| = O(\varepsilon)$ whenever $c(m, n)\,\kappa(A)\,\varepsilon < 1$, a condition on $\kappa$, not $\kappa^2$. On $H_{10}$ it gives $2.6\times10^{-16}$ in one sweep:
+```python
+def cgs2(A):
+    """Classical Gram–Schmidt with each column orthogonalized twice before moving on."""
+    A = np.asarray(A, float); Q = np.zeros_like(A)
+    for j in range(A.shape[1]):
+        v = A[:, j].copy()
+        for _ in range(2):
+            v -= Q[:, :j] @ (Q[:, :j].T @ v)
+        Q[:, j] = v / np.linalg.norm(v)
+    return Q
+
+Q = cgs2(sla.hilbert(10))
+print(np.linalg.norm(Q.T @ Q - np.eye(10), 2))    # 2.6e-16
+```
+Re-running whole passes, as above, is weaker, because the second pass starts from a $Q_1$ whose conditioning the first pass has already wrecked. Each pass costs as much as the first, which is why Householder, which never loses orthogonality in the first place, is the production method (LA-13). Note also $A = Q_1R_1 = (Q_2R_2)R_1$, so the product $R_2R_1$ of the passes is the $R$ of $A$: reorthogonalization buys a good $Q$, not a different factorization.

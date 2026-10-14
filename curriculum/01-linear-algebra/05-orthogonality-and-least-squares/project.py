@@ -61,6 +61,7 @@ x = rng.standard_normal(n)
 x_row, x_null = row @ (row.T @ x), null @ (null.T @ x)
 assert np.allclose(x_row + x_null, x) and np.isclose(x_row @ x_null, 0)
 assert np.allclose(A_r @ x, A_r @ x_row)
+assert np.linalg.matrix_rank(A_r @ row) == r                      # A restricted to C(A^T) is one-to-one (§3.3)
 print(f"Part 1: rank {r}; dim N(A) = {null.shape[1]}, dim N(A^T) = {leftnull.shape[1]}; "
       "all four right angles verified; Fredholm alternative verified.")
 
@@ -172,6 +173,11 @@ assert np.allclose(r2, [0.1, 0.2, -0.7, 0.4]) and np.isclose(r2 @ r2, 0.7)
 assert np.allclose(A2.T @ r2, 0)                                    # residual ⟂ both columns
 assert np.allclose(xh2, np.linalg.lstsq(A2, y2, rcond=None)[0])     # against NumPy
 assert np.allclose(ls_gradient(A2, xh2, y2), 0)                     # stationary point of f
+rng_fd = np.random.default_rng(1)                                   # (3.10) against central differences of (3.9)
+for _ in range(5):
+    x0, h = rng_fd.standard_normal(2), 1e-5
+    fd = [(ls_objective(A2, x0 + h * d, y2) - ls_objective(A2, x0 - h * d, y2)) / (2 * h) for d in np.eye(2)]
+    assert np.allclose(fd, ls_gradient(A2, x0, y2), rtol=1e-6, atol=1e-6)
 for _ in range(100):                                                # and a minimum
     assert ls_objective(A2, xh2 + 0.3 * rng.standard_normal(2), y2) > ls_objective(A2, xh2, y2)
 print("Example 4.2: C, D =", xh2, " residual =", r2, " |r|² =", round(r2 @ r2, 12))
@@ -197,11 +203,11 @@ fig.tight_layout(); fig.savefig(FIG / "least_squares_line.png", dpi=120); plt.cl
 # %% [markdown]
 # ## Part 4: Polynomial fits: a sensor calibration, then noisy data
 #
-# Example 4.5: a pressure transducer read at P = 0, 1, ..., 5 bar gives voltages
-# V; fit V = a + bP + cP² with the design matrix of columns 1, P, P².
+# Example 4.5: a pressure transducer read at pressures u = 0, 1, ..., 5 bar gives
+# voltages V; fit V = c0 + c1 u + c2 u² with the design matrix of columns 1, u, u².
 # Then: 40 noisy samples of a quadratic, fitted and checked with a residual plot
 # (the residual is orthogonal to every column, so it has zero mean and zero
-# correlation with P — if it shows a pattern, your model is missing a term).
+# correlation with t — if it shows a pattern, your model is missing a term).
 
 
 # %%
@@ -210,9 +216,9 @@ def design_matrix(t, degree):
     return np.vander(np.asarray(t, float), degree + 1, increasing=True)
 
 
-P5 = np.arange(6, dtype=float)
+u5 = np.arange(6, dtype=float)                                     # pressure u (bar); P is the projection
 V5 = np.array([0.45, 1.39, 2.22, 3.04, 3.95, 5.05])
-A5 = design_matrix(P5, 2)
+A5 = design_matrix(u5, 2)
 assert np.allclose(A5.T @ A5, [[6, 15, 55], [15, 55, 225], [55, 225, 979]])
 assert np.allclose(A5.T @ V5, [16.10, 56.00, 227.08])
 c5 = least_squares_normal(A5, V5)
@@ -220,7 +226,7 @@ assert np.allclose(c5, [0.5, 0.8, 0.02])
 r5 = V5 - A5 @ c5
 assert np.allclose(r5, [-0.05, 0.07, 0.04, -0.04, -0.07, 0.05]) and np.isclose(r5 @ r5, 0.018)
 assert np.allclose(A5.T @ r5, 0)
-print("Example 4.5: a, b, c =", c5, " residuals =", r5, " RMS =", round(np.sqrt(r5 @ r5 / 6), 4), "V")
+print("Example 4.5: c0, c1, c2 =", c5, " residuals =", r5, " RMS =", round(np.sqrt(r5 @ r5 / 6), 4), "V")
 
 # Noisy synthetic data: true model 0.5 + 2t − 1.5t², noise σ = 0.08.
 t_syn = np.linspace(0, 2, 40)
@@ -240,10 +246,10 @@ print(f"Noisy quadratic fit: coefficients {np.round(c_syn, 3)}; RMS residual {np
       f" (quadratic) vs {np.sqrt(r_lin @ r_lin / 40):.3f} (line, wrong model).")
 
 fig, axes = plt.subplots(2, 2, figsize=(10, 6.5), sharex="col")
-axes[0, 0].plot(P5, V5, "ko", label="readings"); pp = np.linspace(0, 5, 100)
-axes[0, 0].plot(pp, design_matrix(pp, 2) @ c5, "C0", label=f"V = {c5[0]:.2f} + {c5[1]:.2f}P + {c5[2]:.2f}P²")
+axes[0, 0].plot(u5, V5, "ko", label="readings"); pp = np.linspace(0, 5, 100)
+axes[0, 0].plot(pp, design_matrix(pp, 2) @ c5, "C0", label=f"V = {c5[0]:.2f} + {c5[1]:.2f}u + {c5[2]:.2f}u²")
 axes[0, 0].set_ylabel("V (volts)"); axes[0, 0].legend(fontsize=8); axes[0, 0].set_title("Example 4.5: sensor calibration")
-axes[1, 0].stem(P5, r5); axes[1, 0].axhline(0, color="k", lw=.5); axes[1, 0].set_ylabel("residual (V)"); axes[1, 0].set_xlabel("P (bar)")
+axes[1, 0].stem(u5, r5); axes[1, 0].axhline(0, color="k", lw=.5); axes[1, 0].set_ylabel("residual (V)"); axes[1, 0].set_xlabel("pressure u (bar)")
 axes[0, 1].plot(t_syn, y_syn, "k.", label="noisy data"); axes[0, 1].plot(t_syn, A_syn @ c_syn, "C0", label="quadratic fit")
 axes[0, 1].plot(t_syn, A_syn[:, :2] @ c_lin, "C3--", label="line (wrong model)"); axes[0, 1].legend(fontsize=8)
 axes[0, 1].set_title("Noisy synthetic data")
@@ -283,7 +289,8 @@ def gram_schmidt_classical(A):
 
 def gram_schmidt_modified(A):
     """Modified Gram–Schmidt: same A = QR, but r_ij = q_i^T v uses the CURRENT, already-deflated v.
-    Loses orthogonality like κ(A)·ε instead of κ(A)²·ε (Björck 1967; stated in §3.8, proved in LA-13)."""
+    Loses orthogonality like κ(A)·ε instead of κ(A)²·ε (Björck 1967; stated in §3.8 and again in LA-13;
+    for the proof see Björck's paper or Higham, Accuracy and Stability of Numerical Algorithms, §19.8)."""
     A = np.asarray(A, float); m, n = A.shape
     Q = np.zeros((m, n)); R = np.zeros((n, n))
     for j in range(n):
@@ -318,24 +325,31 @@ for _ in range(50):
     assert np.allclose(Qm @ Qm.T, project_onto_subspace(A_rand, np.zeros(mm))[3])
 
 # Loss of orthogonality on Hilbert matrices H_ij = 1/(i + j − 1): cond(H_10) ≈ 1.6e13.
-loss = lambda Q: np.linalg.norm(Q.T @ Q - np.eye(Q.shape[1]))
+# ‖·‖ is the matrix 2-norm (largest singular value), as in §3.8 and LA-13; ε is the unit roundoff.
+loss = lambda Q: np.linalg.norm(Q.T @ Q - np.eye(Q.shape[1]), 2)
+u_rnd = np.finfo(float).eps / 2                       # ε ≈ 1.1e-16 (NumPy's eps is 2ε)
 ns = np.arange(2, 13)
-loss_c, loss_m, loss_h = [], [], []
+loss_c, loss_m, loss_h, kappas = [], [], [], []
 for nh in ns:
     H = sla.hilbert(nh)
+    kappas.append(np.linalg.cond(H))
     loss_c.append(loss(gram_schmidt_classical(H)[0]))
     loss_m.append(loss(gram_schmidt_modified(H)[0]))
     loss_h.append(loss(np.linalg.qr(H)[0]))          # Householder QR (LA-13)
 i10 = list(ns).index(10)
 print(f"Hilbert 10×10, cond = {np.linalg.cond(sla.hilbert(10)):.2e}:  ‖QᵀQ − I‖  classical GS = {loss_c[i10]:.2e}, "
       f"modified GS = {loss_m[i10]:.2e}, Householder = {loss_h[i10]:.2e}")
-assert loss_c[i10] > 1.0 and loss_m[i10] < 1e-2 and loss_h[i10] < 1e-13
+assert loss_c[i10] > 1.0 and loss_m[i10] < 1e-3 and loss_h[i10] < 1e-13
+for kap, lc, lm in zip(kappas, loss_c, loss_m):     # the §3.8 bounds, size by size
+    assert lm <= 10 * kap * u_rnd                     # modified: κε (Björck)
+    if kap ** 2 * u_rnd < 1:
+        assert lc <= 10 * kap ** 2 * u_rnd            # classical: κ²ε, only while that is below 1
 assert all(c >= m_ for c, m_ in zip(loss_c[3:], loss_m[3:]))        # classical never beats modified once it matters
 
 fig, ax = plt.subplots(figsize=(6, 4))
 ax.semilogy(ns, loss_c, "o-", label="classical Gram–Schmidt"); ax.semilogy(ns, loss_m, "s-", label="modified Gram–Schmidt")
 ax.semilogy(ns, loss_h, "^-", label="Householder (np.linalg.qr)")
-ax.set_xlabel("n (Hilbert matrix size)"); ax.set_ylabel("‖QᵀQ − I‖"); ax.grid(alpha=.3, which="both"); ax.legend()
+ax.set_xlabel("n (Hilbert matrix size)"); ax.set_ylabel("‖QᵀQ − I‖ (2-norm)"); ax.grid(alpha=.3, which="both"); ax.legend()
 ax.set_title("Loss of orthogonality on Hilbert matrices")
 fig.tight_layout(); fig.savefig(FIG / "gram_schmidt_loss.png", dpi=120); plt.close(fig)
 
@@ -346,8 +360,8 @@ fig.tight_layout(); fig.savefig(FIG / "gram_schmidt_loss.png", dpi=120); plt.clo
 # `least_squares_qr` runs modified Gram–Schmidt on the augmented matrix [A | b]:
 # its last column of R is Qᵀb and ‖e‖ computed *inside* the factorization, which
 # is the trick that makes Gram–Schmidt least squares stable (Björck). The
-# ill-conditioned fit at the end shows normal equations losing 11 digits where
-# QR loses 5.
+# ill-conditioned fit at the end shows the normal equations losing about 11
+# digits where QR loses 5 to 7.
 
 
 # %%
@@ -414,7 +428,8 @@ print(f"Ill-conditioned fit, κ(A) = {np.linalg.cond(A_bad):.1e}, κ(AᵀA) = {n
       f"relative error  normal eqns {err_normal:.1e} | MGS then Qᵀb {err_naive:.1e} | MGS on [A|b] {err_aug:.1e} | "
       f"Householder {err_hh:.1e} | lstsq {err_lstsq:.1e}")
 assert err_normal > 1e3 * err_aug and err_normal > 1e3 * err_hh
-assert err_naive > 1e3 * err_aug      # naive MGS least squares is no better than the normal equations here (§8)
+assert err_naive > 1e3 * err_aug      # Qᵀb formed separately throws the accuracy away again (§8) ...
+assert err_naive > 0.1 * err_normal   # ... to within a factor of ten of the normal equations (§3.10)
 
 # %% [markdown]
 # ## Part 7: Orthogonal matrices and Householder reflections
@@ -422,7 +437,8 @@ assert err_naive > 1e3 * err_aug      # naive MGS least squares is no better tha
 # Theorem 3.18: Q square with QᵀQ = I preserves lengths and dot products.
 # Rotations, reflections, permutations. (3.17) H = I − 2vvᵀ/vᵀv is symmetric and
 # orthogonal (Theorem 3.21), reflects across the hyperplane v^⊥, and the choice
-# v = x − ‖x‖e₁ sends x to ‖x‖e₁ (the first step of Householder QR, LA-13).
+# v = x + sign(x₁)‖x‖e₁ sends x to −sign(x₁)‖x‖e₁ (the first step of Householder
+# QR, LA-13). The sign makes v₁ a sum of same-sign numbers; the other sign cancels.
 
 
 # %%
@@ -430,6 +446,14 @@ def householder(v):
     """Householder reflection H = I − 2 v vᵀ / (vᵀ v), eq. (3.17). Symmetric, orthogonal, H v = −v, H u = u for u ⟂ v."""
     v = np.asarray(v, float).reshape(-1, 1)
     return np.eye(v.size) - 2 * (v @ v.T) / (v.T @ v)
+
+
+def householder_vector(x):
+    """v = x + s‖x‖e₁ with s = sign(x₁) (s = 1 if x₁ = 0), so that H(v) x = −s‖x‖e₁ (§3.11).
+    v₁ = s(|x₁| + ‖x‖) is a sum of same-sign numbers: no cancellation, and v ≠ 0 for x ≠ 0."""
+    x = np.asarray(x, float); s = 1.0 if x[0] >= 0 else -1.0
+    v = x.copy(); v[0] += s * np.linalg.norm(x)
+    return v
 
 
 theta = 0.7
@@ -455,11 +479,17 @@ for k in (2, 3, 6):
     u = rng.standard_normal(k); u -= (u @ v) / (v @ v) * v           # u ⟂ v
     assert np.allclose(H @ u, u)
     x = rng.standard_normal(k); e1 = np.eye(k)[0]
-    v_x = x - np.linalg.norm(x) * e1
-    assert np.allclose(householder(v_x) @ x, np.linalg.norm(x) * e1) # x is sent to the first axis
-H34 = householder(np.array([3, 4.]) - 5 * np.array([1, 0.]))
-assert np.allclose(H34 @ [3, 4], [5, 0])
-print("Part 7: orthogonal matrices preserve lengths and angles; Householder H(3,4 → 5,0) =\n", np.round(H34, 4))
+    assert np.allclose(householder(householder_vector(x)) @ x, -np.sign(x[0]) * np.linalg.norm(x) * e1)  # onto the first axis
+H34 = householder(householder_vector([3, 4.]))                       # v = (3, 4) + 5(1, 0) = (8, 4)
+assert np.allclose(householder_vector([3, 4.]), [8, 4]) and np.allclose(H34 @ [3, 4], [-5, 0])
+# The wrong sign, v = x − ‖x‖e₁, near the e₁ axis: ‖x‖ rounds to 1, v₁ = 1 − 1 = 0 and v = (0, 1e-9, 0).
+x_near = np.array([1.0, 1e-9, 0.0])
+Hx_good = householder(householder_vector(x_near)) @ x_near
+Hx_bad = householder(x_near - np.linalg.norm(x_near) * np.eye(3)[0]) @ x_near
+assert np.allclose(Hx_good, [-1, 0, 0], rtol=0, atol=1e-15)          # entries below the first are zeroed
+assert np.allclose(Hx_bad, [1, -1e-9, 0], rtol=1e-6, atol=1e-20)         # the entry to be zeroed only flipped sign
+print("Part 7: orthogonal matrices preserve lengths and angles; Householder H(3,4 → −5,0) =\n", np.round(H34, 4),
+      "\n  x = (1, 1e-9, 0): right sign gives Hx =", Hx_good, ", wrong sign gives Hx =", Hx_bad)
 
 # Figure: reflect a shape across the mirror line v^⊥ in R².
 v2 = np.array([1.0, 2.0]); H2 = householder(v2)
@@ -483,7 +513,9 @@ fig.tight_layout(); fig.savefig(FIG / "householder_2d.png", dpi=120); plt.close(
 # orthogonal, eq. (3.18), each with ‖sin nx‖² = π. So the projection of f onto
 # their span has coefficients ⟨f, sin nx⟩/π: the same q_i·b of (3.12), with the
 # integral as the dot product. We check (3.18) symbolically and project a square
-# wave.
+# wave. Bessel's inequality (after Theorem 3.17) bounds π Σ_{n≤N} b_n² by ∫f² for
+# every N; the square wave is odd, so the sines are enough and equality holds in
+# the limit (Parseval, F2 Theorem 3.8). For f ≡ 1 it would fail: every b_n = 0.
 
 
 # %%
@@ -498,8 +530,15 @@ for nn in range(1, 8):
     b_n = 2 * sp.integrate(sp.sin(nn * xsym), (xsym, 0, sp.pi)) / sp.pi     # f is odd, so ∫_{-π}^{π} = 2∫_0^{π}
     coef[nn] = b_n
     assert sp.simplify(b_n - (4 / (nn * sp.pi) if nn % 2 else 0)) == 0
+# Bessel: π Σ_{n≤N} b_n² ≤ ∫ sign(x)² dx = 2π for every N, and the partial sums climb to 2π.
+n_odd = np.arange(1, 200001, 2)
+bessel = np.pi * np.cumsum((4 / (n_odd * np.pi)) ** 2)
+assert np.all(bessel <= 2 * np.pi) and np.isclose(bessel[-1], 2 * np.pi, rtol=1e-5)
+k_sym = sp.symbols("k", integer=True, nonnegative=True)               # exactly: Σ_odd 1/n² = π²/8
+assert sp.simplify(sp.pi * sp.summation((4 / ((2 * k_sym + 1) * sp.pi)) ** 2, (k_sym, 0, sp.oo)) - 2 * sp.pi) == 0
 print("Part 8: ⟨sin mx, sin nx⟩ = π δ_mn verified for m, n ≤ 4; square-wave coefficients b_n =",
       {k: str(v) for k, v in coef.items()})
+print(f"        Bessel: π Σ b_n² over odd n < 200000 = {bessel[-1]:.6f} ≤ 2π = {2 * np.pi:.6f}; the limit is 2π exactly (SymPy).")
 
 xx = np.linspace(-np.pi, np.pi, 800); sq = np.sign(xx)
 fig, ax = plt.subplots(figsize=(6, 4)); ax.plot(xx, sq, "k", lw=1, label="square wave")
@@ -517,7 +556,8 @@ fig.tight_layout(); fig.savefig(FIG / "fourier_preview.png", dpi=120); plt.close
 #    and entry i of b by √w_i turns this into an ordinary least-squares problem,
 #    then implement `least_squares_weighted(A, b, w)` and check: all weights 1
 #    reproduces `least_squares_qr`; a weight of 1e6 on one reading pulls the fit
-#    through that point. (Exercise B8; a reference is below.)
+#    through that point. Then refit Example 4.5 with the last reading weighted
+#    10. (Exercise B8; a reference is below. Write yours before reading it.)
 # 2. **Damped oscillation envelope.** Generate y(t) = A e^{−γt} cos(ωt) + noise,
 #    pick out the peaks, and fit ln|y_peak| = ln A − γ t_peak by least squares.
 #    This is the log-decrement method from vibration testing (Exercise C3).
@@ -548,6 +588,14 @@ w_heavy = np.array([1, 1, 1e6, 1.0])
 xw = least_squares_weighted(A2, y2, w_heavy)
 assert abs((A2 @ xw)[2] - y2[2]) < 1e-5                                # the fit passes through point 3
 assert not np.allclose(xw, xh2)
+# Example 4.5 with the sixth reading weighted 10 (Exercise B8(c)); exact answer from A^T W A c = A^T W V.
+w5 = np.array([1, 1, 1, 1, 1, 10.0])
+c5w = least_squares_weighted(A5, V5, w5)
+r5w = V5 - A5 @ c5w
+assert np.allclose(c5w, [2377 / 4700, 7367 / 9400, 233 / 9400])        # ≈ (0.5057, 0.7837, 0.0248)
+assert abs(r5w[5]) < 0.01 and np.isclose(r5w[3], -0.04)                 # sixth residual shrinks; fourth unchanged
+assert np.allclose(A5.T @ (w5 * r5w), 0) and not np.allclose(A5.T @ r5w, 0)   # ⟂ in the W-inner product only
+print("B8: Example 4.5 with w6 = 10: c =", np.round(c5w, 4), " residuals =", np.round(r5w, 4))
 
 # %%
 if __name__ == "__main__":

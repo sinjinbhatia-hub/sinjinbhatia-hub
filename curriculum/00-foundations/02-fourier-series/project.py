@@ -10,7 +10,8 @@
 # kernel and the convolution formula (3.14); (6) the heat equation on a rod,
 # truncated series vs explicit finite differences; (7) the plucked string's
 # normal modes; (8) d^2/dx^2 is self-adjoint: the periodic second-difference
-# matrix is diagonal and real in the DFT basis (F3's circulant preview).
+# matrix is diagonal and real in the DFT basis (F3's circulant preview); (9)
+# every number in solutions.md, exercise by exercise.
 #
 # Run headless: `MPLBACKEND=Agg python3 project.py`. Figures go to ./figures/.
 
@@ -188,7 +189,7 @@ print("Part 1 passed.")
 # %% [markdown]
 # ## Part 2: Partial sums and the Gibbs phenomenon
 #
-# Theorem 3.13: for the square wave the first peak of S_{2M-1} is at pi/(2M) and
+# Theorem 3.15: for the square wave the first peak of S_{2M-1} is at pi/(2M) and
 # tends to (2/pi) Si(pi) = 1.17898; the overshoot is Si(pi)/pi - 1/2 = 0.0895 of
 # the jump, for every N. For the sawtooth the peak sits where f itself is
 # pi - t, so measure S_N f(x) - f(x); the limit is 2 Si(pi) - pi = 0.5623 =
@@ -268,7 +269,7 @@ fig.tight_layout(); fig.savefig(FIG / "basel.png", dpi=120); plt.close(fig)
 print("Part 3 passed.")
 
 # %% [markdown]
-# ## Part 4: Decay rates (Theorem 3.8)
+# ## Part 4: Decay rates (Theorems 3.9 and 3.10)
 #
 # A jump gives |c_n| ~ 1/n (square wave); a continuous function with a corner
 # gives 1/n^2 (triangle); C^1 with a jump in f'' gives 1/n^3 (cubic x(pi^2-x^2)).
@@ -513,7 +514,7 @@ print("Part 8 passed: D2 symmetric, diagonal & real in the DFT basis, ≈ -n² f
 #    g(x) = pi + f(x - pi). This is the shift theorem of F3.
 # 3. **How many terms for uniform error < 0.01?** For x² and for |x|, compute
 #    max_x |f - S_N f| on a fine grid and find the smallest N that gets below
-#    0.01. Compare with the tail bounds 4/N and 2/(pi N) from Theorem 3.14.
+#    0.01. Compare with the tail bounds 4/N and 2/(pi N) from Theorem 3.16.
 # 4. **Pluck at L/4 instead of L/2.** Which modes return? Which is now largest
 #    after the fundamental?
 # 5. **Fejér (C3).** Average the partial sums: sigma_N = (S_0 + ... + S_N)/(N+1).
@@ -554,6 +555,212 @@ def terms_for_uniform_error(name, tol=0.01, Nmax=600):
 N_par, N_tri = terms_for_uniform_error("parabola"), terms_for_uniform_error("triangle")
 print(f"  B8: uniform error < 0.01 needs N = {N_par} for x² (bound 4/N -> 400) and N = {N_tri} for |x| (bound 2/(pi N) -> 64)")
 assert N_par == 400 and N_tri == 63
+
+# %% [markdown]
+# ## Part 9: Exercise checks
+#
+# Every number quoted in `solutions.md` is recomputed and asserted here, in
+# exercise order, so you can check your own work against the script rather than
+# against the text. (B8's reference is the block just above.) Reuses
+# `fourier_coeffs`, `real_coeffs`, `exact_c`, `partial_sum`, `dirichlet_kernel`,
+# `sine_coeffs`, `cubic`, Part 2's grid `xg` and measured overshoots `over`.
+
+# %%
+def trap_weights(a, b, M):
+    """Composite-trapezoid nodes and weights on [a, b] with M subintervals."""
+    t_ = np.linspace(a, b, M + 1)
+    w_ = np.full(M + 1, (b - a) / M); w_[0] = w_[-1] = (b - a) / (2 * M)
+    return t_, w_
+
+
+# --- A1: orthogonality integrals (Theorems 3.2, 3.3).
+assert abs(quad(lambda x: np.cos(2 * x) * np.cos(5 * x), -PI, PI)[0]) < 1e-12
+assert np.isclose(quad(lambda x: np.sin(3 * x) ** 2, -PI, PI)[0], PI)
+assert abs(quad(lambda x: np.cos(4 * x) * np.sin(4 * x), -PI, PI)[0]) < 1e-12
+assert abs(quad(np.cos, -PI, PI)[0]) < 1e-12 and abs(quad(np.sin, -PI, PI)[0]) < 1e-12      # (d): ∫ e^{ix} = 0
+
+# --- A2: coefficients read off a trigonometric polynomial; norms by Pythagoras.
+f_A2 = lambda x: 2 + 3 * np.cos(x) - np.sin(x) + 4 * np.sin(2 * x) - 5 * np.cos(3 * x)
+n, c = fourier_coeffs(f_A2, 4)
+a, b = real_coeffs(n, c)
+assert np.allclose(a, [4, 3, 0, -5, 0], atol=1e-10) and np.allclose(b, [0, -1, 4, 0, 0], atol=1e-10)
+assert np.allclose(c[(n >= -3) & (n <= 3)], [-2.5, 2j, (3 - 1j) / 2, 2, (3 + 1j) / 2, -2j, -2.5], atol=1e-10)
+t9, w9 = trap_weights(-PI, PI, 2**12)
+assert np.isclose(np.sum(f_A2(t9) ** 2 * w9), 59 * PI) and np.isclose(2 * PI * np.sum(np.abs(c) ** 2), 59 * PI)
+r1 = f_A2(t9) - (2 + 3 * np.cos(t9) - np.sin(t9)); r2 = r1 - 4 * np.sin(2 * t9)              # f - S_1 f, f - S_2 f
+assert np.isclose(np.sum(r1**2 * w9), 41 * PI) and np.isclose(np.sum(r2**2 * w9), 25 * PI)
+print(f"  A2: ||f||² = 59π = {59*PI:.3f};  ||f-S_1f||² = 41π = {41*PI:.3f};  ||f-S_2f||² = 25π = {25*PI:.3f}")
+
+# --- A3: cos²x and sin³x (n = -3..3); a_2 of cos²x by (3.4).
+n, c = fourier_coeffs(lambda x: np.cos(x) ** 2, 3)
+assert np.allclose(c, [0, 0.25, 0, 0.5, 0, 0.25, 0], atol=1e-12)
+n, c = fourier_coeffs(lambda x: np.sin(x) ** 3, 3)
+assert np.allclose(c, [-1j / 8, 0, 3j / 8, 0, -3j / 8, 0, 1j / 8], atol=1e-12)
+assert np.isclose(quad(lambda x: np.cos(x) ** 2 * np.cos(2 * x), -PI, PI)[0] / PI, 0.5)
+
+# --- A4: sine series of 1 on (0, L): b_n = 4/(nπ), n odd; S_5 f(L/2) = 52/(15π).
+nA4, bA4 = sine_coeffs(lambda x: np.ones_like(x), 6, L=1.0, M=2**16)
+assert np.allclose(bA4, np.where(nA4 % 2 == 1, 4 / (nA4 * PI), 0), atol=1e-8)
+S5_mid = np.sum(bA4[:5] * np.sin(nA4[:5] * PI / 2))
+assert np.isclose(S5_mid, 52 / (15 * PI), atol=1e-8) and np.isclose(S5_mid, 1.1035, atol=5e-5)
+
+# --- A5: Osgood's period-1 convention, f(t) = t: ĉ_n = i(-1)^n/(2πn), b_n = (-1)^{n+1}/(πn).
+n, c = fourier_coeffs(lambda t_: np.asarray(t_, float), 3, T=1.0)
+nz = n != 0
+assert np.allclose(c[nz], 1j * (-1.0) ** n[nz] / (2 * PI * n[nz]), atol=1e-8) and abs(c[~nz][0]) < 1e-12
+assert np.isclose(c[n == 1][0].imag, -0.1592, atol=5e-5)
+kk = np.arange(1, 200001, dtype=float)
+assert np.isclose(np.sum((-1.0) ** (kk + 1) / (PI * kk) * np.sin(PI * kk / 2)), 0.25, atol=1e-5)   # series at t = 1/4
+print(f"  A4: S_5 f(L/2) = 52/(15π) = {S5_mid:.4f};  A5: ĉ_1 = {c[n == 1][0]:.4f}")
+
+# --- B1: x(π - x) on [0, π]: b_n = 8/(πn³), n odd; Σ_odd (-1)^{(n-1)/2}/n³ = π³/32; Theorem 3.9 route.
+nB1, bB1 = sine_coeffs(lambda x: x * (PI - x), 7, L=PI, M=2**16)
+assert np.allclose(bB1, np.where(nB1 % 2 == 1, 8 / (PI * nB1**3), 0), atol=1e-8)
+assert np.allclose(bB1[[0, 2, 4]], [2.5465, 0.0943, 0.0204], atol=5e-5)
+kodd = np.arange(1, 100001, 2, dtype=float)
+assert np.isclose(np.sum((-1.0) ** ((kodd - 1) // 2) / kodd**3), PI**3 / 32, atol=1e-10) and np.isclose(PI**3 / 32, 0.96895, atol=5e-6)
+n, c = fourier_coeffs(lambda x: x * (PI - np.abs(x)), 7, M=2**16)       # odd extension; c_n = -4i/(πn³), n odd
+odd = n % 2 != 0
+assert np.allclose(c[odd], -4j / (PI * n[odd] ** 3), atol=1e-8) and np.allclose(c[~odd], 0, atol=1e-8)
+print(f"  B1: b_1, b_3, b_5 = {bB1[0]:.4f}, {bB1[2]:.4f}, {bB1[4]:.4f};  π³/32 = {PI**3/32:.5f}")
+
+# --- B2(d): square wave. Mean-square error -> 0; overshoot max S_N f - 1 -> 0.179; sup|f - S_N f| = 1 always.
+mse_B2 = {}
+for N in (1, 5, 11, 51):
+    mse_B2[N] = 1 - 8 / PI**2 * np.sum(1 / np.arange(1, N + 1, 2) ** 2)
+    nN = np.arange(-N, N + 1)
+    resid = square(xg) - partial_sum(nN, exact_c("square", nN), xg)
+    assert abs(np.trapezoid(resid**2, xg) / (2 * PI) - mse_B2[N]) < 1e-3          # (1/2π)∫|f - S_N f|² directly
+    assert np.abs(resid).max() > 0.98                                              # sup error ≈ 1 next to the jump
+assert np.allclose([mse_B2[N] for N in (1, 5, 11, 51)], [0.1894, 0.0669, 0.0337, 0.0078], atol=5e-5)
+assert np.allclose([over["square"][N] for N in (1, 5, 11, 51)], [0.2732, 0.1884, 0.1813, 0.1791], atol=5e-5)
+print("  B2(d): mean-square error", {N: round(float(v), 4) for N, v in mse_B2.items()},
+      " overshoot max S_N f - 1", {N: round(float(over["square"][N]), 4) for N in (1, 5, 11, 51)}, " sup|f - S_N f| -> 1")
+
+# --- B3: zeta values from Parseval.
+kk = np.arange(1, 100001, dtype=float)                                                  # float: k**6 overflows int64
+assert np.isclose(np.sum(1 / kk[::2] ** 4), PI**4 / 96, atol=1e-9) and np.isclose(PI**4 / 96, 1.014678, atol=5e-7)
+assert np.isclose(np.sum(1 / kk[1::2] ** 4), PI**4 / 1440, atol=1e-9) and np.isclose(PI**4 / 1440, 0.067645, atol=5e-7)
+assert np.isclose(2 / PI * quad(lambda x: (x * (PI - x)) ** 2, 0, PI)[0], PI**4 / 15)       # half-range Parseval, B1
+assert np.isclose(np.sum(1 / kk[::2] ** 6), PI**6 / 960, atol=1e-12) and np.isclose(PI**6 / 960, 1.001447, atol=5e-7)
+assert np.isclose(np.sum(1 / kk**6), PI**6 / 945, atol=1e-12) and np.isclose(PI**6 / 945, 1.017343, atol=5e-7)
+
+# --- B4: (π² - x²)²: f''' = 24x jumps by -48π; c_n = -24(-1)^n/n⁴ (B8 above checks it by trapezoid).
+assert np.isclose(quad(lambda x: (PI**2 - x**2) ** 2, -PI, PI)[0] / (2 * PI), 8 * PI**4 / 15) and np.isclose(8 * PI**4 / 15, 51.9515, atol=5e-5)
+nn9 = np.arange(1, 2001, dtype=float)
+assert abs(8 * PI**4 / 15 - 48 * np.sum(1 / nn9**4)) < 1e-8                                  # series at x = π: f(π) = 0
+assert np.isclose(np.sum((-1.0) ** (nn9 + 1) / nn9**4), 7 * PI**4 / 720, atol=1e-12) and np.isclose(7 * PI**4 / 720, 0.947033, atol=5e-7)
+assert np.isclose((48 * PI + 24 * 2 * PI) / (2 * PI), 48)                                   # Theorem 3.10's C, vs actual 24
+
+# --- B5: Dirichlet kernel: zeros, ∫D_N² = 2π(2N+1), Lebesgue constants and their log growth.
+tk, wk = trap_weights(-PI, PI, 2**18)
+for N in (3, 10):
+    assert np.allclose(dirichlet_kernel(N, 2 * np.arange(1, 2 * N + 1) * PI / (2 * N + 1)), 0, atol=1e-9)
+    assert np.isclose(np.sum(dirichlet_kernel(N, tk) ** 2 * wk), 2 * PI * (2 * N + 1), rtol=1e-10)
+assert np.isclose(42 * PI, 131.95, atol=5e-3)
+LN = {N: np.sum(np.abs(dirichlet_kernel(N, tk)) * wk) / (2 * PI) for N in (1, 10, 100)}   # (1/2π)∫|D_N|
+bound = {N: 4 / PI**2 * np.log(N + 1) for N in LN}
+assert np.allclose([LN[N] for N in (1, 10, 100)], [1.436, 2.223, 3.139], atol=5e-4) and all(LN[N] > bound[N] for N in LN)
+assert np.allclose([bound[N] for N in (1, 10, 100)], [0.281, 0.972, 1.870], atol=5e-4)
+assert np.allclose([LN[N] - 4 / PI**2 * np.log(N) for N in (10, 100)], [1.29, 1.27], atol=5e-3)
+f_ext = np.sign(dirichlet_kernel(10, tk))                                                 # (e): sgn D_N attains L_N
+assert np.isclose(np.sum(f_ext * dirichlet_kernel(10, -tk) * wk) / (2 * PI), LN[10], atol=1e-6)
+print(f"  B5: L_N = {LN[1]:.3f}, {LN[10]:.3f}, {LN[100]:.3f} (N = 1, 10, 100) > (4/π²)ln(N+1) = "
+      f"{bound[1]:.3f}, {bound[10]:.3f}, {bound[100]:.3f}")
+
+# --- B6: termwise integration: sawtooth -> x²/2, then x² - π²/3 -> x(π² - x²); termwise derivative of x².
+xa = np.linspace(-PI, PI, 2001)
+assert np.abs(2 * ((-1.0) ** (nn9 + 1) / nn9**2) @ (1 - np.cos(np.outer(nn9, xa))) - xa**2 / 2).max() < 5e-3
+cubic_series = 12 * ((-1.0) ** (nn9 + 1) / nn9**3) @ np.sin(np.outer(nn9, xa))
+assert np.abs(cubic_series - cubic(xa)).max() < 1e-5                                      # (b): uniform
+assert np.isclose(cubic(PI / 2), 3 * PI**3 / 8) and np.isclose(12 * PI**3 / 32, 3 * PI**3 / 8)   # (c)
+deriv_x2 = -4 * ((-1.0) ** nn9 / nn9) @ np.sin(np.outer(nn9, xa))                         # (d)
+inner = np.abs(xa) < PI - 0.3
+assert np.abs(deriv_x2[inner] - 2 * xa[inner]).max() < 0.05 and abs(deriv_x2[-1]) < 1e-6
+
+# --- B7: insulated ends. Cosine coefficients of the step; mean conserved; u -> u_0/2.
+xb = np.linspace(0, 1, 2**14 + 1); wb = np.full(xb.size, 1 / 2**14); wb[0] = wb[-1] = 0.5 / 2**14
+stepB7 = np.where(xb < 0.5, 1.0, np.where(xb > 0.5, 0.0, 0.5))
+aB7 = 2 * np.cos(np.outer(np.arange(7), PI * xb)) @ (stepB7 * wb)                         # a_0..a_6 (L = 1, u_0 = 1)
+assert np.isclose(aB7[0] / 2, 0.5, atol=1e-8)
+assert np.allclose(aB7[1:], [0.6366, 0.0, -0.2122, 0.0, 0.1273, 0.0], atol=5e-5)
+nB7 = np.arange(1, 401)
+u_neu = lambda x, t_: 0.5 + (2 * np.sin(nB7 * PI / 2) / (nB7 * PI) * np.exp(-(nB7 * PI) ** 2 * t_)) @ np.cos(np.outer(nB7, PI * x))
+for t_ in (0.01, 0.05, 0.2):
+    assert np.isclose(np.sum(u_neu(xb, t_) * wb), 0.5, atol=1e-6)                         # ∫u dx conserved
+assert np.abs(u_neu(xb, 5.0) - 0.5).max() < 1e-12                                         # u -> mean
+print("  B7: Neumann a_1..a_6 =", np.round(aB7[1:], 4))
+
+# --- C1: Gibbs for the sawtooth. (b) T_N peaks at π/(N+1); (c) Riemann sum; (d) overshoot above f;
+#     (e) E_N = T_N - (π - t) peaks at 2π/(2N+1) and obeys |E_N| < 2/((N+1/2) sin(δ/2)) on [δ, 2π-δ].
+T_N = lambda N, t_: 2 * np.sin(np.outer(np.atleast_1d(t_), np.arange(1, N + 1))) @ (1 / np.arange(1, N + 1))
+C1v = {}
+for N in (11, 51):
+    tN = PI / (N + 1)
+    assert abs(dirichlet_kernel(N, tN) - 1) < 1e-9                                         # T_N'(t_N) = D_N(t_N) - 1 = 0
+    tt = np.linspace(1e-4, PI, 40001)
+    assert abs(tt[np.argmax(T_N(N, tt))] - tN) < 1e-4
+    E = T_N(N, tt) - (PI - tt)
+    assert abs(tt[np.argmax(E)] - 2 * PI / (2 * N + 1)) < 1e-4                             # (e) step 4
+    for d in (0.3, 1.0):
+        ts = np.linspace(d, 2 * PI - d, 4001)
+        assert np.abs(T_N(N, ts) - (PI - ts)).max() < 2 / ((N + 0.5) * np.sin(d / 2))     # (e) step 3
+    val = T_N(N, tN)[0]
+    u_ = np.arange(1, N + 1) * tN
+    assert np.isclose(2 * np.sum(np.sin(u_) / u_) * tN, val)                               # (c): Riemann sum
+    C1v[N] = (val, PI - tN, val - (PI - tN))
+assert np.allclose(C1v[11], [3.4384, 2.8798, 0.5586], atol=5e-5) and np.allclose(C1v[51], [3.6433, 3.0812, 0.5621], atol=5e-5)
+assert np.isclose(2 * Si_pi, 3.7038741, atol=1e-7) and np.isclose(2 * Si_pi - PI, 0.5623, atol=5e-5)
+gap = {N: over["sawtooth"][N] - C1v[N][2] for N in (11, 51)}                               # grid max minus value at t_N
+assert np.isclose(gap[11], 0.0057, atol=3e-4) and np.isclose(gap[51], 0.0003, atol=3e-4) and 10 < gap[11] / gap[51] < 40
+print(f"  C1: T_11(π/12) - (π - π/12) = {C1v[11][2]:.4f}, T_51(π/52) - (π - π/52) = {C1v[51][2]:.4f};  "
+      f"grid maxima {over['sawtooth'][11]:.4f}, {over['sawtooth'][51]:.4f};  limit 2Si(π) - π = {2*Si_pi - PI:.4f}")
+
+# --- C2(e): isoperimetric check on the ellipse x = 2cos θ, y = sin θ, and the area formula (c) by FFT.
+L_ell = quad(lambda th: np.sqrt(4 * np.sin(th) ** 2 + np.cos(th) ** 2), 0, 2 * PI)[0]
+assert np.isclose(L_ell, 9.6884, atol=5e-5) and np.isclose(L_ell**2 / (4 * PI), 7.4696, atol=5e-5) and 2 * PI < L_ell**2 / (4 * PI)
+Mc = 256; th = 2 * PI * np.arange(Mc) / Mc; nf = np.fft.fftfreq(Mc, d=1 / Mc)
+alpha = np.fft.fft(2 * np.cos(th)) / Mc; beta = np.fft.fft(np.sin(th)) / Mc               # α_n, β_n by (5.1)
+assert np.isclose(2 * PI * np.sum(1j * nf * np.conj(alpha) * beta), 2 * PI, atol=1e-10)   # (c): A = 2π
+assert np.isclose(np.sum(nf**2 * (np.abs(alpha) ** 2 + np.abs(beta) ** 2)), 2.5, atol=1e-10)   # θ is not arc length
+print(f"  C2: ellipse L = {L_ell:.4f}, L²/4π = {L_ell**2/(4*PI):.4f} > A = 2π = {2*PI:.4f}")
+
+# --- C3: Fejér. (a) taper formula = average of S_0..S_N; (b) closed-form kernel; (c) F_N >= 0, unit mass; (d) no overshoot.
+def fejer_sum(n, c, x):
+    """σ_N f(x) = Σ_{|n|<=N} (1 - |n|/(N+1)) c_n e^{inx}, the average of S_0 f, ..., S_N f (C3(a))."""
+    N = n.max()
+    return np.real(np.exp(1j * np.outer(x, n)) @ ((1 - np.abs(n) / (N + 1)) * c))
+
+
+def fejer_kernel(N, t_):
+    """F_N(t) = sin²((N+1)t/2) / ((N+1) sin²(t/2)), F_N(0) = N+1 (C3(b))."""
+    s = np.sin(np.asarray(t_, float) / 2)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.where(np.abs(s) > 1e-12, np.sin((N + 1) * t_ / 2) ** 2 / s**2 / (N + 1), N + 1.0)
+
+
+N = 11; nN = np.arange(-N, N + 1)
+sig_avg = np.mean([partial_sum(np.arange(-j, j + 1), exact_c("square", np.arange(-j, j + 1)), xg) for j in range(N + 1)], axis=0)
+assert np.allclose(fejer_sum(nN, exact_c("square", nN), xg), sig_avg, atol=1e-10)                          # (a)
+assert np.allclose(fejer_kernel(N, tk), np.mean([dirichlet_kernel(j, tk) for j in range(N + 1)], axis=0), atol=1e-9)   # (b)
+assert fejer_kernel(N, tk).min() >= 0 and np.isclose(np.sum(fejer_kernel(N, tk) * wk) / (2 * PI), 1.0, atol=1e-10)    # (c)
+sig_max = {}
+for N in (11, 51):
+    nN = np.arange(-N, N + 1)
+    sig = fejer_sum(nN, exact_c("square", nN), xg)
+    assert sig.max() <= 1 + 1e-12 and sig.min() >= -1 - 1e-12                                                # (d)
+    sig_max[N] = sig.max()
+assert np.allclose([sig_max[11], sig_max[51]], [0.9473, 0.9878], atol=5e-5)
+N = 51; nN = np.arange(-N, N + 1); cN = exact_c("square", nN)                                                # (f)
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.plot(xg, square(xg), "k", lw=1, label="f")
+ax.plot(xg, partial_sum(nN, cN, xg), lw=1, label=f"S_{N} f (Dirichlet): max {1 + over['square'][N]:.4f}")
+ax.plot(xg, fejer_sum(nN, cN, xg), lw=1, label=f"σ_{N} f (Fejér): max {sig_max[N]:.4f}")
+ax.set_xlim(-1, 1); ax.set_ylim(-1.3, 1.3); ax.grid(alpha=.3); ax.legend(fontsize=8); ax.set_xlabel("x")
+ax.set_title("Square wave: the partial sum overshoots, the Fejér mean never does")
+fig.tight_layout(); fig.savefig(FIG / "fejer_vs_dirichlet.png", dpi=120); plt.close(fig)
+print(f"  C3: max σ_11 f = {sig_max[11]:.4f}, max σ_51 f = {sig_max[51]:.4f} (no overshoot); S_N peaks near 1.18")
+print("Part 9 passed: every number in solutions.md reproduced.")
 
 # %%
 if __name__ == "__main__":

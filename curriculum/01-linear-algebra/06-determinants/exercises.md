@@ -1,6 +1,6 @@
 # LA-6 Exercises
 
-Conventions as in the notes: $\det$ is defined on rows by (D1)–(D3); $M_{ij}$ is the minor, $C_{ij} = (-1)^{i+j}M_{ij}$ the cofactor, $\operatorname{adj}A = C^\top$; $\operatorname{sgn}(\sigma) = (-1)^{N(\sigma)}$ with $N$ the inversion count.
+Conventions as in the notes: $\det$ is defined on rows by (D1)–(D3); $M_{ij}$ is the minor, $C_{ij} = (-1)^{i+j}M_{ij}$ the cofactor, $\operatorname{adj}A = C^\top$; $\operatorname{sgn}(\sigma) = (-1)^{N(\sigma)}$ with $N$ the inversion count (an inversion is a pair of positions $i < j$ with $\sigma(i) > \sigma(j)$; when listing inversions, write the pair of values $(\sigma(i), \sigma(j))$). Equation numbers such as (3.9) refer to the notes, where each tag matches the theorem it belongs to.
 
 ## A. Warm-up (do all; 5–10 minutes each)
 
@@ -17,7 +17,7 @@ Conventions as in the notes: $\det$ is defined on rows by (D1)–(D3); $M_{ij}$ 
 ## B. Core (do all)
 
 **B1.** (Block triangular.) Let $A$ be $k\times k$, $D$ be $m\times m$, $B$ be $k\times m$, and $M = \begin{pmatrix} A & B \\ 0 & D \end{pmatrix}$.
-(a) Prove $\det M = \det A\cdot\det D$. Suggested route: with $B, D$ fixed, show that $A \mapsto \det M$ satisfies (D2) and (D3) as a function of the rows of $A$, so by the uniqueness argument of Theorem 3.9 it equals $\det A$ times its value at $A = I_k$; then evaluate that value.
+(a) Prove $\det M = \det A\cdot\det D$. Suggested route: first use (D3) on each of the first $k$ rows, split as $(\mathbf{r}_i^\top, \mathbf{0}^\top) + (\mathbf{0}^\top, \mathbf{b}_i^\top)$, to show $\det M = \det\begin{pmatrix} A & 0 \\ 0 & D\end{pmatrix}$ (where do the rows $(\mathbf{0}^\top, \mathbf{b}_i^\top)$ and the last $m$ rows live?). Then, with $D$ fixed, show that $A \mapsto \det\begin{pmatrix} A & 0 \\ 0 & D\end{pmatrix}$ satisfies (D2) and (D3) as a function of the rows of $A$, so by the uniqueness argument of Theorem 3.9 it equals $\det A$ times its value at $A = I_k$; then evaluate that value. (Why can't you skip the first step and work with $M$ directly?)
 (b) Deduce the same formula for $\begin{pmatrix} A & 0 \\ C & D\end{pmatrix}$.
 (c) Show by a $4\times 4$ example with $2\times 2$ blocks that $\det\begin{pmatrix} A & B \\ C & D\end{pmatrix} = \det A\det D - \det B\det C$ is **false** in general.
 
@@ -75,7 +75,7 @@ Conventions as in the notes: $\det$ is defined on rows by (D1)–(D3); $M_{ij}$ 
 (d) Prove that $p$ is unchanged if $A$ is replaced by $S^{-1}AS$. Why does this matter for the definition of eigenvalues of a linear map?
 
 **C3.** (Hadamard's inequality and the Gram determinant; needs the QR factorization from LA-5.)
-(a) Prove $|\det A| \le \prod_{j=1}^n\|\mathbf{a}_j\|$ (product of the column lengths), with equality iff the columns are mutually orthogonal (or some column is zero). Route: $A = QR$ with $Q$ orthogonal and $R$ upper triangular; relate $|\det A|$ to the diagonal of $R$ and $\|\mathbf{a}_j\|$ to column $j$ of $R$.
+(a) Prove $|\det A| \le \prod_{j=1}^n\|\mathbf{a}_j\|$ (product of the column lengths), with equality iff the columns are mutually orthogonal (or some column is zero). Route: dispose of singular $A$ first (LA-5 builds $A = QR$ only for independent columns). For invertible $A$, write $A = QR$ with $Q$ orthogonal and $R$ upper triangular with positive diagonal; relate $|\det A|$ to the diagonal of $R$ and $\|\mathbf{a}_j\|$ to column $j$ of $R$.
 (b) Interpret (a) as a statement about the volume of a parallelepiped versus the volume of a box with the same edge lengths.
-(c) For an $n\times k$ matrix $A$ with $k \le n$, the Gram matrix is $G = A^\top A$ ($k\times k$). Show $\det G = (\det A)^2$ when $k = n$, and that for $k = 2$, $n = 3$, $\det G = \|\mathbf{a}_1\times\mathbf{a}_2\|^2$, the squared area of the parallelogram. (So $\sqrt{\det G}$ is the $k$-dimensional volume of the parallelepiped spanned by the columns, in any $\mathbb{R}^n$; this is how LA-12 and EM-1 measure area on surfaces.)
+(c) For an $n\times k$ matrix $A$ with $k \le n$, the Gram matrix is $G = A^\top A$ ($k\times k$). Show $\det G = (\det A)^2$ when $k = n$, and that for $k = 2$, $n = 3$, $\det G = \|\mathbf{a}_1\times\mathbf{a}_2\|^2$, the squared area of the parallelogram. (So $\sqrt{\det G}$ is the $k$-dimensional volume of the parallelepiped spanned by the columns, in any $\mathbb{R}^n$. For $k = 2$, $n = 3$ and columns $\partial\mathbf{r}/\partial u$, $\partial\mathbf{r}/\partial v$ of a parametrized surface, it is the area element $\|\partial_u\mathbf{r}\times\partial_v\mathbf{r}\|\,du\,dv$ of the surface integrals in EM-1.)
 (d) (Code.) Add a cell to `project.py` that checks (a) on $1000$ random $5\times 5$ matrices, checks equality for a random matrix with orthogonal columns, and checks (c) for a random $3\times 2$ matrix against the cross product.

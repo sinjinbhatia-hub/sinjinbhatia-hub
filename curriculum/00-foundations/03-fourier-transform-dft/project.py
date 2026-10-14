@@ -7,8 +7,8 @@
 # (2) timing N^2 vs N log N; (3) circular convolution and circulant
 # diagonalization; (4) continuous transforms of rect, Gaussians, exponentials,
 # triangle by the Riemann-sum relation (3.29), overlaid on the analytic formulas,
-# the Example 4.1-4.3 numbers by quadrature and by FFT, and the convolution
-# theorem; (5) the uncertainty product; (6) the damped
+# the Example 4.1-4.3 numbers by quadrature and by FFT, the convolution
+# theorem, and the Hermite eigenfunctions of Theorem 3.10; (5) the uncertainty product; (6) the damped
 # oscillator: impulse response, |H|, resonance, chirp response; (7) aliasing and
 # sinc interpolation; (8) Poisson summation and the comb; (9) a spectrogram.
 # "Your turn" reference solutions (B7, C3) are at the end.
@@ -23,6 +23,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from pathlib import Path
 from scipy.integrate import solve_ivp
+import sympy as sp
 
 FIG = Path(__file__).resolve().parent / "figures"
 FIG.mkdir(exist_ok=True)
@@ -103,6 +104,12 @@ assert np.allclose(F @ F, N * P) and np.allclose(F @ F @ F @ F, N**2 * np.eye(N)
 lam = np.linalg.eigvals(F / np.sqrt(N))
 assert np.allclose(np.sort_complex(np.round(lam, 8)), np.sort_complex(np.round(np.array([1, 1, 1, -1, -1, 1j, -1j, -1j]), 8)))
 print("  F^2 = N P, F^4 = N^2 I; eigenvalues of F/sqrt(8):", np.round(lam, 6))
+# C2 (solutions): with w = exp(-2 pi i/N) the multiplicities of 1, -1, -i, i are
+# floor(N/4)+1, floor((N+2)/4), floor((N+1)/4), floor((N-1)/4). (The sign convention matters: i and -i swap.)
+for N in range(1, 17):
+    ev = np.linalg.eigvals(dft_matrix(N) / np.sqrt(N))
+    counts = [int(np.sum(np.abs(ev - v) < 1e-6)) for v in (1, -1, -1j, 1j)]
+    assert counts == [N // 4 + 1, (N + 2) // 4, (N + 1) // 4, (N - 1) // 4], (N, counts)
 
 # Example 4.5: small DFTs by hand, integer vs non-integer periods (leakage).
 assert np.allclose(dft([1, 0, 0, 0]), [1, 1, 1, 1])
@@ -362,6 +369,29 @@ ax[1].set_title("Convolution theorem: (Pi*Pi)^ = sinc^2")
 fig.tight_layout(); fig.savefig(FIG / "convolution_theorem.png", dpi=120); plt.close(fig)
 print("  Convolution theorem checked: (Pi*Pi)^ = sinc^2 = (Pi^)^2; (f g)^ = f^ * g^ for Gaussians.")
 
+# Theorem 3.10 and §3.8: h_n = R^n g with R = 2 pi X - D, g = exp(-pi x^2). Check F h_n = (-i)^n h_n (by quadrature,
+# off the DFT grid), the closed forms h_1 = 4 pi x g and h_2 = (16 pi^2 x^2 - 4 pi) g (C2), and A h_n = 2 pi (2n+1) h_n
+# for A = -D^2 + 4 pi^2 X^2 (symbolically), which is why h_0 and h_4 are orthogonal although both have F-eigenvalue 1.
+xs_sym = sp.symbols("x", real=True)
+g_sym = sp.exp(-sp.pi * xs_sym**2)
+h_sym = [g_sym]
+for _ in range(5):
+    h_sym.append(sp.expand(2 * sp.pi * xs_sym * h_sym[-1] - sp.diff(h_sym[-1], xs_sym)))
+assert sp.simplify(h_sym[1] - 4 * sp.pi * xs_sym * g_sym) == 0
+assert sp.simplify(h_sym[2] - (16 * sp.pi**2 * xs_sym**2 - 4 * sp.pi) * g_sym) == 0
+herm_num = []
+for n_h, hn in enumerate(h_sym):
+    assert sp.simplify(-sp.diff(hn, xs_sym, 2) + 4 * sp.pi**2 * xs_sym**2 * hn - 2 * sp.pi * (2 * n_h + 1) * hn) == 0
+    hn_f = sp.lambdify(xs_sym, hn, "numpy")
+    vals = hn_f(x) * np.ones_like(x)
+    herm_num.append(vals)
+    scale = np.max(np.abs(vals))
+    for xi0 in (0.0, 0.3, 0.7, 1.2):
+        assert abs(ft_quadrature(vals, -L, dx, xi0) - (-1j) ** n_h * hn_f(xi0)) < 1e-10 * scale, (n_h, xi0)
+gram = np.array([[np.sum(hi * hj) * dx for hj in herm_num] for hi in herm_num])
+assert np.max(np.abs(gram - np.diag(np.diag(gram)))) < 1e-9 * np.max(np.diag(gram))       # all six mutually orthogonal
+print("  Hermite functions h_0..h_5: F h_n = (-i)^n h_n, A h_n = 2 pi (2n+1) h_n, mutually orthogonal (incl. h_0, h_4).")
+
 # %% [markdown]
 # ## Part 5: The uncertainty product (Theorem 3.11)
 #
@@ -383,8 +413,8 @@ print(f"Part 5: Gaussian sigma_x*sigma_xi = {sx*sxi:.7f}  (1/(4 pi) = {1/(4*np.p
 a = 1.0
 xe = np.linspace(-60, 60, 600001)
 sx, sxi = spreads(np.exp(-a * np.abs(xe)), xe, 2 * a / (a**2 + 4 * np.pi**2 * xe**2), xe)
-assert abs(sx - 1 / (a * np.sqrt(2))) < 1e-6 and abs(sxi - a / (2 * np.pi)) < 1e-3
-assert abs(sx * sxi - np.sqrt(2) / (4 * np.pi)) < 2e-3
+assert abs(sx - 1 / (a * np.sqrt(2))) < 1e-6 and abs(sxi - a / (2 * np.pi)) < 5e-4   # sigma_xi short by ~3e-4: the 1/xi^2 tail beyond |xi| = 60
+assert abs(sx * sxi - np.sqrt(2) / (4 * np.pi)) < 5e-4
 print(f"  two-sided exponential: product = {sx*sxi:.5f}  (sqrt2/(4 pi) = {np.sqrt(2)/(4*np.pi):.5f}), 41% above the minimum")
 for Lxi in (20, 80):
     xr = np.linspace(-1, 1, 20001); xir = np.linspace(-Lxi, Lxi, int(4000 * Lxi) + 1)
@@ -658,8 +688,18 @@ n64 = np.arange(64); tone = np.cos(2 * np.pi * 2.5 * n64 / 64)
 leak_rect = np.abs(np.fft.fft(tone)); leak_hann = np.abs(np.fft.fft(tone * hann(64)))
 far_rect = leak_rect[10:32].max() / leak_rect.max(); far_hann = leak_hann[10:32].max() / leak_hann.max()
 bin30_rect = leak_rect[30] / leak_rect.max(); bin30_hann = leak_hann[30] / leak_hann.max()
-assert far_rect > 0.05 and far_hann < 2e-3            # past bin 10: rect still leaks ~10% of the peak, Hann ~0.1%
-assert bin30_rect > 0.04 and bin30_hann < 1e-4        # at bin 30: rect ~4.5% (1/|k| tails from +-2.5 add), Hann < 1e-5
+assert np.isclose(far_rect, 0.10, atol=5e-3) and np.isclose(far_hann, 1.1e-3, rtol=0.05)   # past bin 10: rect ~10% of the peak, Hann ~0.1%
+assert np.isclose(bin30_rect, 0.045, atol=1e-3) and bin30_hann < 1e-5                        # at bin 30: rect ~4.5% (1/|k| tails from +-2.5 add), Hann < 1e-5
+# C3 (solutions): up to a linear phase, the Hann transform is N |1/2 sinc(u) + 1/4 sinc(u-1) + 1/4 sinc(u+1)|, u = N xi
+# (PLUS signs: the neighbouring sincs have opposite signs there, which is what cancels the sidelobes), first zero at u = 2.
+u_h = np.arange(200 * pad_) / pad_
+W_raw = np.abs(np.fft.fft(hann(Nw_), pad_ * Nw_))[:200 * pad_]
+hann_sinc = Nw_ * np.abs(0.5 * sinc(u_h) + 0.25 * sinc(u_h - 1) + 0.25 * sinc(u_h + 1))
+assert np.max(np.abs(W_raw - hann_sinc)) < 1e-11 * W_raw.max()
+ok_u = (u_h > 0) & (np.abs(u_h - 1) > 1e-9)                                  # closed form -s/(2u(u^2-1)), s = sin(pi u)/pi
+closed = Nw_ * np.abs(np.sin(np.pi * u_h[ok_u]) / np.pi / (2 * u_h[ok_u] * (u_h[ok_u]**2 - 1)))
+assert np.allclose(hann_sinc[ok_u], closed, rtol=1e-9, atol=1e-9 * Nw_)
+assert np.isclose(hann_sinc[pad_], Nw_ / 4) and hann_sinc[2 * pad_] < 1e-9 * Nw_      # nonzero at u = 1, first zero at u = 2
 print(f"Your turn (C3): first sidelobe rect {sl_rect:.2f} dB, Hann {sl_hann:.2f} dB; leakage beyond bin 10: "
       f"rect {far_rect:.1e}, Hann {far_hann:.1e}; at bin 30: rect {bin30_rect:.1e}, Hann {bin30_hann:.1e}")
 

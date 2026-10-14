@@ -33,7 +33,7 @@ For (c), use Theorem 3.15(c) with $A = 2I + N$, and check $\frac{d}{dt}e^{At}\bi
 **B4.** (Markov theory.) Let $A$ be an $n\times n$ Markov matrix.
 (a) Prove that $A^k$ is Markov for every $k \ge 1$.
 (b) Prove that if $A\mathbf{x} = \lambda\mathbf{x}$ with $\lambda \ne 1$, then $\mathbf{1}^\top\mathbf{x} = 0$: the entries of $\mathbf{x}$ sum to zero.
-(c) Using (b), explain why in $\mathbf{u}_k = c_1\mathbf{x}_1 + \sum_{i\ge2}c_i\lambda_i^k\mathbf{x}_i$ (with $\lambda_1 = 1$) the coefficient $c_1$ is the same for every probability vector $\mathbf{u}_0$, and what the transient terms do to the probability mass.
+(c) Suppose $A$ is diagonalizable and $\lambda_1 = 1$ is a **simple** eigenvalue, so $\lambda_i \ne 1$ for $i \ge 2$. Using (b), explain why in $\mathbf{u}_k = c_1\mathbf{x}_1 + \sum_{i\ge2}c_i\lambda_i^k\mathbf{x}_i$ the coefficient $c_1$ is the same for every probability vector $\mathbf{u}_0$, and what the transient terms do to the probability mass. Then show the simplicity hypothesis is needed: for the Markov matrix $A = I$ ($2\times2$) with $\mathbf{x}_1 = \mathbf{e}_1$, $\mathbf{x}_2 = \mathbf{e}_2$, find $c_1$ for $\mathbf{u}_0 = (a, 1 - a)^\top$.
 (d) For the weather matrix $A = \begin{pmatrix}0.9 & 0.5\\ 0.1 & 0.5\end{pmatrix}$ of Example 4.1, compute $A^k$ in closed form via (3.7) and find $\lim_{k\to\infty}A^k$. Interpret the columns of the limit.
 
 **B5.** $A = \begin{pmatrix}1 & -1\\ 1 & 1\end{pmatrix}$, $\dot{\mathbf{u}} = A\mathbf{u}$, $\mathbf{u}(0) = (1, 0)^\top$.
@@ -55,9 +55,10 @@ For (c), use Theorem 3.15(c) with $A = 2I + N$, and check $\frac{d}{dt}e^{At}\bi
 (c) Solve $\dot{\mathbf{u}} = A\mathbf{u}$, $\mathbf{u}(0) = (1, 2)^\top$, and verify by substitution.
 (d) Let $A_\varepsilon = \begin{pmatrix}3 & 1\\ 0 & 3 + \varepsilon\end{pmatrix}$ with $\varepsilon \ne 0$ small. Find its eigenvalues and eigenvectors, the angle between the eigenvectors, and $X_\varepsilon^{-1}$. What happens as $\varepsilon\to0$, and why does this make $A_\varepsilon^k = X_\varepsilon\Lambda_\varepsilon^kX_\varepsilon^{-1}$ a bad way to compute $A_\varepsilon^k$ in floating point?
 
-**B8.** (Code.) `project.py`, Part 1, implements `power_iteration` and records the iterates.
+**B8.** (Code.) `project.py`, Part 1, implements `power_iteration` and `inverse_iteration`, and contains a reference `convergence_rate` that answers (a)–(c). Write your own version first, then compare.
 (a) For $A = \begin{pmatrix}4 & 1\\ 2 & 3\end{pmatrix}$ starting from $\mathbf{v}_0 = (1, 0)^\top$, record the direction error $e_k = \|\mathbf{v}_k - \mathbf{x}_1\|$ (after flipping the sign of $\mathbf{v}_k$ to match $\mathbf{x}_1$, both unit length) and fit a straight line to $\log e_k$ against $k$ over the range where $e_k > 10^{-10}$. Compare the slope to $\log|\lambda_2/\lambda_1| = \log(2/5)$. Do the same for the symmetric $\begin{pmatrix}2 & 1\\ 1 & 2\end{pmatrix}$ (ratio $1/3$).
-(b) Record also the Rayleigh-quotient error $|\lambda^{(k)} - \lambda_1|$. For the symmetric matrix you should find a slope close to $2\log|\lambda_2/\lambda_1|$, twice as steep. Explain this: write the unit iterate as $\mathbf{v}_k \propto \mathbf{x}_1 + \varepsilon_k\mathbf{x}_2$ with $\mathbf{x}_1\perp\mathbf{x}_2$ orthonormal, expand the Rayleigh quotient to second order in $\varepsilon_k$, and say what is different in the nonsymmetric case.
+(b) Record also the Rayleigh-quotient error $|\lambda^{(k)} - \lambda_1|$. For the symmetric matrix you should find a slope close to $2\log|\lambda_2/\lambda_1|$, twice as steep. Explain this: write the unit iterate as $\mathbf{v}_k \propto \mathbf{x}_1 + \varepsilon_k\mathbf{x}_2$ with $\mathbf{x}_1\perp\mathbf{x}_2$ orthonormal, expand the Rayleigh quotient to second order in $\varepsilon_k$, and say what is different in the nonsymmetric case: expand it to first order with unit eigenvectors and $c = \mathbf{x}_1^\top\mathbf{x}_2 \ne 0$.
+(c) Extend your function with a `shift` argument that runs inverse iteration (solve with $A - \sigma I$ in place of the multiply; the target is now the eigenvector whose $\lambda$ is closest to $\sigma$). For $A = \begin{pmatrix}4 & 1\\ 2 & 3\end{pmatrix}$ and $\sigma = 2.2$, predict the slope from §3.6 and check it. How many decimal digits does each step gain, compared with plain power iteration on the same matrix?
 
 ## C. Challenge (do at least one)
 

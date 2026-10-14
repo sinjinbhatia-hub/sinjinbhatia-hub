@@ -9,8 +9,8 @@
 # A^k = X Lambda^k X^{-1} and Binet's formula; (4) du/dt = Au by
 # eigendecomposition versus `solve_ivp`; (5) the matrix exponential by series
 # versus `scipy.linalg.expm`, d/dt e^{At} = A e^{At}, and the e^A e^B != e^{A+B}
-# counterexample; (6) phase portraits of the four regions of the
-# trace-determinant plane; (7) the two-mass three-spring normal modes of
+# counterexample; (6) phase portraits of a saddle, a stable node, a stable
+# spiral and a center, and the trace-determinant plane; (7) the two-mass three-spring normal modes of
 # Example 4.3, animated as frames; (8) trace/det identities, similar matrices,
 # the defective shear, Example 4.5, and the symmetric 3x3 of Example 4.6.
 #
@@ -18,6 +18,7 @@
 
 # %%
 import time
+from fractions import Fraction
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
@@ -34,9 +35,10 @@ SQ3 = np.sqrt(3.0)
 
 def same_direction(v, w, tol=1e-8):
     """True if v and w are nonzero scalar multiples of each other (real or complex
-    scalar). Uses the equality case of Cauchy-Schwarz (LA-1, Theorem 3.11):
-    |<v, w>| = ||v|| ||w||. This is how to compare eigenvectors, which are only
-    defined up to scale (Theorem 3.2 and section 8 of the notes)."""
+    scalar). Uses the equality case of the complex Cauchy-Schwarz inequality
+    (LA-8, Theorem 3.4; LA-1, Theorem 3.11 for real vectors): |<v, w>| = ||v|| ||w||.
+    This is how to compare eigenvectors, which are only defined up to scale
+    (Theorem 3.2 and section 8 of the notes)."""
     v = np.asarray(v, complex).ravel()
     w = np.asarray(w, complex).ravel()
     nv, nw = np.linalg.norm(v), np.linalg.norm(w)
@@ -146,12 +148,23 @@ def inverse_iteration(A, shift, k_max=200, tol=1e-13, v0=None):
     return float(v @ A @ v), v, k
 
 
-def convergence_rate(A, v0, k_max=60, floor=1e-10):
+def convergence_rate(A, v0, k_max=60, floor=1e-10, shift=None):
     """Exercise B8: direction error ||v_k - x_1|| and Rayleigh error |lambda^(k) - lambda_1|
-    along power iteration, with fitted slopes of log(error) vs k, and the predicted
-    slope log|lambda_2/lambda_1| from eq. (3.9)."""
-    A = np.asarray(A, float)
-    lam, X = eig_sorted(A)
+    along the iteration, with fitted slopes of log(error) vs k, and the predicted slope.
+    shift=None: power iteration; x_1 belongs to the largest |lambda|, predicted slope
+    log|lambda_2/lambda_1| (eq. 3.9).  shift=sigma: inverse iteration on (A - sigma I)^{-1};
+    x_1 belongs to the lambda closest to sigma, predicted slope
+    log(|lambda_closest - sigma| / |lambda_next - sigma|) (section 3.6)."""
+    A = np.asarray(A, float); n = A.shape[0]
+    lam, X = np.linalg.eig(A)
+    if shift is None:
+        order = np.argsort(-np.abs(lam), kind="stable")
+        step = lambda v: A @ v
+    else:
+        order = np.argsort(np.abs(lam - shift), kind="stable")
+        lu = lu_factor(A - shift * np.eye(n))
+        step = lambda v: lu_solve(lu, v)
+    lam, X = lam[order], X[:, order]
     x1 = X[:, 0].real; x1 = x1 / np.linalg.norm(x1); lam1 = lam[0].real
     v = np.asarray(v0, float); v = v / np.linalg.norm(v)
     dir_err, ray_err = [], []
@@ -159,14 +172,18 @@ def convergence_rate(A, v0, k_max=60, floor=1e-10):
         s = np.sign(v @ x1) or 1.0
         dir_err.append(np.linalg.norm(s * v - x1))
         ray_err.append(abs(v @ A @ v - lam1))
-        w = A @ v; v = w / np.linalg.norm(w)
+        w = step(v); v = w / np.linalg.norm(w)
     dir_err, ray_err = np.array(dir_err), np.array(ray_err)
 
     def slope(err):
         k = np.arange(len(err)); ok = (err > floor) & (err < 0.5)
         return np.polyfit(k[ok], np.log(err[ok]), 1)[0]
 
-    return dir_err, ray_err, slope(dir_err), slope(ray_err), np.log(abs(lam[1] / lam[0]))
+    if shift is None:
+        pred = np.log(abs(lam[1] / lam[0]))
+    else:
+        pred = np.log(abs(lam[0] - shift) / abs(lam[1] - shift))
+    return dir_err, ray_err, slope(dir_err), slope(ray_err), pred
 
 
 # Exercise A1's matrix: eigenvalues 5 and 2, eigenvectors (1,1) and (1,-2).
@@ -195,10 +212,18 @@ d2, r2, s_dir2, s_ray2, pred2 = convergence_rate(A_sec2, [1, 0])        # ratio 
 assert abs(s_dir1 - pred1) < 0.03 * abs(pred1), (s_dir1, pred1)
 assert abs(s_dir2 - pred2) < 0.03 * abs(pred2), (s_dir2, pred2)
 assert abs(s_ray2 - 2 * pred2) < 0.05 * abs(2 * pred2), (s_ray2, 2 * pred2)  # B8(b): doubled slope
+assert abs(s_ray1 - pred1) < 0.05 * abs(pred1), (s_ray1, pred1)              # B8(b): nonsymmetric, first order
+# B8(c): shifted inverse iteration on A1 with sigma = 2.2 targets lambda = 2;
+# predicted ratio |2 - 2.2| / |5 - 2.2| = 1/14.
+d3, r3, s_dir3, s_ray3, pred3 = convergence_rate(A1, [1, 0], k_max=30, shift=2.2)
+assert np.isclose(pred3, np.log(1 / 14))
+assert abs(s_dir3 - pred3) < 0.05 * abs(pred3), (s_dir3, pred3)
 print(f"Direction-error slopes: {s_dir1:.3f} (predicted log(2/5) = {pred1:.3f}), "
       f"{s_dir2:.3f} (predicted log(1/3) = {pred2:.3f}).")
 print(f"Rayleigh-error slope for the symmetric matrix: {s_ray2:.3f} (predicted 2 log(1/3) = {2*pred2:.3f}); "
-      f"for the nonsymmetric one: {s_ray1:.3f} (first order, like the direction).")
+      f"for the nonsymmetric one: {s_ray1:.3f} (first order, like the direction; predicted {pred1:.3f}).")
+print(f"Inverse iteration on A1, shift 2.2: direction slope {s_dir3:.3f} (predicted log(1/14) = {pred3:.3f}), "
+      f"{-s_dir3 / np.log(10):.2f} digits per step versus {-s_dir1 / np.log(10):.2f} for power iteration.")
 
 fig, ax = plt.subplots(figsize=(6.5, 4.5))
 k = np.arange(len(d1))
@@ -294,7 +319,10 @@ for k in range(2, 101):
 binet = lambda k: (phi ** k - psi ** k) / np.sqrt(5)
 first_bad = next(k for k in range(101) if round(binet(k)) != F[k])
 assert first_bad > 70, first_bad
-assert abs(binet(100) - F[100]) / F[100] < 1e-13
+# Binet in doubles is good to ~3e-15 relative (14-15 digits), not 16: rounding phi to a double
+# (relative error delta ~ 3e-17) is amplified to ~100 delta in phi^100 (Example 4.2).
+rel_binet = abs(binet(100) - F[100]) / F[100]
+assert rel_binet < 1e-14, rel_binet
 assert F[100] == 354224848179261915075
 # A^k via (3.7) in floating point, compared with the exact integers.
 for k in (5, 10, 30, 60):
@@ -303,8 +331,8 @@ for k in (5, 10, 30, 60):
 # Exact A^100 with Python integers.
 A100 = np.linalg.matrix_power(np.array([[1, 1], [1, 0]], dtype=object), 100)
 assert A100[0, 1] == F[100]
-print(f"F_100 = {F[100]} (exact); Binet in floating point = {binet(100):.13e}; "
-      f"rounding Binet first fails at k = {first_bad}.")
+print(f"F_100 = {F[100]} (exact); Binet in floating point = {binet(100):.15e} "
+      f"(relative error {rel_binet:.1e}); rounding Binet first fails at k = {first_bad}.")
 
 # %% [markdown]
 # ## Part 4: du/dt = Au by eigendecomposition and by solve_ivp (sections 3.8, 3.11)
@@ -643,7 +671,29 @@ assert np.allclose(expm(S_sh * 0.7), np.exp(0.7) * np.array([[1, 0.7], [0, 1]]))
 assert np.allclose(np.linalg.eigvals(A_n), 0) and np.allclose(np.linalg.eigvals(B_n), 0)
 assert np.allclose(sorted(np.linalg.eigvals(A_n + B_n).real), [-1, 1])
 assert np.allclose(sorted(np.linalg.eigvals(A_n @ B_n).real), [0, 1])
-print("Shear: AM = 2, GM = 1, S^k = [[1,k],[0,1]]; eigenvalues of A + B are not lambda + mu.")
+# ...and a shared eigenbasis is sufficient (B1c) but not necessary: these two do not commute,
+# yet, being upper triangular, their sum and product have eigenvalues 1+2, 2+1 and 1*2, 2*1.
+A_t = np.array([[1.0, 1.0], [0.0, 2.0]]); B_t = np.diag([2.0, 1.0])
+assert not np.allclose(A_t @ B_t, B_t @ A_t)
+assert np.allclose(np.linalg.eigvals(A_t + B_t), [3, 3]) and np.allclose(np.linalg.eigvals(A_t @ B_t), [2, 2])
+print("Shear: AM = 2, GM = 1, S^k = [[1,k],[0,1]]; eigenvalues of A + B are not lambda + mu in general.")
+
+# B7(d): A_eps = [[3, 1], [0, 3 + eps]] is diagonalizable but X_eps is nearly singular. The top-right
+# entry of X Lambda^k X^{-1} is ((3+eps)^k - 3^k)/eps, a difference quotient that loses about
+# log10(1/eps) ~ 8 of the 16 digits for eps = 1e-8; matrix_power stays accurate to ~1e-16.
+eps = 1e-8
+A_eps = np.array([[3.0, 1.0], [0.0, 3.0 + eps]])
+lam_e, X_e = np.linalg.eig(A_eps)
+err_eig, err_pow = [], []
+for kk in (5, 10, 30):
+    e_ex = Fraction(eps)                                   # the double eps, exactly
+    true = float(((3 + e_ex) ** kk - 3 ** kk) / e_ex)     # exact top-right entry, rounded once
+    err_eig.append(abs(((X_e * lam_e ** kk) @ np.linalg.inv(X_e))[0, 1] - true) / true)
+    err_pow.append(abs(np.linalg.matrix_power(A_eps, kk)[0, 1] - true) / true)
+assert max(err_pow) < 1e-14, err_pow
+assert 1e-11 < max(err_eig) < 1e-6, err_eig                  # about half the digits lost, not all
+print(f"B7(d), eps = 1e-8: relative error of the top-right entry of A^k (k = 5, 10, 30) via X Lambda^k X^-1: "
+      f"{', '.join(f'{e:.1e}' for e in err_eig)}; via matrix_power: {max(err_pow):.1e}.")
 
 # Example 4.6: the symmetric 3x3.
 A6 = np.array([[3.0, 1.0, -1.0], [1.0, 3.0, -1.0], [-1.0, -1.0, 5.0]])

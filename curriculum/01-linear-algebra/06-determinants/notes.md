@@ -8,7 +8,7 @@
 
 You already know, from LA-2, that a square matrix is invertible exactly when elimination produces $n$ nonzero pivots, and from LA-4 that a matrix is the coordinate description of a linear map. This module attaches a single number to a square matrix that answers the invertibility question ("is it zero?"), measures how the map scales volume ("what is its absolute value?"), and records whether the map flips orientation ("what is its sign?").
 
-You need: elimination with row swaps (LA-2), linear independence and dimension (LA-3), the idea that a linear map is determined by what it does to a basis (LA-4, Theorem 3.5 of LA-1). You will use: LA-7 defines eigenvalues as the roots of $\det(A - \lambda I)$ and cannot start without this module. LA-8 (positive definiteness via minors), LA-12 (alternating forms and tensors), F5 (the $\det\Sigma$ in the Gaussian density and the Jacobian in change of variables), and CM-8 (Liouville's theorem) all reach back here.
+You need: elimination with row swaps (LA-2), linear independence and dimension (LA-3), the idea that a linear map is determined by what it does to a basis (LA-4, Theorem 3.5 of LA-1). You will use: LA-7 defines eigenvalues as the roots of $\det(A - \lambda I)$ and cannot start without this module. LA-8 (orthogonal matrices have $\det = \pm 1$; positive definiteness through positive pivots, whose product is $\det A$), LA-12 (alternating forms and tensors), F5 (the $\det\Sigma$ in the Gaussian density and the Jacobian in change of variables), and CM-8 (Liouville's theorem) all reach back here.
 
 Honest sizing: the computations are easy. The two ideas that take real effort are the proof that the three defining properties pin down a unique function, and the alternating-multilinear characterization in §3.9. Budget your eight hours accordingly: two on §2–3.4, two on §3.5–3.8, two on §3.9–3.13, two on exercises and the project.
 
@@ -46,11 +46,11 @@ Call its area $\operatorname{Area}(\mathbf{a}, \mathbf{b})$, a function of two v
 
 **Adding to one side.** Write the area as base times height, where the height is measured perpendicular to $\mathbf{b}$:
 $$\operatorname{Area}(\mathbf{a}, \mathbf{b}) = \|\mathbf{b}\| \cdot h(\mathbf{a}), \qquad h(\mathbf{a}) = \text{component of } \mathbf{a} \text{ perpendicular to } \mathbf{b}.$$
-Let $\mathbf{n}$ be the unit vector obtained by rotating $\mathbf{b}/\|\mathbf{b}\|$ by $90°$ counterclockwise. Then $h(\mathbf{a}) = \mathbf{a} \cdot \mathbf{n}$, and the dot product is linear in $\mathbf{a}$ (LA-1, §3.5). So
+Let $\mathbf{n}$ be the unit vector obtained by rotating $\mathbf{b}/\|\mathbf{b}\|$ by $90°$ **clockwise**, $\mathbf{n} = (b_2, -b_1)^\top/\|\mathbf{b}\|$. (Check: for $\mathbf{b} = \mathbf{e}_2$ this gives $\mathbf{n} = \mathbf{e}_1$, so $\mathbf{a} = \mathbf{e}_1$ gets height $+1$.) Then $h(\mathbf{a}) = \mathbf{a} \cdot \mathbf{n}$, and the dot product is linear in $\mathbf{a}$ (LA-1, §3.5). So
 $$\operatorname{Area}(\mathbf{a} + \mathbf{a}', \mathbf{b}) = \|\mathbf{b}\|\,(\mathbf{a} + \mathbf{a}')\cdot\mathbf{n} = \operatorname{Area}(\mathbf{a}, \mathbf{b}) + \operatorname{Area}(\mathbf{a}', \mathbf{b}).$$
 Area is **additive** in the first argument. You can see the same fact without the dot product: shear the parallelogram on $\mathbf{a} + \mathbf{a}'$ along the direction of $\mathbf{b}$ and it decomposes into the parallelogram on $\mathbf{a}$ and the one on $\mathbf{a}'$, each with the same base $\mathbf{b}$.
 
-But there is a catch in the formula $h(\mathbf{a}) = \mathbf{a} \cdot \mathbf{n}$: it can be **negative**. If $\mathbf{a}$ is on the clockwise side of $\mathbf{b}$, the "height" comes out negative, and $\|\mathbf{b}\|\,h(\mathbf{a})$ is minus the geometric area. The formula is not computing area. It is computing **signed area**: positive when going from $\mathbf{a}$ to $\mathbf{b}$ is a counterclockwise turn, negative when it is clockwise.
+But there is a catch in the formula $h(\mathbf{a}) = \mathbf{a} \cdot \mathbf{n}$: it can be **negative**. If $\mathbf{a}$ is on the counterclockwise side of $\mathbf{b}$ (so going from $\mathbf{a}$ to $\mathbf{b}$ is a clockwise turn), the "height" comes out negative, and $\|\mathbf{b}\|\,h(\mathbf{a})$ is minus the geometric area. The formula is not computing area. It is computing **signed area**: positive when going from $\mathbf{a}$ to $\mathbf{b}$ is a counterclockwise turn, negative when it is clockwise.
 
 ```
        b                            a
@@ -105,7 +105,7 @@ Throughout this subsection, $\det$ is any function satisfying (D1)–(D3).
 
 *Proof.* Swap the two equal rows. The matrix is unchanged, so its determinant is unchanged. But (D2) says the determinant was multiplied by $-1$. So $\det A = -\det A$, hence $\det A = 0$. ∎
 
-(This one-line argument uses that $2 \neq 0$ in $\mathbb{R}$. Over fields where $1 + 1 = 0$ it fails, which is why Axler takes "two equal arguments gives zero" as the axiom and derives the sign flip from it; see §3.9 step 1. Over $\mathbb{R}$ the two formulations are equivalent.)
+(This one-line argument uses that $2 \neq 0$ in $\mathbb{R}$. Axler takes "two equal arguments give zero" as the definition and derives the sign flip from it (§3.9 step 1); that is also the formulation that keeps working over fields where $1 + 1 = 0$, where the argument above fails. Over $\mathbb{R}$ and $\mathbb{C}$ the two formulations are equivalent.)
 
 **Theorem 3.3 (Row operations).** Subtracting a multiple of one row from another row does not change the determinant.
 
@@ -115,7 +115,7 @@ where the last matrix has $\mathbf{r}_j^\top$ in row $i$ **and** in row $j$. By 
 
 **Theorem 3.4 (Zero row).** If some row of $A$ is zero, $\det A = 0$.
 
-*Proof.* The zero row equals $0 \cdot \mathbf{r}^\top$ for any $\mathbf{r}$. By (D3) with $c = 0$ and no $\mathbf{r}'$ term, $\det A = 0 \cdot \det(\cdots) = 0$. ∎
+*Proof.* Write the zero row as $\mathbf{0}^\top + \mathbf{0}^\top$ and apply (3.1) in that row with $c = 1$ and $\mathbf{r} = \mathbf{r}' = \mathbf{0}$: $\det A = \det A + \det A$. Hence $\det A = 0$. ∎
 
 **Theorem 3.5 (Dependent rows).** If the rows of $A$ are linearly dependent, $\det A = 0$.
 
@@ -137,10 +137,12 @@ where the last matrix has $\mathbf{r}_j^\top$ in row $i$ **and** in row $j$. By 
 $$\det A = (-1)^s\, u_{11} u_{22} \cdots u_{nn} = (-1)^s \times (\text{product of the pivots}). \tag{3.7}$$
 In particular, $\det A \neq 0$ if and only if $A$ is invertible.
 
+▶ **Try it first.** Elimination uses only two kinds of row operation. What does each do to the determinant (§3.2)? And what does Theorem 3.6 say about the matrix you end with?
+
 *Proof.*
 
 1. Elimination uses two kinds of operations: swapping two rows (each one multiplies the determinant by $-1$, by (D2)) and subtracting a multiple of a pivot row from a lower row (no change, Theorem 3.3). After $s$ swaps and any number of subtractions, $\det U = (-1)^s \det A$.
-2. $\det U$ is the product of its diagonal (Theorem 3.6). The diagonal of $U$ holds the pivots, with $0$ in any position where elimination found no pivot. Multiply through by $(-1)^s$ to get (3.7).
+2. $\det U$ is the product of its diagonal (Theorem 3.6). If elimination finds a pivot in every column, the diagonal of $U$ holds the $n$ pivots. If some column has no pivot, then $U$ has fewer than $n$ pivots, so its last row is zero; in particular $u_{nn} = 0$, and both sides of (3.7) are $0$ (read "product of the pivots" as $0$ in that case). Multiply through by $(-1)^s$ to get (3.7).
 3. From LA-2: $A$ is invertible iff elimination produces $n$ nonzero pivots iff $u_{11}\cdots u_{nn} \neq 0$ iff $\det A \neq 0$. ∎
 
 ■ **What just happened.** Two things. First, the practical algorithm: eliminate, count swaps, multiply the diagonal. For a $1000 \times 1000$ matrix this costs about $\tfrac23 n^3 \approx 7 \times 10^8$ flops, well under a second. Second, a uniqueness proof in disguise: step 1 used only (D2) and (D3), and step 2 used only (D1)–(D3). So **any** function satisfying the three properties must return $(-1)^s u_{11}\cdots u_{nn}$ on $A$. If two functions both satisfy (D1)–(D3), they agree on every matrix. There is at most one determinant.
@@ -155,7 +157,7 @@ What we have not yet shown is that there is at least one. Different elimination 
 
 *Proof.*
 
-1. *Adjacent swap.* Swap the entries in positions $k$ and $k+1$. For any pair of positions not equal to $\{k, k+1\}$, the two entries keep their relative order (a pair involving position $k$ and some $m \notin \{k, k+1\}$ compares the same two values, in the same left-to-right order, as before). Only the pair $(k, k+1)$ changes status: it becomes an inversion if it was not one, and stops being one if it was. So $N$ changes by exactly $\pm 1$.
+1. *Adjacent swap.* Swap the entries in positions $k$ and $k+1$. Track pairs of **entries** (values) rather than pairs of positions: an inversion is a pair of entries in which the larger one stands to the left. Any two entries that are not both among the two swapped ones keep their left-to-right order. (For example, the entry $\sigma(k)$ and an entry at position $m < k$: before the swap they sit at positions $m < k$, after it at $m < k+1$; same order.) So their inversion status is unchanged. Only the pair of swapped entries changes status: it becomes an inversion if it was not one, and stops being one if it was. So $N$ changes by exactly $\pm 1$.
 2. *General swap.* Swap positions $i < j$, with $d = j - i$. Do it with adjacent swaps: move the entry at position $j$ leftward to position $i+1$ ($d - 1$ adjacent swaps), swap positions $i$ and $i + 1$ (one swap), then move the entry now at position $i+1$ (the one originally at $i$) rightward to position $j$ ($d - 1$ swaps). Total $2d - 1$ adjacent swaps, an odd number, each changing $N$ by $\pm 1$. The net change is odd. ∎
 
 Let $P_\sigma$ be the **permutation matrix** with rows $\mathbf{e}_{\sigma(1)}^\top, \dots, \mathbf{e}_{\sigma(n)}^\top$. Sorting its rows into the order $\mathbf{e}_1^\top, \dots, \mathbf{e}_n^\top$ by $s$ swaps turns it into $I$ and turns the list $\sigma$ into $(1, \dots, n)$, which has $N = 0$. Each swap flips the parity of $N$ (Lemma 3.8), so $(-1)^s = (-1)^{N(\sigma)}$. By (D2) and (D1), if a determinant exists then
@@ -189,13 +191,14 @@ the sum running over all $n!$ permutations of $\{1, \dots, n\}$.
 
 ### 3.4 Products, inverses, transposes
 
-**Theorem 3.10 (Product rule).** For $n \times n$ matrices $A$ and $B$, $\det(AB) = \det A \cdot \det B$.
+**Theorem 3.10 (Product rule).** For $n \times n$ matrices $A$ and $B$,
+$$\det(AB) = \det A \cdot \det B. \tag{3.10}$$
 
 ▶ **Try it first.** Fix $B$ with $\det B \neq 0$ and consider $f(A) = \det(AB)/\det B$ as a function of $A$. Check (D1)–(D3) for $f$. Then what does uniqueness say?
 
 *Proof.*
 
-1. *Case $\det B \neq 0$.* Define $f(A) = \det(AB)/\det B$. Row $i$ of $AB$ is $\mathbf{r}_i^\top B$ (LA-1, row form of a product), so each row of $AB$ depends only on the corresponding row of $A$, and linearly.
+1. *Case $\det B \neq 0$.* Define $f(A) = \det(AB)/\det B$. Row $i$ of $AB$ is $\mathbf{r}_i^\top B$: by LA-1 eq. (3.3), column $j$ of $AB$ is $A\mathbf{b}_j$, whose $i$-th entry is $\mathbf{r}_i^\top\mathbf{b}_j$ (LA-1, Definition 3.3′), so row $i$ of $AB$ is $(\mathbf{r}_i^\top\mathbf{b}_1, \dots, \mathbf{r}_i^\top\mathbf{b}_n) = \mathbf{r}_i^\top B$. So each row of $AB$ depends only on the corresponding row of $A$, and linearly.
 2. *(D1):* $f(I) = \det(IB)/\det B = 1$.
 3. *(D2):* swapping rows $i, j$ of $A$ swaps rows $i, j$ of $AB$, which flips $\det(AB)$ and hence $f$.
 4. *(D3):* if row $i$ of $A$ is $c\,\mathbf{r}^\top + \mathbf{r}'^\top$, row $i$ of $AB$ is $c\,\mathbf{r}^\top B + \mathbf{r}'^\top B$, and (D3) for $\det$ applied to $AB$ gives (D3) for $f$.
@@ -210,7 +213,10 @@ the sum running over all $n!$ permutations of $\{1, \dots, n\}$.
 
 Part (c) is the result LA-7 needs most. In LA-4, two matrices $A$ and $S^{-1}AS$ describe the **same linear map** in two bases. So the determinant is a property of the map, not of the coordinates. §3.9 gives a second, coordinate-free proof of the same fact.
 
-**Theorem 3.11 (Transpose).** $\det A^\top = \det A$.
+**Theorem 3.11 (Transpose).**
+$$\det A^\top = \det A. \tag{3.11}$$
+
+▶ **Try it first.** For $n = 2$, check it directly. For general $n$, each Leibniz term of $A^\top$ is a product $\prod_i a_{\sigma(i)\,i}$. Reorder its factors by row index. Which permutation do you get, and how is its sign related to $\operatorname{sgn}(\sigma)$?
 
 *Proof.*
 
@@ -220,6 +226,10 @@ Part (c) is the result LA-7 needs most. In LA-4, two matrices $A$ and $S^{-1}AS$
 4. As $\sigma$ runs over all permutations so does $\sigma^{-1}$. So $\det A^\top = \sum_{\rho}\operatorname{sgn}(\rho)\prod_m a_{m\rho(m)} = \det A$ with $\rho = \sigma^{-1}$. ∎
 
 ■ **What just happened.** Every row statement in §3.2 is now a column statement too: the determinant is linear in each column, flips under a column swap, is zero when two columns are equal or the columns are dependent, and is unchanged by adding a multiple of one column to another. The signed-area function of §2 was a function of columns; Definition 3.1 was stated for rows; Theorem 3.11 says they are the same function.
+
+**Remark (complex matrices).** Nothing in §3.1–3.4 used anything about $\mathbb{R}$ beyond addition, multiplication, division by nonzero numbers, and $2 \neq 0$; elimination (LA-2) and independence (LA-3) work the same way over $\mathbb{C}$. So with Definition 3.1 read for $\det : \mathbb{C}^{n\times n} \to \mathbb{C}$, Theorems 3.2–3.11 and the Leibniz formula (3.9) hold verbatim for complex $n\times n$ matrices, and so do §3.5–3.7 and §3.9, whose proofs use only these. LA-7 needs this: it takes $\det(A - \lambda I)$ with complex $\lambda$. One fact is new. Write $\overline{A}$ for the entrywise complex conjugate and $A^\dagger = \overline{A}^\top$ for the conjugate transpose. Then
+$$\det\overline{A} = \overline{\det A}, \qquad \det A^\dagger = \overline{\det A}.$$
+*Proof.* Conjugation respects sums and products, and $\operatorname{sgn}(\sigma) = \pm 1$ is real, so conjugating each term of (3.9) gives $\overline{\det A} = \sum_\sigma\operatorname{sgn}(\sigma)\prod_i\overline{a_{i\sigma(i)}} = \det\overline{A}$. Then $\det A^\dagger = \det(\overline{A}^\top) = \det\overline{A}$ by Theorem 3.11. ∎ (LA-8 uses this to show a unitary matrix has $|\det U| = 1$.)
 
 ### 3.5 Cofactor expansion
 
@@ -244,7 +254,7 @@ where $M_{ij}$ is the minor (the determinant of $A$ with row $i$ and column $j$ 
 The signs $(-1)^{i+j}$ form a checkerboard starting with $+$ in the top-left corner:
 $$\begin{pmatrix} + & - & + & - \\ - & + & - & + \\ + & - & + & - \\ - & + & - & + \end{pmatrix}.$$
 
-■ **What just happened.** The $n\times n$ determinant is a combination of $n$ determinants of size $n - 1$. Recursing all the way down costs about $e \cdot n!$ multiplications (a short calculation: $T(n) = nT(n-1) + n$ gives $T(n)/n! \to e$). Cofactor expansion is the right tool when a row has many zeros, when the matrix has symbolic entries, and for proofs (§3.6, §3.7, §3.12). It is the wrong tool for a numerical $10\times 10$ matrix; use (3.7).
+■ **What just happened.** The $n\times n$ determinant is a combination of $n$ determinants of size $n - 1$. Recursing all the way down costs about $(e - 1)\,n! \approx 1.72\,n!$ multiplications. The short calculation: a $1\times 1$ determinant needs no multiplications, $T(1) = 0$, and an $n\times n$ one needs $n$ minors plus $n$ products $a_{1j}M_{1j}$, so $T(n) = nT(n-1) + n$. Dividing by $n!$ gives $T(n)/n! = T(n-1)/(n-1)! + 1/(n-1)!$, hence $T(n) = n!\sum_{k=1}^{n-1}1/k! \to (e - 1)\,n!$. Cofactor expansion is the right tool when a row has many zeros, when the matrix has symbolic entries, and for proofs (§3.6, §3.7, §3.12). It is the wrong tool for a numerical $10\times 10$ matrix; use (3.7).
 
 ### 3.6 Cramer's rule
 
@@ -276,7 +286,7 @@ $$A \,\operatorname{adj}A = (\det A)\, I, \qquad\text{so}\qquad A^{-1} = \frac{\
 3. *Off-diagonal, $i \neq k$:* Let $A'$ be $A$ with row $k$ replaced by a copy of row $i$. The cofactors $C_{kj}$ are computed from the matrix with row $k$ deleted, so they do not see what is in row $k$: $A'$ and $A$ have the same $C_{kj}$ for every $j$. Expanding $\det A'$ along its row $k$, whose entries are $a_{ij}$, gives $\det A' = \sum_j a_{ij}C_{kj}$, which is exactly our sum. But $A'$ has two equal rows, so $\det A' = 0$.
 4. So $A\,C^\top$ has $\det A$ on the diagonal and $0$ elsewhere. If $\det A \neq 0$, divide by it. ∎
 
-For $n = 2$: $\operatorname{adj}\begin{pmatrix} a & b \\ c & d\end{pmatrix} = \begin{pmatrix} d & -b \\ -c & a\end{pmatrix}$, giving the formula you memorized for the $2\times 2$ inverse. For $n = 3$ you need nine $2\times 2$ determinants; for $n = 4$, sixteen $3\times 3$ ones. Like Cramer, this is a formula for proofs and symbols (it shows, for instance, that the entries of $A^{-1}$ are polynomials in the entries of $A$ divided by $\det A$), not a way to compute inverses numerically. The project's "Your turn" asks you to measure how badly it does.
+■ **What just happened.** The diagonal of $A\operatorname{adj}A$ is cofactor expansion; the off-diagonal is cofactor expansion of a matrix with a repeated row, which is $0$. So the inverse is the transposed cofactor matrix divided by one number. For $n = 2$: $\operatorname{adj}\begin{pmatrix} a & b \\ c & d\end{pmatrix} = \begin{pmatrix} d & -b \\ -c & a\end{pmatrix}$, giving the formula you memorized for the $2\times 2$ inverse. For $n = 3$ you need nine $2\times 2$ determinants; for $n = 4$, sixteen $3\times 3$ ones. Like Cramer, this is a formula for proofs and symbols (it shows, for instance, that the entries of $A^{-1}$ are polynomials in the entries of $A$ divided by $\det A$), not a way to compute inverses numerically. The project's "Your turn" asks you to measure how badly it does.
 
 ### 3.8 The cross product is a determinant
 
@@ -293,7 +303,7 @@ where the "determinant" with vectors in the first row is shorthand for the cofac
 $$\|\mathbf{u}\|^2\|\mathbf{v}\|^2 - (\mathbf{u}\cdot\mathbf{v})^2 = \sum_{i,j}u_i^2v_j^2 - \sum_{i,j}u_iv_iu_jv_j = \sum_{i < j}\left(u_i^2v_j^2 + u_j^2v_i^2 - 2u_iv_iu_jv_j\right) = \sum_{i<j}(u_iv_j - u_jv_i)^2,$$
 where the $i = j$ terms cancelled between the two double sums. The three terms $i < j$ are the squares of the three components in (3.15). Then $\|\mathbf{u}\|^2\|\mathbf{v}\|^2(1 - \cos^2\theta) = \|\mathbf{u}\|^2\|\mathbf{v}\|^2\sin^2\theta$ by the angle formula (LA-1, Theorem 3.10). ∎
 
-■ **What just happened.** Every cross-product identity you memorized in mechanics is a determinant property. Anticommutativity $\mathbf{v}\times\mathbf{u} = -\mathbf{u}\times\mathbf{v}$ is a row swap. $\mathbf{u}\times\mathbf{u} = \mathbf{0}$ is two equal rows. Linearity in each factor is (D3). And (a) with (c) says $|\mathbf{w}\cdot(\mathbf{u}\times\mathbf{v})|$ is base area times height, the volume of the parallelepiped on $\mathbf{u}, \mathbf{v}, \mathbf{w}$, which is the $n = 3$ case of §3.10. The cross product exists only in $\mathbb{R}^3$ because only there does deleting one row of an $n\times n$ determinant leave exactly one vector's worth of cofactors; the object that generalizes is the alternating form of §3.9.
+■ **What just happened.** Every cross-product identity you memorized in mechanics is a determinant property. Anticommutativity $\mathbf{v}\times\mathbf{u} = -\mathbf{u}\times\mathbf{v}$ is a row swap. $\mathbf{u}\times\mathbf{u} = \mathbf{0}$ is two equal rows. Linearity in each factor is (D3). And (a) with (c) says $|\mathbf{w}\cdot(\mathbf{u}\times\mathbf{v})|$ is base area times height, the volume of the parallelepiped on $\mathbf{u}, \mathbf{v}, \mathbf{w}$, which is the $n = 3$ case of §3.10. Why only $\mathbb{R}^3$? The same construction in $\mathbb{R}^n$ (basis vectors in row 1, then $n - 1$ vectors below) eats $n - 1$ vectors, so it is a product of **two** vectors only when $n = 3$. (A bilinear cross product that is not built this way also exists in $\mathbb{R}^7$, from the octonions; it plays no role in this course.) The object that generalizes to every $n$ is the alternating form of §3.9.
 
 ### 3.9 The alternating-multilinear characterization (Axler's route)
 
@@ -319,11 +329,15 @@ In words: the alternating multilinear functions of $n$ vectors in $\mathbb{R}^n$
 
 **Corollary 3.16′ (The determinant of a linear map).** Let $T : \mathbb{R}^n \to \mathbb{R}^n$ be linear and let $f$ be any nonzero alternating multilinear form. Then $g(\mathbf{v}_1, \dots, \mathbf{v}_n) = f(T\mathbf{v}_1, \dots, T\mathbf{v}_n)$ is again alternating and multilinear, so by Theorem 3.16 there is a scalar $c$ with $g = c\,f$. The scalar $c$ does not depend on which $f$ you chose, and it equals $\det[T]_{\mathcal B}$ for the matrix of $T$ in **any** basis $\mathcal B$.
 
-*Proof.* $g$ is multilinear because $T$ is linear and $f$ is multilinear; it is alternating because equal inputs to $T$ give equal outputs. Apply (3.16) to both $g$ and $f$: $g(\mathbf{v}) = g(\mathbf{e})\det V$ and $f(\mathbf{v}) = f(\mathbf{e})\det V$, so $c = g(\mathbf{e})/f(\mathbf{e}) = f(T\mathbf{e}_1, \dots, T\mathbf{e}_n)/f(\mathbf{e}_1, \dots, \mathbf{e}_n) = \det(T\mathbf{e}_1 \cdots T\mathbf{e}_n) = \det[T]$ in the standard basis, using (3.16) once more. For another basis, repeat the argument with $\mathbf{e}$ replaced by that basis: the ratio $g/f$ is the same scalar $c$ no matter which basis you evaluate it on, and evaluating on $\mathcal B$ gives $\det[T]_{\mathcal B}$. ∎
+*Proof.* $g$ is multilinear because $T$ is linear and $f$ is multilinear; it is alternating because equal inputs to $T$ give equal outputs. Apply (3.16) to both $g$ and $f$: $g(\mathbf{v}) = g(\mathbf{e})\det V$ and $f(\mathbf{v}) = f(\mathbf{e})\det V$, so $c = g(\mathbf{e})/f(\mathbf{e}) = f(T\mathbf{e}_1, \dots, T\mathbf{e}_n)/f(\mathbf{e}_1, \dots, \mathbf{e}_n) = \det(T\mathbf{e}_1 \cdots T\mathbf{e}_n) = \det[T]$ in the standard basis, using (3.16) once more. ($f(\mathbf{e}) \neq 0$, since otherwise (3.16) would make $f$ identically zero.)
+
+For another basis $\mathcal B = (\mathbf{b}_1, \dots, \mathbf{b}_n)$ we need (3.16) written in $\mathcal B$-coordinates. Let $[\mathbf{v}]_{\mathcal B}$ be the coordinate column of $\mathbf{v}$, so $\mathbf{v}_j = \sum_i ([\mathbf{v}_j]_{\mathcal B})_i\,\mathbf{b}_i$. Steps 2–4 of the proof of Theorem 3.16, with $\mathbf{b}_i$ in place of $\mathbf{e}_i$ and these coordinates in place of the entries $v_{ij}$, give word for word
+$$f(\mathbf{v}_1, \dots, \mathbf{v}_n) = f(\mathbf{b}_1, \dots, \mathbf{b}_n)\cdot\det\big([\mathbf{v}_1]_{\mathcal B}\ \cdots\ [\mathbf{v}_n]_{\mathcal B}\big).$$
+Apply this with $\mathbf{v}_i = T\mathbf{b}_i$. The coordinate columns $[T\mathbf{b}_i]_{\mathcal B}$ are by definition the columns of $[T]_{\mathcal B}$ (LA-4), so $g(\mathbf{b}_1, \dots, \mathbf{b}_n) = f(T\mathbf{b}_1, \dots, T\mathbf{b}_n) = f(\mathbf{b}_1, \dots, \mathbf{b}_n)\det[T]_{\mathcal B}$. Also $f(\mathbf{b}_1, \dots, \mathbf{b}_n) = f(\mathbf{e})\det(\mathbf{b}_1 \cdots \mathbf{b}_n) \neq 0$, because the $\mathbf{b}_i$ are a basis (Theorem 3.7). Since $g = c\,f$, dividing gives $c = \det[T]_{\mathcal B}$. ∎
 
 So $\det T$ is defined without choosing coordinates, and Corollary 3.10′(c) is the shadow of this fact. The second thing it buys is a one-line product rule: $f(AB\mathbf{v}_1, \dots, AB\mathbf{v}_n) = (\det A) f(B\mathbf{v}_1, \dots, B\mathbf{v}_n) = (\det A)(\det B) f(\mathbf{v}_1, \dots, \mathbf{v}_n)$, so $\det(AB) = \det A\det B$.
 
-This is also the door to differential forms. In EM-1 and LA-12 you will meet $dx \wedge dy$, the alternating form that eats two vectors in the plane and returns the signed area of their parallelogram. It is $\det$. The Jacobian factor in §3.11 is the statement that a smooth map pulls back this form to $(\det J)\,du\wedge dv$. And in QM-7, the antisymmetric wavefunction of $n$ fermions is a determinant (the Slater determinant) precisely because "two particles in the same state gives zero" is the alternating property.
+This is also the door to differential forms. LA-12 §3.19 sketches alternating $k$-forms and the wedge product and identifies $\det$ as the top-degree form. In that language, $dx \wedge dy$ is the alternating form that eats two vectors in the plane and returns the signed area of their parallelogram: it is $\det$. The Jacobian factor in §3.11 is the statement that a smooth map pulls back this form to $(\det J)\,du\wedge dv$. This course does not develop differential forms further; Spivak, *Calculus on Manifolds*, ch. 4, is the standard place to learn them. And in QM-7, the antisymmetric wavefunction of $n$ fermions is a determinant (the Slater determinant) precisely because "two particles in the same state gives zero" is the alternating property.
 
 ### 3.10 Volume scaling and orientation
 
@@ -352,8 +366,10 @@ $$\operatorname{vol}T(\Omega) = |\det A|\operatorname{vol}\Omega. \tag{3.17}$$
 3. $P(d_1\mathbf{e}_1, \dots, d_n\mathbf{e}_n)$ is a box with edge lengths $|d_k|$, so its volume is $|d_1\cdots d_n|$ by (V1), and $|\det D| = |d_1\cdots d_n|$ by Theorem 3.6. Since neither quantity changed during the reduction, $\operatorname{vol}P(\mathbf{v}_1, \dots, \mathbf{v}_n) = |\det V|$.
 4. *(b).* $T$ is linear, so $T(P(\mathbf{v}_1, \dots, \mathbf{v}_n)) = \{\sum t_i A\mathbf{v}_i\} = P(A\mathbf{v}_1, \dots, A\mathbf{v}_n)$. By (a) and the product rule, $\operatorname{vol}T(P) = |\det(AV)| = |\det A|\,|\det V| = |\det A|\operatorname{vol}P$. A translated parallelepiped maps to a translated parallelepiped, so (V2) extends this to parallelepipeds not based at the origin.
 5. *(c), singular case.* If $\det A = 0$, $T(\Omega)$ lies in the column space of $A$, a proper subspace, and has volume $0$ by (V3).
-6. *(c), invertible case.* "$\Omega$ has a volume" means: for every $\varepsilon > 0$ there is a grid of cubes of side $h$ such that the union $I_h$ of the grid cubes contained in $\Omega$ and the union $O_h$ of the grid cubes meeting $\Omega$ satisfy $I_h \subseteq \Omega \subseteq O_h$ and $\operatorname{vol}O_h - \operatorname{vol}I_h < \varepsilon$. (This is Jordan measurability, the hypothesis under which Riemann integrals of volumes make sense.) Since $T$ is a bijection, $T(I_h) \subseteq T(\Omega) \subseteq T(O_h)$, and $T$ carries the disjoint cubes of $I_h$ to parallelepipeds overlapping only on faces. By step 4 and (V5),
-   $$\operatorname{vol}T(I_h) = |\det A|\operatorname{vol}I_h \le \operatorname{vol}T(\Omega) \le \operatorname{vol}T(O_h) = |\det A|\operatorname{vol}O_h.$$
+6. *(c), invertible case.* "$\Omega$ has a volume" means: for every $\varepsilon > 0$ there is a grid of cubes of side $h$ such that the union $I_h$ of the grid cubes contained in $\Omega$ and the union $O_h$ of the grid cubes meeting $\Omega$ satisfy $I_h \subseteq \Omega \subseteq O_h$ and $\operatorname{vol}O_h - \operatorname{vol}I_h < \varepsilon$. (This is Jordan measurability, the hypothesis under which Riemann integrals of volumes make sense.) Since $T$ is a bijection, $T(I_h) \subseteq T(\Omega) \subseteq T(O_h)$. The grid cubes overlap only on faces, and $T$ carries them to parallelepipeds that also overlap only on faces. A face lies in a translate of an $(n-1)$-dimensional subspace, so it has volume $0$ by (V2) and (V3). By step 4 and (V5),
+   $$\operatorname{vol}T(I_h) = |\det A|\operatorname{vol}I_h \qquad\text{and}\qquad \operatorname{vol}T(O_h) = |\det A|\operatorname{vol}O_h,$$
+   and these differ by less than $|\det A|\,\varepsilon$. So $T(\Omega)$ is squeezed between two finite unions of parallelepipeds, each with a volume, whose volumes are as close as we like. A set squeezed that way has a volume (this is the Jordan-measurability criterion again, with parallelepipeds in place of cubes), so we did not need to assume $T(\Omega)$ has one, and by monotonicity (V5) its volume lies between them:
+   $$|\det A|\operatorname{vol}I_h \le \operatorname{vol}T(\Omega) \le |\det A|\operatorname{vol}O_h.$$
    Both outer quantities are within $|\det A|\,\varepsilon$ of $|\det A|\operatorname{vol}\Omega$. Let $\varepsilon \to 0$. ∎
 
 ■ **What just happened.** The determinant was defined by three algebraic properties on rows. Theorem 3.17 says its absolute value is the volume-scaling factor of the linear map, for every region, not only for parallelepipeds. The approximation step is the same one that makes Riemann integration work; it is where "the linear map scales each tiny cube by $|\det A|$" becomes "it scales everything by $|\det A|$."
@@ -371,11 +387,11 @@ $$\int_{\mathbf{g}(U)} f(\mathbf{x})\,d\mathbf{x} = \int_U f(\mathbf{g}(\mathbf{
 
 What is skipped here, and is the entire difficulty of the real proof, is controlling the error uniformly: showing the image of a small cube is contained in a slightly inflated parallelepiped and contains a slightly deflated one. That argument is in Spivak, *Calculus on Manifolds*, Theorem 3-13, and Rudin, *Principles of Mathematical Analysis*, Theorem 10.9. The linear-algebra content of the theorem is exactly (3.17), and the $r$ in $r\,dr\,d\theta$ is exactly a $2\times 2$ determinant (Example 4.4).
 
-The absolute value is there because volume is positive. The sign of $\det J$ still carries information: it says whether $\mathbf{g}$ preserves or reverses orientation at that point, and when you integrate differential forms (EM-1, Stokes' theorem) rather than densities, the sign stays.
+The absolute value is there because volume is positive. The sign of $\det J$ still carries information: it says whether $\mathbf{g}$ preserves or reverses orientation at that point. In the oriented integrals of vector calculus (flux through a surface with a chosen normal, the orientation convention in Stokes' theorem, EM-1) and in the integration of differential forms (Spivak, *Calculus on Manifolds*, ch. 4), the sign stays.
 
 ### 3.12 The Vandermonde determinant and interpolation
 
-Given $n$ distinct numbers $x_1, \dots, x_n$, the **Vandermonde matrix** is
+Given $n$ numbers $x_1, \dots, x_n$ (the **nodes**), the **Vandermonde matrix** is
 $$V = \begin{pmatrix} 1 & x_1 & x_1^2 & \cdots & x_1^{n-1} \\ 1 & x_2 & x_2^2 & \cdots & x_2^{n-1} \\ \vdots & & & & \vdots \\ 1 & x_n & x_n^2 & \cdots & x_n^{n-1}\end{pmatrix}.$$
 Row $i$ is the monomials evaluated at $x_i$. So $V\mathbf{c}$, for $\mathbf{c} = (c_0, \dots, c_{n-1})^\top$, is the vector of values $p(x_i)$ of the polynomial $p(x) = c_0 + c_1x + \cdots + c_{n-1}x^{n-1}$. Finding the polynomial of degree $\le n - 1$ through the points $(x_i, y_i)$ is solving $V\mathbf{c} = \mathbf{y}$. That is Cramer's 1750 problem.
 
@@ -385,10 +401,10 @@ In particular $\det V \neq 0$ iff the $x_i$ are distinct, and then the interpola
 
 ▶ **Try it first.** Think of $\det V$ as a polynomial in $x_n$ alone (the other $x_i$ are constants). What is its degree? Where must it vanish? What does that force?
 
-*Proof.* Induction on $n$. For $n = 1$, $\det V = 1$ and the empty product is $1$.
+*Proof.* If two nodes coincide, $V$ has two equal rows, so $\det V = 0$ (Theorem 3.2), and the right side of (3.19) has a zero factor; both sides are $0$. So assume the nodes are distinct, and induct on $n$. For $n = 1$, $\det V = 1$ and the empty product is $1$.
 
 1. Expand $\det V$ along the last row (3.12). Each term is $\pm x_n^{j-1}$ times a minor that does not involve $x_n$. So $\det V = p(x_n)$ for a polynomial $p$ of degree $\le n - 1$ whose coefficient of $x_n^{n-1}$ is $(-1)^{n+n}M_{nn} = M_{nn}$, the determinant of the $(n-1)\times(n-1)$ Vandermonde matrix on $x_1, \dots, x_{n-1}$.
-2. If $x_n$ is set equal to any of $x_1, \dots, x_{n-1}$, two rows of $V$ become equal, so $p(x_i) = 0$ for $i = 1, \dots, n-1$. A polynomial of degree $\le n - 1$ with the $n - 1$ distinct roots $x_1, \dots, x_{n-1}$ (distinct by hypothesis) is a constant times $\prod_{i < n}(x_n - x_i)$, and matching the coefficient of $x_n^{n-1}$ identifies the constant: $p(x_n) = M_{nn}\prod_{i<n}(x_n - x_i)$.
+2. If $x_n$ is set equal to any of $x_1, \dots, x_{n-1}$, two rows of $V$ become equal, so $p(x_i) = 0$ for $i = 1, \dots, n-1$. A polynomial of degree $\le n - 1$ with the $n - 1$ distinct roots $x_1, \dots, x_{n-1}$ (distinct by our assumption) is a constant times $\prod_{i < n}(x_n - x_i)$, and matching the coefficient of $x_n^{n-1}$ identifies the constant: $p(x_n) = M_{nn}\prod_{i<n}(x_n - x_i)$.
 3. By induction $M_{nn} = \prod_{1\le i<j\le n-1}(x_j - x_i)$. Multiplying by the new factors $\prod_{i < n}(x_n - x_i)$ gives (3.19). ∎
 
 ■ **What just happened.** A determinant identity was proved by treating the determinant as a polynomial and counting roots. The same technique proves the characteristic polynomial facts in LA-7. And note the two ways distinctness enters: if two nodes coincide, two rows coincide, the determinant is $0$, and interpolation fails (two different $y$ values at the same $x$ is impossible; the same $y$ value gives a one-parameter family of solutions). Exercise B4 extracts a theorem about polynomials from this.
@@ -397,7 +413,7 @@ In particular $\det V \neq 0$ iff the $x_i$ are distinct, and then the interpola
 
 **It is a polynomial.** From (3.9), $\det A$ is a homogeneous polynomial of degree $n$ in the $n^2$ entries. Consequences: it is continuous (used in §3.10 for orientation and in LA-7 for the continuity of eigenvalues); it is differentiable (Exercise C1 computes the derivative); and $\det(cA) = c^n\det A$.
 
-**Cost.** Cofactor recursion: $T(n) = nT(n-1) + O(n)$, so $T(n) \approx e\cdot n!$. For $n = 20$ that is about $6.6 \times 10^{18}$ multiplications, centuries on a laptop. Elimination: about $\tfrac23 n^3$ flops, $5{,}300$ for $n = 20$. The project measures both; cofactor time multiplies by roughly $n$ at every step while elimination barely moves. Every library computes determinants by LU factorization, which is (3.7) with partial pivoting.
+**Cost.** Cofactor recursion: $T(n) = nT(n-1) + n$ with $T(1) = 0$, so $T(n) \approx (e - 1)\,n!$ (§3.5). For $n = 20$ that is about $4.2 \times 10^{18}$ multiplications, more than a century on a laptop at $10^9$ per second. Elimination: about $\tfrac23 n^3$ flops, $5{,}300$ for $n = 20$. The project measures both; once $n$ is past the sizes where overhead dominates, cofactor time multiplies by roughly $n$ at every step while elimination barely moves. Every library computes determinants by LU factorization, which is (3.7) with partial pivoting.
 
 **Scale.** Because $\det(cA) = c^n\det A$, the determinant says nothing about how close $A$ is to singular. The matrix $\tfrac{1}{10}I_{100}$ has determinant $10^{-100}$ and is as far from singular as a matrix can be: its inverse is $10 I$, perfectly behaved. The matrix $\operatorname{diag}(10^6, 10^{-6})$ has determinant $1$ and is numerically treacherous: perturbing its $(2,2)$ entry by $10^{-6}$ makes it singular. The right measure of "how singular" is the condition number $\kappa(A) = \sigma_{\max}/\sigma_{\min}$, the ratio of the largest to smallest singular values, defined in LA-9 and used throughout LA-13. The determinant is $\pm\prod_i\sigma_i$, a product that one tiny factor can dominate or a hundred moderate factors can shrink to nothing, and neither tells you about the ratio.
 
@@ -456,7 +472,7 @@ The map $\mathbf{g}(r, \theta) = (r\cos\theta, r\sin\theta)$ has Jacobian matrix
 $$J = \begin{pmatrix} \partial x/\partial r & \partial x/\partial\theta \\ \partial y/\partial r & \partial y/\partial\theta\end{pmatrix} = \begin{pmatrix} \cos\theta & -r\sin\theta \\ \sin\theta & r\cos\theta\end{pmatrix}, \qquad \det J = r\cos^2\theta + r\sin^2\theta = r.$$
 Read the columns geometrically. The first column, $\partial\mathbf{g}/\partial r = (\cos\theta, \sin\theta)^\top$, is a unit vector pointing radially: moving $dr$ in the $r$ direction moves you $dr$ outward. The second, $\partial\mathbf{g}/\partial\theta = r(-\sin\theta, \cos\theta)^\top$, has length $r$ and points tangentially: moving $d\theta$ moves you $r\,d\theta$ along the circle. The two columns are orthogonal (dot product $-r\cos\theta\sin\theta + r\sin\theta\cos\theta = 0$), so the parallelogram they span is a rectangle with sides $1$ and $r$, area $r$. The small coordinate cell $[r, r + dr]\times[\theta, \theta + d\theta]$ in the $(r, \theta)$ plane, of area $dr\,d\theta$, is carried to a near-rectangle of area $r\,dr\,d\theta$. That is (3.18) with $|\det J| = r$. The sign is positive: $(\partial_r\mathbf{g}, \partial_\theta\mathbf{g})$ is counterclockwise, so polar coordinates preserve orientation (for $r > 0$).
 
-A check with numbers: the quarter annulus $1 \le r \le 2$, $0 \le \theta \le \pi/2$ has area $\int_0^{\pi/2}\int_1^2 r\,dr\,d\theta = \tfrac{\pi}{2}\cdot\tfrac{4 - 1}{2} = \tfrac{3\pi}{4} \approx 2.356$. Forgetting the Jacobian gives $\tfrac{\pi}{2}\cdot 1 \approx 1.571$, wrong by a factor of $\tfrac32$, the average value of $r$ on the region. The project estimates the area by Monte Carlo and recovers $3\pi/4$ only with the factor $r$ included. Exercise B6 does the same for spherical coordinates and produces $r^2\sin\phi$.
+A check with numbers: the quarter annulus $1 \le r \le 2$, $0 \le \theta \le \pi/2$ has area $\int_0^{\pi/2}\int_1^2 r\,dr\,d\theta = \tfrac{\pi}{2}\cdot\tfrac{4 - 1}{2} = \tfrac{3\pi}{4} \approx 2.356$. Forgetting the Jacobian gives $\tfrac{\pi}{2}\cdot 1 \approx 1.571$, wrong by a factor of $\tfrac32$, the average value of $r$ over the $(r, \theta)$ rectangle $[1, 2]\times[0, \pi/2]$. The project estimates the area by Monte Carlo and recovers $3\pi/4$ only with the factor $r$ included. Exercise B6 does the same for spherical coordinates and produces $r^2\sin\phi$.
 
 ### Example 4.5: Cramer's rule in a two-loop circuit, against elimination
 
@@ -473,11 +489,11 @@ This is what you want from Cramer: closed forms showing how each current depends
 ## 5. Why it matters and where it connects
 
 - **LA-7.** Eigenvalues are the $\lambda$ with $A - \lambda I$ singular, that is, the roots of the **characteristic polynomial** $p(\lambda) = \det(A - \lambda I)$ (Theorem 3.7). It is a polynomial of degree $n$ by (3.9) (Exercise C2), and by Corollary 3.10′(c) it does not depend on the basis, so eigenvalues are a property of the map. Also $\det A = \prod_i\lambda_i$ and the Wronskian test for independent solutions of a linear ODE system is a determinant.
-- **LA-8.** Orthogonal matrices have $\det Q = \pm 1$ (from $Q^\top Q = I$ and Theorems 3.10, 3.11; Exercise B2). Sylvester's criterion tests positive definiteness through the signs of the leading principal minors.
+- **LA-8.** Orthogonal matrices have $\det Q = \pm 1$ (from $Q^\top Q = I$ and Theorems 3.10, 3.11; Exercise B2). LA-8 Theorem 3.15(iv) tests positive definiteness by the pivots: a symmetric $A$ is positive definite iff every pivot of elimination without row exchanges is positive. Since the product of the pivots is $\det A$ (3.7), for a $2\times 2$ matrix $\begin{pmatrix} a & b \\ b & c\end{pmatrix}$ the test reads $a > 0$ and $\det A > 0$.
 - **LA-9 and LA-13.** $|\det A| = \prod_i\sigma_i$, the product of the singular values, while the condition number is their ratio $\sigma_{\max}/\sigma_{\min}$. §3.13 is the reason the latter and not the former measures nearness to singularity. Determinants are computed via the LU factorization, which is (3.7).
-- **LA-12.** Theorem 3.16 says the space of alternating $n$-linear forms on an $n$-dimensional space is one-dimensional. LA-12 builds the whole exterior algebra ($k$-forms for $k < n$, wedge products) on this fact; $\det$ is the top-degree case, and $dx\wedge dy\wedge dz$ is the volume form.
+- **LA-12.** Theorem 3.16 says the space of alternating $n$-linear forms on an $n$-dimensional space is one-dimensional. LA-12 §3.19 sketches alternating $k$-forms and the wedge product and identifies $\det$ as the top-degree form (the volume form, whose components in $\mathbb{R}^3$ are the Levi-Civita symbol $\varepsilon_{ijk}$).
 - **EM-1.** Curvilinear coordinates and the Jacobian; the cross product in $\nabla\times$; the volume element in Gauss's law computations.
-- **CM-7, CM-8.** The inertia tensor's principal axes come from LA-8, but the volume of the body is a triple integral with a Jacobian. Liouville's theorem (CM-8) says Hamiltonian flow preserves phase-space volume: the Jacobian determinant of the flow map is identically $1$, and Exercise C1's formula $\tfrac{d}{dt}\det = \det\cdot\operatorname{tr}(\ldots)$ is how one proves it.
+- **CM-7, CM-8.** The inertia tensor's principal axes come from LA-8, but the volume of the body is a triple integral with a Jacobian. Liouville's theorem (CM-8) says Hamiltonian flow preserves phase-space volume: the Jacobian determinant of the flow map is identically $1$. CM-8 (Theorem 3.4) proves it with the divergence theorem. Exercise C1's Jacobi formula gives an alternative proof: the Jacobian $D\Phi_t$ of the flow satisfies $\tfrac{d}{dt}\det D\Phi_t = \det D\Phi_t\cdot(\nabla\cdot\mathbf{v})$, and $\nabla\cdot\mathbf{v} = 0$ for a Hamiltonian field.
 - **F5, ST-1, ML-6.** The multivariate Gaussian density has $(\det\Sigma)^{-1/2}$ in front because the map $\mathbf{z} \mapsto \Sigma^{1/2}\mathbf{z}$ scales volume by $(\det\Sigma)^{1/2}$ (Theorem 3.17). Transforming a density under $\mathbf{y} = \mathbf{g}(\mathbf{x})$ multiplies by $|\det J|^{-1}$ (3.18). Gaussian mixture log-likelihoods carry $\log\det\Sigma_k$; compute it with `slogdet`.
 - **QM-7.** The Slater determinant: the antisymmetric wavefunction of $n$ identical fermions is $\det[\psi_i(\mathbf{x}_j)]$. The Pauli exclusion principle is Theorem 3.2: two fermions in the same single-particle state means two equal rows, and the wavefunction vanishes.
 
@@ -490,10 +506,10 @@ See [exercises.md](exercises.md). A1–A5 drill the three ways to compute, the r
 `project.py` implements the determinant three ways and tests every claim in the notes that has a number in it:
 
 1. **Three algorithms.** `det_elimination` (partial pivoting, counts swaps, applies (3.7)), `det_leibniz` (all $n!$ permutations with signs from inversion counts, (3.9)), and `det_cofactor` (recursive (3.12)). All three are asserted against `np.linalg.det` on random matrices, and all four computations of Example 4.1 are reproduced, including the six Leibniz terms and the pivots $1, 2, -\tfrac72$.
-2. **Cost.** Times cofactor against elimination for $n = 2, \dots, 9$ and plots both on a log axis. You will watch factorial growth happen.
-3. **Volume.** Maps $100{,}000$ uniform points in the unit square and unit cube through random matrices and estimates the image's volume two ways (bounding-box rejection with the inverse map, and `scipy.spatial.ConvexHull`), checking against $|\det A|$ to within $1\%$ for the hull and $2\%$ for the rejection estimate (Theorem 3.17).
-4. **Pictures.** The unit square and its images under Example 4.2's shear, rotation, and reflection, with orientation shown by the order of the edge vectors.
-5. **Identities.** $\det(AB) = \det A\det B$, $\det A^\top = \det A$, $\det A^{-1} = 1/\det A$, $\det(cA) = c^n\det A$, the adjugate identity (3.14), Cramer's rule, and the Vandermonde formula (3.19), numerically on random matrices and symbolically in SymPy. The polar and spherical Jacobians are computed symbolically and the quarter-annulus area $3\pi/4$ is recovered by Monte Carlo with the factor $r$ (Example 4.4).
+2. **Cost.** Counts the multiplications of `det_cofactor` and asserts the exact count $n!\sum_{k=1}^{n-1}1/k!$, which is $(e - 1)\,n!$ to six digits at $n = 9$, and the $4.2\times 10^{18}$ figure for $n = 20$. Then times cofactor against elimination for $n = 2, \dots, 9$, asserts that cofactor time grows by a factor near $n$ per step for $n = 7, 8, 9$, and plots both on a log axis. You will watch factorial growth happen.
+3. **Volume.** Maps $100{,}000$ uniform points in the unit square and unit cube through Example 4.2's matrix, two fixed matrices and five random ones, and estimates the image's volume two ways (bounding-box rejection with the inverse map, and `scipy.spatial.ConvexHull`), checking against $|\det A|$ to within $1\%$ for the hull and $2\%$ for the rejection estimate (Theorem 3.17(a), (b)). Then maps the unit disk, a region that is not a parallelepiped, and checks that its image has area $\pi|\det A|$ (Theorem 3.17(c)).
+4. **Pictures.** The unit square and its images under Example 4.2's shear, rotation, reflection, and the stretch $RSD$, with orientation shown by the order of the edge vectors.
+5. **Identities.** $\det(AB) = \det A\det B$, $\det A^\top = \det A$, $\det A^{-1} = 1/\det A$, $\det(cA) = c^n\det A$, upper and lower triangular determinants, $\det\overline{Z} = \overline{\det Z}$ and $\det Z^\dagger = \overline{\det Z}$ for complex $Z$, the adjugate identity (3.14), Cramer's rule, and the Vandermonde formula (3.19), numerically on random matrices and symbolically in SymPy. The polar and spherical Jacobians are computed symbolically and the quarter-annulus area $3\pi/4$ is recovered by Monte Carlo with the factor $r$ (Example 4.4).
 6. **Scale.** `diag(1e6, 1e-6)` has determinant $1$ and condition number $10^{12}$; $0.1 I_{100}$ has determinant $10^{-100}$ and condition number $1$.
 
 **Build it yourself first:** write `det_elimination(A)` (eliminate with partial pivoting, count swaps, multiply the diagonal) and `det_leibniz(A)` (`itertools.permutations`, sign from counting inversions) before reading the code. Then the "Your turn" cells: the adjugate inverse versus `np.linalg.inv` on an ill-conditioned $4\times 4$, the volume of a tetrahedron from its vertices, and a repeated-row matrix under random perturbation of its third row.
@@ -502,12 +518,12 @@ See [exercises.md](exercises.md). A1–A5 drill the three ways to compute, the r
 
 - **Which row operation does what.** Three operations, three different effects: swapping two rows multiplies $\det$ by $-1$; multiplying a row by $c$ multiplies $\det$ by $c$; adding a multiple of one row to another does **nothing**. The swap sign is the one people lose. When you eliminate by hand, write "$s = $" in the margin and increment it every time you swap; do not try to remember afterwards. Example 4.1 has exactly one swap and the sign matters: without it you get $-7$.
 - **$\det(A + B) \neq \det A + \det B$ and $\det(cA) \neq c\det A$.** Linearity is in **one row at a time**. $\det(2I_3) = 8$, not $2$. If you catch yourself writing $\det(A + B)$ as a sum, go back to (3.1) and note that it has one row changing and $n - 1$ rows fixed.
-- **The checkerboard.** The cofactor $C_{ij}$ has sign $(-1)^{i+j}$, so $C_{12}$ is **negative** and $C_{21}$ is negative, while $C_{13}$, $C_{22}$, $C_{31}$ are positive. Expanding along row 2 starts with a minus. Write the sign pattern down every time until you stop needing to. The other classic slip is using the minor $M_{ij}$ where the cofactor $C_{ij}$ is needed, which drops all the signs; the adjugate formula (3.14) is wrong without them.
+- **The checkerboard.** The cofactor is $C_{ij} = (-1)^{i+j}M_{ij}$, so the sign factor attached to $C_{12}$ is **negative**, and so is the one attached to $C_{21}$, while those attached to $C_{13}$, $C_{22}$, $C_{31}$ are positive. (The sign factor is not the sign of the cofactor's value: in Example 4.1, $C_{12} = -(-5) = +5$.) Expanding along row 2 starts with a minus. Write the sign pattern down every time until you stop needing to. The other classic slip is using the minor $M_{ij}$ where the cofactor $C_{ij}$ is needed, which drops all the signs; the adjugate formula (3.14) is wrong without them.
 - **A small determinant does not mean nearly singular.** It means nothing without knowing the scale. $\det(0.1 I_{100}) = 10^{-100}$. The quantity that measures nearness to singularity is the condition number $\kappa$, defined in LA-9 and used in LA-13; until then, the habit to build is "never test singularity by comparing $\det$ to a tolerance." The project's Part 6 shows both failure modes with numbers.
 - **The alternating-multilinear characterization feels like abstraction for its own sake.** It is not. It is what makes the determinant **coordinate-free**: Corollary 3.16′ defines $\det T$ for a linear map with no basis in sight, and that is what LA-7 needs when it says "the eigenvalues of $T$" rather than "the eigenvalues of this matrix." It also gives the product rule in one line and generalizes to $k$ vectors in $\mathbb{R}^n$ (LA-12, where $\det$ becomes one member of a family). If §3.9 feels empty, reread the §2 derivation of $a_1b_2 - a_2b_1$ and notice that it was the $n = 2$ case of Theorem 3.16, done before you had any formula.
 - **Cofactors and Cramer are formulas, not algorithms.** Both are the right tool for symbols (Example 4.5) and proofs (§3.7, §3.12), and the wrong tool for numbers past $n = 3$. If you are reaching for cofactor expansion on a numerical $5\times 5$, stop and eliminate.
 - **The volume theorem's approximation step** (Theorem 3.17, step 6) is the first place in this course where "has a volume" is a hypothesis rather than a given. If it bothers you, that is appropriate; the full story is measure theory, and the version here is exactly what Riemann integration assumes.
-- **B1 is harder than it looks.** The natural attempt (expand along rows, track signs) drowns in indices. The clean proof uses uniqueness: show that the block determinant, as a function of the top-left block, satisfies (D1)–(D3). C1 needs you to trust the uniqueness theorem for linear ODEs; if that is rusty, do C2 instead.
+- **B1 is harder than it looks.** The natural attempt (expand along rows, track signs) drowns in indices. The clean proof uses uniqueness, in two moves. First get rid of $B$: split each of the first $k$ rows as $(\mathbf{r}_i^\top, \mathbf{0}^\top) + (\mathbf{0}^\top, \mathbf{b}_i^\top)$ by (D3); the second piece contributes $0$, so $\det M = \det\begin{pmatrix} A & 0 \\ 0 & D\end{pmatrix}$. Then show that this block-diagonal determinant, as a function of the rows of $A$, satisfies (D2) and (D3), so by the uniqueness argument of Theorem 3.9 it equals $\det A$ times its value at $A = I_k$, which is $\det D$. It does **not** satisfy (D1) unless $\det D = 1$. Skipping the first move is the classic error: with $B$ present, swapping two rows of $A$ is not a row swap of $M$. C1 needs you to trust the uniqueness theorem for linear ODEs; if that is rusty, do C2 instead.
 
 ## 9. Check yourself
 
@@ -516,7 +532,7 @@ See [exercises.md](exercises.md). A1–A5 drill the three ways to compute, the r
 3. $\det A = 5$ for a $3\times 3$ matrix. What are $\det(2A)$, $\det(A^\top)$, $\det(A^{-1})$, $\det(A^2)$, and $\det(-A)$?
 4. Write the Leibniz formula for $n = 3$ with all six terms and their signs. Which term corresponds to the permutation $(3, 1, 2)$?
 5. Why is $\det(AB) = \det A\det B$? Give the uniqueness-based proof in three sentences.
-6. What is the sign of the cofactor $C_{23}$? Of $C_{32}$? Expand a general $3\times 3$ determinant along its second row.
+6. What sign factor multiplies $M_{23}$ in the cofactor $C_{23}$? In $C_{32}$? Expand a general $3\times 3$ determinant along its second row.
 7. Derive Cramer's rule from linearity in a column, in two lines.
 8. Why is $\mathbf{u}\times\mathbf{v}$ perpendicular to $\mathbf{u}$? Answer with a property of determinants, not with a computation.
 9. State Theorem 3.16. Why does it mean the determinant of a linear map is independent of the basis?
@@ -528,6 +544,6 @@ See [exercises.md](exercises.md). A1–A5 drill the three ways to compute, the r
 
 - **Strang, *Introduction to Linear Algebra*, ch. 5.** §5.1 is the three properties and their consequences in the same order as §3.2 here; §5.2 derives the big formula and cofactors; §5.3 does Cramer, the adjugate, and volume. Strang is better than these notes at the $3\times 3$ pictures of the volume argument.
 - **MIT 18.06, lectures 18, 19, 20 (Strang) on OCW.** Lecture 18 is the properties (watch him derive the triangular case live); 19 is the formula and cofactors; 20 is Cramer, the inverse formula, and volume. Lecture 19's derivation of the big formula by expanding rows is the one §3.3 follows.
-- **Axler, *Linear Algebra Done Right*, 4th ed., ch. 9** (open access). §9B defines alternating multilinear forms and proves the one-dimensionality (our Theorem 3.16) in full generality over any field; §9C defines the determinant of an operator the way Corollary 3.16′ does and proves the product rule from it. Axler is better than these notes at the coordinate-free side and at the connection to the characteristic polynomial. Read §9B after §3.9 here.
+- **Axler, *Linear Algebra Done Right*, 4th ed., ch. 9** (open access). §9B defines alternating multilinear forms and proves the one-dimensionality (our Theorem 3.16) for $\mathbf{F} = \mathbb{R}$ or $\mathbb{C}$, the two fields the book works over; §9C defines the determinant of an operator the way Corollary 3.16′ does and proves the product rule from it. Axler is better than these notes at the coordinate-free side and at the connection to the characteristic polynomial. Read §9B after §3.9 here.
 - **3Blue1Brown, *Essence of Linear Algebra*, episode 6 ("The determinant").** Ten minutes of animated area scaling and orientation flips. Watch it after §2, before §3.
 - **Spivak, *Calculus on Manifolds*, Theorem 3-13**, if you want the full proof of the change-of-variables formula (3.18). Not required.

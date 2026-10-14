@@ -77,12 +77,17 @@ def det_leibniz(A):
     return sum(leibniz_terms(A).values())
 
 
-def det_cofactor(A):
+def det_cofactor(A, count=False):
     """det A by recursive Laplace expansion along the first row, eq. (3.12).
 
     Works on index tuples instead of copying submatrices, and stops the recursion
-    at 2x2. Cost is still about e * n! / 2 scalar multiplications."""
+    at 2x2. The sign (-1)^(1+j) is applied by adding or subtracting, so the only
+    multiplications are the products a_1j * M_1j: T(1) = 0, T(n) = n T(n-1) + n,
+    i.e. T(n) = sum_{k=1}^{n-1} n!/k!  ~  (e - 1) n!  (§3.5). Zero entries are
+    skipped, so the count is exact for matrices with no zeros.
+    With count=True, returns (det, number of multiplications)."""
     M = [[float(x) for x in row] for row in np.asarray(A)]
+    mults = [0]
 
     def rec(rows, cols):
         n = len(cols)
@@ -90,18 +95,21 @@ def det_cofactor(A):
             return M[rows[0]][cols[0]]
         if n == 2:
             (r0, r1), (c0, c1) = rows, cols
+            mults[0] += 2
             return M[r0][c0] * M[r1][c1] - M[r0][c1] * M[r1][c0]
         i, rest = rows[0], rows[1:]
-        total, sgn = 0.0, 1.0
+        total = 0.0
         for k, j in enumerate(cols):
             a = M[i][j]
             if a != 0.0:
-                total += sgn * a * rec(rest, cols[:k] + cols[k + 1:])
-            sgn = -sgn
+                mults[0] += 1
+                term = a * rec(rest, cols[:k] + cols[k + 1:])
+                total = total + term if k % 2 == 0 else total - term
         return total
 
     n = len(M)
-    return rec(tuple(range(n)), tuple(range(n)))
+    d = rec(tuple(range(n)), tuple(range(n)))
+    return (d, mults[0]) if count else d
 
 
 def det_elimination(A, pivoting="partial"):
@@ -112,15 +120,18 @@ def det_elimination(A, pivoting="partial"):
     Returns (det, pivots, swaps)."""
     U = np.array(A, float)
     n = U.shape[0]
+    # "No pivot" must be judged relative to the scale of A, never by an absolute
+    # threshold: det(1e-15 * I_2) = 1e-30 is a perfectly invertible matrix (§3.13, §8).
+    tol = n * np.finfo(float).eps * (np.abs(U).max() if U.size else 0.0)
     swaps, pivots = 0, []
     for k in range(n):
         col = U[k:, k]
         if pivoting == "partial":
             p = k + int(np.argmax(np.abs(col)))
         else:
-            nz = np.flatnonzero(np.abs(col) > 1e-14)
+            nz = np.flatnonzero(np.abs(col) > tol)
             p = k + int(nz[0]) if nz.size else k
-        if abs(U[p, k]) < 1e-14:
+        if abs(U[p, k]) <= tol:
             return 0.0, [float(x) for x in pivots] + [0.0] * (n - k), swaps   # no pivot: singular
         if p != k:
             U[[k, p]] = U[[p, k]]
@@ -150,6 +161,9 @@ for n in range(1, 8):
 for n in range(8, 13):
     A = rng.standard_normal((n, n))
     assert np.isclose(det_elimination(A)[0], np.linalg.det(A), rtol=1e-9)
+# Scale: a tiny but perfectly invertible matrix is not "singular" (§3.13).
+assert np.isclose(det_elimination(1e-15 * np.eye(2))[0], 1e-30, rtol=1e-12, atol=0)
+assert det_elimination([[1.0, 2.0], [2.0, 4.0]])[0] == 0.0                 # genuinely singular
 print("Part 1: det_elimination, det_cofactor, det_leibniz agree with np.linalg.det.")
 
 # Example 4.1, all four ways.
@@ -178,23 +192,44 @@ print("Example 4.1 Leibniz terms (1-based permutations):",
 # %% [markdown]
 # ## Part 2: Cofactor cost (n!) against elimination cost (n^3)
 #
-# §3.13: T_cofactor(n) ~ e * n!, T_elimination(n) ~ (2/3) n^3. Each is timed on
-# one random matrix per size; elimination is repeated to get a measurable time.
+# §3.5/§3.13: T_cofactor(n) = sum_{k=1}^{n-1} n!/k! ~ (e - 1) n! multiplications,
+# T_elimination(n) ~ (2/3) n^3. First the exact multiplication count, then wall time:
+# each is timed on one random matrix per size; elimination is repeated to get a
+# measurable time.
 
 # %%
+for n in range(1, 10):
+    _, mults = det_cofactor(rng.standard_normal((n, n)), count=True)
+    assert mults == sum(math.factorial(n) // math.factorial(k) for k in range(1, n)), (n, mults)
+_, mults9 = det_cofactor(rng.standard_normal((9, 9)), count=True)
+assert abs(mults9 / math.factorial(9) - (math.e - 1)) < 1e-5
+T20 = sum(math.factorial(20) // math.factorial(k) for k in range(1, 20))
+assert 4.1e18 < T20 < 4.25e18                                   # "about 4.2 x 10^18" (§3.13)
+print(f"Part 2: cofactor multiplications for n = 9: {mults9} = {mults9 / math.factorial(9):.6f} * 9!"
+      f" (e - 1 = {math.e - 1:.6f}); for n = 20: {T20:.2e}")
+
 ns = list(range(2, 10))
 t_cof, t_elim = [], []
 for n in ns:
     A = rng.standard_normal((n, n))
-    t0 = time.perf_counter()
-    det_cofactor(A)
-    t_cof.append(time.perf_counter() - t0)
+    best = np.inf
+    for _ in range(5 if n <= 8 else 1):                   # best of 5 where it is cheap
+        t0 = time.perf_counter()
+        det_cofactor(A)
+        best = min(best, time.perf_counter() - t0)
+    t_cof.append(best)
     reps = 100
     t0 = time.perf_counter()
     for _ in range(reps):
         det_elimination(A)
     t_elim.append((time.perf_counter() - t0) / reps)
 assert t_cof[-1] > 50 * t_cof[2], "cofactor time should explode between n = 4 and n = 9"
+# Past the small sizes where overhead dominates, each step multiplies cofactor time by ~n
+# (geometric mean of the ratios for n = 7, 8, 9 should be near 8), while elimination
+# time grows by a small factor over the whole range.
+step = (t_cof[-1] / t_cof[-4]) ** (1 / 3)
+assert 4 < step < 16, step
+assert (t_elim[-1] / t_elim[0]) < 0.01 * (t_cof[-1] / t_cof[0])
 
 fig, ax = plt.subplots(figsize=(6.5, 4.2))
 ax.semilogy(ns, t_cof, "o-", color=BLUE, lw=2, ms=6, label="cofactor expansion (3.12)")
@@ -207,7 +242,8 @@ ax.grid(alpha=.25); ax.legend(frameon=False)
 for s in ("top", "right"):
     ax.spines[s].set_visible(False)
 fig.tight_layout(); fig.savefig(FIG / "cofactor_vs_elimination.png", dpi=120); plt.close(fig)
-print(f"Part 2: cofactor n=9 took {t_cof[-1]:.2f} s; elimination n=9 took {t_elim[-1]*1e6:.0f} µs.")
+print(f"Part 2: cofactor n=9 took {t_cof[-1]:.2f} s (time ratio per step for n = 7..9: {step:.1f});"
+      f" elimination n=9 took {t_elim[-1]*1e6:.0f} µs ({t_elim[-1] / t_elim[0]:.1f}x its n=2 time).")
 
 # %% [markdown]
 # ## Part 3: The identities of §3.2 and §3.4 on random matrices
@@ -230,7 +266,9 @@ for _ in range(50):
     assert np.isclose(np.linalg.det(Sc), -2.5 * dA)                           # (D3)
     E = A.copy(); E[1] = E[0]
     assert np.isclose(np.linalg.det(E), 0, atol=1e-10)                        # Thm 3.2
-    assert np.isclose(np.linalg.det(np.triu(A)), np.prod(np.diag(A)))         # Thm 3.6
+    assert np.isclose(np.linalg.det(np.triu(A)), np.prod(np.diag(A)))         # Thm 3.6, upper
+    assert np.isclose(np.linalg.det(np.tril(A)), np.prod(np.diag(A)))         # Thm 3.6, lower
+    assert np.isclose(det_elimination(np.tril(A))[0], np.prod(np.diag(A)))
     assert np.isclose(np.linalg.det(A @ B), dA * np.linalg.det(B))            # Thm 3.10
     assert np.isclose(np.linalg.det(A.T), dA)                                 # Thm 3.11
     assert np.isclose(np.linalg.det(np.linalg.inv(A)), 1 / dA)                # Cor 3.10'(a)
@@ -241,7 +279,15 @@ for _ in range(50):
     perm = tuple(rng.permutation(n))
     P = np.eye(n)[list(perm)]                                                 # rows e_{perm(i)}
     assert np.isclose(np.linalg.det(P), sign(perm))                           # det P_sigma = sgn
-print("Part 3: row-operation rules, product/transpose/inverse/scaling identities, det P = sgn: all pass.")
+# Complex matrices (remark at the end of §3.4): same formulas, and det A^dagger = conj(det A).
+for _ in range(10):
+    Z = rng.standard_normal((4, 4)) + 1j * rng.standard_normal((4, 4))
+    assert np.isclose(sum(sign(p) * np.prod([Z[i, p[i]] for i in range(4)])
+                          for p in itertools.permutations(range(4))), np.linalg.det(Z))
+    assert np.isclose(np.linalg.det(Z.conj()), np.conj(np.linalg.det(Z)))
+    assert np.isclose(np.linalg.det(Z.conj().T), np.conj(np.linalg.det(Z)))
+print("Part 3: row-operation rules, product/transpose/inverse/scaling identities, det P = sgn,"
+      " complex conjugate rules: all pass.")
 
 # %% [markdown]
 # ## Part 4: Adjugate (3.14) and Cramer (3.13)
@@ -393,13 +439,35 @@ def image_volume_estimates(A, n_pts=100_000):
 M42 = np.array([[np.sqrt(3) / 2, -0.5], [0.5, np.sqrt(3) / 2]]) @ np.array([[1, 2], [0, 1]])   # Example 4.2
 A2 = np.array([[2.0, 1.0], [0.5, 1.5]])                                                        # det = 2.5
 A3 = np.array([[2, 1, 0], [0, 1, 1], [1, 0, 3]], float)                                       # det = 7
-for A in (M42, A2, A3):
+
+
+def random_well_conditioned(n):
+    """A random n x n matrix with cond < 3, so Monte Carlo estimates are not starved."""
+    while True:
+        A = rng.standard_normal((n, n))
+        if np.linalg.cond(A) < 3:
+            return A
+
+
+rand_mats = [random_well_conditioned(2) for _ in range(3)] + [random_well_conditioned(3) for _ in range(2)]
+for A in [M42, A2, A3] + rand_mats:
     hull, rej, dv, img = image_volume_estimates(A)
     assert abs(hull - dv) / dv < 0.01, (hull, dv)
     assert abs(rej - dv) / dv < 0.02, (rej, dv)
     print(f"  n={A.shape[0]}: hull {hull:.4f}, rejection {rej:.4f}, |det A| = {dv:.4f}")
 assert np.isclose(np.linalg.det(A3), 7)
-print("Part 7: Monte Carlo volume of the image of the unit square/cube matches |det A|.")
+
+# Theorem 3.17(c) for a region that is not a parallelepiped: the unit disk (area pi).
+# Its image under A is an ellipse; estimate its area by rejection in a bounding box
+# (y is in the image iff ||A^{-1} y|| <= 1) and compare with pi |det A|.
+for A in [A2] + rand_mats[:3]:
+    R_box = np.linalg.norm(A, 2)                         # the image lies in the disk of radius ||A||_2
+    ys = rng.uniform(-R_box, R_box, (200_000, 2))
+    inside = np.linalg.norm(ys @ np.linalg.inv(A).T, axis=1) <= 1
+    disk_img = inside.mean() * (2 * R_box) ** 2
+    assert abs(disk_img - np.pi * abs(np.linalg.det(A))) / (np.pi * abs(np.linalg.det(A))) < 0.02
+    print(f"  unit disk -> area {disk_img:.4f}, pi |det A| = {np.pi * abs(np.linalg.det(A)):.4f}")
+print("Part 7: Monte Carlo area/volume of images of the unit square, cube and disk matches |det A| * vol.")
 
 hull, rej, dv, img = image_volume_estimates(A2, 20_000)
 fig, ax = plt.subplots(figsize=(5.5, 5))
@@ -451,16 +519,18 @@ def draw_image_of_square(ax, A, title):
     d = np.linalg.det(A)
     ax.set_title(f"{title}\ndet = {d:+.2f} ({'CCW kept' if d > 0 else 'orientation flipped'})", fontsize=9)
     ax.set_aspect("equal"); ax.grid(alpha=.25)
-    ax.set_xlim(-0.5, 3.6); ax.set_ylim(-2.2, 2.4)
+    ax.set_xlim(-0.5, 3.6); ax.set_ylim(-2.2, 2.8)
     for s in ("top", "right"):
         ax.spines[s].set_visible(False)
 
 
-fig, axes = plt.subplots(1, 4, figsize=(14, 4.8))
+fig, axes = plt.subplots(1, 5, figsize=(17.5, 4.8))
 draw_image_of_square(axes[0], np.eye(2), "unit square")
 draw_image_of_square(axes[1], S, "shear S")
 draw_image_of_square(axes[2], RS, "rotate after shear: RS")
 draw_image_of_square(axes[3], F @ RS, "then reflect: F R S")
+draw_image_of_square(axes[4], RS @ D, "stretch D first: R S D")
+assert np.isclose(abs(np.linalg.det(RS @ D)), 1.5)        # area 3/2 (Example 4.2)
 fig.suptitle("Example 4.2: the determinant is signed area of the image of the unit square (dashed = original)")
 fig.tight_layout(); fig.savefig(FIG / "example_4_2_shear_rotate_reflect.png", dpi=120); plt.close(fig)
 

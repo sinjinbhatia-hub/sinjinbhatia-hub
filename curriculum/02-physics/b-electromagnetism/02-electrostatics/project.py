@@ -151,10 +151,16 @@ assert abs(circ) < 1e-6 * np.abs(E_loop).max() and np.allclose(Eg, field_potenti
 def rhs(_, s):
     E, _v = field_potential(pz_q, pz_pos, s[None, :]); return E[0] / np.linalg.norm(E[0])
 stop = lambda _, s: np.linalg.norm(s) - 0.1; stop.terminal = True
-sol = integrate.solve_ivp(rhs, (0, 5), [1.0, 0, 0], events=stop, rtol=1e-10, atol=1e-12, max_step=0.01)
-rl = np.linalg.norm(sol.y, axis=0); thl = np.arccos(sol.y[2] / rl)
-assert np.abs(rl / np.sin(thl) ** 2 - 1).max() < 1e-3
-print(f"B4: along a dipole field line r/sin^2(theta) stays within {np.abs(rl/np.sin(thl)**2-1).max():.1e} of 1")
+devs = []
+for d_line in (d, 2 * d):                       # physical dipole, separation 1 mm then 2 mm
+    pz_pos = np.array([[0, 0, d_line / 2], [0, 0, -d_line / 2]])
+    sol = integrate.solve_ivp(rhs, (0, 5), [1.0, 0, 0], events=stop, rtol=1e-10, atol=1e-12, max_step=0.01)
+    rl = np.linalg.norm(sol.y, axis=0); thl = np.arccos(sol.y[2] / rl)
+    devs.append(np.abs(rl / np.sin(thl) ** 2 - 1).max())
+pz_pos = np.array([[0, 0, d / 2], [0, 0, -d / 2]])
+assert devs[0] < 1e-4 and np.isclose(devs[1] / devs[0], 4, rtol=0.02)   # deviation ~ (d/r)^2: octupole
+print(f"B4: along a dipole field line r/sin^2(theta) stays within {devs[0]:.1e} of 1 (d = 1 mm), "
+      f"{devs[1]:.2e} (d = 2 mm); ratio {devs[1]/devs[0]:.2f}; (d/r)^2 at r = 0.1 m: {(d/0.1)**2:.0e}")
 
 # %% [markdown]
 # ## Part 2: Gauss's-law checker (Theorem 3.1)
@@ -260,7 +266,9 @@ EC = lambda Z, A: a_C * Z * (Z - 1) / A ** (1 / 3)
 print(f"  e^2/4pi eps0 = {ke2_MeVfm:.4f} MeV fm; a_C = {a_C:.3f} MeV; U-238: {EC(92, 238):.0f} MeV; "
       f"two Pd-119: {2*EC(46, 119):.0f} MeV; released {EC(92, 238)-2*EC(46, 119):.0f} MeV")
 assert np.isclose(a_C, 0.720, atol=1e-3) and abs(EC(92, 238) - 973) < 1 and abs(2 * EC(46, 119) - 606) < 1
-print(f"C1: electrostatic electron radius: ball {0.6*r_e:.3f} fm, shell {0.5*r_e:.3f} fm (r_e = {r_e:.4f} fm)")
+lam_C = 197.3269804 / 0.51099895                                 # hbar/(m_e c) = hbar c / m_e c^2, fm
+print(f"C1: electrostatic electron radius: ball {0.6*r_e:.3f} fm, shell {0.5*r_e:.3f} fm (r_e = {r_e:.4f} fm); "
+      f"reduced Compton wavelength {lam_C:.2f} fm = r_e x {lam_C/r_e:.3f}")
 
 # %% [markdown]
 # ## Part 4: The infinite line and its reference point (Example 4.2)
@@ -467,18 +475,25 @@ print(f"Example 4.6: wall charge = {Qwall/nC:.6f} nC, sigma(near)/sigma(far) = {
 
 # %%
 E_A1, V_A1 = field_potential(np.array([2, -1.0]) * nC, np.array([[0, 0, 0], [0.3, 0, 0.0]]), np.array([[0, 0.4, 0.0]]))
-print(f"A1: E = ({E_A1[0,0]:.2f}, {E_A1[0,1]:.2f}) V/m, |E| = {np.linalg.norm(E_A1):.2f} V/m, V = {V_A1[0]:.2f} V")
+x_zero = 0.3 * np.sqrt(2) / (np.sqrt(2) - 1)                        # 2/x^2 = 1/(x - 0.3)^2, x > 0.3
+E_zero, _ = field_potential(np.array([2, -1.0]) * nC, np.array([[0, 0, 0], [0.3, 0, 0.0]]), np.array([[x_zero, 0, 0.0]]))
+assert np.abs(E_zero).max() < 1e-9
+print(f"A1: E = ({E_A1[0,0]:.2f}, {E_A1[0,1]:.2f}) V/m, |E| = {np.linalg.norm(E_A1):.2f} V/m, V = {V_A1[0]:.2f} V; "
+      f"E = 0 on the x-axis at x = {x_zero:.4f} m")
 sig4 = 5e-6; print(f"A4: sigma/eps0 = {sig4/EPS0:.4e} V/m; E_above = (3, 0, {2+sig4/EPS0/1e5:.3f}) x 1e5 V/m")
 Cs = 1 / (1 / 2e-6 + 1 / 3e-6); Ceq = Cs + 4e-6
 print(f"A5: series {Cs*1e6:.2f} uF, C_eq = {Ceq*1e6:.2f} uF, Q_tot = {Ceq*12*1e6:.1f} uC, Q(2uF) = {Cs*12*1e6:.1f} uC, "
-      f"W = {0.5*Ceq*144*1e6:.1f} uJ")
+      f"V(2uF) = {Cs*12/2e-6:.1f} V, V(3uF) = {Cs*12/3e-6:.1f} V, Q(4uF) = {4e-6*12*1e6:.0f} uC, W = {0.5*Ceq*144*1e6:.1f} uJ")
+W_each = [0.5 * (Cs * 12) ** 2 / 2e-6, 0.5 * (Cs * 12) ** 2 / 3e-6, 0.5 * 4e-6 * 144]
+assert np.isclose(0.5 * Ceq * 144, sum(W_each))
+print("    energies of the 2, 3, 4 uF capacitors: " + ", ".join(f"{w*1e6:.2f}" for w in W_each) + " uJ")
 sq = np.array([[0, 0, 0], [0.1, 0, 0], [0.1, 0.1, 0], [0, 0.1, 0.0]]); qsq = np.full(4, nC)
 W_sq = K * nC**2 * np.sum(1 / pdist(sq)); _, Vsq = field_potential(qsq[1:], sq[1:], sq[:1])
 assert np.isclose(W_sq, 0.5 * 4 * nC * Vsq[0]) and np.isclose(W_sq, (4 + np.sqrt(2)) * K * nC**2 / 0.1)
-print(f"A6: W = {W_sq:.4e} J = (4 + sqrt 2) kq^2/a")
+print(f"A6: W = {W_sq:.4e} J = (4 + sqrt 2) kq^2/a; V at each corner from the other three = {Vsq[0]:.1f} V")
 GM, RE = 3.986004e14, 6.371e6
 print(f"B1: tunnel period 2 pi sqrt(R^3/GM) = {2*np.pi*np.sqrt(RE**3/GM):.0f} s = {2*np.pi*np.sqrt(RE**3/GM)/60:.1f} min, "
-      f"speed at centre {np.sqrt(GM/RE)/1e3:.2f} km/s")
+      f"one way {np.pi*np.sqrt(RE**3/GM)/60:.1f} min, speed at centre {np.sqrt(GM/RE)/1e3:.2f} km/s, g = {GM/RE**2:.2f} m/s^2")
 sigE = -EPS0 * 100
 print(f"B2: Earth C = {4*np.pi*EPS0*RE*1e6:.0f} uF; fair-weather sigma = {sigE:.3e} C/m^2, Q = {sigE*4*np.pi*RE**2:.2e} C")
 Qb6, Rb6 = 1e-6, 0.1
@@ -492,7 +507,12 @@ fsq[[0, -1], :] = fsq[:, [0, -1]] = True
 ref_sq = solve_dirichlet(Vsqr, fsq, 1.0)
 n_meas = jacobi(Vsqr, fsq, 1e-6 * np.abs(ref_sq).max(), ref_sq)
 assert abs(n_meas / (np.log(1e-6) / np.log(np.cos(np.pi / 31))) - 1) < 0.15
-print(f"C2: measured Jacobi sweeps, N = 30, error down by 1e-6: {n_meas}")
+xs = np.arange(Nsq + 2) / (Nsq + 1); phi11 = np.outer(np.sin(np.pi * xs), np.sin(np.pi * xs))
+c11 = np.sum((Vsqr - ref_sq) * phi11) / np.sum(phi11**2)          # slowest mode's share of the initial error
+n_pred = np.log(1e-6 / abs(c11)) / np.log(np.cos(np.pi / 31))
+assert abs(c11 + 4 / np.pi**2) < 2e-3 and abs(n_pred - n_meas) < 3
+print(f"C2: measured Jacobi sweeps, N = 30, error down by 1e-6: {n_meas}; slowest-mode coefficient {c11:.4f} "
+      f"(continuum -4/pi^2 = {-4/np.pi**2:.4f}), corrected prediction {n_pred:.0f}")
 
 # %% [markdown]
 # ## Your turn
@@ -528,14 +548,14 @@ assert np.isclose(zr, Rr / np.sqrt(2), rtol=1e-4)
 print(f"Your turn 1 / B8: ring E(0.1 m) = {ring_E(0.1):.1f} V/m, max {ring_E(zr):.1f} V/m at z = {zr:.4f} m; "
       f"disk E at z = 0.01, 0.05, 0.1, 1 m: " + ", ".join(f"{e:.2f}" for e in disk_E(zs))
       + f" V/m (sigma/2eps0 = {Qr/(np.pi*Rr**2)/(2*EPS0):.1f}; kQ/z^2 at 1 m = {K*Qr:.3f})")
-ac_, bc_, hc = 0.25, 1.0, 0.01
-xc = np.linspace(-1.05, 1.05, int(round(2.1 / hc)) + 1); Xc, Yc_ = np.meshgrid(xc, xc); Sc = np.hypot(Xc, Yc_)
-fixed_c = (Sc <= ac_ + 1e-9) | (Sc >= bc_ - 1e-9); Vc = np.where(Sc <= ac_ + 1e-9, 1.0, 0.0)
-Vc = solve_dirichlet(Vc, fixed_c, hc)
-C_num, C_th = 2 * edge_energy(Vc), 2 * np.pi * EPS0 / np.log(bc_ / ac_)
-assert abs(C_num / C_th - 1) < 0.05
-print(f"Your turn 2 / B2(d): coax a = {ac_}, b = {bc_}: C' numerical = {C_num*1e12:.2f} pF/m, "
-      f"2 pi eps0/ln(b/a) = {C_th*1e12:.2f} pF/m, ratio {C_num/C_th:.4f}")
+ac_, bc_ = 0.25, 1.0; C_th = 2 * np.pi * EPS0 / np.log(bc_ / ac_); errs = []
+for hc in (0.02, 0.01, 0.005):
+    xc = np.linspace(-1.05, 1.05, int(round(2.1 / hc)) + 1); Xc, Yc_ = np.meshgrid(xc, xc); Sc = np.hypot(Xc, Yc_)
+    fixed_c = (Sc <= ac_ + 1e-9) | (Sc >= bc_ - 1e-9); Vc = np.where(Sc <= ac_ + 1e-9, 1.0, 0.0)
+    C_num = 2 * edge_energy(solve_dirichlet(Vc, fixed_c, hc)); errs.append(1 - C_num / C_th)
+    print(f"Your turn 2 / B2(d): coax a = {ac_}, b = {bc_}, h = {hc}: C' numerical = {C_num*1e12:.2f} pF/m, "
+          f"2 pi eps0/ln(b/a) = {C_th*1e12:.2f} pF/m, ratio {C_num/C_th:.4f}")
+assert all(e > 0 for e in errs) and errs[0] > errs[1] > errs[2] and errs[1] < 0.05
 Nf = 4000; ii_ = np.arange(Nf) + 0.5; thf, phf = np.arccos(1 - 2 * ii_ / Nf), np.pi * (1 + 5**0.5) * ii_
 shell_pos = np.c_[np.sin(thf) * np.cos(phf), np.sin(thf) * np.sin(phf), np.cos(thf)]
 uin = rng.standard_normal((300, 3)); uin /= np.linalg.norm(uin, axis=1)[:, None]
