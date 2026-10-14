@@ -30,7 +30,7 @@ Conventions as in the notes: $L = T - V$, $p_i = \partial L/\partial\dot q_i$, t
 (b) Show that $z \to z + \varepsilon$ is a quasi-symmetry: find $F$ and the charge $Q$. Interpret $Q$ using the explicit solution $\dot z(t) = \dot z_0 - gt$.
 (c) Which rotations are symmetries? Show that the rotation about $\hat{\mathbf x}$, $K = (0, -z, y)$, is not even a quasi-symmetry: no $F(q, t)$ exists.
 (d) The boost along $\hat{\mathbf z}$, $K = (0, 0, t)$. Find $F$ and $Q$, and show that "$Q$ is constant" is the same statement as $z(t) = z_0 + \dot z_0 t - \tfrac12 gt^2$.
-(e) Count the surviving Galilean charges (the ten of §1). Which two are lost? Explain the count from the picture "uniform gravity is a free particle seen from a frame accelerating along $\hat{\mathbf z}$".
+(e) Count the Galilean generators (the ten of §1) that survive as symmetries or quasi-symmetries. Which two are lost? Then use the picture "uniform gravity is a free particle seen from a frame accelerating along $\hat{\mathbf z}$" to show that the two *conserved quantities* are not lost at all, only deformed: find a generator of the form $K = (0, -z - f(t), y)$ that is a quasi-symmetry, and its charge.
 
 **B2.** (Two bodies, ten charges.) $L = \tfrac12 m_1|\dot{\mathbf r}_1|^2 + \tfrac12 m_2|\dot{\mathbf r}_2|^2 - V(|\mathbf r_1 - \mathbf r_2|)$, $M = m_1 + m_2$, $\mu = m_1m_2/M$.
 (a) With $\mathbf R = (m_1\mathbf r_1 + m_2\mathbf r_2)/M$ and $\mathbf s = \mathbf r_1 - \mathbf r_2$, show $L = \tfrac12 M|\dot{\mathbf R}|^2 + \tfrac12\mu|\dot{\mathbf s}|^2 - V(s)$.

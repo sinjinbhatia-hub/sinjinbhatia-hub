@@ -912,5 +912,141 @@ print(f"C4  damped oscillator (m = k = 1, γ = 0.2, x₀ = 1, ẋ₀ = 0): Q = {
       f"(|ΔQ| ≤ {np.abs(Qd - 0.5).max():.1e}); h ranges over [{hd.min():.4f}, {hd.max():.4f}]; x(20) = {xd[-1]:.6f}")
 
 # %%
+# --- Further checks behind the written solutions (A1, A2, A3, A4, A6c, B1e, B2e, B3a/e, B4c/d, C1f, C3e, C4c/d).
+# A1(a): spherical pendulum, phi cyclic.  A2(a): h = T + V for the polar central force.
+ell_ = sp.Symbol("ell", positive=True)
+(thp, php), (thpd, phpd), _ = coords(["theta_p", "phi_p"])
+L_sph = sp.Rational(1, 2) * m * ell_**2 * (thpd**2 + sp.sin(thp)**2 * phpd**2) + m * g * ell_ * sp.cos(thp)
+assert sp.simplify(noether_charge(L_sph, [thp, php], [thpd, phpd], K=[0, 1]) - m * ell_**2 * sp.sin(thp)**2 * phpd) == 0
+h_polar = energy_function(L_polar, [r, th], [rdot, thdot])
+assert sp.simplify(h_polar - (sp.Rational(1, 2) * m * (rdot**2 + r**2 * thdot**2) + Vf(r))) == 0
+assert on_shell_dt(h_polar, L_polar, [r, th], [rdot, thdot], [rddot, thddot]) == 0
+
+# A3: Euler's theorem (3.10) for three homogeneous functions; its failure for x² + y; the T = ½ q̇ᵀM(q) q̇ case.
+u1, u2, u3 = sp.symbols("u1 u2 u3", positive=True)
+
+
+def euler_defect(f, vars_, k):
+    """sum_i x_i ∂f/∂x_i − k f, which (3.10) says vanishes when f is homogeneous of degree k."""
+    return sp.simplify(sum(xi * sp.diff(f, xi) for xi in vars_) - k * f)
+
+
+assert euler_defect(-kappa / sp.sqrt(u1**2 + u2**2 + u3**2), [u1, u2, u3], -1) == 0
+assert euler_defect(sp.Rational(1, 2) * k_s * (u1**2 + u2**2), [u1, u2], 2) == 0
+assert euler_defect(u1**2 * u2 / u3, [u1, u2, u3], 2) == 0
+assert euler_defect(u1**2 + u2, [u1, u2], 1) == u1**2 and euler_defect(u1**2 + u2, [u1, u2], 2) == -u2
+M11, M12, M22 = [sp.Function(n)(ox, oy) for n in ("M11", "M12", "M22")]
+T_gen = sp.Rational(1, 2) * (M11 * ovx**2 + 2 * M12 * ovx * ovy + M22 * ovy**2)
+assert sp.simplify(ovx * sp.diff(T_gen, ovx) + ovy * sp.diff(T_gen, ovy) - 2 * T_gen) == 0
+
+# A4: similarity exponents (time, speed, energy, angular momentum) ∝ size^ν, and the ratios for a' = 4a.
+def similarity_exponents(k):
+    """ν in (time, speed, energy, angular momentum) ∝ size^ν for V homogeneous of degree k (Theorem 3.8)."""
+    return {"time": 1 - k / 2, "speed": k / 2, "energy": k, "angmom": 1 + k / 2}
+
+
+tab = {k: similarity_exponents(k) for k in (-2, -1, 1, 2, 4)}
+assert tab[-1] == {"time": 1.5, "speed": -0.5, "energy": -1, "angmom": 0.5}
+assert tab[2]["time"] == 0 and tab[4]["time"] == -1 and tab[-2]["angmom"] == 0 and tab[1]["time"] == 0.5
+ratios_4 = {key: 4.0**nu for key, nu in tab[-1].items()}
+assert np.allclose([ratios_4[k_] for k_ in ("time", "speed", "energy", "angmom")], [8, 0.5, 0.25, 2])
+print("A4  k = -1, a' = 4a: period ×%.0f, speed ×%.2f, energy ×%.2f, angular momentum ×%.0f"
+      % (ratios_4["time"], ratios_4["speed"], ratios_4["energy"], ratios_4["angmom"]))
+
+# A6(c): V(x, t) = V0(x) + f(t) is the only time dependence that keeps K = ẋ a quasi-symmetry; Q = ½mẋ² + V0.
+ff = sp.Function("f")
+L_sep = sp.Rational(1, 2) * m * xv**2 - Vf(xq) - ff(t)
+dL_sep = delta_L(L_sep, [xq], [xv], K=[xv], a=[xa])
+assert sp.simplify(dL_sep - (total_dt(L_sep, [xq], [xv], [xa]) - sp.diff(L_sep, t))) == 0   # δL = dL/dt − ∂L/∂t
+Q_sep = sp.simplify(sp.diff(L_sep, xv) * xv - (L_sep + ff(t)))                               # F = L + f
+assert sp.simplify(Q_sep - (sp.Rational(1, 2) * m * xv**2 + Vf(xq))) == 0
+assert on_shell_dt(Q_sep, L_sep, [xq], [xv], [xa]) == 0
+
+# B1: h for uniform gravity; x-boost; the Galilean count; the deformed rotation that survives.
+h_grav = energy_function(L_grav, [x, y, z], [vx, vy, vz])
+assert sp.simplify(h_grav - (sp.Rational(1, 2) * m * (vx**2 + vy**2 + vz**2) + m * g * z)) == 0
+assert on_shell_dt(h_grav, L_grav, [x, y, z], [vx, vy, vz], [ax, ay, az]) == 0
+Q_bx, F_bx = noether_charge_quasi(L_grav, [x, y, z], [vx, vy, vz], K=[t, 0, 0])
+assert sp.simplify(F_bx - m * x) == 0 and sp.simplify(Q_bx - (m * vx * t - m * x)) == 0
+gens = {"Px": [1, 0, 0], "Py": [0, 1, 0], "Pz": [0, 0, 1], "Lx": [0, -z, y], "Ly": [z, 0, -x], "Lz": [-y, x, 0],
+        "Gx": [t, 0, 0], "Gy": [0, t, 0], "Gz": [0, 0, t]}
+surviving = []
+for name, Kg in gens.items():
+    try:
+        noether_charge_quasi(L_grav, [x, y, z], [vx, vy, vz], Kg)
+        surviving.append(name)
+    except ValueError:
+        pass
+assert surviving == ["Px", "Py", "Pz", "Lz", "Gx", "Gy", "Gz"]        # plus h: eight of the ten
+K_def = [0, -z - g * t**2 / 2, y]                                        # rotation about x̂ in the freely falling frame
+Q_def, F_def = noether_charge_quasi(L_grav, [x, y, z], [vx, vy, vz], K=K_def)
+assert sp.simplify(F_def + m * g * t * y) == 0
+assert sp.simplify(Q_def - (m * (y * vz - z * vy) + m * g * (t * y - t**2 * vy / 2))) == 0
+assert on_shell_dt(Q_def, L_grav, [x, y, z], [vx, vy, vz], [ax, ay, az]) == 0
+print("B1  gravity: surviving Galilean generators", surviving, "+ h  (8 of 10);")
+print("    deformed x-rotation K = (0, −z − gt²/2, y): F =", F_def, ", Q =", sp.factor(Q_def))
+
+# B2(e): in (X, s) coordinates E_rel = ½μṡ² + V(s) and E_cm = ½MẊ² are conserved separately.
+(Xc_, sc_), (Xcd, scd), (Xcdd, scdd) = coords(["X", "s"])
+L_cm = sp.Rational(1, 2) * Mtot * Xcd**2 + sp.Rational(1, 2) * mu * scd**2 - Vf(sc_)
+L_from_2body = L_2body.subs({x1: Xc_ + m2 / Mtot * sc_, x2: Xc_ - m1 / Mtot * sc_,
+                             v1: Xcd + m2 / Mtot * scd, v2: Xcd - m1 / Mtot * scd}, simultaneous=True)
+assert sp.simplify(L_from_2body - L_cm) == 0
+E_rel = sp.Rational(1, 2) * mu * scd**2 + Vf(sc_)
+assert on_shell_dt(E_rel, L_cm, [Xc_, sc_], [Xcd, scd], [Xcdd, scdd]) == 0
+assert on_shell_dt(sp.Rational(1, 2) * Mtot * Xcd**2, L_cm, [Xc_, sc_], [Xcd, scd], [Xcdd, scdd]) == 0
+assert sp.simplify(energy_function(L_cm, [Xc_, sc_], [Xcd, scd]) - (sp.Rational(1, 2) * Mtot * Xcd**2 + E_rel)) == 0
+
+# B3(a): ẍ = ω_c ẏ, ÿ = −ω_c ẋ.  B3(e): Q_rot = (p_y² + Q_x²)/(2q_eB) − m h/(q_eB) is not independent.
+acc_mag = el_accelerations(L_mag, [x, y], [vx, vy], [ax, ay])
+wc = qe * Bf / m
+assert sp.simplify(acc_mag[ax] - wc * vy) == 0 and sp.simplify(acc_mag[ay] + wc * vx) == 0
+h_mag = energy_function(L_mag, [x, y], [vx, vy])
+assert sp.simplify(Qrot_mag - ((py_mag**2 + Qx_mag**2) / (2 * qe * Bf) - m * h_mag / (qe * Bf))) == 0
+
+# B4(c): the isotropic orbit x = A cos ωt, y = B cos(ωt − φ) is a centred ellipse with L_z = mωAB sin φ.
+A_, B_amp, phi_ = sp.symbols("A B_amp phi", real=True)
+xt, yt = A_ * sp.cos(w * t), B_amp * sp.cos(w * t - phi_)
+assert sp.simplify((xt / A_)**2 + (yt / B_amp)**2 - 2 * xt * yt * sp.cos(phi_) / (A_ * B_amp) - sp.sin(phi_)**2) == 0
+assert sp.simplify(m * (xt * sp.diff(yt, t) - yt * sp.diff(xt, t)) - m * w * A_ * B_amp * sp.sin(phi_)) == 0
+# B4(d): a_x² conj(a_y) = Q3 + i Q4 is constant when ω2 = 2ω1.
+a_x1, a_y2c = ovx + sp.I * w1 * ox, ovy - 2 * sp.I * w1 * oy
+assert sp.simplify(on_shell_dt(a_x1, L_12, [ox, oy], [ovx, ovy], [oax, oay]) - sp.I * w1 * a_x1) == 0
+Q4 = 2 * w1 * (ox * ovx * ovy - oy * (ovx**2 - w1**2 * ox**2))
+assert sp.simplify(sp.expand(a_x1**2 * a_y2c) - (Q3 + sp.I * Q4)) == 0
+assert on_shell_dt(Q4, L_12, [ox, oy], [ovx, ovy], [oax, oay]) == 0
+
+# C1(f): a rotation of the plane by α rotates (Q1, Q2) by 2α and fixes L_z.
+alpha_ = sp.Symbol("alpha", real=True)
+rot = {ox: sp.cos(alpha_) * ox - sp.sin(alpha_) * oy, oy: sp.sin(alpha_) * ox + sp.cos(alpha_) * oy,
+       ovx: sp.cos(alpha_) * ovx - sp.sin(alpha_) * ovy, ovy: sp.sin(alpha_) * ovx + sp.cos(alpha_) * ovy}
+Q1r, Q2r, Lzr = [sp.expand(Qc.subs(rot, simultaneous=True)) for Qc in (Q1, Q2, Lz_w)]
+assert sp.simplify(Q1r - (sp.cos(2 * alpha_) * Q1 - sp.sin(2 * alpha_) * Q2)) == 0
+assert sp.simplify(Q2r - (sp.sin(2 * alpha_) * Q1 + sp.cos(2 * alpha_) * Q2)) == 0
+assert sp.simplify(Lzr - Lz_w) == 0
+print("C1  rotation by α: (Q1, Q2) → rotated by 2α, L_z fixed  (verified symbolically)")
+
+# C3(e): no length and no time can be built from m, c, ℓ; ℓ²/(mc) is dimensionless.
+Dm = np.array([[1, 1, 1], [0, 4, 2], [0, -2, -1]], float)       # rows M, L, T; columns m, c, ℓ
+for target in (np.array([0, 1, 0.]), np.array([0, 0, 1.])):     # a length, a time
+    assert np.linalg.matrix_rank(np.column_stack([Dm, target])) > np.linalg.matrix_rank(Dm)
+assert np.allclose(Dm @ np.array([-1, -1, 2]), 0)
+print("C3  dimensions: rank", np.linalg.matrix_rank(Dm), "of 3; no length or time from (m, c, ℓ); ℓ²/(mc) dimensionless")
+
+# C4(c): time shift alone and rescaling alone each change L by a multiple of L; only their sum is a total derivative.
+dL_shift = delta_L(L_damp, [xq], [xv], K=[xv], a=[xa])
+assert sp.simplify(dL_shift - (total_dt(L_damp, [xq], [xv], [xa]) - gam * L_damp)) == 0
+assert sp.simplify(delta_L(L_damp, [xq], [xv], K=[gam * xq / 2]) - gam * L_damp) == 0
+# C4(d): x = e^{−γt/2} X turns Q into ½mẊ² + ½mΩ²X², Ω² = k/m − γ²/4.
+XX, XXd = sp.symbols("X_ Xdot_", real=True)
+Q_X = sp.simplify(Q_damp.subs({xq: sp.exp(-gam * t / 2) * XX, xv: sp.exp(-gam * t / 2) * (XXd - gam * XX / 2)},
+                              simultaneous=True))
+assert sp.simplify(Q_X - (sp.Rational(1, 2) * m * XXd**2 + sp.Rational(1, 2) * m * (k_s / m - gam**2 / 4) * XX**2)) == 0
+# C4(e): the h range [Qω₀/(ω₀ + γ/2), Qω₀/(ω₀ − γ/2)] in closed form, compared with the integration above.
+h_lo, h_hi = 0.5 * 1.0 / (1.0 + gam_n / 2), 0.5 * 1.0 / (1.0 - gam_n / 2)
+assert np.isclose(hd.min(), h_lo, atol=2e-4) and np.isclose(hd.max(), h_hi, atol=2e-4)
+print(f"C4  Q = ½mẊ² + ½mΩ²X² verified; h ∈ [{h_lo:.4f}, {h_hi:.4f}] in closed form")
+
+# %%
 if __name__ == "__main__":
     print("All checks passed. Figures in", FIG)
