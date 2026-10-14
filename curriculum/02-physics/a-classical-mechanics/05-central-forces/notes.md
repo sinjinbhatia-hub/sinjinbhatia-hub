@@ -6,9 +6,9 @@
 
 ## 0. Where this sits
 
-You need CM-4: a cyclic coordinate gives a conserved momentum (CM-4 Theorem 3.1), a time-independent Lagrangian gives a conserved energy function $h$ (CM-4 Theorem 3.7), and the Laplace–Runge–Lenz vector is conserved for $-k/r$ (CM-4 Example 4.6). You also need CM-3's polar-coordinate Lagrangian and its spherical-pendulum reduction (CM-3 Example 4.7), which is this module's method in miniature.
+You need CM-4: cyclic coordinates give conserved momenta (CM-4 Theorem 3.1), a time-independent Lagrangian conserves $h$ (CM-4 Theorem 3.7), and the Laplace–Runge–Lenz vector is conserved for $-k/r$ (CM-4 Example 4.6). CM-3's spherical pendulum (CM-3 Example 4.7) is this module's method in miniature.
 
-This module uses those tools on the problem they were invented for. Afterwards, QM-6 solves hydrogen by the same reduction with $\ell^2 \to \hbar^2\ell(\ell+1)$; QM-1 starts from Rutherford's nucleus, which this module derives from scattering data; CM-8 recasts the Kepler problem in action-angle variables; CM-6 generalizes the radial oscillation frequency of §3.9 to many degrees of freedom.
+Afterwards, QM-6 solves hydrogen by the same reduction with $\ell^2 \to \hbar^2\ell(\ell+1)$; QM-1 starts from the Rutherford nucleus derived here; CM-8 recasts Kepler in action-angle variables; CM-6 generalizes §3.9's radial oscillation frequency to many degrees of freedom.
 
 ## 1. The problem that forced this idea
 
@@ -28,7 +28,7 @@ Sun and Earth both circle their common center of mass, which drifts in a straigh
 
 ### Angular momentum flattens the problem twice
 
-A central force pulls along $\mathbf r$, so it exerts no torque about the center: $\mathbf L$ is a fixed vector, and since $\mathbf L \perp \mathbf r$ at every instant, $\mathbf r$ stays in the fixed plane perpendicular to $\mathbf L$. Three dimensions become two. In that plane the polar angle $\varphi$ is cyclic, so $\ell = \mu r^2\dot\varphi$ is constant and $\varphi$ just follows $r$. Two dimensions become one: a particle on a half-line with energy $\tfrac12\mu\dot r^2 + V_{\rm eff}(r)$, $V_{\rm eff} = V + \ell^2/2\mu r^2$. The extra term is a repulsive **centrifugal barrier**, the kinetic energy of the angular motion, growing as $1/r^2$ because $\ell$ is fixed. CM-3's spherical pendulum had the same barrier with $\sin\theta$ in place of $r$.
+A central force pulls along $\mathbf r$, so it exerts no torque about the center: $\mathbf L$ is a fixed vector, and since $\mathbf L \perp \mathbf r$ at every instant, $\mathbf r$ stays in the fixed plane perpendicular to $\mathbf L$. Three dimensions become two. In that plane the polar angle $\varphi$ is cyclic, so $\ell = \mu r^2\dot\varphi$ is constant and $\varphi$ is slaved to $r$. Two dimensions become one: a particle on a half-line with energy $\tfrac12\mu\dot r^2 + V_{\rm eff}(r)$, $V_{\rm eff} = V + \ell^2/2\mu r^2$. The extra term is a repulsive **centrifugal barrier**, the kinetic energy of the angular motion, growing as $1/r^2$ because $\ell$ is fixed. CM-3's spherical pendulum had the same barrier with $\sin\theta$ in place of $r$.
 
 ### Reading the orbit off $V_{\rm eff}$
 
@@ -41,7 +41,7 @@ For gravity, $V_{\rm eff} = -k/r + \ell^2/2\mu r^2$. The barrier wins at small $
    |   \                                     E > 0 : in from infinity, bounce, out
  + |----*---------------------------------   (one turning point)
    |     \
- 0 +------*-------------------------------   E = 0 : just barely escapes
+ 0 +------*-------------------------------   E = 0 : barely escapes    
    |       \              _______-------       (V_eff -> 0 from below like -k/r)
    |        \       __----
  - |---------*-----*----------------------   E < 0 : trapped between r_p and r_a
@@ -536,7 +536,7 @@ For $n = -2$, (3.21) gives $\omega_r = \omega_\varphi = \sqrt{k/\mu r_0^3}$. Put
 
 *Exact check.* A radial kick leaves $\ell = \mu r_0v_c$ unchanged, so $c = \ell^2/\mu k = r_0$, and adds $\tfrac12\mu\Delta v_r^2$ to $E = -\tfrac12\mu v_c^2$. By (3.14): $e^2 = 1 + 2(E/\mu)(r_0v_c)^2/(GM)^2 = 1 + (\Delta v_r^2 - v_c^2)/v_c^2 = (\Delta v_r/v_c)^2$, so $e = \Delta v_r/v_c = 1.3033\times10^{-3}$ exactly. Then $r_a - r_0 = r_0e/(1 - e) = 8.836$ km and $r_0 - r_p = r_0e/(1 + e) = 8.813$ km, bracketing the linear value.
 
-*Other powers* (Part 4, $3\%$ amplitude). $n = -1$: measured $\omega_r/\omega_\varphi = 1.414319$ against $\sqrt2 = 1.414214$ (the gap is second order in amplitude), apsidal angle $127.27°$, never closes. $n = 1$: $2.000000$, apsidal angle $90°$. $n = -2.1$: $0.948627$ against $\sqrt{0.9} = 0.948683$, apsidal angle $189.75°$, slow forward precession.
+*Other powers* (Part 4, launched $3\%$ above circular speed). $n = -1$: measured $\omega_r/\omega_\varphi = 1.414319$ against $\sqrt2 = 1.414214$ (the gap is second order in amplitude), apsidal angle $127.27°$, never closes. $n = 1$: $2.000000$, apsidal angle $90°$. $n = -2.1$: $0.948627$ against $\sqrt{0.9} = 0.948683$, apsidal angle $189.75°$, slow forward precession.
 
 ### Example 4.6: Alpha particles on gold
 
@@ -548,7 +548,7 @@ $5.0$ MeV alpha particles ($Z_1 = 2$) hit a gold foil ($Z_2 = 79$, $A = 196.967$
 
 *Fraction beyond $90°$.* $n = 19.32\times6.022\times10^{23}/196.967 = 5.907\times10^{22}$ atoms/cm³. The probability is $n\,t\,\sigma = 5.907\times10^{22}\times(0.4\times10^{-4}\text{ cm})\times(1.626\times10^{-23}\text{ cm}^2) = 3.84\times10^{-5}$: about one in 26,000 bounces back, the same order as Geiger and Marsden's 1 in 8000 from platinum (different target and thickness, so only the order compares).
 
-*The shape.* $d\sigma/d\Omega$ falls by $1/2999$ from $15°$ to $150°$ and by $240{,}468$ from $5°$ to $150°$; Geiger and Marsden's 1913 counts tracked $\sin^{-4}(\theta/2)$ across that range. A $7.0$ fm hard sphere would scatter isotropically with total cross-section $153$ fm², a tenth of the Coulomb cross-section beyond $90°$.
+*The shape.* $d\sigma/d\Omega$ falls by a factor $2999$ from $15°$ to $150°$ and $240{,}468$ from $5°$ to $150°$; Geiger and Marsden's 1913 counts tracked $\sin^{-4}(\theta/2)$ across that range. A $7.0$ fm hard sphere would scatter isotropically with total cross-section $153$ fm², a tenth of the Coulomb cross-section beyond $90°$.
 
 *Why Thomson's atom fails.* Spread the charge over $R_{\rm atom} \approx 10^5$ fm. Crossing it, an alpha particle feels at most $\sim k/R^2$ for a time $\sim 2R/v$: deflection $\Delta p/p \sim 2k/(Rmv^2) = k/(ER) = 4.55\times10^{-4}$ rad. The foil is $t\,n^{1/3} = 1558$ atomic layers; random kicks add as a random walk to $\sqrt{1558}\times4.55\times10^{-4} = 0.0180$ rad ($1.03°$), and reaching $90°$ has probability of order $\exp[-(\pi/2)^2/0.018^2] \approx 10^{-3322}$. Observed: about $10^{-4}$. Only one large kick from a point charge does it.
 
@@ -566,13 +566,13 @@ Project Part 6 integrates 12,000 trajectories with $b$ uniform over a disk and r
 
 ## 6. Exercises
 
-See [exercises.md](exercises.md). A1–A5 are drills: reduced masses (hydrogen, deuterium, Earth–Moon, positronium), reading a conic, Mercury's speeds, the mass correction to Kepler III for Jupiter, and total cross-sections. B1–B8 are the module: B2 (find the force from the orbit with Binet's equation), B4 (stability in a Yukawa potential, where the golden ratio appears), B6 (closest approach and nuclear size) and B8 (extend `project.py` to watch the LRL vector precess) are essential. C1–C4 go further: the GR perihelion shift from the modified orbit equation, Kepler's equation and time averages, the cross-section of a $1/r^2$ potential, and the Lagrange points L4/L5.
+See [exercises.md](exercises.md). A1–A5 are drills (reduced masses, reading a conic, Mercury's speeds, Jupiter's mass in Kepler III, total cross-sections). B1–B8 are the module; B2 (force from orbit by Binet), B4 (Yukawa stability), B6 (closest approach and nuclear size) and B8 (extend `project.py`: the LRL vector of a precessing orbit) are essential. C1–C4: the GR perihelion shift, Kepler's equation, the $1/r^2$ cross-section, and L4/L5.
 
 ## 7. Coding project
 
 `project.py` integrates the two-body problem *without* the reduction and checks §3 against the raw numbers: (1) eight coupled ODEs for $m_1 = 1$, $m_2 = 0.3$, center of mass straight to $10^{-9}$, relative orbit the conic with $e = 0.230769$, $a = 0.8125$ from (3.14)–(3.15); (2) Kepler III over ten orbits, slope $1.50000000$; (3) $V_{\rm eff}$, turning points and the four conics; (4) power laws $n = -2, -1, 1, -2.1, -3.5$ against (3.21); (5) precession against (3.22) and Mercury from (3.23); (6) the Rutherford Monte Carlo against (3.27); (7) the LRL vector; (8) a simulated Hohmann transfer; (9) every worked-example number; (10) SymPy checks of Binet's chain rule, (3.11), (3.14), (3.16), (3.21), (3.22), (3.25), (3.27), (3.29), and the numbers in the solutions.
 
-**Build it yourself:** before reading Part 1, write `two_body_rhs` and the least-squares conic fit `fit_conic` (fit $1/r$ as $A + B\cos\varphi + C\sin\varphi$; then $c = 1/A$, $e = \sqrt{B^2 + C^2}/A$). Before reading Part 6, write the Rutherford Monte Carlo: sample $b$ with density $\propto b$ (that is, $b = \sqrt{\text{uniform}}$ over the disk), integrate, histogram $\theta$, divide by $2\pi\sin\theta\,\Delta\theta$. "Your turn" asks for the restricted three-body problem at L4 and L1, orbital decay under drag, and Halley's comet.
+**Build it yourself:** before Part 1, write `two_body_rhs` and `fit_conic` (fit $1/r = A + B\cos\varphi + C\sin\varphi$; then $c = 1/A$, $e = \sqrt{B^2 + C^2}/A$). Before Part 6, write the Rutherford Monte Carlo: sample $b$ with density $\propto b$ (uniform over the disk), integrate, histogram $\theta$, divide by $2\pi\sin\theta\,\Delta\theta$. "Your turn" asks for the restricted three-body problem at L4 and L1, orbital decay under drag, and Halley's comet.
 
 ## 8. Where you'll struggle
 

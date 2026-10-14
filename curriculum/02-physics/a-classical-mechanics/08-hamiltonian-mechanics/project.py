@@ -193,7 +193,7 @@ def spherical_rhs(t, y):
 
 
 sol = solve_ivp(spherical_rhs, (0, 5), [th0, 0.0, 0.0], rtol=1e-10, atol=1e-12, dense_output=True)
-assert np.max(np.abs(sol.y[0] - th0)) < 1e-7, "conical orbit should keep theta fixed"
+assert np.max(np.abs(sol.y[0] - th0)) < 1e-10, "conical orbit should keep theta fixed (notes: to about 1e-12)"
 assert np.isclose(sol.y[2, -1] / sol.t[-1], phidot_pred, rtol=1e-8)
 # Perturb theta slightly and measure the oscillation frequency about the conical orbit.
 sol2 = solve_ivp(spherical_rhs, (0, 20), [th0 + 0.01, 0.0, 0.0], rtol=1e-10, atol=1e-12,
@@ -203,6 +203,7 @@ crossings = np.where(np.diff(np.sign(th_dev)) != 0)[0]
 t_cross = sol2.t[crossings]
 Omega_meas = np.pi / np.mean(np.diff(t_cross))
 assert np.isclose(Omega_meas, Omega_pred, rtol=2e-3), (Omega_meas, Omega_pred)
+assert np.isclose(Omega_pred, 6.0675, atol=5e-5) and np.isclose(Omega_meas, 6.0673, atol=1e-4)   # Example 4.2 numbers
 print(f"  measured Omega_theta = {Omega_meas:.4f} (predicted {Omega_pred:.4f}); theta stays at th0 to {np.max(np.abs(sol.y[0]-th0)):.1e}")
 
 # %% [markdown]
@@ -290,8 +291,10 @@ for i, (name, frames) in enumerate(results.items()):
     print(f"  {name:28s}: " + "  ".join(f"{a:.6f}" for a in areas[name]))
 fig.suptitle("Liouville: the blob deforms but its area is invariant under a canonical map", y=1.0)
 fig.tight_layout(); fig.savefig(FIG / "liouville_blob.png", dpi=110); plt.close(fig)
-assert max(abs(a - 1) for a in areas["symplectic Euler (h=0.02)"]) < 2e-3, "symplectic map must preserve area"
-assert areas["explicit Euler (h=0.02)"][-1] > 1.05, "explicit Euler should inflate the blob"
+assert max(abs(a - 1) for a in areas["symplectic Euler (h=0.02)"]) < 1e-5, "symplectic map must preserve area"
+assert np.isclose(areas["symplectic Euler (h=0.02)"][-1], 0.999998, atol=1e-6)        # §7: 0.999998 at t = 24
+assert np.isclose(areas["RK45 (rtol 1e-3)"][-1], 0.960, atol=5e-4)                   # §7: 0.960
+assert np.isclose(areas["explicit Euler (h=0.02)"][-1], 1.202, atol=5e-4), "explicit Euler should inflate the blob"   # §7: 1.202
 # Predicted inflation for explicit Euler: product of (1 + h^2 cos theta) along the path ~ exp(h^2 * sum cos theta).
 # Check this on the centroid trajectory as a sanity estimate.
 P = pts0[:N_IN].mean(axis=0)[None, :]; log_growth = 0.0
@@ -304,7 +307,8 @@ print(f"  explicit Euler predicted area factor (centroid estimate) exp(sum ln(1+
 #
 # Pendulum with theta0 = 2 rad. Both methods use 50 steps per period. RK4 is
 # 4th order but not symplectic: its energy error grows secularly. Verlet is
-# only 2nd order but symplectic: its energy error stays bounded forever.
+# only 2nd order but symplectic: its energy error oscillates but does not grow
+# (for exponentially long times, §3.11).
 
 # %%
 th_amp = 2.0
@@ -352,6 +356,8 @@ err_rk4 = np.abs(E_rk4 - E0) / abs(E0); err_ver = np.abs(E_ver - E0) / abs(E0)
 print(f"Energy drift after {N_PER} periods (h = T/{STEPS}): RK4 {err_rk4[-1]:.3e}, Verlet {err_ver[-1]:.3e}  "
       f"(Verlet max {err_ver.max():.3e}); loop time {time.time()-t0:.1f}s")
 assert err_ver.max() < 2e-2, "Verlet energy error must stay bounded"
+# §3.11 numbers: RK4 0.257 at 10^4 periods; Verlet max 0.0181, 0.0019 at the end
+assert np.isclose(err_rk4[-1], 0.257, atol=1e-3) and np.isclose(err_ver.max(), 0.0181, atol=1e-4) and np.isclose(err_ver[-1], 0.0019, atol=1e-4)
 assert err_rk4[-1] > 10 * err_ver.max(), "RK4 should have drifted far past Verlet's bounded error"
 # RK4 drift should be roughly linear in time: compare error at 10^3 and 10^4 periods.
 ratio = err_rk4[-1] / err_rk4[N_PER // 10 - 1]
@@ -553,6 +559,8 @@ for E in Es:
     dJdE = (action_closed(E + dE) - action_closed(E - dE)) / (2 * dE)
     assert np.isclose(dJdE, T_c, rtol=1e-6), (E, dJdE, T_c)          # nu = dE/dJ = 1/T  (3.25)
     print(f"   {E:5.2f}   {Jn_:9.5f}   {Jc:9.5f}   {T_c:8.5f}   {T_m:8.5f}    {T_c/dJdE:.7f}")
+# §3.9 numbers at E = 0: J = 6.77770, T = 7.41630
+assert np.isclose(action_closed(0.0), 6.77770, atol=5e-6) and np.isclose(period_closed(0.0), 7.41630, atol=5e-6)
 # Small-amplitude limit: J -> 2 pi E_osc / omega with E_osc = E + mgl, omega = sqrt(g/l)
 E_small = -m * g * l + 1e-4
 assert np.isclose(action_closed(E_small), 2 * np.pi * (E_small + m * g * l) / np.sqrt(g / l), rtol=1e-4)
@@ -605,8 +613,11 @@ print(f"Example 4.7: slow shrink  -> amplitude ratio {amp_final_slow/th_init:.4f
 amp_final_fast = np.max(np.abs(th_fast[t_f > tau_fast]))
 print(f"             fast shrink  -> amplitude ratio {amp_final_fast/th_init:.4f}; E/omega changes by {abs(I_fast[-1]/I_fast[0]-1):.3f}")
 assert abs(amp_final_slow / th_init - ratio_pred) / ratio_pred < 0.01
-assert np.max(np.abs(I_slow / I_slow[0] - 1)) < 0.02, "E/omega should be adiabatically invariant"
+assert np.max(np.abs(I_slow / I_slow[0] - 1)) < 0.002, "E/omega should be adiabatically invariant (0.14%)"
 assert abs(I_fast[-1] / I_fast[0] - 1) > 0.03, "fast variation should break the invariant"
+# Example 4.7 numbers: slow ratio 1.6823, fast ratio 1.5669, fast E/omega off by 13.3%
+assert np.isclose(amp_final_slow / th_init, 1.6823, atol=1e-4) and np.isclose(amp_final_fast / th_init, 1.5669, atol=1e-4)
+assert np.isclose(abs(I_fast[-1] / I_fast[0] - 1), 0.133, atol=5e-4)
 fig, axs = plt.subplots(1, 2, figsize=(11, 4))
 for ax, (t_, I_, l_, lab) in zip(axs, [(t_s, I_slow, l_slow, "slow: 100 periods"), (t_f, I_fast, l_fast, "fast: 0.5 period")]):
     ax.plot(t_, I_ / I_[0], label=r"$E/\omega$ (normalized)")
@@ -661,7 +672,8 @@ fig.tight_layout(); fig.savefig(FIG / "hamilton_jacobi_S.png", dpi=120); plt.clo
 # With m = omega = hbar = 1 and E = n + 1/2, the WKB amplitude gives
 # |psi|^2 ∝ 1/p(q) = 1/sqrt(A^2 - q^2), normalized to rho_cl = 1/(pi sqrt(A^2 - q^2)).
 # The exact |psi_n|^2 oscillates about rho_cl. Probability in |q| < A/2:
-# classical 1/3; quantum ~ 1/3.
+# classical 1/3 exactly; quantum 0.3436 (integrated with quad between the exact
+# limits +-A/2, not on the grid, whose points miss them).
 
 # %%
 n_q = 20
@@ -672,11 +684,12 @@ psi = np.exp(log_norm) * eval_hermite(n_q, xq) * np.exp(-xq**2 / 2)
 rho_q = psi**2
 assert np.isclose(np.trapezoid(rho_q, xq), 1.0, atol=1e-8)
 rho_cl = np.where(np.abs(xq) < A_q, 1 / (np.pi * np.sqrt(np.maximum(A_q**2 - xq**2, 1e-300))), 0.0)
-mask = np.abs(xq) < A_q / 2
 P_cl = 2 / np.pi * np.arcsin(0.5)                      # = 1/3 exactly
-P_q = np.trapezoid(rho_q[mask], xq[mask])
+psi_sq = lambda x_: (np.exp(log_norm) * eval_hermite(n_q, x_) * np.exp(-x_**2 / 2))**2
+P_q = quad(psi_sq, -A_q / 2, A_q / 2, limit=400, epsabs=1e-13)[0]
 assert np.isclose(P_cl, 1 / 3)
 assert abs(P_q - P_cl) < 0.02, (P_q, P_cl)
+assert np.isclose(P_q, 0.343582, atol=2e-6), P_q                       # §3.10: 0.3436
 print(f"§3.10 (WKB): P(|q| < A/2): classical 1/p density = {P_cl:.4f}, exact n = 20 state = {P_q:.4f}")
 fig, ax = plt.subplots(figsize=(8, 4.2))
 ax.plot(xq, rho_q, lw=.9, label=rf"$|\psi_{{{n_q}}}(q)|^2$ exact")
@@ -692,8 +705,9 @@ fig.tight_layout(); fig.savefig(FIG / "wkb_oscillator.png", dpi=120); plt.close(
 #
 # Kick K: (q, p) -> (q, p - h m w^2 q), drift D: (q, p) -> (q + h p/m, p). Both have
 # det 1. Symplectic Euler is D∘K with matrix [[1 - h^2 w^2, h/m], [-h m w^2, 1]].
-# It is the exact flow of H~ = p^2/2m + m w^2 q^2/2 - (h/2) w^2 q p, which is
-# conserved to machine precision. Explicit Euler has det = 1 + h^2 w^2 and
+# It conserves H~ = p^2/2m + m w^2 q^2/2 - (h/2) w^2 q p exactly (to machine
+# precision numerically), so its orbits are the ellipses H~ = const. (The map is
+# the exact time-h flow of c(h) H~ with c = 1 + O(h^2), not of H~ itself.) Explicit Euler has det = 1 + h^2 w^2 and
 # inflates area by that factor every step (Exercise B2: (1.01)^1000 = 20959).
 
 # %%
@@ -730,6 +744,7 @@ sq, sp_, mm, tt_ = 0.7, 0.4, 1.0, 3.0
 Sig0 = np.diag([sq**2, sp_**2]); Mfree = np.array([[1, tt_ / mm], [0, 1]])
 Sig_t = Mfree @ Sig0 @ Mfree.T
 assert np.isclose(Sig_t[0, 0], sq**2 + sp_**2 * tt_**2 / mm**2) and np.isclose(np.linalg.det(Sig_t), np.linalg.det(Sig0))
+assert np.isclose(Sig_t[0, 0], 1.93) and np.isclose(Sig_t[0, 1], 0.48) and np.isclose(np.linalg.det(Sig_t), 0.0784)   # B6 numbers
 print(f"  B6: sigma_q^2(t=3) = {Sig_t[0, 0]:.4f} (from {sq**2:.2f}), cov(q,p) = {Sig_t[0, 1]:.4f}, "
       f"det Sigma = {np.linalg.det(Sig_t):.4f} = {np.linalg.det(Sig0):.4f} at t = 0")
 
@@ -761,7 +776,8 @@ assert set(sp.solve(sp.diff(V5, xs), xs)) == {-1, 1} and V5.subs(xs, -1) == sp.R
 assert sp.factor(V5 - sp.Rational(2, 3)) == (xs - 2) * (xs + 1)**2 / 3
 # A6: oscillator m = 2 kg, w = 3 rad/s, amplitude 0.5 m
 E6 = 0.5 * 2 * 3**2 * 0.5**2; J6 = 2 * np.pi * E6 / 3; h_planck = 6.62607015e-34
-assert np.isclose(E6, 2.25)
+assert np.isclose(E6, 2.25) and np.isclose(J6, 4.7124, atol=5e-5) and np.isclose(3 / (2 * np.pi), 0.4775, atol=5e-5)
+assert np.isclose(J6 / h_planck, 7.112e33, rtol=1e-4)
 print(f"A6: E = {E6:.2f} J, J = 2 pi E / w = {J6:.4f} J s, nu = {3/(2*np.pi):.4f} Hz, n = J/h = {J6/h_planck:.3e}")
 # B1: Hamilton's equations for |p - qA|^2/2m + q phi give m dv/dt = q(E + v x B) (general A, phi)
 tq, mq, qe = sp.symbols("t m q_e", positive=True)
@@ -814,6 +830,10 @@ def energy_errors(steps, periods):
 print(f"B8: 10^3 periods. RK4 final error {r50:.3e} -> {r100:.3e} (ratio {r50/r100:.1f}); "
       f"Verlet max error {v50:.3e} -> {v100:.3e} (ratio {v50/v100:.2f})")
 assert 3.8 < v50 / v100 < 4.2 and 25 < r50 / r100 < 40
+# solutions B8 numbers, and Verlet's max over 10^3 periods equals Part 5's over 10^4 (no growth)
+assert np.isclose(r50, 2.639e-2, rtol=5e-4) and np.isclose(r100, 8.347e-4, rtol=5e-4)
+assert np.isclose(v50, 1.815e-2, rtol=5e-4) and np.isclose(v100, 4.533e-3, rtol=5e-4)
+assert np.isclose(v50, err_ver.max(), rtol=1e-3)
 yv = sp.symbols("y", real=True)
 R4 = 1 + yv * sp.I + (yv * sp.I)**2 / 2 + (yv * sp.I)**3 / 6 + (yv * sp.I)**4 / 24
 assert sp.expand(R4 * sp.conjugate(R4)) == sp.expand(1 - yv**6 / 72 + yv**8 / 576)      # |R(iy)|^2 for RK4
@@ -823,6 +843,8 @@ for Ec in (0.99, 0.999):
     T_ex = period_closed(Ec); T_as = 2 * np.log(32 / (1 - Ec))
     print(f"C1: E = {Ec}: T = 4K(k) = {T_ex:.4f}, asymptotic 2 ln(32/(1-E)) = {T_as:.4f}")
     assert abs(T_ex - T_as) < 0.02
+    assert np.isclose(T_ex, {0.99: 16.1570, 0.999: 20.7491}[Ec], atol=5e-5)
+    assert np.isclose(T_as, {0.99: 16.1418, 0.999: 20.7470}[Ec], atol=5e-5)
 k2s = sp.symbols("k", positive=True)
 Jk = sp.elliptic_e(k2s**2) - (1 - k2s**2) * sp.elliptic_k(k2s**2)              # sympy uses the parameter m = k^2
 assert abs(float((sp.diff(Jk, k2s) - k2s * sp.elliptic_k(k2s**2)).subs(k2s, 0.6))) < 1e-12     # dJ/dk = 16 k K(k)
@@ -839,6 +861,7 @@ sk = solve_ivp(lambda t, yy: [yy[1] / mk, lk**2 / (mk * yy[0]**3) - kk / yy[0]**
                (0, 3 * T_kep), [r2, 0.0, 0.0], events=ev_peri, dense_output=True, rtol=1e-11, atol=1e-12)
 t_peri = sk.t_events[0]; dphi = sk.sol(t_peri[1])[2] - sk.sol(t_peri[0])[2]
 assert np.isclose(t_peri[1] - t_peri[0], T_kep, rtol=1e-7) and np.isclose(dphi, 2 * np.pi, rtol=1e-7)
+assert np.allclose([r1, r2, Jr_cl, T_kep], [0.35857, 2.97476, 3.08501, 13.5193], atol=5e-5)   # solutions C2(c)
 print(f"C2: r in [{r1:.5f}, {r2:.5f}], J_r numeric {Jr_num:.5f} = closed form {Jr_cl:.5f}; "
       f"radial period {t_peri[1]-t_peri[0]:.4f} = 1/nu = {T_kep:.4f}; phi advances {dphi/np.pi:.6f} pi per radial period")
 
@@ -860,6 +883,7 @@ for ax, Kv in zip(axs, (0.5, 0.97, 1.5)):
     ax.set_title(f"standard map, K = {Kv}: max |p - p0| = {mx:.2f}"); ax.set_xlabel(r"$\theta$"); ax.set_ylabel("p mod 2π")
 fig.tight_layout(); fig.savefig(FIG / "standard_map.png", dpi=110); plt.close(fig)
 assert spread[0.5] < 2 * np.pi and spread[0.97] < 2 * np.pi and spread[1.5] > 4 * np.pi
+assert np.allclose([spread[0.5], spread[0.97], spread[1.5]], [2.45, 4.13, 28.71], atol=5e-3)   # solutions C3(c)
 print("C3: max |p_n - p_0| over 50 orbits x 2000 kicks: " + ", ".join(f"K = {k_}: {v:.2f}" for k_, v in spread.items())
       + f"  (2 pi = {2*np.pi:.2f}); Greene's literature threshold K_c = 0.9716")
 

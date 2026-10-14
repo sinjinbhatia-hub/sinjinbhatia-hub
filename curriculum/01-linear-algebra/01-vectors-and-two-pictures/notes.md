@@ -2,7 +2,7 @@
 
 **Time:** ~8 hours · **Prerequisites:** none (multivariable calculus helps) · **Unlocks:** LA-2, LA-3, and indirectly everything else
 
-> **Conventions in this module.** Vectors are columns and written in bold lowercase: $\mathbf{v} \in \mathbb{R}^n$. Their entries are $v_1, \dots, v_n$. Matrices are uppercase: $A$. The dot product of $\mathbf{u}$ and $\mathbf{v}$ is $\mathbf{u} \cdot \mathbf{v} = \mathbf{u}^\top \mathbf{v} = \sum_i u_i v_i$. The length (Euclidean norm) is $\|\mathbf{v}\| = \sqrt{\mathbf{v}\cdot\mathbf{v}}$. We write $\mathbf{e}_1, \dots, \mathbf{e}_n$ for the standard basis vectors (all zeros except a 1 in position $i$).
+> **Conventions in this module.** Vectors are columns and written in bold lowercase: $\mathbf{v} \in \mathbb{R}^n$. Their entries are $v_1, \dots, v_n$. Matrices are uppercase: $A$. The dot product of $\mathbf{u}$ and $\mathbf{v}$ is $\mathbf{u} \cdot \mathbf{v} = \mathbf{u}^\top \mathbf{v} = \sum_i u_i v_i$. The length (Euclidean norm) is $\|\mathbf{v}\| = \sqrt{\mathbf{v}\cdot\mathbf{v}}$; $\|\mathbf{v}\|$ with no subscript is always this norm, and $\|\mathbf{v}\|_1$, $\|\mathbf{v}\|_\infty$ are defined in §3.6. The standard basis vectors are $\mathbf{e}_1, \dots, \mathbf{e}_n$: $\mathbf{e}_i$ has a 1 in position $i$ and zeros elsewhere. Products compose right to left: in $AB$, $B$ acts first.
 
 ## 0. Where this sits
 
@@ -12,7 +12,7 @@ If this module feels easy, good. Do the exercises anyway. The column picture is 
 
 ## 1. The problem that forced this idea
 
-Linear equations are old. The Babylonians solved two equations in two unknowns around 2000 BCE. The Chinese text *Nine Chapters on the Mathematical Art* (around 200 BCE) solves three equations in three unknowns by a method you would recognize as elimination, laid out on a counting board. But none of these cultures had *vectors* or *matrices*. They had recipes for numbers.
+Linear equations are old. Old Babylonian scribes (roughly 1900–1600 BCE) solved problems that amount to two equations in two unknowns. Chapter 8 of the Chinese text *Nine Chapters on the Mathematical Art* (compiled by about the first century CE from older material) solves systems of linear equations, starting with three equations in three unknowns, by a method you would recognize as elimination, laid out on a counting board. But none of these cultures had *vectors* or *matrices*. They had recipes for numbers.
 
 The thing that forced vectors into existence was geometry meeting algebra. Descartes (1637) showed that points in the plane can be coordinates $(x, y)$, so geometric questions become algebraic ones. But the reverse problem took two more centuries: given a system of linear equations, what does it *look like*? Where is the geometry?
 
@@ -20,7 +20,7 @@ Two answers emerged, and they are different pictures of the same equations.
 
 **The row picture** (what you learned in high school). Each equation $a_1 x + a_2 y = b$ is a line in the plane. Two equations are two lines; the solution is where they cross. Three equations in three unknowns are three planes meeting at a point. This picture is fine in two or three dimensions and useless in ten: nobody can see ten hyperplanes in $\mathbb{R}^{10}$.
 
-**The column picture** (what we will live in). Hermann Grassmann in 1844, and then Arthur Cayley in 1858 with his "memoir on the theory of matrices," took a different view. Write the system
+**The column picture** (what we will live in). Hermann Grassmann (*Die lineale Ausdehnungslehre*, 1844) made "linear combination of vectors" a basic operation in its own right. Arthur Cayley ("A Memoir on the Theory of Matrices," 1858) treated the array of coefficients as a single object with its own algebra. Put those two moves together and you can write the system
 
 $$
 \begin{aligned}

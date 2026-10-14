@@ -2,7 +2,7 @@
 
 **Time:** ~12 hours · **Prerequisites:** CM-4 (generalized momenta, cyclic coordinates, the energy function) · **Unlocks:** SM-3 (Liouville and ensembles), QM-4 (commutators from Poisson brackets), QM-9 (path integrals, the classical limit), QC-9 (Hamiltonian simulation)
 
-> **Conventions in this module.** Generalized coordinates are $q = (q_1, \dots, q_n)$ and their conjugate momenta are $p_i = \partial L/\partial \dot q_i$, exactly as in CM-4. The Hamiltonian is $H(q, p, t) = \sum_i p_i \dot q_i - L$. Hamilton's equations are $\dot q_i = \partial H/\partial p_i$, $\dot p_i = -\partial H/\partial q_i$. The Poisson bracket is $\{F, G\} = \sum_i \left(\frac{\partial F}{\partial q_i}\frac{\partial G}{\partial p_i} - \frac{\partial F}{\partial p_i}\frac{\partial G}{\partial q_i}\right)$, so that $\{q, p\} = +1$ (Landau & Lifshitz use the opposite sign; check before copying a formula). Phase space is the set of points $z = (q, p) \in \mathbb{R}^{2n}$. The symplectic matrix is written in sans-serif, $\mathsf{J} = \begin{pmatrix} 0 & I \\ -I & 0 \end{pmatrix}$, because the italic $J = \oint p\,dq$ is the action variable; both names are standard. The angle variable $w$ conjugate to $J$ advances by exactly $1$ per period, so the frequency $\nu = \partial H/\partial J$ is in cycles per unit time and $\omega = 2\pi\nu$. $L$ with no index is the Lagrangian; $L_x, L_y, L_z$ are components of angular momentum and $L^2 = L_x^2 + L_y^2 + L_z^2$. $\epsilon_{ijk}$ is the Levi-Civita symbol with $\epsilon_{xyz} = 1$. Sums are written out; no summation convention. The pendulum's angle $\theta$ is measured from the downward vertical, so $V = -mgl\cos\theta$ and the hanging rest point is $\theta = 0$. $\hbar = h/2\pi$, with $h$ Planck's constant except in §3.11, where $h$ is a time step. Electric charge is $q_e$, to keep $q$ for coordinates.
+> **Conventions in this module.** Generalized coordinates are $q = (q_1, \dots, q_n)$ and their conjugate momenta are $p_i = \partial L/\partial \dot q_i$, exactly as in CM-4. The Hamiltonian is $H(q, p, t) = \sum_i p_i \dot q_i - L$. Hamilton's equations are $\dot q_i = \partial H/\partial p_i$, $\dot p_i = -\partial H/\partial q_i$. The Poisson bracket is $\{F, G\} = \sum_i \left(\frac{\partial F}{\partial q_i}\frac{\partial G}{\partial p_i} - \frac{\partial F}{\partial p_i}\frac{\partial G}{\partial q_i}\right)$, so that $\{q, p\} = +1$ (Landau & Lifshitz use the opposite sign; check before copying a formula). Phase space is the set of points $z = (q, p) \in \mathbb{R}^{2n}$. The symplectic matrix is written in sans-serif, $\mathsf{J} = \begin{pmatrix} 0 & I \\ -I & 0 \end{pmatrix}$, because the italic $J = \oint p\,dq$ is the action variable; both names are standard. The angle variable $w$ conjugate to $J$ advances by exactly $1$ per period, so the frequency $\nu = \partial H/\partial J$ is in cycles per unit time and $\omega = 2\pi\nu$. $L$ with no index is the Lagrangian; $L_x, L_y, L_z$ are components of angular momentum and $L^2 = L_x^2 + L_y^2 + L_z^2$. $\epsilon_{ijk}$ is the Levi-Civita symbol with $\epsilon_{xyz} = 1$. Sums are written out; no summation convention. The pendulum's angle $\theta$ is measured from the downward vertical, so $V = -mgl\cos\theta$ and the hanging rest point is $\theta = 0$. $\hbar = h/2\pi$, with $h$ Planck's constant except in §3.11, where $h$ is a time step. Electric charge is $q_e$, to keep $q$ for coordinates, and the electric scalar potential is $\Phi$, to keep $\phi$ for azimuthal angles.
 
 ## 0. Where this sits
 
@@ -18,15 +18,15 @@ William Rowan Hamilton came to it from optics. In 1827, at age twenty-one, he ha
 $$
 \dot q_i = \frac{\partial H}{\partial p_i}, \qquad \dot p_i = -\frac{\partial H}{\partial q_i},
 $$
-in which the coordinates and the momenta appear on exactly the same footing. The letter $H$ is his; the name "Hamiltonian" for the function came later. What Hamilton himself called the *principal function* is a different object, the $S$ of §3.10, and it is the one he cared about most.
+in which the coordinates and the momenta appear on exactly the same footing. Hamilton wrote the function as $H$; the name "Hamiltonian" for it came later. What Hamilton himself called the *principal function* is a different object, the $S$ of §3.10, and it is the one he cared about most.
 
 Three things happened to this reformulation within a decade, and a fourth took ninety years.
 
 **(a) It made the geometry of motion visible.** A state is a point $(q, p)$ in a $2n$-dimensional space, Hamilton's equations are a vector field on it, and the set of all histories is a flow, like a fluid. Trajectories that cross constantly in configuration space never cross in phase space.
 
-**(b) The flow preserves a structure.** Joseph Liouville, in an 1838 note on the variation of arbitrary constants, proved that for equations of Hamilton's form the flow carries any region to a region of the same volume. Boltzmann (1868–1871), Maxwell (1879) and Gibbs (1902, who called it "conservation of density-in-phase") made it the foundation of statistical mechanics: it is why "all accessible microstates are equally likely" stays true as time passes. It is a corollary of something stronger that Hamilton's equations preserve, named only in the twentieth century: the *symplectic form*.
+**(b) The flow preserves a structure.** Joseph Liouville, in an 1838 note on the variation of arbitrary constants, proved that for equations of Hamilton's form the Jacobian determinant of the solution map stays constant; in modern words, the flow carries any region to a region of the same volume. Boltzmann (1868–1871), Maxwell (1879) and Gibbs (1902, who called it "conservation of density-in-phase") made it the foundation of statistical mechanics: it is why "all accessible microstates are equally likely" stays true as time passes. It is a corollary of something stronger that Hamilton's equations preserve, named only in the twentieth century: the *symplectic form*.
 
-**(c) It gave Jacobi a method that solved problems Lagrange could not.** Carl Gustav Jacob Jacobi (1837) reduced Hamilton's construction to one first-order PDE for a function $S(q, t)$, the Hamilton–Jacobi equation; when it separates, the problem is solved by quadratures. He used it for the geodesics on an ellipsoid (1838) and for a particle attracted by two fixed centers. In his Königsberg lectures (1842–43) he proved the identity that carries his name, and with it Poisson's 1809 theorem that the bracket of two conserved quantities is conserved.
+**(c) It gave Jacobi a method that solved problems Lagrange could not.** Carl Gustav Jacob Jacobi (1837) reduced Hamilton's construction to one first-order PDE for a function $S(q, t)$, the Hamilton–Jacobi equation; when it separates, the problem is solved by quadratures. He used it for the geodesics on an ellipsoid (1838) and for a particle attracted by two fixed centers. The identity that carries his name is what turns Poisson's 1809 theorem (the bracket of two conserved quantities is conserved) into a two-line proof (§3.6).
 
 **(d) It turned out to be the classical shadow of quantum mechanics.** In September 1925 Paul Dirac read Heisenberg's first paper, in which $xp - px \neq 0$. By his own account, on a Sunday walk he remembered a classical structure of the same shape, could not recall its definition, and had to wait for the library to open on Monday. It was the Poisson bracket. His paper *The Fundamental Equations of Quantum Mechanics* (November 1925) made every Poisson bracket a commutator divided by $i\hbar$. Hamilton's equations become Heisenberg's, and Jacobi's identity, Poisson's theorem and the angular-momentum algebra of §3.6 carry over unchanged.
 
@@ -118,7 +118,7 @@ $$
 
 For several variables, $f(v_1, \dots, v_n)$ convex, the same construction gives $g(p) = \max_v\,[\sum_i p_iv_i - f(v)]$ with $p_i = \partial f/\partial v_i$ and $v_i = \partial g/\partial p_i$. You may also transform only some of the variables and carry the others along as parameters; their partial derivatives then flip sign, as (3.6) will show.
 
-**Thermodynamics uses the same transform.** In SM-2 the internal energy $U(S, V)$ has $\partial U/\partial S = T$. The Helmholtz free energy $F(T, V) = U - TS$ is $-g$ in the notation above (thermodynamics writes $U - TS$ rather than $TS - U$, so every sign is reversed), and (3.3) becomes $\partial F/\partial T = -S$. Describing a system by its temperature instead of its entropy is describing the curve $U(S)$ by its slopes. Each thermodynamic potential in SM-2 (enthalpy, Gibbs) is a Legendre transform in one more variable, and each Maxwell relation is equality of mixed partials of one of them.
+**Thermodynamics uses the same transform.** In SM-2 the internal energy $U(S, V)$ has $\partial U/\partial S = T$. The Helmholtz free energy $F(T, V) = U - TS$ is $-g$ in the notation above (thermodynamics writes $U - TS$ rather than $TS - U$, so every sign is reversed), and (3.3) becomes $\partial F/\partial T = -S$. Describing a system by its temperature instead of its entropy is describing the curve $U(S)$ by its slopes. Each of the other thermodynamic potentials in SM-2 is a Legendre transform of $U$ in a different set of variables (enthalpy in $V$, Gibbs in both $S$ and $V$), and each Maxwell relation is equality of mixed partials of one of them.
 
 ### 3.2 From $L$ to $H$: Hamilton's equations
 
@@ -157,7 +157,7 @@ So $H$ is conserved iff it has no explicit time dependence, which by (3.6) is if
 
 *Proof.* Under these hypotheses $T = \tfrac12\sum_{ij}M_{ij}(q)\dot q_i\dot q_j$ is homogeneous of degree 2 in $\dot q$ (CM-3 (3.13) with $N_i = T_0 = 0$). Euler's theorem on homogeneous functions (CM-4 (3.10)) gives $\sum_i\dot q_i\,\partial T/\partial\dot q_i = 2T$, so $\sum_i p_i\dot q_i - L = 2T - (T - V) = T + V$. To write it in $p$: $p = M\dot q$, so $\dot q = M^{-1}p$ and $T = \tfrac12 p^\top M^{-1}p$. ∎
 
-When the hypotheses fail (rotating constraints, CM-4 Example 4.3; magnetic forces, §3.4 below), $H$ is still conserved whenever $\partial L/\partial t = 0$, but it is not $T + V$. Do not write $H = T + V$ by reflex. Write $\sum p\dot q - L$ and see what you get.
+When the hypotheses fail, $H$ is still conserved whenever $\partial L/\partial t = 0$, but it need not be $T + V$. With rotating constraints (CM-4 Example 4.3) its value is not $T + V$. With magnetic forces (§3.4 below) its value is $T + q_e\Phi$, but as a function on phase space it is not $p^2/2m$ plus a potential. Do not write $H = T + V$ by reflex. Write $\sum p\dot q - L$ and see what you get.
 
 ### 3.3 The phase-space variational principle
 
@@ -197,13 +197,13 @@ $\phi$ is cyclic, so $\dot p_\phi = -\partial H/\partial\phi = 0$ and $p_\phi = 
 
 **Pendulum.** $H = \frac{p^2}{2ml^2} - mgl\cos\theta$, $\theta$ from the downward vertical. Fixed points, where $\nabla H = 0$: $(0, 0)$, a minimum of $H$ (elliptic), and $(\pm\pi, 0)$, saddles (hyperbolic). The separatrix is the level set through the saddle, $E_s = H(\pi, 0) = mgl$. Below it, libration (closed curves around the origin); above it, rotation ($p$ never changes sign). Example 4.3 computes the separatrix curve, the area inside it, and the motion along it; Exercise C1 computes the period, which diverges logarithmically as $E \to E_s$.
 
-**Charged particle: canonical versus kinetic momentum.** For charge $q_e$ in potentials $\phi(\mathbf{r}, t)$ and $\mathbf{A}(\mathbf{r}, t)$ the Lagrangian is $L = \tfrac12 m|\dot{\mathbf{r}}|^2 + q_e\,\dot{\mathbf{r}}\cdot\mathbf{A} - q_e\phi$ (CM-3 §3.5). The canonical momentum is
+**Charged particle: canonical versus kinetic momentum.** For charge $q_e$ in a scalar potential $\Phi(\mathbf{r}, t)$ (capital, to keep $\phi$ for the azimuth) and a vector potential $\mathbf{A}(\mathbf{r}, t)$ the Lagrangian is $L = \tfrac12 m|\dot{\mathbf{r}}|^2 + q_e\,\dot{\mathbf{r}}\cdot\mathbf{A} - q_e\Phi$ (CM-3 §3.5 and Example 4.8). The canonical momentum is
 $$
 \mathbf{p} = \frac{\partial L}{\partial\dot{\mathbf{r}}} = m\dot{\mathbf{r}} + q_e\mathbf{A},
 $$
 and it is not $m\mathbf{v}$. Then $\dot{\mathbf{r}} = (\mathbf{p} - q_e\mathbf{A})/m$ and
 $$
-H = \mathbf{p}\cdot\dot{\mathbf{r}} - L = \dot{\mathbf{r}}\cdot(\mathbf{p} - q_e\mathbf{A}) - \tfrac12 m|\dot{\mathbf{r}}|^2 + q_e\phi = \tfrac12 m|\dot{\mathbf{r}}|^2 + q_e\phi = \frac{|\mathbf{p} - q_e\mathbf{A}|^2}{2m} + q_e\phi. \tag{3.9}
+H = \mathbf{p}\cdot\dot{\mathbf{r}} - L = \dot{\mathbf{r}}\cdot(\mathbf{p} - q_e\mathbf{A}) - \tfrac12 m|\dot{\mathbf{r}}|^2 + q_e\Phi = \tfrac12 m|\dot{\mathbf{r}}|^2 + q_e\Phi = \frac{|\mathbf{p} - q_e\mathbf{A}|^2}{2m} + q_e\Phi. \tag{3.9}
 $$
 The value is kinetic plus electrostatic energy, but as a function on phase space it is not $p^2/2m + V$: the magnetic field enters only through the shift $\mathbf{p} \to \mathbf{p} - q_e\mathbf{A}$. This is the form that survives into QM-4, where $\hat{\mathbf{p}} = -i\hbar\nabla$ is the *canonical* momentum and a magnetic field enters the Schrödinger equation as $(-i\hbar\nabla - q_e\mathbf{A})^2/2m$. Exercise B1 checks that Hamilton's equations for (3.9) give the Lorentz force.
 
@@ -295,7 +295,7 @@ $$
 |---|---|
 | $\{q, p\} = 1$ | $[\hat x, \hat p] = i\hbar$ |
 | $\dot F = \{F, H\}$ | $d\hat A/dt = \frac{i}{\hbar}[\hat H, \hat A]$ (Heisenberg) |
-| $\{L_x, L_y\} = L_z$ | $[\hat L_x, \hat L_y] = i\hbar\hat L_z$ |
+| $\{L_x, L_y\} = L_z$ | $[\hat L_x, \hat L_y] = i\hbar\hat L_z$ (QM-5) |
 | conserved iff $\{F, H\} = 0$ | conserved iff $[\hat A, \hat H] = 0$ |
 | $p$ generates translations | $e^{-ia\hat p/\hbar}$ translates by $a$ |
 
@@ -318,7 +318,7 @@ $$
 2. By (3.12), $\{Z_a, Z_b\} = (\nabla_zZ_a)^\top\mathsf{J}\nabla_zZ_b = (M\mathsf{J}M^\top)_{ab}$, and (3.15) says this matrix is $\mathsf{J}$. So (b) ⇔ $M\mathsf{J}M^\top = \mathsf{J}$.
 3. Invert $M\mathsf{J}M^\top = \mathsf{J}$ with $\mathsf{J}^{-1} = -\mathsf{J}$: $M^{-\top}\mathsf{J}M^{-1} = \mathsf{J}$; multiply by $M^\top$ on the left and $M$ on the right to get (3.20). Reversible. ∎
 
-■ **What just happened.** All three tests say the Jacobian preserves $\mathsf{J}$. By hand, checking brackets is usually fastest; in code, (3.20) is (Part 7).
+■ **What just happened.** All three tests say the Jacobian preserves $\mathsf{J}$. By hand, checking brackets is usually fastest; in code, checking (3.20) is the most direct (Part 7).
 
 **One degree of freedom.** For $M = \begin{pmatrix} a & b\\ c & d\end{pmatrix}$, multiplying out gives $M^\top\mathsf{J}M = (ad - bc)\mathsf{J}$, and $ad - bc = \frac{\partial Q}{\partial q}\frac{\partial P}{\partial p} - \frac{\partial Q}{\partial p}\frac{\partial P}{\partial q} = \{Q, P\}$. So canonical ⇔ $\{Q, P\} = 1$ ⇔ $\det M = 1$ ⇔ area-preserving, the guess of §2. For $n > 1$, (3.20) implies $|\det M| = 1$ but is stronger: it preserves the sum of oriented areas projected onto the $(q_i, p_i)$ planes (the symplectic form).
 
@@ -456,11 +456,11 @@ $$
 $$
 which is (3.28) for $H = p^2/2m + V$. ∎
 
-■ **What just happened.** To leading order the phase of the wavefunction, in units of $\hbar$, is Hamilton's principal function. Step 4 is a continuity equation for $\rho = A^2$ moving at $p/m$; for a stationary state it gives $A^2p = \text{const}$, so $|\psi|^2 \propto 1/p(q)$, the classical fraction of time spent near $q$. The project compares this with the exact $n = 20$ oscillator state: the probability of $|q| < A/2$ ($A$ the classical amplitude) is $\frac{2}{\pi}\arcsin\frac12 = \frac13$ classically and $0.3435$ exactly. The approximation fails at turning points, where $p \to 0$; QM-8 repairs it.
+■ **What just happened.** To leading order the phase of the wavefunction, in units of $\hbar$, is Hamilton's principal function. Step 4 is a continuity equation for $\rho = A^2$ moving at $p/m$; for a stationary state it gives $A^2p = \text{const}$, so $|\psi|^2 \propto 1/p(q)$, the classical fraction of time spent near $q$. The project compares this with the exact $n = 20$ oscillator state: the probability of $|q| < a/2$ ($a$ the classical amplitude, not the WKB amplitude $A$) is $\frac{2}{\pi}\arcsin\frac12 = \frac13$ classically and $0.3436$ exactly. The approximation fails at turning points, where $p \to 0$; QM-8 repairs it.
 
 ### 3.11 Symplectic integrators, integrability, chaos
 
-RK4's step map is not canonical, so its energy error accumulates. A **symplectic integrator** is a canonical map; backward error analysis (Hairer, Lubich & Wanner, *Geometric Numerical Integration*, ch. IX) shows it is, up to exponentially small terms, the exact flow of a modified Hamiltonian $\tilde H = H + O(h^r)$, $r$ the order. It conserves $\tilde H$, so $H$ stays within $O(h^r)$ forever.
+RK4's step map is not canonical, so its energy error accumulates. A **symplectic integrator** is a canonical map; backward error analysis (Hairer, Lubich & Wanner, *Geometric Numerical Integration*, ch. IX) shows it is, up to exponentially small terms, the exact flow of a modified Hamiltonian $\tilde H = H + O(h^r)$, $r$ the order. It conserves $\tilde H$ up to those terms, so $H$ stays within $O(h^r)$ of its initial value for exponentially long times ($t \lesssim e^{c/h}$ for analytic $H$, HLW §IX.8): not literally forever, but far beyond any simulation you will run.
 
 For $H = T(p) + V(q)$, **symplectic Euler** is kick then drift:
 $$
@@ -470,7 +470,7 @@ The kick is the exact time-$h$ flow of $V$ alone, Jacobian $\begin{pmatrix}1 & 0
 $$
 p_{n+\frac12} = p_n - \tfrac{h}{2}V'(q_n), \qquad q_{n+1} = q_n + h\,T'(p_{n+\frac12}), \qquad p_{n+1} = p_{n+\frac12} - \tfrac{h}{2}V'(q_{n+1}). \tag{3.32}
 $$
-Pendulum from $\theta_0 = 2$ rad, 50 steps per period, $10^4$ periods: RK4's relative energy error grows roughly linearly to $0.257$; Verlet's never exceeds $0.018$ (and is $0.0019$ at the end). Verlet's 1967 argon simulations used (3.32), Wisdom and Holman (1991) built solar-system integrators on the same splitting, and ST-6's HMC and QC-9's Trotter formula reuse it.
+Pendulum from $\theta_0 = 2$ rad, 50 steps per period, $10^4$ periods: RK4's relative energy error grows roughly linearly to $0.257$; Verlet's oscillates with maximum $0.0181$ and does not grow (the maximum over $10^3$ and over $10^4$ periods is the same; the error is $0.0019$ at the end). Verlet's 1967 argon simulations used the two-step position form of the same integrator (algebraically equivalent to (3.32)), Wisdom and Holman (1991) built solar-system integrators on the same kick–drift idea with Kepler motion as the drift, and ST-6's HMC and QC-9's Trotter formula reuse the splitting.
 
 **Integrability and chaos.** $n$ degrees of freedom with $n$ independent conserved quantities whose mutual brackets vanish make a system *integrable*. **Liouville–Arnold theorem (stated; Arnold ch. 10):** each compact connected level set is then an $n$-torus carrying action-angle variables with $H = H(J_1, \dots, J_n)$. Every 1-DOF system, Kepler and the symmetric top are integrable. The double pendulum has two degrees of freedom but only one conserved quantity, and at high energy it is chaotic. The KAM theorem (Kolmogorov 1954, Arnold 1963, Moser 1962): under small perturbations most tori survive, deformed, while those with nearly rational frequency ratios break into island chains and chaotic layers (Exercise C3).
 
@@ -494,7 +494,7 @@ $\phi$ is cyclic, $p_\phi$ is constant, and $\theta$ moves in $V_{\text{eff}} = 
 
 *Small oscillations about it:* $V_{\text{eff}}'' = \frac{p_\phi^2(\sin^2\theta + 3\cos^2\theta)}{ml^2\sin^4\theta} + mgl\cos\theta$. The equilibrium condition gives $\frac{p_\phi^2}{ml^2\sin^4\theta_0} = \frac{mgl}{\cos\theta_0}$, so $V_{\text{eff}}''(\theta_0) = \frac{mgl(1 + 3\cos^2\theta_0)}{\cos\theta_0}$ and $\Omega^2 = \frac{V_{\text{eff}}''}{ml^2} = \frac{g}{l}\frac{1 + 3\cos^2\theta_0}{\cos\theta_0}$.
 
-*Numbers* ($m = 1$ kg, $l = 1$ m, $g = 9.81$ m/s², $\theta_0 = \pi/6$): $p_\phi = \sqrt{9.81\times 0.0625/0.8660} = 0.841413$ kg m²/s; $\dot\phi = \sqrt{9.81/0.8660} = 3.36565$ rad/s (one revolution in $1.86686$ s); $\Omega = 6.0675$ rad/s; $\Omega/\dot\phi = \sqrt{3.25} = 1.8028$. The ratio is irrational, so a perturbed conical orbit traces a rosette. Integrating Hamilton's equations, the project keeps $\theta = \theta_0$ to $10^{-12}$ and measures $\Omega = 6.0673$.
+*Numbers* ($m = 1$ kg, $l = 1$ m, $g = 9.81$ m/s², $\theta_0 = \pi/6$): $p_\phi = \sqrt{9.81\times 0.0625/0.8660} = 0.841413$ kg m²/s; $\dot\phi = \sqrt{9.81/0.8660} = 3.36565$ rad/s (one revolution in $1.86686$ s); $\Omega = 6.0675$ rad/s; $\Omega/\dot\phi = \sqrt{3.25} = 1.8028$. The ratio is irrational, so a perturbed conical orbit traces a rosette. Integrating Hamilton's equations, the project keeps $\theta = \theta_0$ to about $10^{-12}$ and, starting $0.01$ rad off the cone, measures $\Omega = 6.0673$ (the small shift from $6.0675$ is the anharmonic correction at that amplitude).
 
 ### Example 4.3: The pendulum's separatrix
 
@@ -548,7 +548,7 @@ The project integrates the exact equations with $l$ decreasing linearly. Slow: a
 ## 5. Why it matters and where it connects
 
 - **SM-2, SM-3, SM-4:** $F = U - TS$ is §3.1's transform; $\{f(H), H\} = 0$ in (3.11) makes $\delta(H - E)$ and $e^{-\beta H}$ stationary.
-- **QM-4:** the dictionary (3.19), Heisenberg's equation from (3.14), the algebra (3.17), and $(\hat{\mathbf{p}} - q_e\mathbf{A})^2/2m$ from (3.9). Unitary transformations are the quantum canonical transformations.
+- **QM-4, QM-5:** the dictionary (3.19), Heisenberg's equation from (3.14), and $(\hat{\mathbf{p}} - q_e\mathbf{A})^2/2m$ from (3.9) in QM-4; the angular-momentum algebra (3.17) becomes QM-5's commutator algebra. Unitary transformations are the quantum canonical transformations.
 - **QM-1, QM-8, QM-9:** Bohr–Sommerfeld (§3.9); WKB is (3.30) plus $\hbar^2A_{qq}/A$; the path integral starts from (3.7).
 - **QC-9, ST-6:** Trotterization and Hamiltonian Monte Carlo are the splitting (3.31)–(3.32). HMC accepts with $\min(1, e^{-\Delta H})$ and no Jacobian factor because Verlet preserves volume.
 - **CM-5, CM-7:** Kepler and the symmetric top are integrable; C2 shows why Kepler orbits close.
@@ -561,7 +561,7 @@ See [exercises.md](exercises.md). A1–A6 are drills. B1–B8 are the module; B1
 
 `project.py` (about 15 s) checks every number in §3–§4 and in the solutions, and saves nine figures: phase portraits (oscillator, pendulum with separatrix, double well $V = -x^2/2 + x^4/4$); Legendre tangent lines; the Liouville blob (5000 interior points and a 4000-point boundary under the pendulum flow; at $t = 24$ the shoelace area ratio is $0.999998$ for symplectic Euler, $0.960$ for RK45, $1.202$ for explicit Euler); the signature figure `energy_drift.png` (RK4 vs Verlet, $10^4$ periods); the pendulum's $J(E)$ and $T = dJ/dE$; adiabatic invariance; $S(q, t)$; WKB; and the standard map (C3). A SymPy `poisson_bracket` checks (3.15), (3.17), Jacobi and conservation laws; a canonical checker evaluates $M^\top\mathsf{J}M - \mathsf{J}$; Part 13 checks the exercises.
 
-**Build it yourself:** before reading Parts 4–5, write `symplectic_euler_step` and `verlet_pendulum` from (3.31)–(3.32) and reproduce `energy_drift.png`. If your Verlet curve drifts, you used a full kick at both ends. "Your turn" asks for a 4th-order symplectic method, Kepler action-angle variables, and the standard map.
+**Build it yourself:** before reading Parts 4–5, write `symplectic_euler_step` and `verlet_pendulum` from (3.31)–(3.32) and reproduce `energy_drift.png`. If your Verlet curve drifts, you evaluated the second half kick at the old $\theta$ (a force cached from before the drift); that map has $\det M \ne 1$. (A full kick at both ends is a different bug: the map is still symplectic, Verlet with step $2h$ for the wrong Hamiltonian $p^2/4 - \cos\theta$, so the error is large but does not drift.) "Your turn" asks for a 4th-order symplectic method, Kepler action-angle variables, and the standard map.
 
 ## 8. Where you'll struggle
 

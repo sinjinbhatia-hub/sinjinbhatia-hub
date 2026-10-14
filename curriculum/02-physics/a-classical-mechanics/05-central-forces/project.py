@@ -322,7 +322,7 @@ print(f"Part 3, Ex 4.2: E={E42}, ell=1: e = {e42:.4f}, c = {c42:.4f}, r_p = {c42
 print("Part 3: turning points from the quadratic match c/(1±e); energy conserved to 1e-8 on all four conics.")
 
 # %% [markdown]
-# ## Part 4: Power-law forces $F = -kr^n$: closed, precessing, unstable
+# ## Part 4: Power-law forces $F = -kr^n$: closed, precessing, unstable (Example 4.5)
 #
 # Theorem 3.9: a circular orbit is stable iff $n > -3$, and small radial
 # oscillations have $\omega_r/\omega_\phi = \sqrt{n+3}$, so the angle from one
@@ -549,7 +549,7 @@ for e_t in (0.0, 0.3, 0.6, 0.9, 1.0, 1.5):
 print("        |A|/(mu k) = e to 1e-8 along orbits with e = 0, 0.3, 0.6, 0.9, 1 (parabola), 1.5 (hyperbola)")
 
 # %% [markdown]
-# ## Part 8: Hohmann transfer, LEO to GEO, with two impulsive burns
+# ## Part 8: Hohmann transfer, LEO to GEO, with two impulsive burns (Example 4.4)
 #
 # SI units, Earth $GM = 3.986004418\times10^{14}$ m$^3$/s$^2$. Start on a circular
 # orbit at $r_1 = 6771$ km (400 km altitude). Burn 1 raises the speed to the
@@ -749,14 +749,15 @@ cA, eA = 2.0, 0.5
 aA = cA / (1 - eA**2); lA = np.sqrt(cA); EA = -1 / (2 * aA)
 assert abs(ecc_from_E_ell(EA, lA, 1.0, 1.0) - eA) < 1e-12
 print(f"A2: r_p = {cA/(1+eA):.4f}, r_a = {cA/(1-eA):.4f}, a = {aA:.4f}, b = {aA*np.sqrt(1-eA**2):.4f}, ell = {lA:.4f}, E = {EA:.4f}, "
-      f"T = {kepler_period(aA, 1, 1):.2f}, v_p = {lA/(cA/(1+eA)):.4f}, v_a = {lA/(cA/(1-eA)):.4f}")
+      f"T = {kepler_period(aA, 1, 1):.2f}, v_p = {lA/(cA/(1+eA)):.4f}, v_a = {lA/(cA/(1-eA)):.4f} "
+      f"(sqrt(1-e^2) = {np.sqrt(1-eA**2):.5f}, a^1.5 = {aA**1.5:.4f})")
 # A3: Mercury
 vm = np.sqrt(GM_sun / a_merc)
-print(f"A3: Mercury sqrt(GM/a) = {vm/1e3:.2f} km/s, v_p = {vm*np.sqrt((1+e_merc)/(1-e_merc))/1e3:.2f} km/s, v_a = {vm*np.sqrt((1-e_merc)/(1+e_merc))/1e3:.2f} km/s, "
+print(f"A3: Mercury sqrt(GM/a) = {vm/1e3:.2f} km/s, sqrt((1+e)/(1-e)) = {np.sqrt((1+e_merc)/(1-e_merc)):.5f}, v_p = {vm*np.sqrt((1+e_merc)/(1-e_merc))/1e3:.2f} km/s, v_a = {vm*np.sqrt((1-e_merc)/(1+e_merc))/1e3:.2f} km/s, "
       f"ratio {(1+e_merc)/(1-e_merc):.4f}")
 # A4: Jupiter
 q_J, T_J = 1.26686534e17 / GM_sun, 4332.59
-print(f"A4: m_J/M = {q_J:.4e}; Sun-only formula overestimates Jupiter's period by {T_J*(np.sqrt(1+q_J)-1):.2f} d")
+print(f"A4: m_J/M = {q_J:.4e}, sqrt(1+q) - 1 = {np.sqrt(1+q_J)-1:.3e}; Sun-only formula overestimates Jupiter's period by {T_J*(np.sqrt(1+q_J)-1):.2f} d")
 # A5
 print(f"A5: sigma(theta > 1 deg)/sigma(theta > 90 deg) = cot^2(0.5 deg) = {1/np.tan(np.radians(0.5))**2:,.0f}")
 # B2: the circle r = 2R cos(phi) through the centre needs F = -8 ell^2 R^2/(mu r^5), and has E = 0
@@ -769,7 +770,8 @@ rpM, raM = (6371 + 600) * 1e3, (6371 + 39700) * 1e3
 aM, eM = 0.5 * (rpM + raM), (raM - rpM) / (raM + rpM)
 vpM, vaM = np.sqrt(GM_E * (2 / rpM - 1 / aM)), np.sqrt(GM_E * (2 / raM - 1 / aM))
 assert abs(vpM * rpM - vaM * raM) / (vpM * rpM) < 1e-12
-print(f"B3: Molniya a = {aM/1e3:.0f} km, e = {eM:.4f}, T = {kepler_period(aM, 1, GM_E)/3600:.3f} h, v_p = {vpM/1e3:.3f} km/s, v_a = {vaM/1e3:.3f} km/s")
+print(f"B3: Molniya a = {aM/1e3:.0f} km, e = {eM:.4f}, T = {kepler_period(aM, 1, GM_E)/3600:.3f} h, v_p = {vpM/1e3:.3f} km/s, v_a = {vaM/1e3:.3f} km/s, "
+      f"r_p v_p = r_a v_a = {rpM*vpM/1e6:.4e} km^2/s")
 # B4: Yukawa, units k = lambda = 1: stability condition d ln f/d ln r > -3
 f_y = sp.exp(-r_s) * (1 / r_s**2 + 1 / r_s)
 cond = sp.factor(sp.simplify(r_s * sp.diff(sp.log(f_y), r_s) + 3))
@@ -792,7 +794,7 @@ T_Mars = kepler_period(r2M, 1, GM_sun)
 lead = 180 - 360 * t_tM / T_Mars
 syn = 1 / (1 / kepler_period(r1M, 1, GM_sun) - 1 / T_Mars)
 print(f"B7: v_E = {np.sqrt(GM_sun/r1M)/1e3:.2f}, v_p = {np.sqrt(GM_sun*(2/r1M-1/atM))/1e3:.2f}, v_a = {np.sqrt(GM_sun*(2/r2M-1/atM))/1e3:.2f}, "
-      f"v_Mars = {np.sqrt(GM_sun/r2M)/1e3:.2f} km/s; T_Mars = {T_Mars/86400:.1f} d")
+      f"v_Mars = {np.sqrt(GM_sun/r2M)/1e3:.2f} km/s; a_t = {atM/AU:.3f} AU; T_Mars = {T_Mars/86400:.1f} d, Mars moves {360*t_tM/T_Mars:.1f} deg in transit")
 print(f"B7: Earth->Mars: dv1 = {dv1M/1e3:.3f} km/s, dv2 = {dv2M/1e3:.3f} km/s, transfer {t_tM/86400:.1f} d, Mars leads by {lead:.1f} deg, "
       f"windows every {syn/86400:.0f} d")
 # B8: LRL along the precessing orbit of Part 5 (mu = k = 1)
@@ -808,7 +810,8 @@ u_c = mu * k / (ell0**2 * beta**2)                     # centre of the u oscilla
 e_pert = (1 / rp0) / u_c - 1
 A_ap = mu * k - ell0**2 * u_c * (1 - e_pert)           # |A| at aphelion, where A = (l^2/r - mu k) r_hat
 assert abs(A_ap - np.hypot(Axs, Ays).min()) < 1e-6
-print(f"B8: mu k/(l^2 beta^2) = {u_c:.5f}, e' = {e_pert:.5f}, r_a = {1/(u_c*(1-e_pert)):.5f}, |A|/(mu k) at aphelion = {A_ap:.4f}")
+print(f"B8: mu k/(l^2 beta^2) = {u_c:.5f}, e' = {e_pert:.5f}, u_a = {u_c*(1-e_pert):.5f}, r_a = {1/(u_c*(1-e_pert)):.5f}, "
+      f"l^2 u_a = {ell0**2*u_c*(1-e_pert):.4f}, |A|/(mu k) at aphelion = {A_ap:.4f}")
 print(f"B8: LRL at successive perihelia advances {np.mean(np.diff(angA)):.6f} rad/orbit (precession {prec_exact:.6f}); "
       f"|A|/(mu k) ranges over [{np.hypot(Axs, Ays).min():.4f}, {np.hypot(Axs, Ays).max():.4f}] within an orbit")
 # C1: modified Binet equation w'' + w = 1 + delta w^2 (w = u h^2/GM), e = 0.2: advance per orbit vs 2 pi delta

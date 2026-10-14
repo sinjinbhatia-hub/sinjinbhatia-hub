@@ -1,6 +1,6 @@
 # CM-5 Exercises
 
-Conventions as in the notes: $\mu$ is the reduced mass, $\ell = |\mathbf L|$, $u = 1/r$, primes are $d/d\varphi$, $V = -k/r$ ($k > 0$) for gravity and $V = +k/r$ for Coulomb repulsion, $\theta$ is the scattering angle. Constants: $GM_\odot = 1.32712440018\times10^{20}$ m³/s², $GM_\oplus = 3.986004418\times10^{14}$ m³/s², 1 AU $= 1.495978707\times10^{11}$ m, $e^2/4\pi\varepsilon_0 = 1.43996$ MeV fm. `project.py` Part 10 prints every number in the solutions; do the problems first.
+Conventions as in the notes: $\mu$ is the reduced mass, $\ell = |\mathbf L|$, $u = 1/r$, primes are $d/d\varphi$, $V = -k/r$ ($k > 0$) for gravity and $V = +k/r$ for Coulomb repulsion, $\theta$ is the scattering angle. Constants: $GM_\odot = 1.32712440018\times10^{20}$ m³/s², $GM_\oplus = 3.986004418\times10^{14}$ m³/s², 1 AU $= 1.495978707\times10^{11}$ m, $e^2/4\pi\varepsilon_0 = 1.43996$ MeV fm. `project.py` Parts 9–10 print every number in the solutions; do the problems first.
 
 ## A. Warm-up (do all; 5–10 minutes each)
 

@@ -133,7 +133,7 @@ assert 0.09 < rel_naive < 0.11 and rel_stable < 5e-8   # 5e-8 = half a unit in t
 # Conditioning of the subtraction itself: κ_sub = (|x|+|y|)/|x-y|, eq. (3.4)
 kappa_sub = (9000 + 8999.99977778) / abs(9000 - 8999.99977778)
 print(f"κ of the subtraction 9000 - 8999.9998 = {kappa_sub:.1e}; times the 8-digit rounding level 5e-9 ≈ {kappa_sub*5e-9:.2f}")
-assert 7e7 < kappa_sub < 9e7
+assert np.isclose(kappa_sub, 8.1e7, rtol=1e-2)                            # Example 4.1 quotes 8.1e7
 
 # %% [markdown]
 # ## Part 2: Conditioning and backward stability (§3.3–3.4)
@@ -192,6 +192,8 @@ fwd, bwd = np.array(fwd), np.array(bwd)
 assert np.all(bwd < 50 * n * EPS), "LU should be backward stable here"
 assert np.all(fwd < 50 * n * kappas * EPS), "forward error should be ≲ κ ε"
 assert fwd[-1] > 1e-6 and fwd[0] < 1e-13, "forward error must actually grow with κ"
+# The numbers quoted in §3.3: backward error in [4.5e-17, 1.5e-15]; forward error 1.5e-15 at κ = 1, 5.5e-6 at κ = 1e12.
+assert bwd.max() < 2e-15 and fwd[0] < 2e-15 and 4e-6 < fwd[-1] < 7e-6
 print(f"LU: backward error in [{bwd.min():.1e}, {bwd.max():.1e}] for all κ; forward error {fwd[0]:.1e} at κ=1 → {fwd[-1]:.1e} at κ=1e12")
 
 fig, ax = plt.subplots(figsize=(6, 4))
@@ -241,7 +243,7 @@ A = rng.standard_normal((100, 100))
 P, L, U, rho = lu_partial_pivoting(A)
 assert np.allclose(P @ A, L @ U)
 print(f"random Gaussian 100×100: ρ = {rho:.1f}  (vs worst case 2^99 ≈ {2.0**99:.1e})")
-assert rho < 100
+assert 3 < rho < 6                     # §3.4 quotes ρ ≈ 4.2 for this matrix
 
 # %% [markdown]
 # ## Part 3: Householder reflections and QR (§3.5–3.6)
@@ -286,7 +288,8 @@ v_good = householder_vector(x_near)              # 1 + (1 + 1e-16): no cancellat
 err_bad = np.linalg.norm(householder_matrix(v_bad) @ x_near - nx * np.eye(3)[0]) / nx
 err_good = np.linalg.norm(householder_matrix(v_good) @ x_near + nx * np.eye(3)[0]) / nx
 print(f"sign choice on x = (1, 1e-8, 1e-8): ‖Hx − target‖/‖x‖ = {err_bad:.1e} (bad sign) vs {err_good:.1e} (good sign)")
-assert err_bad > 1e-10 and err_good < 1e-15
+# fl(‖x‖) = 1 exactly, so the bad v is (0, 1e-8, 1e-8), H x = (1, −1e-8, −1e-8): residual √2·1e-8 (Example 4.3 quotes 1.4e-8).
+assert np.isclose(err_bad, np.sqrt(2) * 1e-8, rtol=1e-6) and err_good < 1e-20
 # Both H's are exactly orthogonal; the bad one is a perfect reflection across the wrong plane.
 assert np.allclose(householder_matrix(v_bad).T @ householder_matrix(v_bad), np.eye(3))
 
@@ -368,6 +371,9 @@ for k in loss:
 assert loss["Householder"].max() < 1e-14
 assert loss["CGS"][ns == 10][0] > 1 and loss["MGS"][ns == 10][0] < 1e-2 and loss["MGS"][ns == 10][0] > loss["Householder"][ns == 10][0] * 1e8
 assert loss["CGS"][ns == 7][0] > 0.5      # notes §2, §3.5: CGS has lost all orthogonality by n = 7
+# The numbers quoted in §3.5: n = 7 CGS 0.58; n = 10 (κ = 1.6e13) CGS 3.0, MGS 1.8e-4, Householder 1.4e-15.
+assert 0.55 < loss["CGS"][ns == 7][0] < 0.61 and np.isclose(conds[ns == 10][0], 1.6e13, rtol=0.02)
+assert 2.9 < loss["CGS"][ns == 10][0] < 3.1 and 1.7e-4 < loss["MGS"][ns == 10][0] < 1.9e-4 and loss["Householder"].max() < 2e-15
 print(f"Hilbert n=7: ‖QᵀQ−I‖₂ CGS = {loss['CGS'][ns==7][0]:.2f}; Householder max over n=2..14 = {loss['Householder'].max():.1e}")
 print(f"Hilbert n=10 (κ={conds[ns==10][0]:.1e}): ‖QᵀQ−I‖₂ = CGS {loss['CGS'][ns==10][0]:.1e}, MGS {loss['MGS'][ns==10][0]:.1e}, Householder {loss['Householder'][ns==10][0]:.1e}")
 
@@ -406,6 +412,7 @@ err_qr = np.linalg.norm(x_qr - x_true) / np.linalg.norm(x_true)
 err_ref = np.linalg.norm(x_ref - x_true) / np.linalg.norm(x_true)
 print(f"least squares, κ(A)=1e8: error normal equations = {err_ne:.2e}, Householder QR = {err_qr:.2e}, lstsq (SVD) = {err_ref:.2e}")
 assert err_ne > 1e-3 and err_qr < 1e-6 and err_ne / err_qr > 1e3
+assert 5e-3 < err_ne < 7e-3 and 6.5e-10 < err_qr < 8.5e-10            # §3.6 quotes 6e-3 and 7.5e-10
 
 # %% [markdown]
 # ## Part 4: Eigenvalue algorithms (§3.7–3.8)
@@ -493,7 +500,8 @@ def qr_positive(A):
 
 
 def qr_algorithm_unshifted(A, steps):
-    """A_{k+1} = R_k Q_k where A_k = Q_k R_k (eq. 3.17). Returns the iterates and the accumulated Q⁽ᵏ⁾ = Q₁…Q_k."""
+    """A_{k+1} = R_k Q_k where A_k = Q_k R_k, A_0 = A (eq. 3.17). Returns the iterates A_0..A_steps and the accumulated
+    Q⁽ˢᵗᵉᵖˢ⁾ = Q_0 Q_1 … Q_{steps−1} (Theorem 3.15)."""
     Ak = np.array(A, float); Qacc = np.eye(len(Ak)); hist = [Ak.copy()]
     for _ in range(steps):
         Q, R = qr_positive(Ak); Ak = R @ Q; Qacc = Qacc @ Q; hist.append(Ak.copy())
@@ -513,7 +521,7 @@ ratio = lam[1] / lam[0]
 print(f"Example 4.4: A₁ = {hist[1].tolist()}, A₂ = {np.round(hist[2], 5).tolist()}; off-diagonals {[round(float(h[1,0]),5) for h in hist]}")
 print(f"   λ₂/λ₁ = {ratio:.4f}; successive off-diagonal ratios: {[round(float(hist[k+1][1,0]/hist[k][1,0]), 4) for k in range(4)]}")
 assert np.isclose(ratio, 3 - 2 * np.sqrt(2)) and np.isclose(hist[2][1, 0] / hist[1][1, 0], ratio, atol=2e-3)
-# Theorems 3.15–3.16: A_{k+1} = (Q⁽ᵏ⁾)ᵀ A Q⁽ᵏ⁾ and A^k = Q⁽ᵏ⁾ R⁽ᵏ⁾, so Q⁽ᵏ⁾e₁ is normalized power iteration.
+# Theorems 3.15–3.16 with Q⁽ᵏ⁾ = Q_0…Q_{k−1}: A_k = (Q⁽ᵏ⁾)ᵀ A Q⁽ᵏ⁾ and A^k = Q⁽ᵏ⁾ R⁽ᵏ⁾, so Q⁽ᵏ⁾e₁ is normalized power iteration.
 assert np.allclose(Qacc.T @ A44 @ Qacc, hist[4])
 p = np.linalg.matrix_power(A44, 4) @ np.eye(2)[0]; p /= np.linalg.norm(p)
 assert np.allclose(np.abs(Qacc[:, 0]), np.abs(p))
@@ -533,7 +541,7 @@ fig.tight_layout(); fig.savefig(FIG / "qr_subdiagonal_decay.png", dpi=120); plt.
 # Check the predicted geometric rates over iterations 20..60.
 for j in range(5):
     rate = (sub[60, j] / sub[20, j]) ** (1 / 40)
-    assert abs(rate - (5 - j) / (6 - j)) < 0.03, (j, rate)
+    assert abs(rate - (5 - j) / (6 - j)) < 0.015, (j, rate)        # tight enough to separate 5/6 from 4/5
 print("   6×6 check: subdiagonal (j+1, j) decays at rate λ_{j+1}/λ_j for every j ✓")
 
 
@@ -617,7 +625,7 @@ for nn in (10, 50, 150):
     err = np.abs(ev - ev_ref).max() / np.abs(ev_ref).max()
     assert err < 1e-12, err
     print(f"qr_algorithm_symmetric n={nn}: {steps} QR steps = {steps/nn:.2f} per eigenvalue, max rel error vs eigh {err:.1e}, {t_qr:.2f}s")
-    assert steps < 4 * nn
+    assert 1.9 <= steps / nn <= 2.2 and err < 1e-14                 # §3.8(c): about two steps per eigenvalue, error ~6e-15
 
 # Example 4.4, continued: the diagonal of A₂ is off by O(off-diagonal²); the unshifted iteration needs 11 steps to
 # push the off-diagonal below 1e-8; the Wilkinson shift (eq. 3.19) for this matrix is the exact eigenvalue 2 − √2.
@@ -751,7 +759,8 @@ assert np.isclose(np.abs(np.linalg.eigvals(BGS)).max(), rho_GS, atol=1e-10)
 rate_j = (hist_j[-1] / hist_j[-201]) ** (1 / 200); rate_gs = (hist_gs[-1] / hist_gs[-101]) ** (1 / 100)
 print(f"N=20 (n=400, κ={laplacian_condition(N):.0f}): Jacobi {len(hist_j)-1} its ({t_j:.2f}s), Gauss–Seidel {len(hist_gs)-1} its ({t_gs:.2f}s), CG {it_c} its ({t_c:.3f}s)")
 print(f"   ρ_J = cos πh = {rho_J:.5f} (observed rate {rate_j:.5f}); ρ_GS = cos² πh = {rho_GS:.5f} (observed {rate_gs:.5f})")
-assert abs(rate_j - rho_J) < 2e-3 and abs(rate_gs - rho_GS) < 4e-3
+assert abs(rate_j - rho_J) < 5e-6 and abs(rate_gs - rho_GS) < 5e-6          # "match to five digits" (§3.9)
+assert abs(len(hist_j) - 1 - 1416) <= 2 and abs(len(hist_gs) - 1 - 703) <= 2  # the counts quoted in §3.9 and Example 4.6
 assert len(hist_j) > 2 * len(hist_gs) * 0.9 and it_c < len(hist_gs) / 5
 
 fig, ax = plt.subplots(figsize=(6.5, 4))
@@ -804,7 +813,8 @@ for N in grids:
     print(f"N={N:3d} n={n:6d} κ={kap:8.0f} √κ={np.sqrt(kap):6.1f}  CG its={it_c:4d} ({it_c/np.sqrt(kap):.2f}√κ)  CG {t_c:.3f}s  dense {'—' if np.isnan(t_dense) else f'{t_dense:.3f}s'}")
 res = np.array(results)
 ratios = res[:, 3] / np.sqrt(res[:, 2])
-assert ratios.std() / ratios.mean() < 0.05, "iterations/√κ should be roughly constant"
+assert ratios.std() / ratios.mean() < 0.02, "iterations/√κ should be roughly constant"   # §3.10 quotes 4.7√κ ± 1.5%
+assert 4.6 < ratios.mean() < 4.85 and abs(res[-1, 3] - 600) <= 6
 print(f"iterations / √κ = {ratios.mean():.2f} ± {ratios.std():.2f} across all grids: CG cost scales like √κ ∝ N")
 t60 = res[res[:, 0] == 60, 5][0]
 print(f"N=200: CG {res[-1, 4]:.2f}s; dense LU extrapolated from the N=60 time by n³: ≈ {t60 * (40000 / 3600)**3 / 60:.0f} min, "
@@ -819,6 +829,7 @@ conjugate_gradient(A, b, tol=1e-12, callback=lambda x: errs.append(np.sqrt((x_tr
 errs = np.array(errs); ks = np.arange(1, len(errs) + 1)
 bound = 2 * rho**ks
 assert np.all(errs <= bound * (1 + 1e-8)), "CG violated the Chebyshev bound"
+assert 350 < bound[49] / errs[49] < 480                                  # "loose by a factor of about 400 at k = 50"
 print(f"Chebyshev bound (Thm 3.24) holds at every step on N=40: e.g. k=50: ‖e‖_A/‖e₀‖_A = {errs[49]:.2e} ≤ 2ρ^50 = {bound[49]:.2e}, ρ = (√κ−1)/(√κ+1) = {rho:.4f}")
 
 fig, axs = plt.subplots(1, 3, figsize=(13, 4))
@@ -881,6 +892,7 @@ x_g, hist_g = gmres(Acd, bcd, m)
 x_cd = spla.spsolve(Acd.tocsc(), bcd)
 assert np.all(np.diff(hist_g) <= 1e-10)          # residuals never increase (nested subspaces)
 assert hist_g[-1] < 1e-10 and hist_g[-2] > 1e-6  # ... and this one needs all 60 steps: the spectrum is spread out
+assert 3e-2 < hist_g[-2] < 6e-2 and hist_g[-1] < 5e-13                 # §3.11 quotes 4.4e-2 and 1.1e-13
 print(f"GMRES on a 60×60 convection–diffusion matrix: residual {hist_g[-2]:.1e} at step 59, {hist_g[-1]:.1e} at step 60 (finite termination); error vs direct {np.linalg.norm(x_g - x_cd)/np.linalg.norm(x_cd):.1e}")
 # (b) A clustered spectrum converges fast: A = 2I + B with ‖B‖₂ = 1. The polynomial p(z) = (1 − z/2)^k has p(0) = 1
 # and |p(A)| = ‖(−B/2)^k‖ ≤ 2^-k, so GMRES (which minimizes over all such p, eq. 3.32) satisfies ‖r_k‖ ≤ 2^-k ‖b‖.
@@ -949,10 +961,12 @@ for i, q in enumerate(qs):
     print(f"   q={q}: " + "  ".join(f"{v/opt:5.2f}" for v in err[i]))
 assert np.all(np.diff(err, axis=1) < 0.05) and np.all(err[2] < err[0])    # more p and more q both help
 assert err[2, -1] / opt < 1.15                                              # q=2, p=40: within 15% of optimal
+table_313 = np.array([[2.12, 1.77, 1.42, 0.98, 0.59], [1.05, 0.87, 0.64, 0.45, 0.28], [0.94, 0.78, 0.58, 0.40, 0.25]])
+assert np.allclose(err / opt, table_313, atol=0.01)                         # the table printed in §3.13
 bound11_p10 = (1 + 4 * np.sqrt(k + 10) / 9 * np.sqrt(300)) * sig[k]
 print(f"   HMT Theorem 1.1 bound at p=10, q=0: {bound11_p10/opt:.1f} σ_{k+1} (loose but true: measured {err[0, 2]/opt:.2f} σ_{k+1})")
 U_r, s_r, Vt_r, _ = randomized_svd(A_test, k, 10, 2)
-assert np.max(np.abs(s_r - sig[:k]) / sig[:k]) < 0.02
+assert np.max(np.abs(s_r - sig[:k]) / sig[:k]) < 5e-4                     # §3.13 quotes 4.1e-4
 print(f"   leading 10 singular values from randomized_svd (p=10, q=2): max relative error {np.max(np.abs(s_r - sig[:k]) / sig[:k]):.1e}")
 
 fig, ax = plt.subplots(figsize=(6.5, 4))
@@ -1009,6 +1023,8 @@ if len(converging) >= 3:
     for e_prev, e_next in zip(converging[:-1], converging[1:]):
         assert e_next < 5 * e_prev ** 2.5, (e_prev, e_next)          # at least much faster than quadratic
 assert errs_rqi[-1] < 1e-12
+digits_rqi = [int(-np.log10(max(e, 1e-17))) for e in errs_rqi]
+assert digits_rqi[:3] == [0, 2, 8] and errs_rqi[3] < 2e-15                  # §3.7: 0, 2, 8, 15 digits
 
 
 def variable_coefficient_poisson(N, a_func):
@@ -1058,8 +1074,12 @@ for name, a_func in (("a = exp(6(x+y))", a_smooth), ("a = 1 or 1e3 (jump)", a_ju
     print(f"variable-coefficient Poisson, {name}, N={Nv}: κ(A) = {kap_v:.1e} → κ(D⁻¹A) = {kap_pv:.1e} (√ ratio {np.sqrt(kap_v/kap_pv):.0f}); CG {it_plain} its → Jacobi-PCG {it_pcg} its (ratio {it_plain/it_pcg:.0f})")
     if a_func is a_smooth:
         assert kap_v / kap_pv > 1e3 and it_plain / it_pcg > 20
+        # §3.12 quotes κ 1.3e6 → 3.6e2 and 4650 → 122 iterations.
+        assert 1.25e6 < kap_v < 1.35e6 and 3.5e2 < kap_pv < 3.7e2 and abs(it_plain - 4650) <= 50 and abs(it_pcg - 122) <= 2
     else:   # κ barely moves but the preconditioned spectrum is clustered: CG responds to the whole spectrum, not only κ
         assert kap_v / kap_pv < 3 and it_plain / it_pcg > 5
+        # §3.12 quotes κ 5.7e5 → 3.2e5 and 1504 → 155 iterations.
+        assert 5.6e5 < kap_v < 5.8e5 and 3.1e5 < kap_pv < 3.3e5 and abs(it_plain - 1504) <= 15 and abs(it_pcg - 155) <= 2
         ev_p = np.linalg.eigvalsh(Ad / np.sqrt(Dv)[:, None] / np.sqrt(Dv)[None, :])
         print(f"   jump case: eigenvalues of D^-1/2 A D^-1/2: one outlier {ev_p[0]:.1e}, the other {len(ev_p)-1} in "
               f"[{ev_p[1]:.1e}, {ev_p[-1]:.2f}] (spread {ev_p[-1]/ev_p[1]:.0f})")
@@ -1067,7 +1087,7 @@ for name, a_func in (("a = exp(6(x+y))", a_smooth), ("a = 1 or 1e3 (jump)", a_ju
 # On the constant-coefficient Laplacian D = (4/h²) I, so D⁻¹A = (h²/4) A has the same κ: Jacobi does nothing.
 A, h = laplacian_2d(40); b = rng.standard_normal(1600)
 _, it_a, _ = conjugate_gradient(A, b); _, it_b = preconditioned_cg(A, b, lambda r: r / A.diagonal())
-assert it_a == it_b
+assert it_a == it_b and abs(it_a - 126) <= 1                # §3.12 quotes 126 either way
 print(f"   constant-coefficient Laplacian N=40: CG {it_a} its, Jacobi-PCG {it_b} its (identical: D is a multiple of I)")
 
 
@@ -1109,7 +1129,10 @@ r30 = ritz_hist[29]
 assert (r30[0] - lam_min) < 400 and (lam_max - r30[-1]) < 400 and 0.25 < (r30[0] - lam_min) / (lam_max - r30[-1]) < 4
 assert (lam_max - r30[-1]) / lam_max < 5e-3 and (r30[0] - lam_min) / lam_min > 1
 r200 = ritz_hist[-1]
-assert abs(r200[-1] - lam_max) / lam_max < 1e-5 and abs(r200[0] - lam_min) / lam_min < 1e-3
+assert abs(r200[-1] - lam_max) / lam_max < 1e-5 and abs(r200[0] - lam_min) / lam_min < 3e-5   # §3.11: 3e-5 relative or better
+# The numbers quoted in §3.11 and B5: Ritz extremes 141.9 and 81,425.9 at k = 30 (abs. errors 122 and 162); κ estimate 574 → 4134.
+assert abs(r30[0] - 141.9) < 0.1 and abs(r30[-1] - 81425.9) < 0.1 and round(r30[-1] / r30[0]) == 574
+assert abs(r200[-1] / r200[0] - laplacian_condition(N)) < 1 and round(laplacian_condition(N)) == 4134
 print(f"   κ estimate from 30 Ritz values: {r30[-1]/r30[0]:.0f}; from 200: {r200[-1]/r200[0]:.0f}; exact {laplacian_condition(N):.0f}")
 print("   (Lanczos finds the extremes first in ABSOLUTE terms; the relative gap (λ₂−λ₁)/(λₙ−λ₁) ≈ 3.6e-4 is what sets the speed, and it is the same at both ends.)")
 
@@ -1144,8 +1167,7 @@ print(f"   stored 0.1 = {Decimal(0.1)}, 0.2 = {Decimal(0.2)}, 0.3 = {Decimal(0.3
 xa = 1e-8
 naive, stable = 1 - np.cos(xa), 2 * np.sin(xa / 2) ** 2
 kappa_f = xa * np.sin(xa) / stable                       # κ(f; x) = |x f'(x) / f(x)|
-kappa_s = (1 + np.cos(xa)) / (1 - np.cos(xa) if naive else stable)   # κ_sub of 1 − cos x, eq. (3.4), with the true difference
-kappa_s = (1 + 1) / stable
+kappa_s = (1 + 1) / stable                                # κ_sub of 1 − cos x, eq. (3.4): (|1| + |cos x|)/|1 − cos x| with the true difference
 assert naive == 0.0 and np.isclose(stable, 5e-17, rtol=1e-8) and np.isclose(kappa_f, 2.0, rtol=1e-8) and np.isclose(kappa_s, 4e16, rtol=1e-6)
 print(f"A2: 1 − cos(1e-8) naive = {naive}, 2 sin²(x/2) = {stable:.4e}; κ(f) = {kappa_f:.4f}; κ of the subtraction ≈ {kappa_s:.1e}")
 
@@ -1204,6 +1226,7 @@ e_lu = np.linalg.norm(x60 - xt60) / np.linalg.norm(xt60); e_qr = np.linalg.norm(
 bw_lu = np.linalg.norm(b60 - W60 @ x60) / (np.linalg.norm(W60, 2) * np.linalg.norm(x60))
 print(f"B3: n=60 growth matrix, κ = {np.linalg.cond(W60):.1f}: GEPP forward error {e_lu:.2f}, backward error {bw_lu:.1e}; Householder QR {e_qr:.1e}")
 assert np.linalg.cond(W60) < 30 and e_lu > 0.05 and bw_lu > 1e-3 and e_qr < 1e-13
+assert 26.7 < np.linalg.cond(W60) < 26.9 and 0.2 < e_lu < 0.32 and 1e-2 < bw_lu < 2e-2 and e_qr < 1e-14   # as quoted in B3(c)
 
 # B4: Läuchli's matrix, δ = 1e-8.
 dl = 1e-8; AL = np.array([[1.0, 1.0], [dl, 0.0], [0.0, dl]]); bL = np.array([2.0, dl, dl])
@@ -1266,7 +1289,7 @@ rec8 = np.linalg.norm(Q8 @ H8 @ Q8.T - A8n) / np.linalg.norm(A8n)
 hist8, _ = qr_algorithm_unshifted(H8, 150)
 below = max(np.abs(np.tril(h, -2)).max() for h in hist8) / np.abs(A8n).max()
 diag_err = np.abs(np.diag(hist8[-1]) - np.array([6.0, 5, 4, 3, 2, 1])).max()
-assert rec8 < 1e-14 and np.allclose(Q8.T @ Q8, np.eye(6)) and below < 1e-12 and diag_err < 1e-9
+assert rec8 < 1e-14 and np.allclose(Q8.T @ Q8, np.eye(6)) and below < 1e-12 and diag_err < 1e-12   # B8(b): 2.7e-13 < (5/6)^150
 print(f"B8: ‖QHQᵀ − A‖/‖A‖ = {rec8:.1e}; max entry below the subdiagonal over 150 QR steps = {below:.1e} (relative); "
       f"diag(A₁₅₀) − (6,…,1) max = {diag_err:.1e}; slowest rate (5/6)^150 = {(5 / 6) ** 150:.1e}")
 

@@ -30,7 +30,7 @@ By (3.14), $\frac{d}{dt}(qp) = 2(T - V)$. Average over one period $\tau$: the le
 
 **A4.** For one degree of freedom, canonical ⇔ $\det M = 1$ (§3.7).
 
-(a) $M = \begin{pmatrix}\cos\alpha & -\sin\alpha\\ \sin\alpha & \cos\alpha\end{pmatrix}$, $\det = 1$. Canonical (it is the scaled oscillator flow).
+(a) $M = \begin{pmatrix}\cos\alpha & -\sin\alpha\\ \sin\alpha & \cos\alpha\end{pmatrix}$, $\det = 1$. Canonical (it is the time-$(-\alpha)$ flow of the oscillator with $m = \omega = 1$, a rotation of the phase plane).
 (b) $\det = 2\cdot\frac12 = 1$. Canonical.
 (c) $M = \begin{pmatrix}2q & 0\\ -p/2q^2 & 1/2q\end{pmatrix}$, $\det = 1$. Canonical: the point transformation $f(q) = q^2$.
 (d) $M = \begin{pmatrix}1 & 0\\ 2q & 1\end{pmatrix}$, $\det = 1$. Canonical: a shear in $p$, the same kind of map as a kick in (3.31), and the 1D version of the gauge change $\mathbf{p} \to \mathbf{p} + \nabla\chi$.
@@ -47,13 +47,13 @@ Separatrix energy $E_s = \frac23$. On $p = 0$: $\frac13x^3 - x = \frac23$, i.e. 
 
 ## B. Core
 
-**B1.** (a) Index form, $i = 1, 2, 3$, with $\mathbf{A}$ and $\phi$ functions of $(\mathbf{r}, t)$:
+**B1.** (a) Index form, $i = 1, 2, 3$, with $\mathbf{A}$ and $\Phi$ functions of $(\mathbf{r}, t)$:
 
 1. $\dot x_i = \partial H/\partial p_i = (p_i - q_eA_i)/m$, so the kinetic momentum is $m\dot x_i = p_i - q_eA_i$.
-2. $\dot p_i = -\partial H/\partial x_i = \sum_j\frac{p_j - q_eA_j}{m}q_e\,\partial_iA_j - q_e\partial_i\phi = q_e\sum_j\dot x_j\,\partial_iA_j - q_e\partial_i\phi$.
+2. $\dot p_i = -\partial H/\partial x_i = \sum_j\frac{p_j - q_eA_j}{m}q_e\,\partial_iA_j - q_e\partial_i\Phi = q_e\sum_j\dot x_j\,\partial_iA_j - q_e\partial_i\Phi$.
 3. Along the path, $\frac{d}{dt}A_i(\mathbf{r}(t), t) = \partial_tA_i + \sum_j\dot x_j\,\partial_jA_i$. So
-$$m\ddot x_i = \dot p_i - q_e\frac{dA_i}{dt} = q_e\Big(-\partial_i\phi - \partial_tA_i\Big) + q_e\sum_j\dot x_j\big(\partial_iA_j - \partial_jA_i\big).$$
-4. The first bracket is $E_i$. For the second, $\mathbf{v}\times(\nabla\times\mathbf{A}) = \nabla(\mathbf{v}\cdot\mathbf{A}) - (\mathbf{v}\cdot\nabla)\mathbf{A}$ with $\mathbf{v}$ held fixed, whose $i$-th component is $\sum_jv_j\partial_iA_j - \sum_jv_j\partial_jA_i$. So $m\ddot{\mathbf{r}} = q_e(\mathbf{E} + \mathbf{v}\times\mathbf{B})$. ∎ (Project: symbolic, for arbitrary $\mathbf{A}$, $\phi$.)
+$$m\ddot x_i = \dot p_i - q_e\frac{dA_i}{dt} = q_e\Big(-\partial_i\Phi - \partial_tA_i\Big) + q_e\sum_j\dot x_j\big(\partial_iA_j - \partial_jA_i\big).$$
+4. The first bracket is $E_i$. For the second, $\mathbf{v}\times(\nabla\times\mathbf{A}) = \nabla(\mathbf{v}\cdot\mathbf{A}) - (\mathbf{v}\cdot\nabla)\mathbf{A}$ with $\mathbf{v}$ held fixed, whose $i$-th component is $\sum_jv_j\partial_iA_j - \sum_jv_j\partial_jA_i$. So $m\ddot{\mathbf{r}} = q_e(\mathbf{E} + \mathbf{v}\times\mathbf{B})$. ∎ (Project: symbolic, for arbitrary $\mathbf{A}$, $\Phi$.)
 
 (b) Both potentials give $\nabla\times\mathbf{A} = B\hat{\mathbf{z}}$.
 - Landau gauge $\mathbf{A} = (0, Bx, 0)$: $H = \frac{1}{2m}\big[p_x^2 + (p_y - q_eBx)^2 + p_z^2\big]$. $y$ is cyclic, so $p_y = m\dot y + q_eBx$ is conserved. $m\dot y$ is not: it changes as $x$ oscillates. The conserved $p_y$ fixes the $x$-coordinate of the orbit's center, $x_c = p_y/q_eB$.
@@ -105,7 +105,7 @@ At $\Omega^2 = g/R$ the bottom loses stability and two new elliptic points split
 $$\Sigma(t) = \begin{pmatrix}\sigma_q^2 + \sigma_p^2t^2/m^2 & \sigma_p^2t/m\\ \sigma_p^2t/m & \sigma_p^2\end{pmatrix}, \qquad \det\Sigma(t) = \sigma_q^2\sigma_p^2 + \frac{\sigma_p^4t^2}{m^2} - \frac{\sigma_p^4t^2}{m^2} = \sigma_q^2\sigma_p^2.$$
 Numbers: $\sigma_q^2(3) = 0.49 + 0.16\times 9 = 1.9300$, $\operatorname{cov}(q, p) = 0.16\times 3 = 0.4800$, $\det\Sigma = 0.49\times 0.16 = 0.0784$ at every $t$ (project).
 
-(c) Liouville fixes the area of the $1\sigma$ ellipse, $\pi\sqrt{\det\Sigma}$, not its width. The ellipse shears: fast particles get ahead, $q$ and $p$ become correlated, and the ellipse gets long in $q$ and thin across. The QM-4 Gaussian wave packet spreads by the same formula, $\sigma_x^2(t) = \sigma_x^2 + \sigma_p^2t^2/m^2$.
+(c) Liouville fixes the area of the $1\sigma$ ellipse, $\pi\sqrt{\det\Sigma}$, not its width. The ellipse shears: fast particles get ahead, $q$ and $p$ become correlated, and the ellipse gets long in $q$ and thin across. The QM-3 free-particle Gaussian wave packet spreads by the same formula, $\sigma_x^2(t) = \sigma_x^2 + \sigma_p^2t^2/m^2$.
 
 **B7.** (a) $\frac{1}{2m}W'^2 = E$ gives $W = \sqrt{2mE}\,q$ (branch $p > 0$), so $S = \sqrt{2mE}\,q - Et$. Then $\beta = \partial S/\partial E = q\sqrt{m/2E} - t$, so $q = \sqrt{2E/m}\,(t + \beta)$: uniform motion at $v = \sqrt{2E/m}$, with $p = \partial S/\partial q = \sqrt{2mE} = mv$.
 
@@ -121,7 +121,7 @@ def energy_errors(steps, periods):
 ```
 Results over $10^3$ periods (project): RK4 final error $2.639\times10^{-2}$ (50 steps) and $8.347\times10^{-4}$ (100 steps), ratio $31.6$; Verlet maximum error $1.815\times10^{-2}$ and $4.533\times10^{-3}$, ratio $4.00$.
 
-(a) Verlet is second order and is the exact flow of $\tilde H = H + O(h^2)$ (§3.11). It conserves $\tilde H$, so $|H - H_0| \le |H - \tilde H| + |\tilde H - H_0| = O(h^2)$ for all time: halving $h$ divides the bound by 4. The same maximum appears at $10^4$ periods in Part 5; it does not grow.
+(a) Verlet is second order and is, up to exponentially small terms, the exact flow of $\tilde H = H + O(h^2)$ (§3.11). It conserves $\tilde H$ up to those terms, so $|H - H_0| \le |H - \tilde H| + |\tilde H - H_0| = O(h^2)$ for exponentially long times (far beyond $10^4$ periods): halving $h$ divides the bound by 4. The same maximum appears at $10^4$ periods in Part 5; it does not grow.
 
 (b) For the linear oscillator, one RK4 step multiplies the complex amplitude $q + ip/m\omega$ by $R(z)$ at $z = -i\omega h$, and $|R|$ is the same at $\pm i\omega h$. Write $y = \omega h$. Then $R(iy) = \big(1 - \frac{y^2}{2} + \frac{y^4}{24}\big) + i\big(y - \frac{y^3}{6}\big)$ and
 $$|R(iy)|^2 = 1 - y^2 + \frac{y^4}{3} - \frac{y^6}{24} + \frac{y^8}{576} + y^2 - \frac{y^4}{3} + \frac{y^6}{36} = 1 - \frac{y^6}{72} + \frac{y^8}{576}.$$

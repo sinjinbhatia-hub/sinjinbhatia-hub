@@ -24,8 +24,8 @@ In (b), is $p = m\dot x$?
 
 ## B. Core (do all)
 
-**B1.** (Canonical vs kinetic momentum.) For $H = |\mathbf{p} - q_e\mathbf{A}|^2/2m + q_e\phi$ (3.9):
-(a) Show that Hamilton's equations give $m\ddot{\mathbf{r}} = q_e(\mathbf{E} + \dot{\mathbf{r}}\times\mathbf{B})$, with $\mathbf{E} = -\nabla\phi - \partial_t\mathbf{A}$ and $\mathbf{B} = \nabla\times\mathbf{A}$. Remember that $\mathbf{A}$ depends on $\mathbf{r}(t)$.
+**B1.** (Canonical vs kinetic momentum.) For $H = |\mathbf{p} - q_e\mathbf{A}|^2/2m + q_e\Phi$ (3.9):
+(a) Show that Hamilton's equations give $m\ddot{\mathbf{r}} = q_e(\mathbf{E} + \dot{\mathbf{r}}\times\mathbf{B})$, with $\mathbf{E} = -\nabla\Phi - \partial_t\mathbf{A}$ and $\mathbf{B} = \nabla\times\mathbf{A}$. Remember that $\mathbf{A}$ depends on $\mathbf{r}(t)$.
 (b) For a uniform field $B\hat{\mathbf{z}}$, compare the gauges $\mathbf{A} = (0, Bx, 0)$ and $\mathbf{A} = \frac{B}{2}(-y, x, 0)$. In which is $p_y$ conserved? Is $m\dot y$ conserved in either? What does this say about whether canonical momentum is "physical"?
 
 **B2.** (Area and Euler's methods.) For the oscillator with $m = \omega = 1$:
