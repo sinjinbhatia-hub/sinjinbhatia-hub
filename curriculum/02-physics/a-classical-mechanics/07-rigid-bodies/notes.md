@@ -257,7 +257,7 @@ Now the computation every student dreads. Do it once, carefully, and never again
 
 *Derivation.*
 
-1. $\dot R_z(\phi)R_z(\phi)^\top = \dot\phi[\hat{\mathbf z}]_\times$, and similarly for the other factors (differentiate a rotation about a fixed axis).
+1. A rotation about a fixed axis $\hat{\mathbf a}$ by angle $\alpha(t)$ has $\dot R R^\top = \dot\alpha[\hat{\mathbf a}]_\times$ (differentiate Rodrigues' formula, or note that Theorem 3.1's $\boldsymbol\omega$ is $\dot\alpha\hat{\mathbf a}$). So $\dot R_z(\phi)R_z(\phi)^\top = \dot\phi[\hat{\mathbf z}]_\times$, $\dot R_x(\theta)R_x(\theta)^\top = \dot\theta[\hat{\mathbf x}]_\times$, $\dot R_z(\psi)R_z(\psi)^\top = \dot\psi[\hat{\mathbf z}]_\times$.
 2. Apply the addition rule twice to $R = R_z(\phi)\cdot R_x(\theta)\cdot R_z(\psi)$:
 $\dot RR^\top = \dot\phi[\hat{\mathbf z}]_\times + R_z(\phi)\,\dot\theta[\hat{\mathbf x}]_\times R_z(\phi)^\top + R_z(\phi)R_x(\theta)\,\dot\psi[\hat{\mathbf z}]_\times\,(R_z(\phi)R_x(\theta))^\top.$
 3. Use $R[\mathbf a]_\times R^\top = [R\mathbf a]_\times$: the second term is $\dot\theta[\hat{\mathbf n}]_\times$ with $\hat{\mathbf n} = R_z(\phi)\hat{\mathbf x}$, the third is $\dot\psi[\hat{\mathbf e}_3]_\times$ with $\hat{\mathbf e}_3 = R_z(\phi)R_x(\theta)\hat{\mathbf z}$ (the last $R_z(\psi)$ does not move $\hat{\mathbf z}$). So
@@ -354,9 +354,9 @@ A rectangular steel plate, $M = 2$ kg, $a = 0.3$ m by $b = 0.1$ m, is welded to 
 
 *Inertia.* Axes along the edges ($x$ along $a$, $y$ along $b$, $z$ normal) are principal by the mirror symmetries. From §3.7, $I = \frac M{12}\operatorname{diag}(b^2, a^2, a^2 + b^2) = \operatorname{diag}(0.0016667,\ 0.015,\ 0.016667)$ kg m².
 
-*Angular velocity.* $|\boldsymbol\omega| = 2\pi\cdot50 = 314.16$ rad/s along $\hat{\mathbf n} = (a, b, 0)/\sqrt{a^2 + b^2} = (0.94868, 0.31623, 0)$, so $\boldsymbol\omega = (298.02,\ 99.346,\ 0)$ rad/s.
+*Angular velocity.* $|\boldsymbol\omega| = 2\pi\cdot50 = 314.16$ rad/s along $\hat{\mathbf n} = (a, b, 0)/\sqrt{a^2 + b^2} = (0.94868, 0.31623, 0)$, so $\boldsymbol\omega = (298.04,\ 99.346,\ 0)$ rad/s.
 
-*Angular momentum.* $\mathbf L = I\boldsymbol\omega = (0.49671,\ 1.4902,\ 0)$ kg m²/s, $|\mathbf L| = \frac{M}{12}ab\,|\boldsymbol\omega| = 1.5708$ kg m²/s. The angle between $\mathbf L$ and $\boldsymbol\omega$: $\cos\gamma = \frac{\mathbf L\cdot\boldsymbol\omega}{|\mathbf L||\boldsymbol\omega|} = \frac{2ab}{a^2 + b^2} = 0.6$, so $\gamma = 53.13°$. $\mathbf L$ is closer to the long axis's perpendicular than $\boldsymbol\omega$ is, because the plate is "easier" to turn about $x$ ($I_{xx}$ small) and so stores less angular momentum in that direction.
+*Angular momentum.* $\mathbf L = I\boldsymbol\omega = (0.49673,\ 1.4902,\ 0)$ kg m²/s, $|\mathbf L| = \frac{M}{12}ab\,|\boldsymbol\omega| = 1.5708$ kg m²/s. The angle between $\mathbf L$ and $\boldsymbol\omega$: $\cos\gamma = \frac{\mathbf L\cdot\boldsymbol\omega}{|\mathbf L||\boldsymbol\omega|} = \frac{2ab}{a^2 + b^2} = 0.6$, so $\gamma = 53.13°$. $\mathbf L$ is closer to the long axis's perpendicular than $\boldsymbol\omega$ is, because the plate is "easier" to turn about $x$ ($I_{xx}$ small) and so stores less angular momentum in that direction.
 
 *Torque.* $\mathbf L$ is fixed in the body, so it rotates at $\boldsymbol\omega$, and $d\mathbf L/dt = \boldsymbol\omega\times\mathbf L$ (this is (3.16) with $\dot{\boldsymbol\omega} = 0$). Its magnitude is $|\boldsymbol\omega||\mathbf L|\sin\gamma = 314.16\times1.5708\times0.8 = 394.8$ N m, or in closed form $\omega^2\frac{M}{12}ab\,\frac{a^2 - b^2}{a^2 + b^2}$. Kinetic energy $T = \frac12\boldsymbol\omega\cdot\mathbf L = 148.04$ J.
 
@@ -448,7 +448,7 @@ See [exercises.md](exercises.md). A1–A5 are drills: moments by integration, th
 - **Body versus space components.** Euler's equations are the space-frame derivative of $\mathbf L$ written in body components. The torque in (3.17) must be in body components too, and for the top it is easier to use the Lagrangian than to resolve gravity into a rotating frame. Label every vector with its frame in your scratch work.
 - **$\Omega_b$ versus $\Omega_s$.** Two different precession rates, seen by two different observers. Feynman mixed them up (Example 4.3). Write which observer you mean.
 - **Conventions.** Products of inertia with or without the minus sign; $R$ versus Goldstein's $A = R^\top$; $z$-$x'$-$z''$ versus aerospace $z$-$y'$-$x''$; intrinsic (new axes, right-multiply) versus extrinsic (fixed axes, left-multiply). Before using any formula from another book, test it on one configuration against Example 4.6.
-- **Euler angles are a bad coordinate system** used here because the top's symmetry makes two of them cyclic. They are singular at $\theta = 0$, which for a top is the *sleeping* configuration, the one you most want to simulate. In code, integrate $R$ or a quaternion.
+- **Euler angles are objectively unpleasant;** don't judge yourself by them. They are a bad coordinate system used here because the top's symmetry makes two of them cyclic. They are singular at $\theta = 0$, which for a top is the *sleeping* configuration, the one you most want to simulate. In code, integrate $R$ or a quaternion.
 - **The top's effective-potential algebra is error-prone.** Three specific traps: using $I_1$ about the CM instead of the pivot; substituting the momenta into $\mathcal L$ instead of $E$; dropping the constant $p_\psi^2/2I_3$ and then wondering why the energy doesn't match. Let SymPy check every line, as the project does.
 - **Chandler and the equinoxes are order-of-magnitude.** 305 days against 433; 50.7″/yr against 50.3″/yr. The first misses by physics (elasticity), the second agrees partly by luck. Say so when you quote them.
 - **The stability result is linear.** "Unstable" means exponential growth at first; the flip is then periodic, not a fall into chaos. Don't over-read Theorem 3.7.

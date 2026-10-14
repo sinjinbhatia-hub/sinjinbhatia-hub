@@ -271,7 +271,8 @@ assert np.allclose(v43, [5, 1, 2]) and np.isclose(v43 @ v43, 30)
 assert np.allclose(H43 @ x43, [-3, 0, 0])
 assert np.allclose(H43, np.array([[-10, -5, -10], [-5, 14, -2], [-10, -2, 11]]) / 15)
 assert np.allclose(H43 @ H43, np.eye(3)) and np.allclose(H43, H43.T)   # involutory, symmetric → orthogonal
-print("Example 4.3: v =", v43, " vᵀv =", v43 @ v43, " Hx =", H43 @ x43)
+assert v43 @ x43 == 15.0 and np.allclose(H43[:, 0], -x43 / 3)         # vᵀx = vᵀv/2; first column of H is −x/‖x‖
+print("Example 4.3: v =", v43, " vᵀv =", v43 @ v43, " vᵀx =", v43 @ x43, " Hx =", H43 @ x43)
 # The other sign also works in exact arithmetic: v' = x - ‖x‖e₁ = (-1, 1, 2), H'x = +3e₁.
 v_other = x43 - 3 * np.eye(3)[0]
 assert np.allclose(householder_matrix(v_other) @ x43, [3, 0, 0])
@@ -503,6 +504,10 @@ A44 = np.array([[3.0, 1.0], [1.0, 1.0]])
 hist, Qacc = qr_algorithm_unshifted(A44, 4)
 assert np.allclose(hist[1], [[3.4, 0.2], [0.2, 0.6]])
 assert np.allclose(hist[2], np.array([[99, 1], [1, 17]]) / 29)
+# The hand factors: step 1 Q = [[3,−1],[1,3]]/√10, R = [[10,4],[0,2]]/√10; step 2 Q = [[17,−1],[1,17]]/√290, R = [[58,4],[0,10]]/√290.
+Qh1, Rh1 = qr_positive(A44); Qh2, Rh2 = qr_positive(hist[1])
+assert np.allclose(Qh1 * np.sqrt(10), [[3, -1], [1, 3]]) and np.allclose(Rh1 * np.sqrt(10), [[10, 4], [0, 2]])
+assert np.allclose(Qh2 * np.sqrt(290), [[17, -1], [1, 17]]) and np.allclose(Rh2 * np.sqrt(290), [[58, 4], [0, 10]])
 lam = np.sort(np.linalg.eigvalsh(A44))[::-1]
 ratio = lam[1] / lam[0]
 print(f"Example 4.4: A₁ = {hist[1].tolist()}, A₂ = {np.round(hist[2], 5).tolist()}; off-diagonals {[round(float(h[1,0]),5) for h in hist]}")
@@ -705,7 +710,8 @@ beta0 = (r1 @ r1) / (r0 @ r0); p1 = r1 + beta0 * p0
 assert np.allclose(Ap0, [6, 7]) and alpha0 == 0.25 and np.allclose(r1, [-0.5, 0.25]) and beta0 == 0.0625
 assert np.allclose(p1, [-0.4375, 0.375]) and np.isclose(r1 @ r0, 0) and np.isclose(p1 @ A45 @ p0, 0)
 alpha1 = (r1 @ r1) / (p1 @ A45 @ p1)
-assert np.isclose(alpha1, 4 / 11) and np.allclose(A45 @ p1, [-1.375, 0.6875])
+assert np.isclose(alpha1, 4 / 11) and np.allclose(A45 @ p1, [-1.375, 0.6875]) and np.isclose(p1 @ A45 @ p1, 55 / 64)
+assert np.allclose(r1 - alpha1 * (A45 @ p1), 0)                         # r₂ = 0 exactly (Theorem 3.21 with n = 2)
 print(f"Example 4.5: α₀={alpha0}, x₁={iterates[0]}, r₁={r1}, β₀={beta0}, p₁={p1}, α₁={alpha1:.6f}, x₂={iterates[1]} = (1/11, 7/11); r₁ ⟂ r₀ and p₁ A-conjugate to p₀ ✓")
 
 # %% [markdown]
@@ -768,6 +774,12 @@ for key in pred:
     assert meas[key] <= pred[key]
 assert np.isclose(kap20, 178.1, atol=0.05) and round(pred["Jacobi"]) == 1640 and round(pred["Gauss–Seidel"]) == 820
 assert math.ceil(pred["CG (bound 3.30)"]) == 128
+# (3.30) bounds the A-norm error. For the residual, ‖r_k‖/‖r_0‖ ≤ √κ ‖e_k‖_A/‖e_0‖_A costs an extra factor √κ.
+k_res = math.ceil(np.log(1e-8 / (2 * np.sqrt(kap20))) / np.log(rho_cg20))
+assert k_res == 145 and it_c == 63
+print(f"   CG residual version of (3.30), extra factor √κ = {np.sqrt(kap20):.2f}: ≤ {k_res} iterations; measured {it_c}")
+print(f"   Jacobi/CG iteration ratio = {meas['Jacobi'] / it_c:.1f}; h² = {(1 / 21) ** 2:.1e} (order of the discretization error)")
+assert 22 < meas["Jacobi"] / it_c < 23
 
 # %% [markdown]
 # ### CG on grids 20×20 … 200×200: residual curves, iterations ∝ √κ, timing vs dense solve
@@ -1048,6 +1060,10 @@ for name, a_func in (("a = exp(6(x+y))", a_smooth), ("a = 1 or 1e3 (jump)", a_ju
         assert kap_v / kap_pv > 1e3 and it_plain / it_pcg > 20
     else:   # κ barely moves but the preconditioned spectrum is clustered: CG responds to the whole spectrum, not only κ
         assert kap_v / kap_pv < 3 and it_plain / it_pcg > 5
+        ev_p = np.linalg.eigvalsh(Ad / np.sqrt(Dv)[:, None] / np.sqrt(Dv)[None, :])
+        print(f"   jump case: eigenvalues of D^-1/2 A D^-1/2: one outlier {ev_p[0]:.1e}, the other {len(ev_p)-1} in "
+              f"[{ev_p[1]:.1e}, {ev_p[-1]:.2f}] (spread {ev_p[-1]/ev_p[1]:.0f})")
+        assert ev_p[0] < 1e-5 and ev_p[1] > 5e-3 and 300 < ev_p[-1] / ev_p[1] < 400
 # On the constant-coefficient Laplacian D = (4/h²) I, so D⁻¹A = (h²/4) A has the same κ: Jacobi does nothing.
 A, h = laplacian_2d(40); b = rng.standard_normal(1600)
 _, it_a, _ = conjugate_gradient(A, b); _, it_b = preconditioned_cg(A, b, lambda r: r / A.diagonal())
@@ -1119,6 +1135,10 @@ assert np.spacing(1024.0) == 2.0**-42 and np.spacing(2.0**-10) == 2.0**-62
 assert int(float(2**53 + 1)) == 2**53 and int(float(2**53)) == 2**53       # 2^53 + 1 rounds (tie → even) to 2^53
 assert 0.1 + 0.2 != 0.3 and (0.1 + 0.2) - 0.3 == 2.0**-54 == np.spacing(0.3)
 print(f"A1: spacing in [2^10, 2^11) = {2.0**-42:.3e}, in [2^-10, 2^-9) = {2.0**-62:.3e}; (0.1+0.2) − 0.3 = {(0.1 + 0.2) - 0.3:.3e} = one ulp of 0.3")
+exact_sum = Fraction(0.1) + Fraction(0.2)                  # the exact sum of the two stored doubles
+assert exact_sum - Fraction(0.3) == Fraction(0.1 + 0.2) - exact_sum   # a tie: exactly halfway between two doubles
+print(f"   stored 0.1 = {Decimal(0.1)}, 0.2 = {Decimal(0.2)}, 0.3 = {Decimal(0.3)}; fl(0.1+0.2) = {Decimal(0.1 + 0.2)}; "
+      f"exact sum lies {float(exact_sum - Fraction(0.3)):.4e} above fl(0.3): a tie, rounded to even")
 
 # A2: 1 − cos x at x = 1e-8.
 xa = 1e-8
@@ -1155,7 +1175,9 @@ print(f"A5: Jacobi x₁ = {xJ}, GS x₁ = {xGS}; ρ_J = {rJ5:.4f} ({-np.log10(rJ
 # A6: power vs shifted inverse iteration for eigenvalues 10, 9, 1.
 st_pow = math.ceil(np.log(1e-6) / np.log(0.9)); st_inv = math.ceil(np.log(1e-6) / np.log(0.2 / 0.8))
 assert (st_pow, st_inv) == (132, 10)
-print(f"A6: power iteration {st_pow} steps, inverse iteration with μ = 9.8: {st_inv} steps (to 1e-6)")
+st_94 = math.ceil(np.log(1e-6) / np.log(0.4 / 0.6))     # μ = 9.4: closest eigenvalue is 9, rate 0.4/0.6
+assert st_94 == 35
+print(f"A6: power iteration {st_pow} steps, inverse iteration with μ = 9.8: {st_inv} steps (to 1e-6); μ = 9.4 finds λ = 9 at rate 2/3 in {st_94} steps")
 
 # B1: the residual is the backward error; Example 4.2's bad solution x̂ = (2, 0).
 xh = np.array([2.0, 0.0]); rb1 = b42 - A42 @ xh
@@ -1169,7 +1191,7 @@ print(f"B1: r = {rb1}, backward error = {bwd1:.4e}, κ × backward = {kappa42 * 
 # B2(c): the nearest singular matrix to A is at relative distance 1/κ.
 U42, s42, V42t = np.linalg.svd(A42)
 A42s = A42 - s42[1] * np.outer(U42[:, 1], V42t[1])
-assert np.isclose(s42[1], 1e-4) and np.linalg.svd(A42s, compute_uv=False)[1] < 1e-15
+assert np.isclose(s42[1], 1e-4) and np.linalg.svd(A42s, compute_uv=False)[1] < 1e-15 and np.allclose(A42s, 0.5)
 print(f"B2: σ_min(A) = {s42[1]:.1e}; A − σ₂u₂v₂ᵀ has σ_min = {np.linalg.svd(A42s, compute_uv=False)[1]:.1e} (singular)")
 
 # B3: the growth matrix, n = 4 by hand and n = 60 in LAPACK (np.linalg.solve).
@@ -1278,6 +1300,9 @@ for q in (0, 4, 8, 12):
 print("C3: mean ‖A − QQᵀA‖₂/σ₁₁ (no re-orthonormalization, with): " + "; ".join(f"q={q}: {a:.2f}, {b:.2f}" for q, (a, b) in c3.items()))
 assert c3[12][0] > 1.5 * c3[12][1] and c3[8][0] > c3[4][0] and abs(c3[4][0] - c3[4][1]) < 1e-3
 print(f"   (σ₁/σ₂₀)^(2q+1) = 20^(2q+1): q=4 → {20.0**9:.0e}, q=8 → {20.0**17:.0e} vs 1/ε_mach = {1/EPS:.0e}")
+j8, j12 = (1 / EPS) ** (1 / 17), (1 / EPS) ** (1 / 25)    # directions j with j^(2q+1) < 1/ε survive (σ_j = 1/j)
+assert 8.6 < j8 < 8.7 and 4.3 < j12 < 4.4 and 1.0 < c3[8][0] < 1.25 and 2.0 < c3[12][0] < 2.3
+print(f"   surviving directions (1/ε)^(1/(2q+1)): q=8 → {j8:.2f}, q=12 → {j12:.2f}; predicted error ≈ σ₉..σ₁₀ (ratio {11/10:.2f}–{11/9:.2f}) and σ₅ (ratio {11/5:.2f})")
 
 # %%
 if __name__ == "__main__":

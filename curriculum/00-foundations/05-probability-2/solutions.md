@@ -201,14 +201,14 @@ Substituting yields the stated formula. (The quadratic form is unchanged by flip
 
 *$k = 1$.* $\tfrac12\big[\tfrac{\sigma_1^2}{\sigma_2^2} + \tfrac{(\mu_1 - \mu_2)^2}{\sigma_2^2} - 1 + \ln\tfrac{\sigma_2^2}{\sigma_1^2}\big] = \ln\tfrac{\sigma_2}{\sigma_1} + \tfrac{\sigma_1^2 + (\mu_1 - \mu_2)^2}{2\sigma_2^2} - \tfrac12$, which is (3.32). ✓
 
-*Numbers.* With $\Sigma_2 = I$: $\mathrm{tr}(\Sigma_1) = 4$, $\|\boldsymbol\mu_2 - \boldsymbol\mu_1\|^2 = 1$, $k = 2$ and $\ln(1/\det\Sigma_1) = \ln\tfrac13 = -1.0986$. So $D = \tfrac12(4 + 1 - 2 - 1.0986) = 0.9507$ nats. The project's Monte Carlo estimate is $0.9482$.
+*Numbers.* With $\Sigma_2 = I$: $\mathrm{tr}(\Sigma_1) = 4$, $\|\boldsymbol\mu_2 - \boldsymbol\mu_1\|^2 = 1$, $k = 2$ and $\ln(1/\det\Sigma_1) = \ln\tfrac13 = -1.0986$. So $D = \tfrac12(4 + 1 - 2 - 1.0986) = 0.9507$ nats. The project's Monte Carlo estimate is $0.9505$.
 
 **C2.** *The identity.* Integrating out $y$ by (3.2) gives $\iint f(x,y)\ln f_X(x)\,dx\,dy = \int f_X(x)\ln f_X(x)\,dx = -h(X)$, and likewise for $Y$. So
 $$I(X;Y) = \iint f\ln\frac{f(x,y)}{f_X(x)f_Y(y)} = \iint f\ln f - \iint f\ln f_X - \iint f\ln f_Y = -h(X,Y) + h(X) + h(Y).$$
 
 *Evaluation.* By (3.31), $h(X) = h(Y) = \tfrac12\ln(2\pi e)$. From §3.13, $h(X, Y) = \tfrac12\ln\big((2\pi e)^2\det\Sigma\big)$ with $\det\Sigma = 1 - \rho^2$. So
 $$I = \ln(2\pi e) - \ln(2\pi e) - \tfrac12\ln(1 - \rho^2) = -\tfrac12\ln(1 - \rho^2).$$
-At $\rho = 0.5$: $-\tfrac12\ln0.75 = 0.1438$ nats $= 0.2075$ bits, against the project's Monte Carlo value of $0.1437$.
+At $\rho = 0.5$: $-\tfrac12\ln0.75 = 0.1438$ nats $= 0.2075$ bits, against the project's Monte Carlo value of $0.1448$.
 
 *Limits.* As $\rho \to \pm1$, $I \to \infty$. In the limit $Y = \pm X$ exactly, and a continuous variable pins down another continuous variable to infinitely many digits. At $\rho = 0$, $I = 0$, which matches Theorem 3.23 (uncorrelated jointly Gaussian variables are independent). For a Gaussian pair, $\rho$ captures *all* the dependence. For non-Gaussian pairs it does not ($X$ and $X^2$; "Your turn" item 3).
 

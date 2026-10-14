@@ -1049,6 +1049,16 @@ assert np.isclose(-np.log2(0.9), 0.1520, atol=5e-5) and np.isclose(-np.log2(0.05
 assert np.isclose(np.exp(-beta_die), 1.449, atol=5e-4) and np.isclose(np.log2(6) - entropy(p_die, 2), 0.257, atol=5e-4)  # C3
 print("Solutions: intermediate values for A1, A5, B3, B4, B9, C3 check out.")
 
+# Intermediate values quoted in the notes (sections 3.11 and 4), so those digits are checked too.
+assert np.isclose(np.sqrt(0.6 * 0.25), 0.3873, atol=5e-5)                                          # Ex 4.1
+assert np.isclose(-2 * np.log(0.5), 1.3863, atol=5e-5) and np.isclose(-2 * np.log(0.1), 4.6052, atol=5e-5)  # Ex 4.2
+assert np.isclose(np.sqrt(-2 * np.log(0.1)), 2.1460, atol=5e-5) and np.isclose(np.sqrt(3), 1.732, atol=5e-4)  # Ex 4.2, 4.4
+assert np.isclose(2.5 / np.sqrt(4.6875), 1.155, atol=5e-4)                                          # Ex 4.5: z = 1.155
+assert np.isclose(np.log(5), 1.6094, atol=5e-5) and np.isclose(np.log(1.8), 0.5878, atol=5e-5)      # Ex 4.7
+assert np.isclose(stats.norm.sf(5), 3e-7, rtol=0.05)                                                # 3.11: 1 - Phi(5)
+print(f"Notes: sqrt(0.15) = {np.sqrt(0.15):.4f}; ln 5 = {np.log(5):.4f}, ln 1.8 = {np.log(1.8):.4f}; "
+      f"z = {2.5 / np.sqrt(4.6875):.3f}; 1 - Phi(5) = {stats.norm.sf(5):.2e}")
+
 # %% [markdown]
 # ## Your turn
 #

@@ -180,7 +180,7 @@ $$\frac{\|\tilde f(x) - f(x)\|}{\|f(x)\|} = O(\kappa(f; x)\,\varepsilon). \tag{3
 2. By (3.6), for $\|\tilde x - x\|$ small enough, $\dfrac{\|f(\tilde x) - f(x)\|}{\|f(x)\|} \le (\kappa + o(1))\dfrac{\|\tilde x - x\|}{\|x\|}$.
 3. Substitute step 1 into step 2: $\dfrac{\|\tilde f(x) - f(x)\|}{\|f(x)\|} \le (\kappa + o(1))\,C\varepsilon = O(\kappa\varepsilon)$. ∎
 
-■ **What just happened.** Three lines, and they organize everything that follows. To know how many digits you will get, you need two numbers: the backward error of your algorithm (a property of the code; for the good algorithms in this module it is $\approx \varepsilon$) and the condition number of your problem (a property of the data; you must estimate it). The project runs `np.linalg.solve` on matrices with $\kappa$ from $1$ to $10^{12}$: the backward error stays between $5\times 10^{-17}$ and $2\times 10^{-15}$ throughout, while the forward error climbs from $10^{-15}$ to $5\times 10^{-6}$, tracking $\kappa\varepsilon$ exactly as (3.9) says.
+■ **What just happened.** Three lines, and they organize everything that follows. To know how many digits you will get, you need two numbers: the backward error of your algorithm (a property of the code; for the good algorithms in this module it is $\approx \varepsilon$) and the condition number of your problem (a property of the data; you must estimate it). The project runs `np.linalg.solve` on matrices with $\kappa$ from $1$ to $10^{12}$: the backward error stays between $4.5\times 10^{-17}$ and $1.5\times 10^{-15}$ throughout, while the forward error climbs from $1.5\times 10^{-15}$ to $5.5\times 10^{-6}$, tracking $\kappa\varepsilon$ exactly as (3.9) says.
 
 ### 3.4 Gaussian elimination: pivoting and the growth factor
 
@@ -283,7 +283,7 @@ LA-7 taught you to find eigenvalues as roots of $p_A(\lambda) = \det(A - \lambda
 $$\delta r \approx -\frac{r^j}{p'(r)}\,\delta a_j, \qquad \frac{|\delta r|/|r|}{|\delta a_j|/|a_j|} \approx \frac{|a_j|\,|r|^{j-1}}{|p'(r)|}. \tag{3.15}$$
 The right-hand quantity is the relative condition number of the root $r$ with respect to the coefficient $a_j$, in the sense of (3.6). ∎
 
-■ **What just happened.** The sensitivity is $|r|^j$ divided by $|p'(r)| = \prod_{i \ne r}|r - r_i|$. For roots that are large and close to their neighbours, the numerator is huge and the denominator modest. For **Wilkinson's polynomial** $w(x) = \prod_{k=1}^{20}(x - k)$, the coefficient of $x^{19}$ is $a_{19} = -210$, and at the root $r = 16$ we have $p'(16) = 15!\cdot 4! \approx 3.1\times 10^{13}$ while $16^{19} \approx 7.6\times 10^{22}$. So $|r^{19}/p'(r)| \approx 2.4\times 10^{9}$ and the relative condition number (3.15) is about $3.2\times 10^{10}$: a relative change of $10^{-10}$ in one coefficient moves the root by a relative amount of order $1$. The perturbation Wilkinson used, $\delta a_{19} = -2^{-23} \approx -1.2\times 10^{-7}$, is so far outside the linear regime that (3.15) predicts a move of $287$, which is meaningless; what actually happens is that the roots $10$ through $19$ collide in pairs and leave the real axis, the pair near $16.73$ acquiring imaginary parts $\pm 2.81$. The root $r = 1$, by contrast, has condition number $1.7\times 10^{-15}$ and does not move. The project computes all twenty perturbed roots to 30 digits and plots them. Worse: the coefficients of $w$ run up to $20! \approx 2.4\times 10^{18} > 2^{53}$, so they cannot even be *stored* exactly in double precision, and `np.roots` on the unperturbed coefficients already returns roots off by $0.085$. Forming $p_A$ throws away the matrix and keeps twenty numbers that do not determine its eigenvalues to any useful accuracy. (For a symmetric matrix the eigenvalues themselves are perfectly conditioned, $|\delta\lambda_i| \le \|\delta A\|$ by Weyl's inequality, LA-8 Exercise C1; it is the *polynomial* that is the problem, not the eigenvalues.)
+■ **What just happened.** The sensitivity is $|r|^j$ divided by $|p'(r)| = \prod_{i \ne r}|r - r_i|$. For roots that are large and close to their neighbours, the numerator is huge and the denominator modest. For **Wilkinson's polynomial** $w(x) = \prod_{k=1}^{20}(x - k)$, the coefficient of $x^{19}$ is $a_{19} = -210$, and at the root $r = 16$ we have $p'(16) = 15!\cdot 4! \approx 3.1\times 10^{13}$ while $16^{19} \approx 7.6\times 10^{22}$. So $|r^{19}/p'(r)| \approx 2.4\times 10^{9}$ and the relative condition number (3.15) is about $3.2\times 10^{10}$: a relative change of $10^{-10}$ in one coefficient moves the root by a relative amount of order $1$. The perturbation Wilkinson used, $\delta a_{19} = -2^{-23} \approx -1.2\times 10^{-7}$, is so far outside the linear regime that (3.15) predicts a move of $287$, which is meaningless; what actually happens is that the roots $10$ through $19$ collide in pairs and leave the real axis, the pair near $16.73$ acquiring imaginary parts $\pm 2.81$. The root $r = 1$, by contrast, has condition number $1.7\times 10^{-15}$ and does not move. The project computes all twenty perturbed roots to 30 digits and plots them. Worse: the coefficients of $w$ run up to $20! \approx 2.4\times 10^{18} > 2^{53}$, so they cannot even be *stored* exactly in double precision, and `np.roots` on the unperturbed coefficients already returns roots off by $0.085$. Forming $p_A$ throws away the matrix and keeps twenty numbers that do not determine its eigenvalues to any useful accuracy. (For a symmetric matrix the eigenvalues themselves are perfectly conditioned, $|\delta\lambda_i| \le \|\delta A\|$ by Weyl's inequality, whose singular-value form is LA-9 Exercise C2(c) and whose eigenvalue form has the same Courant–Fischer proof; it is the *polynomial* that is the problem, not the eigenvalues.)
 
 **So every eigenvalue algorithm is iterative.** Abel (1824) and Ruffini proved there is no formula in radicals for the roots of a general polynomial of degree $5$ or more. Since the eigenvalues of any $n\times n$ matrix are the roots of its characteristic polynomial, and every monic polynomial is the characteristic polynomial of its companion matrix, a finite exact algorithm for eigenvalues would be a finite exact algorithm for polynomial roots, which does not exist. This is the opposite of the situation for $Ax = b$ or $A = QR$, which finite algorithms solve exactly in exact arithmetic. Eigenvalue algorithms must converge; the only questions are "to what" and "how fast."
 
@@ -379,7 +379,7 @@ with $\operatorname{sign}(0) = 1$. (Check: the eigenvalues of the block are $\fr
 
 ### 3.9 Large sparse systems: the model problem and stationary iterations
 
-**The running example.** Poisson's equation $-\nabla^2 u = f$ on the unit square with $u = 0$ on the boundary is the electrostatic potential of a charge density (EM-3), the steady temperature of a heated plate, and the deflection of a membrane. Put $N$ interior grid points per side with spacing $h = 1/(N+1)$, write $u_{ij} \approx u(ih, jh)$, and replace each second derivative by its centered difference $(u_{i-1,j} - 2u_{ij} + u_{i+1,j})/h^2$. The result is the **five-point stencil**
+**The running example.** Poisson's equation $-\nabla^2 u = f$ on the unit square with $u = 0$ on the boundary is the electrostatic potential of a charge density (EM-2, posed as a boundary-value problem in EM-3), the steady temperature of a heated plate, and the deflection of a membrane. Put $N$ interior grid points per side with spacing $h = 1/(N+1)$, write $u_{ij} \approx u(ih, jh)$, and replace each second derivative by its centered difference $(u_{i-1,j} - 2u_{ij} + u_{i+1,j})/h^2$. The result is the **five-point stencil**
 
 $$\frac{4u_{ij} - u_{i-1,j} - u_{i+1,j} - u_{i,j-1} - u_{i,j+1}}{h^2} = f_{ij}, \tag{3.20}$$
 
@@ -404,7 +404,7 @@ so $A$ is SPD with $\lambda_{\min} \approx 2\pi^2$, $\lambda_{\max} \approx 8/h^
 3. For the Kronecker sum, $(I\otimes L + L\otimes I)(v^{(j)}\otimes v^{(k)}) = v^{(j)}\otimes L v^{(k)} + L v^{(j)}\otimes v^{(k)} = (\mu_k + \mu_j)(v^{(j)}\otimes v^{(k)})$, using $(B\otimes C)(x\otimes y) = Bx\otimes Cy$ (LA-12). Divide by $h^2$ to get (3.22).
 4. $\lambda_{\min} = \lambda_{11} = (8/h^2)\sin^2(\pi h/2) \to 2\pi^2$ as $h\to 0$ (since $\sin x \approx x$); $\lambda_{\max} = \lambda_{NN} = (8/h^2)\cos^2(\pi h/2)$ (since $\sin(N\pi h/2) = \cos(\pi h/2)$); their ratio is $\cot^2(\pi h/2) \approx 4/(\pi^2h^2)$. ∎
 
-■ **What just happened.** The condition number grows like $N^2$: refining the grid to get a better answer makes the linear system harder, and the digits-lost rule of §3.3 says a $1000\times 1000$ grid ($\kappa \approx 4\times 10^5$) still leaves ten digits, which is plenty. The project checks (3.22) against `eigvalsh` for $N = 8$. The same calculation gives the vibration frequencies of a square drum (CM-6) and the eigenstates of a particle in a 2D box (QM-2); the matrix $L_N$ is the discrete Laplacian whose eigenvectors are the discrete sine transform (F2). The $\sin^2$ structure, small eigenvalues for smooth modes and large ones for oscillatory modes, is what makes multigrid methods work, and what makes Jacobi slow.
+■ **What just happened.** The condition number grows like $N^2$: refining the grid to get a better answer makes the linear system harder, and the digits-lost rule of §3.3 says a $1000\times 1000$ grid ($\kappa \approx 4\times 10^5$) still leaves ten digits, which is plenty. The project checks (3.22) against `eigvalsh` for $N = 8$. The same calculation gives the vibration frequencies of a square drum (CM-6) and the eigenstates of a particle in a 2D box (QM-3's infinite well, in two dimensions); the matrix $L_N$ is the discrete Laplacian whose eigenvectors are the discrete sine transform (F2). The $\sin^2$ structure, small eigenvalues for smooth modes and large ones for oscillatory modes, is what makes multigrid methods work, and what makes Jacobi slow.
 
 **Sparse storage.** Only the nonzeros are stored. Compressed sparse row (CSR) format keeps three arrays: the nonzero values row by row, their column indices, and a pointer to where each row starts; $A x$ costs $2\,\mathrm{nnz}(A)$ flops, here $10n$. For $N = 200$, one matrix–vector product is $4\times 10^5$ flops against $\tfrac23 n^3 = 4\times 10^{13}$ for dense elimination: a factor of $10^8$. So every method below is built from matrix–vector products only.
 
@@ -545,3 +545,287 @@ $$\frac{\|e_k\|_A}{\|e_0\|_A} \le 2\left(\frac{\sqrt\kappa - 1}{\sqrt\kappa + 1}
 ■ **What just happened.** Since $\frac{\sqrt\kappa - 1}{\sqrt\kappa+1} \approx 1 - 2/\sqrt\kappa$, the error drops by a factor $e$ roughly every $\sqrt\kappa/2$ steps: **$O(\sqrt\kappa)$ iterations** against $O(\kappa)$ for steepest descent and Jacobi. For the model problem $\sqrt\kappa \approx 0.64N$, so CG needs $O(N)$ iterations of $O(N^2)$ work each: $O(N^3) = O(n^{3/2})$ total, against $O(N^4)$ for Gauss–Seidel or banded elimination and $O(N^6)$ for dense elimination. The project confirms the scaling: from $N = 20$ to $N = 200$ the iteration count to reach $\|r\|/\|b\| < 10^{-8}$ is $4.7\sqrt\kappa \pm 1.5\%$, i.e. $600$ iterations for $40{,}000$ unknowns, and the bound (3.30) on the $A$-norm error holds at every step (it is loose by a factor of about $400$ at $k = 50$ on the $N = 40$ grid, because the actual spectrum is not the whole interval). Note what is bounded: the $A$-norm of the *error*, which you cannot compute without $x_*$; the residual you *can* compute is not monotone in CG and can jump around, which confuses people the first time (§8).
 
 **Why it was forgotten for twenty years.** In exact arithmetic CG terminates in $n$ steps, so it was judged as a direct method and compared with elimination: for dense $A$ its $n$ steps cost $2n^3$ flops, three times LU, and in floating point the "exact at step $n$" property fails because the residuals lose orthogonality. Reid (1971) pointed out that for sparse, well-conditioned or preconditioned $A$ one should stop after $k \ll n$ steps and judge it by (3.30). Everything in this section was in Hestenes and Stiefel's paper; the use was not.
+
+### 3.11 Arnoldi, GMRES, Lanczos: Krylov methods beyond SPD systems
+
+CG needs $A$ SPD. For a general $A$, or for eigenvalues of a large sparse $A$, we keep the Krylov space $\mathcal K_k = \operatorname{span}\{b, Ab, \dots, A^{k-1}b\}$ but must build its basis with care. The power basis $b, Ab, A^2b, \dots$ is useless in floating point: its columns all turn toward the dominant eigenvector (that is power iteration), so the matrix that holds them becomes numerically rank-deficient within a few dozen steps. Orthonormalize as you go.
+
+**The Arnoldi iteration.** $q_1 = b/\|b\|$; for $j = 1, \dots, k$:
+
+```
+v = A q_j
+for i = 1..j:   h_ij = q_iᵀ v ;  v = v − h_ij q_i       # modified Gram–Schmidt against the basis so far
+h_{j+1,j} = ‖v‖ ;  q_{j+1} = v / h_{j+1,j}
+```
+
+Read the loop backwards: $Aq_j = \sum_{i=1}^{j+1}h_{ij}q_i$. Stacking these for $j = 1, \dots, k$ gives one matrix identity,
+
+$$AQ_k = Q_{k+1}\tilde H_k, \qquad \tilde H_k \in \mathbb R^{(k+1)\times k} \text{ upper Hessenberg}, \tag{3.31}$$
+
+Hessenberg because $Aq_j$ involves only $q_1, \dots, q_{j+1}$. Multiplying by $Q_k^\top$ and using $Q_k^\top Q_{k+1} = [\,I_k\ \ 0\,]$ gives $H_k = Q_k^\top AQ_k$, the top $k\times k$ block: $A$ compressed onto $\mathcal K_k$. By the induction of Theorem 3.22(a), $\operatorname{span}\{q_1,\dots,q_k\} = \mathcal K_k$. Run to $k = n$, Arnoldi is the Hessenberg reduction of §3.8(a) done by Gram–Schmidt instead of reflectors; its value is that you stop at $k \ll n$. Cost: $k$ matrix–vector products, $2nk^2$ flops of orthogonalization, $nk$ storage.
+
+**GMRES** (Saad and Schultz, 1986). With $x_0 = 0$, choose $x_k \in \mathcal K_k$ to minimize the residual $\|b - Ax\|$.
+
+▶ **Try it first.** Write $x = Q_ky$ and $b = \beta q_1 = Q_{k+1}(\beta\mathbf e_1)$ with $\beta = \|b\|$. Use (3.31) to write $b - Ax$ as $Q_{k+1}$ times a small vector.
+
+**Derivation.**
+
+1. $b - AQ_ky = Q_{k+1}\beta\mathbf e_1 - Q_{k+1}\tilde H_ky = Q_{k+1}(\beta\mathbf e_1 - \tilde H_ky)$.
+2. $Q_{k+1}$ has orthonormal columns, so it preserves norms, and
+$$\min_{x\in\mathcal K_k}\|b - Ax\| = \min_{y\in\mathbb R^k}\|\beta\mathbf e_1 - \tilde H_ky\|. \tag{3.32}$$
+3. This is a $(k+1)\times k$ least-squares problem, solved by QR (§3.6). Because $\tilde H_k$ is Hessenberg, $k$ Givens rotations (3.18) triangularize it, and going from $k$ to $k+1$ adds one column and one rotation, so the residual norm is known at every step without forming $x_k$. ∎
+
+■ **What just happened.** An $n$-dimensional minimization became a $(k+1)\times k$ one, because Arnoldi gives an orthonormal basis in which $A$ is Hessenberg. As before (3.29), every $x \in \mathcal K_k$ has residual $p(A)b$ with $\deg p \le k$ and $p(0) = 1$, so GMRES picks the polynomial that minimizes $\|p(A)b\|$. Three consequences. Residuals never increase (the spaces are nested). The exact solution arrives by step $n$, since $p(z) = \det(zI - A)/\det(-A)$ is admissible and $p(A) = 0$ by Cayley–Hamilton (LA-11 Theorem 3.16). And if $\|A - cI\| \le \rho < |c|$, the choice $p(z) = (1 - z/c)^k$ gives $\|r_k\| \le (\rho/|c|)^k\|b\|$. The project checks both ends: a $60\times60$ convection–diffusion matrix needs all $60$ steps (relative residual $4.4\times10^{-2}$ at step $59$, $1.1\times10^{-13}$ at step $60$), while $A = 2I + B$ with $\|B\| = 1$ gives $8.9\times10^{-7}$, $6.2\times10^{-13}$, $1.4\times10^{-15}$ at $k = 10, 20, 30$, under the bound $2^{-k}$. For nonsymmetric $A$ the eigenvalues alone do not control GMRES: for diagonalizable $A = X\Lambda X^{-1}$ the bound is $\kappa(X)\min_p\max_{\lambda\in\sigma(A)}|p(\lambda)|$, and $\kappa(X)$ can be enormous (T&B lecture 35). The price of optimality is that step $k$ costs $O(kn)$ and stores $k$ vectors, so in practice GMRES is restarted every $m$ steps, GMRES($m$), which gives up the monotone optimality across restarts.
+
+**Lanczos.** If $A$ is symmetric, $H_k = Q_k^\top AQ_k$ is symmetric and Hessenberg, hence tridiagonal: $h_{ij} = 0$ whenever $|i - j| > 1$. So Arnoldi's inner loop has only two nonzero terms. With $\alpha_j = h_{jj}$ and $\beta_j = h_{j+1,j} = h_{j,j+1}$,
+
+$$\beta_jq_{j+1} = Aq_j - \alpha_jq_j - \beta_{j-1}q_{j-1}, \qquad AQ_k = Q_kT_k + \beta_kq_{k+1}\mathbf e_k^\top, \tag{3.33}$$
+
+with $T_k$ the symmetric tridiagonal matrix with diagonal $\alpha_1..\alpha_k$ and off-diagonal $\beta_1..\beta_{k-1}$. A three-term recurrence: $O(n)$ work and three vectors per step, like CG. That is not a coincidence. CG on $Ax = b$ is Lanczos started from $b$, combined with an $LDL^\top$ solve of $T_ky = \|b\|\mathbf e_1$ updated one row at a time (Golub & Van Loan §11.3).
+
+**Ritz values.** The eigenvalues $\theta^{(k)}_1 \ge \cdots \ge \theta^{(k)}_k$ of $T_k$ are the **Ritz values**: the eigenvalues of $A$ compressed to $\mathcal K_k$. Apply LA-8 Theorem 3.17 (the largest eigenvalue is the maximum Rayleigh quotient) to $T_k$, then substitute $x = Q_ky$, for which $x^\top x = y^\top y$ and $x^\top Ax = y^\top T_ky$:
+$$\theta^{(k)}_1 = \max_{y \ne 0}\frac{y^\top T_ky}{y^\top y} = \max_{0 \ne x\in\mathcal K_k}\frac{x^\top Ax}{x^\top x} \le \lambda_{\max}(A),$$
+and the maximum over a growing space can only grow (Exercise B5). Because $\mathcal K_k$ contains $A^{k-1}b$, the top Ritz value is at least as good as $k-1$ steps of power iteration, and in fact far better: the maximum is over all polynomials $p(A)b$ of degree $< k$, and a Chebyshev argument like Theorem 3.24 shows the extreme Ritz values converge at a rate set by the gap to the next eigenvalue relative to the width of the spectrum (Kaniel–Paige–Saad theory; Golub & Van Loan §10.1). Extremes converge first, the interior last. The project runs Lanczos on the $10{,}000\times10{,}000$ Laplacian ($N = 100$). After $30$ steps the extreme Ritz values are $141.9$ and $81{,}425.9$ against the exact $19.74$ and $81{,}588.3$ from (3.22). Both ends are off by a similar *absolute* amount ($122$ and $162$), because the spectrum is symmetric about $4/h^2$; that is $0.2\%$ of $\lambda_{\max}$ but six times $\lambda_{\min}$. After $200$ steps both extremes are right to $3\times10^{-5}$ relative or better, and the estimate $\theta_1/\theta_k$ of $\kappa$ is $4134$, the exact value (it was $574$ at $k = 30$). This is what `scipy.sparse.linalg.eigsh` does (ARPACK's implicitly restarted Lanczos).
+
+In floating point the Lanczos vectors lose orthogonality as soon as a Ritz value converges, a fact Chris Paige analyzed in 1971, and spurious copies of converged eigenvalues appear. The cures are selective or full reorthogonalization. The project's Lanczos has none, which is acceptable for the extreme Ritz values it reports; do not trust its interior ones.
+
+### 3.12 Preconditioning
+
+CG needs $O(\sqrt\kappa)$ iterations and the model problem has $\kappa \approx 0.4N^2$. Preconditioning changes the system, not the method: find an SPD $M \approx A$ for which $Mz = r$ is cheap to solve, and run CG on a system whose spectrum is that of $M^{-1}A$.
+
+▶ **Try it first.** $M^{-1}A$ is not symmetric, so CG cannot be applied to it directly. Write $M = LL^\top$ (Cholesky, LA-10 Theorem 3.5) and show that $\hat A = L^{-1}AL^{-\top}$ is SPD with the same eigenvalues as $M^{-1}A$.
+
+**Derivation.**
+
+1. $\hat A$ is symmetric, and $y^\top\hat Ay = (L^{-\top}y)^\top A(L^{-\top}y) > 0$ for $y \ne 0$, so $\hat A$ is SPD. Also $L^{-\top}\hat AL^\top = L^{-\top}L^{-1}A = M^{-1}A$: the two are similar, so they share eigenvalues.
+2. $Ax = b$ is equivalent to $\hat A\hat x = \hat b$ with $\hat x = L^\top x$ and $\hat b = L^{-1}b$. Run Algorithm 3.3 on the hatted system and translate back. The residual is $\hat r = \hat b - \hat A\hat x = L^{-1}r$; define $p$ by $\hat p = L^\top p$, so that $\hat A\hat p = L^{-1}Ap$.
+3. Let $z = M^{-1}r$. Then $\hat r^\top\hat r = r^\top L^{-\top}L^{-1}r = r^\top z$ and $\hat p^\top\hat A\hat p = p^\top Ap$, so $\alpha = r^\top z/p^\top Ap$. The updates $\hat x \mathrel{+}= \alpha\hat p$ and $\hat r \mathrel{-}= \alpha\hat A\hat p$ become $x \mathrel{+}= \alpha p$ and $r \mathrel{-}= \alpha Ap$. The direction update $\hat p_{\text{new}} = \hat r_{\text{new}} + \beta\hat p$ becomes $L^\top p_{\text{new}} = L^{-1}r_{\text{new}} + \beta L^\top p$, that is $p_{\text{new}} = z_{\text{new}} + \beta p$, with $\beta = r_{\text{new}}^\top z_{\text{new}}/r^\top z$. ∎
+
+**Algorithm 3.3′ (Preconditioned CG).** $r_0 = b - Ax_0$, $z_0 = M^{-1}r_0$, $p_0 = z_0$. For $k = 0, 1, \dots$:
+
+```
+α_k = (r_kᵀ z_k) / (p_kᵀ A p_k)
+x_{k+1} = x_k + α_k p_k ;   r_{k+1} = r_k − α_k A p_k
+z_{k+1} = M⁻¹ r_{k+1}                                   # one preconditioner solve per step
+β_k = (r_{k+1}ᵀ z_{k+1}) / (r_kᵀ z_k) ;   p_{k+1} = z_{k+1} + β_k p_k
+```
+
+■ **What just happened.** $L$ cancelled out; only solves with $M$ remain. Everything in §3.10 holds with $A$ replaced by $M^{-1}A$: the bound (3.30) with $\kappa(M^{-1}A)$, and more usefully (3.29) with the spectrum of $M^{-1}A$.
+
+The art is the choice of $M$: close enough to $A$ that $M^{-1}A$ has a small or clustered spectrum, cheap enough that $Mz = r$ costs $O(n)$. The cheapest is **Jacobi**, $M = D = \operatorname{diag}(A)$. On the constant-coefficient Laplacian it does nothing, since $D = (4/h^2)I$ makes $D^{-1}A$ a multiple of $A$ (the project gets $126$ iterations either way at $N = 40$). It pays when the coefficients vary, as in steady heat flow through a plate of varying conductivity, $-\nabla\cdot(a\nabla u) = f$. For $a = e^{6(x+y)}$, a conductivity that varies by $e^{12} \approx 1.6\times10^5$, the project finds $\kappa(A) = 1.3\times10^6$ but $\kappa(D^{-1}A) = 3.6\times10^2$, and CG iterations drop from $4650$ to $122$. For $a = 10^3$ in a central square and $1$ elsewhere, $\kappa$ barely moves ($5.7\times10^5 \to 3.2\times10^5$) and yet iterations drop from $1504$ to $155$. The project shows why: after scaling, one eigenvalue sits at $6.2\times10^{-6}$ and the other $1599$ lie in $[5.7\times10^{-3}, 2]$, a spread of $349$. The large $\kappa$ is one outlier. By (3.29), CG can spend one root of its polynomial on the outlier and treat the rest as a problem with $\kappa \approx 349$, which is what it does. Better preconditioners exist: **incomplete Cholesky** (Meijerink and van der Vorst, 1977), Cholesky that throws away all fill outside the sparsity pattern of $A$; and **multigrid**, which makes the iteration count for the model problem independent of $N$. GMRES is preconditioned the same way, on the left ($M^{-1}Ax = M^{-1}b$) or on the right.
+
+### 3.13 Randomized SVD
+
+**The task.** Given an $m\times n$ matrix $A$ and a target rank $k \ll \min(m, n)$, find an $m\times(k+p)$ matrix $Q$ with orthonormal columns such that $\|A - QQ^\top A\|$ is close to the best possible rank-$k$ error $\sigma_{k+1}$ (Eckart–Young, LA-9 Theorem 3.8). The integer $p$, the **oversampling**, is small, typically $5$ to $10$. Once $Q$ is known the rest is small dense linear algebra.
+
+**Algorithm 3.4 (Randomized SVD; Halko, Martinsson & Tropp 2011).**
+
+1. Draw a Gaussian test matrix $\Omega \in \mathbb R^{n\times(k+p)}$ (independent standard normal entries).
+2. Form $Y = A\Omega$ and its reduced Householder QR, $Y = QR$.
+3. Repeat $q$ times (power iterations): $Q \leftarrow \operatorname{qr}\!\big(A\,\operatorname{qr}(A^\top Q)\big)$, keeping only the orthogonal factors.
+4. Form $B = Q^\top A$, a $(k+p)\times n$ matrix.
+5. Compute the SVD $B = \hat U\Sigma V^\top$ (§3.8; it is small).
+6. Set $U = Q\hat U$. Keep the leading $k$ columns and values: $A \approx U_k\Sigma_kV_k^\top$.
+
+Steps 4 to 6 are exact algebra: $QQ^\top A = QB = (Q\hat U)\Sigma V^\top$. All the approximation is in steps 1 to 3, in whether $\operatorname{range}(Q)$ captures the dominant column space of $A$.
+
+**Why it works, exact case.**
+
+▶ **Try it first.** Suppose $\operatorname{rank}A = k$ exactly and $p = 0$. Write $A = U_k\Sigma_kV_k^\top$ (thin SVD). When is $\operatorname{range}(A\Omega) = \operatorname{range}(A)$?
+
+**Derivation.**
+
+1. $Y = A\Omega = U_k\Sigma_k(V_k^\top\Omega) = U_k\Sigma_kG$ with $G = V_k^\top\Omega \in \mathbb R^{k\times k}$.
+2. Each column of $G$ is $V_k^\top\omega$ for a standard Gaussian $\omega$, which is Gaussian with covariance $V_k^\top V_k = I_k$. So $G$ again has independent standard normal entries.
+3. $\det G$ is a polynomial in the $k^2$ entries and not identically zero, so it vanishes only on a set of measure zero: $G$ is invertible with probability $1$.
+4. Then $\Sigma_kG$ is invertible and $\operatorname{range}(Y) = \operatorname{range}(U_k) = \operatorname{range}(A)$, so $QQ^\top A = A$ exactly. ∎
+
+**Why it works, approximate case, and why oversample.** Now split $A = U_1\Sigma_1V_1^\top + U_2\Sigma_2V_2^\top$ into the top $k$ singular triples and the tail, and write $\Omega_1 = V_1^\top\Omega$ ($k\times(k+p)$) and $\Omega_2 = V_2^\top\Omega$. Then $Y = U_1\Sigma_1\Omega_1 + U_2\Sigma_2\Omega_2$: the part we want, polluted by the tail. HMT prove (their Theorem 9.1; deterministic, stated here) that if $\Omega_1$ has full row rank,
+
+$$\|(I - QQ^\top)A\|^2 \le \|\Sigma_2\|^2 + \|\Sigma_2\Omega_2\Omega_1^{+}\|^2, \tag{3.34}$$
+
+with $\Omega_1^+$ the pseudoinverse (LA-9 §3.9). The first term is the unavoidable $\sigma_{k+1}^2$. The second is the pollution, amplified by $\|\Omega_1^+\| = 1/\sigma_{\min}(\Omega_1)$. A square Gaussian ($p = 0$) often has a very small smallest singular value, so the bound can be terrible. A $k\times(k+p)$ Gaussian with a few extra columns has $\sigma_{\min}$ bounded away from zero with overwhelming probability. That is what oversampling buys.
+
+**Theorem 3.25 (Halko–Martinsson–Tropp 2011, Theorems 10.5, 10.6 and 1.1; stated).** Let $\Omega$ be Gaussian with $k + p$ columns, $p \ge 2$, and $q = 0$. Then
+
+$$\mathbb E\,\|A - QQ^\top A\|_F \le \Big(1 + \frac{k}{p-1}\Big)^{1/2}\Big(\sum_{j>k}\sigma_j^2\Big)^{1/2},$$
+$$\mathbb E\,\|A - QQ^\top A\|_2 \le \Big(1 + \sqrt{\tfrac{k}{p-1}}\Big)\sigma_{k+1} + \frac{e\sqrt{k+p}}{p}\Big(\sum_{j>k}\sigma_j^2\Big)^{1/2} \le \Big[1 + \frac{4\sqrt{k+p}}{p-1}\sqrt{\min(m,n)}\Big]\sigma_{k+1}. \tag{3.35}$$
+
+With $q$ power iterations, apply the spectral bound to $(AA^\top)^qA$, whose singular values are $\sigma_j^{2q+1}$, and take the $(2q+1)$-th root (HMT Corollary 10.10). Large deviations above these expectations are exponentially unlikely in $p$ (HMT §1.5 and §10.3), so one run suffices.
+
+Read (3.35) as: the error is the best possible error times a modest factor that $p$ controls, plus a tail term that matters only when the spectrum decays slowly. Power iterations raise every singular value to the power $2q+1$, which makes the tail decay faster relative to $\sigma_{k+1}$. Two cautions. The probability is over $\Omega$, which you generate; nothing is assumed random about $A$. And the power iterations must be re-orthonormalized (step 3): forming $(AA^\top)^qA\Omega$ directly is power iteration on $k + p$ vectors at once, and every direction whose amplification falls below $\varepsilon$ times the largest is rounded away once $(\sigma_1/\sigma_{k+p})^{2q+1} > 1/\varepsilon$ (Exercise C3).
+
+**Cost.** For dense $A$, steps 2 and 4 are two products with $A$ at $2mn(k+p)$ flops each, and each power iteration adds two more; the QRs and the small SVD cost $O((m+n)(k+p)^2)$. Total $(2q+2)\cdot 2mn(k+p)$ flops plus lower order, against $O(mn\min(m,n))$ for a full SVD, and only $2q+2$ passes over $A$, all of them matrix–matrix products that parallelize well. For sparse $A$, replace $mn$ by $\mathrm{nnz}(A)$. Krylov methods (Golub–Kahan–Lanczos bidiagonalization, `scipy.sparse.linalg.svds`) can extract more accuracy per matrix–vector product when the spectrum decays slowly; the randomized method wins on passes and parallelism.
+
+**The project's numbers.** Test matrix: $400\times300$ with $\sigma_j = 1/j$, a slowly decaying spectrum chosen because it is the hard case; $k = 10$. Mean of $\|A - QQ^\top A\|_2/\sigma_{11}$ over $10$ trials:
+
+| | $p = 2$ | $p = 5$ | $p = 10$ | $p = 20$ | $p = 40$ |
+|---|---|---|---|---|---|
+| $q = 0$ | 2.12 | 1.77 | 1.42 | 0.98 | 0.59 |
+| $q = 1$ | 1.05 | 0.87 | 0.64 | 0.45 | 0.28 |
+| $q = 2$ | 0.94 | 0.78 | 0.58 | 0.40 | 0.25 |
+
+More oversampling and more power iterations both help, and one power iteration ($q = 1$, $p = 10$: $0.64$) does about as well as quadrupling the oversampling ($q = 0$, $p = 40$: $0.59$). Values below $1$ do not contradict Eckart–Young: $Q$ has $k + p$ columns, so the relevant optimum is $\sigma_{k+p+1}$; truncating to rank $k$ in step 6 brings the error back above $\sigma_{11}$. The simplified bound in (3.35) at $p = 10$, $q = 0$ is $35.4\,\sigma_{11}$ against a measured $1.42\,\sigma_{11}$: true, and loose. With $p = 10$, $q = 2$ the ten leading singular values come out with relative error at most $4.1\times10^{-4}$.
+
+### 3.14 Complexity at a glance
+
+Leading-order flops (multiply-add counted as two). "Matvec" is one product with a sparse $A$, $2\,\mathrm{nnz}(A)$ flops.
+
+| Problem | Method | Cost | What you get |
+|---|---|---|---|
+| $Ax = b$, dense | LU, partial pivoting (§3.4) | $\tfrac23n^3$ | backward stable in practice; $\approx 16 - \log_{10}\kappa$ digits |
+| $Ax = b$, dense SPD | Cholesky | $\tfrac13n^3$ | backward stable, no pivoting |
+| QR, $m\times n$ | Householder (Alg. 3.1) | $2mn^2 - \tfrac23n^3$ | backward stable; $\|Q^\top Q - I\| \approx \varepsilon$ |
+| QR, $m\times n$ | classical / modified Gram–Schmidt | $2mn^2$ | orthogonality lost like $\kappa^2\varepsilon$ / $\kappa\varepsilon$ |
+| least squares | normal equations + Cholesky | $mn^2 + \tfrac13n^3$ | error $\sim\kappa^2\varepsilon$ |
+| least squares | Householder QR | $2mn^2 - \tfrac23n^3$ | error $\sim\kappa\varepsilon$ (plus $\kappa^2\varepsilon$ times the relative residual) |
+| symmetric eigenvalues | tridiagonalize + Wilkinson-shifted QR (§3.8) | $\tfrac43n^3$; $\approx 9n^3$ with eigenvectors | absolute error $O(\varepsilon\|A\|)$ |
+| general eigenvalues | Hessenberg + Francis double-shift QR | $\approx 10n^3$; $\approx 25n^3$ with Schur vectors | backward stable Schur form |
+| SVD | Golub–Kahan + implicit QR | $4mn^2 - \tfrac43n^3$ (values only) | backward stable |
+| one eigenpair near $\mu$ | inverse iteration / RQI | $\tfrac23n^3$ once, then $2n^2$ per step / $\tfrac23n^3$ per step | linear / cubic |
+| sparse SPD $Ax = b$ | CG (Alg. 3.3, 3.3′) | $O(\sqrt{\kappa})$ iterations of one matvec $+\,10n$ | model problem: $O(n^{3/2})$ total |
+| sparse $Ax = b$ | Jacobi, Gauss–Seidel | $O(\kappa)$ iterations of one matvec | model problem: $O(n^2)$ total |
+| sparse general $Ax = b$ | GMRES | $k$ matvecs $+\,2k^2n$ | monotone residual; restarted in practice |
+| extreme eigenvalues, sparse symmetric | Lanczos | $k$ matvecs $+\,O(kn)$ | extremes converge first |
+| rank-$k$ approximation | randomized SVD (Alg. 3.4) | $(2q+2)\cdot 2mn(k+p)$ | near-optimal with high probability |
+
+## 4. Worked examples
+
+### Example 4.1: The quadratic formula in 8-digit arithmetic
+
+Solve $x^2 + 9000x + 1 = 0$ on a machine that rounds every result to 8 significant decimal digits. The true small root, from (3.5) in double precision, is $-1.1111111248\times10^{-4}$.
+
+*Naive formula.* $b^2 = 81{,}000{,}000$ and $4ac = 4$, so $b^2 - 4ac = 80{,}999{,}996$ (8 digits, exact). Its square root $8999.99977777\ldots$ rounds to $8999.9998$. Then
+$$x_{\text{small}} = \frac{-9000 + 8999.9998}{2} = \frac{-0.0002}{2} = -0.0001.$$
+Relative error $|{-0.0001} + 0.000111111|/0.000111111 = 0.100$: one correct digit out of eight. The subtraction was exact. The damage was done by rounding the square root, whose relative error (up to $5\times10^{-9}$, half a unit in the 8th digit) is amplified by $\kappa_{\text{sub}} = (9000 + 8999.9998)/0.00022 \approx 8.1\times10^7$ from (3.4): the bound $8.1\times10^7 \times 5\times10^{-9} \approx 0.41$ is order one, and so is the error.
+
+*Stable formula (3.5).* Since $b > 0$, the safe root takes the minus sign: $(-9000 - 8999.9998)/2 = -17999.9998/2$, and $17999.9998$ rounds to $18000.000$, giving $x_{\text{big}} = -9000.000$. Then $x_{\text{small}} = c/(a\,x_{\text{big}}) = 1/(-9000.000) = -0.00011111111$. Relative error $2.2\times10^{-8}$, which is the 8-digit rounding itself.
+
+Same machine, same 8 digits, same inputs. The difference is entirely in whether the algorithm asks the machine to subtract nearly equal numbers.
+
+### Example 4.2: A $2\times2$ system with $\kappa = 10^4$
+
+Let
+$$A = \begin{pmatrix} 0.50005 & 0.49995 \\ 0.49995 & 0.50005\end{pmatrix}, \qquad b = \begin{pmatrix}1\\1\end{pmatrix}, \qquad x = \begin{pmatrix}1\\1\end{pmatrix}.$$
+$A$ is symmetric with eigenvectors $(1, 1)/\sqrt2$ (eigenvalue $0.50005 + 0.49995 = 1$) and $(1, -1)/\sqrt2$ (eigenvalue $0.50005 - 0.49995 = 10^{-4}$). It is positive definite, so its singular values are its eigenvalues and $\kappa_2(A) = 1/10^{-4} = 10^4$ by Theorem 3.7. Rule of thumb: a backward stable solver will lose 4 of 16 digits.
+
+*Worst-case perturbation.* $\delta b = 10^{-4}(1, -1)$ has $\|\delta b\|/\|b\| = 10^{-4}\sqrt2/\sqrt2 = 10^{-4}$. It lies along the eigenvector with eigenvalue $10^{-4}$, so $\delta x = A^{-1}\delta b = 10^4\cdot10^{-4}(1, -1) = (1, -1)$ and the perturbed solution is $\tilde x = (2, 0)$. Relative change $\|\delta x\|/\|x\| = \sqrt2/\sqrt2 = 1$. The bound (3.7) predicts $\kappa\cdot10^{-4} = 1$. **Attained exactly**: $x$ lies along the direction $A$ stretches most and $\delta b$ along the direction $A^{-1}$ stretches most, the two equality cases in the derivation of Theorem 3.5. A $0.01\%$ change in the data produced a $100\%$ change in the answer.
+
+*Benign perturbation.* $\delta b = 10^{-4}(1, 1)$, same size. Now $\delta x = 10^{-4}(1, 1)$ and the relative change is $10^{-4}$, below the bound by a factor $10^4$. The condition number is a worst case over directions; whether you meet the worst case depends on where your errors point. Rounding errors point everywhere, so plan for the worst case.
+
+### Example 4.3: One Householder reflection on a 3-vector
+
+Reflect $x = (2, 1, 2)^\top$ onto the $\mathbf e_1$ axis. $\|x\| = 3$ and $x_1 > 0$, so by (3.13)
+$$v = x + 3\mathbf e_1 = (5, 1, 2)^\top, \qquad v^\top v = 30, \qquad v^\top x = 10 + 1 + 4 = 15 = \tfrac12 v^\top v.$$
+So $Hx = x - 2v\,\dfrac{v^\top x}{v^\top v} = x - v = (-3, 0, 0)^\top$, as (3.13) promised: $-\operatorname{sign}(x_1)\|x\|\mathbf e_1$. The matrix is
+$$H = I - \frac{2}{30}vv^\top = I - \frac{1}{15}\begin{pmatrix}25 & 5 & 10\\ 5 & 1 & 2\\ 10 & 2 & 4\end{pmatrix} = \frac{1}{15}\begin{pmatrix}-10 & -5 & -10\\ -5 & 14 & -2\\ -10 & -2 & 11\end{pmatrix}.$$
+Checks: $H$ is symmetric; its first column is $-x/3$, a unit vector; $H^2 = I$ (the project asserts it). If $x$ is the first column of a $3\times n$ matrix, applying this $H$ to the whole matrix is the first step of Algorithm 3.1, with $r_{11} = -3$. Negative diagonal entries in $R$ are normal; LAPACK produces them too.
+
+The other sign, $v' = x - 3\mathbf e_1 = (-1, 1, 2)^\top$, gives $H'x = (3, 0, 0)^\top$ and is harmless *here* because $v'_1 = 2 - 3$ is not a cancellation ($\kappa_{\text{sub}} = 5$). It becomes catastrophic when $x$ is nearly parallel to $\mathbf e_1$: for $x = (1, 10^{-8}, 10^{-8})$ the project measures a residual of $1.4\times10^{-8}$ with the bad sign against $5\times10^{-25}$ with (3.13).
+
+### Example 4.4: Two steps of the QR algorithm on a $2\times2$
+
+$A_0 = \begin{pmatrix}3 & 1\\1 & 1\end{pmatrix}$, eigenvalues $2\pm\sqrt2 = 3.4142,\ 0.5858$. We take $R$ with positive diagonal.
+
+*Step 1.* Gram–Schmidt on the columns: $r_{11} = \|(3,1)\| = \sqrt{10}$, $q_1 = (3, 1)/\sqrt{10}$, $r_{12} = q_1^\top(1, 1) = 4/\sqrt{10}$, and $(1,1) - \tfrac{4}{10}(3, 1) = (-0.2, 0.6)$ has norm $2/\sqrt{10}$, so $q_2 = (-1, 3)/\sqrt{10}$. Thus
+$$Q_0 = \frac{1}{\sqrt{10}}\begin{pmatrix}3 & -1\\ 1 & 3\end{pmatrix},\quad R_0 = \frac{1}{\sqrt{10}}\begin{pmatrix}10 & 4\\ 0 & 2\end{pmatrix},\quad A_1 = R_0Q_0 = \frac{1}{10}\begin{pmatrix}34 & 2\\ 2 & 6\end{pmatrix} = \begin{pmatrix}3.4 & 0.2\\ 0.2 & 0.6\end{pmatrix}.$$
+
+*Step 2.* $\|(3.4, 0.2)\| = \sqrt{11.6} = \sqrt{290}/5$, $q_1 = (17, 1)/\sqrt{290}$, $r_{12} = (3.4\cdot0.2 + 0.2\cdot0.6)/\sqrt{11.6} = 4/\sqrt{290}$, and $r_{22} = \det A_1/r_{11} = 2/\sqrt{11.6} = 10/\sqrt{290}$, with $q_2 = (-1, 17)/\sqrt{290}$. Then
+$$A_2 = R_1Q_1 = \frac{1}{290}\begin{pmatrix}58 & 4\\ 0 & 10\end{pmatrix}\begin{pmatrix}17 & -1\\ 1 & 17\end{pmatrix} = \frac{1}{290}\begin{pmatrix}990 & 10\\ 10 & 170\end{pmatrix} = \begin{pmatrix}99/29 & 1/29\\ 1/29 & 17/29\end{pmatrix}.$$
+
+*Reading it.* The trace stays $4$ and the determinant stays $2$ (Theorem 3.15: similar matrices). The off-diagonal goes $1 \to 0.2 \to 0.0345$, ratios $0.2$ and $0.1724$, approaching $\lambda_2/\lambda_1 = (2-\sqrt2)/(2+\sqrt2) = 3 - 2\sqrt2 = 0.1716$ as Theorem 3.16 predicts. The diagonal $99/29 = 3.41379$ is already within $4.2\times10^{-4}$ of $2 + \sqrt2$: the diagonal error is of order the off-diagonal squared, the Rayleigh-quotient effect of Theorem 3.13. Unshifted, it takes $11$ steps to push the off-diagonal below $10^{-8}$; with the Wilkinson shift (3.19), which here equals the exact eigenvalue $2 - \sqrt2$, one step suffices (Exercise B6).
+
+### Example 4.5: Conjugate gradients by hand
+
+Solve $\begin{pmatrix}4 & 1\\1 & 3\end{pmatrix}x = \begin{pmatrix}1\\2\end{pmatrix}$ from $x_0 = 0$ with Algorithm 3.3. The exact answer is $x_* = (1/11, 7/11)$.
+
+*Step 0.* $r_0 = b = (1, 2)$, $p_0 = r_0$, $Ap_0 = (6, 7)$, $r_0^\top r_0 = 5$, $p_0^\top Ap_0 = 6 + 14 = 20$. So $\alpha_0 = 5/20 = 1/4$, $x_1 = (1/4, 1/2)$, $r_1 = (1, 2) - \tfrac14(6, 7) = (-1/2, 1/4)$.
+
+Check Theorem 3.22(b): $r_1^\top r_0 = -1/2 + 1/2 = 0$. ✓ (This first step is identical to steepest descent.)
+
+*Step 1.* $r_1^\top r_1 = 1/4 + 1/16 = 5/16$, so $\beta_0 = (5/16)/5 = 1/16$ and $p_1 = r_1 + \tfrac1{16}p_0 = (-7/16, 3/8)$. Check conjugacy: $p_1^\top Ap_0 = -\tfrac{7}{16}\cdot6 + \tfrac38\cdot7 = -\tfrac{42}{16} + \tfrac{42}{16} = 0$. ✓ Then $Ap_1 = (-28/16 + 6/16,\ -7/16 + 18/16) = (-11/8, 11/16)$, $p_1^\top Ap_1 = \tfrac{154}{256} + \tfrac{66}{256} = \tfrac{55}{64}$, and $\alpha_1 = (5/16)/(55/64) = 4/11$.
+$$x_2 = \Big(\frac14, \frac12\Big) + \frac{4}{11}\Big(-\frac{7}{16}, \frac38\Big) = \Big(\frac{11 - 7}{44}, \frac{11 + 3}{22}\Big) = \Big(\frac{1}{11}, \frac{7}{11}\Big),\qquad r_2 = r_1 - \frac{4}{11}Ap_1 = (0, 0).$$
+Exact in $n = 2$ steps, as Theorem 3.21 guarantees. Steepest descent, from the same first step, chooses its second direction as $r_1$ instead of $p_1$ and lands at $(1/12, 7/12)$; it never terminates (Exercise B7).
+
+### Example 4.6: A heated plate, predicted before it is run
+
+The steady temperature of a square plate with edges held at $0$ and heat source $f$ solves $-\nabla^2u = f$; so does the electrostatic potential of a charge distribution inside a grounded box (EM-2). Discretize with $N = 20$ interior points per side: $n = 400$ unknowns, $h = 1/21$. Before running anything, here is what the theory of this module predicts for reducing $\|r_k\|/\|b\|$ to $10^{-8}$ from $x_0 = 0$.
+
+*Conditioning.* Theorem 3.18: $\kappa = \cot^2(\pi/42) = 178.1$. A backward stable direct solve keeps $16 - \log_{10}178 \approx 13.7$ digits, far more than the discretization error needs (it is $O(h^2)$, with $h^2 \approx 2.3\times10^{-3}$).
+
+*Jacobi.* (3.24): $\rho_J = \cos(\pi/21) = 0.98883$, which is $1/(-\log_{10}\rho_J) = 205$ iterations per digit. Since $B_J = I - (h^2/4)A$ is symmetric and commutes with $A$, $r_k = AB_J^ke_0 = B_J^kr_0$ and $\|r_k\| \le \rho_J^k\|r_0\|$ is a guarantee: $\ln(10^{-8})/\ln\rho_J = 1640$ iterations at most.
+
+*Gauss–Seidel.* $\rho_{GS} = \rho_J^2 = 0.97779$, $103$ iterations per digit, about $820$ in total. ($B_{GS}$ is not symmetric, so this is the asymptotic rate, not a guarantee.)
+
+*CG.* $\rho = (\sqrt\kappa - 1)/(\sqrt\kappa + 1) = 0.8606$. The bound (3.30) reaches $10^{-8}$ in the $A$-norm error at $k = 128$. For the residual we must pay one more factor: $\|r_k\| = \|Ae_k\| \le \sqrt{\lambda_{\max}}\|e_k\|_A$ and $\|r_0\| \ge \sqrt{\lambda_{\min}}\|e_0\|_A$, so $\|r_k\|/\|r_0\| \le \sqrt\kappa\,\|e_k\|_A/\|e_0\|_A$, which raises the guaranteed count to $145$.
+
+*Measured* (project, random $b$): Jacobi $1416$, Gauss–Seidel $703$, CG $63$. All three beat their predictions, and the late-stage rates of Jacobi and Gauss–Seidel match $\cos\pi h$ and $\cos^2\pi h$ to five digits. CG beats its bound by more than a factor of two because (3.30) replaces the actual eigenvalues by the whole interval. The ratios are what matter: a factor $22.5$ in iterations between Jacobi and CG at $N = 20$, growing like $N$ as the grid is refined.
+
+## 5. Why it matters and where it connects
+
+- **ML-2.** The quadratic $\varphi(x) = \tfrac12x^\top Ax - b^\top x$ of Theorem 3.20 is the model problem for every convergence proof there. Steepest descent's factor $(\kappa - 1)/(\kappa + 1)$ is gradient descent with exact line search on a quadratic; heavy-ball momentum with tuned parameters reaches the CG-like factor $(\sqrt\kappa - 1)/(\sqrt\kappa + 1)$ on quadratics, without CG's optimality. Newton's method needs a linear solve per step, often done by CG (Newton–CG).
+- **ML-6 and LA-9 §3.10.** PCA is an SVD of the centered data matrix $X$, never an eigendecomposition of $X^\top X$: Theorem 3.12 says the latter squares $\kappa$ and loses every singular value below $\sqrt\varepsilon\,\sigma_1$. For large $X$, Algorithm 3.4 is the standard method.
+- **ST-3.** Regression is least squares; statistical software solves it by QR, for the reason of Theorem 3.12. Multicollinearity is large $\kappa(X)$, and the inflated variance of the coefficients is the statistical face of (3.8).
+- **ML-4.** A Gaussian-process kernel matrix is SPD but often has $\kappa \sim 10^{12}$ or worse; adding "jitter" $\lambda I$ before the Cholesky factorization is deliberately trading a small backward error for a better-conditioned problem.
+- **ML-7 to ML-9.** Training runs in float32 ($\varepsilon = 2^{-24} \approx 6\times10^{-8}$) or bfloat16 ($\varepsilon = 2^{-8} \approx 4\times10^{-3}$). Every bound in this module holds with that $\varepsilon$. The log-sum-exp trick in softmax is a fix in the spirit of (3.5): rewrite the formula so that rounding never meets a dangerous operation (there, overflow of $e^{z}$).
+- **CM-6.** Normal modes solve $Kx = \omega^2Mx$; Cholesky of $M$ turns it into a symmetric eigenproblem for §3.8. The eigenvalues (3.22) are the modes of a square membrane.
+- **EM-2, EM-3.** Every finite-difference or finite-element electrostatics code is the model problem of §3.9 with a preconditioned Krylov solver (§3.10–3.12) or multigrid.
+- **QM-4, QC-9.** Diagonalizing a Hamiltonian is `eigh`, i.e. §3.8. For large sparse Hamiltonians, ground-state energies come from Lanczos (3.33): only the smallest Ritz value is wanted, and it converges first.
+- **LA-14.** The condition number of a differentiable map, $\kappa = \|J\|\|x\|/\|f(x)\|$ (Definition 3.3), is a Jacobian norm.
+
+## 6. Exercises
+
+See [exercises.md](exercises.md). **A1–A6** are drills: spacing of doubles, a cancellation in $1 - \cos x$, $\kappa$ of a nearly singular $2\times2$, one Householder reflection, one Jacobi and one Gauss–Seidel step, power versus shifted inverse iteration. **B1–B8** are the module: B1 (the residual *is* the backward error), B2 (the combined perturbation bound and distance to singularity), B3 (a well-conditioned matrix on which partial pivoting fails), B4 (Läuchli's matrix: the normal equations break), B5 (Ritz values are monotone), B6 (one shifted QR step deflates), B7 (steepest descent zigzags), B8 (code: Hessenberg reduction for nonsymmetric matrices). Essential: B1, B4, B6, B7. **C1–C3** go further: an SPD matrix on which Jacobi diverges and Gauss–Seidel provably converges, the Chebyshev facts behind (3.30), and power iterations without re-orthonormalization (code).
+
+## 7. Coding project
+
+`project.py` runs in about 20 seconds (single-threaded BLAS, set at the top so the CG-versus-dense timing is fair) and asserts every number quoted in these notes and in the solutions.
+
+1. **Floating point.** Finds the gap $2^{-52}$ by halving, checks the rounding model (3.2) against exact rational arithmetic on 8,000 operations (worst $|\delta| = 1.109\times10^{-16}$), and reproduces Example 4.1 with Python's `decimal` at 8 digits.
+2. **Conditioning and stability.** Example 4.2; `np.linalg.solve` across $\kappa = 1$ to $10^{12}$ (figure `forward_vs_kappa.png`: backward error flat at $\varepsilon$, forward error along $\kappa\varepsilon$); growth factors $2^{n-1}$ for Wilkinson's matrix versus $4.2$ for a random one.
+3. **Householder.** Example 4.3 and the sign experiment; `householder_qr`; $\|Q^\top Q - I\|$ for CGS, MGS and Householder on Hilbert matrices $n = 2..14$ (`orthogonality_loss.png`); normal equations versus QR at $\kappa = 10^8$ ($6\times10^{-3}$ versus $7.5\times10^{-10}$).
+4. **Eigenvalues.** Wilkinson's perturbed roots at 30 digits (`wilkinson_roots.png`); Example 4.4; the $6\times6$ subdiagonal decay rates (`qr_subdiagonal_decay.png`); `householder_tridiagonalize`, `wilkinson_shift`, `qr_algorithm_symmetric` checked against `eigvalsh` with step counts ($20$, $105$, $304$ for $n = 10, 50, 150$); Golub–Kahan bidiagonalization.
+5. **Iterative methods.** The sparse Laplacian and (3.22); Jacobi, Gauss–Seidel and CG at $N = 20$ (`stationary_vs_cg.png`) and Example 4.6; `conjugate_gradient` on grids $N = 20..200$ with residual curves, iterations against $\sqrt\kappa$ ($4.72\sqrt\kappa$, constant to $1.5\%$) and timing against a dense solve (`cg_laplacian.png`); the Chebyshev bound checked at every step; Arnoldi and GMRES.
+6. **Randomized SVD.** `randomized_svd(A, k, p, q)` on $\sigma_j = 1/j$ with the table of §3.13 and the HMT bounds asserted (`randomized_svd.png`).
+7. **Your turn**, with reference solutions after the prompts: Rayleigh quotient iteration (digits per step: $0, 2, 8, 15$), Jacobi-preconditioned CG on variable-coefficient Poisson problems, and 30 steps of Lanczos on the $10{,}000\times10{,}000$ Laplacian (`lanczos_ritz.png`). Part 7 checks every number in `solutions.md`.
+
+**Build it yourself first:** `householder_qr` (Algorithm 3.1), `qr_algorithm_symmetric` with its helpers, `conjugate_gradient` (Algorithm 3.3) and `randomized_svd` (Algorithm 3.4). Write each from the notes, run it against the asserts, and only then read the reference version. The asserts are the specification.
+
+## 8. Where you'll struggle
+
+- **Conditioning versus stability.** They were conflated for decades (Hotelling's $4^n$ in §1), and you will conflate them too. The fix is mechanical: for every bad numerical result, write down two numbers. The backward error of your answer (for $Ax = b$, the relative residual $\|b - A\hat x\|/(\|A\|\|\hat x\|)$, computable without $x$) and an estimate of $\kappa$ (`np.linalg.cond`, or the ratio of extreme Ritz values from §3.11). If the backward error is near $\varepsilon$ and the answer is still bad, the problem is the problem: reformulate it (B4 replaces the normal equations by QR), do not hunt for a better solver.
+- **Backward error is weird the first three times.** "Exactly right for a slightly wrong question" sounds like an excuse. It is not, because your data already carry relative error $\varepsilon$ just from being stored (§3.1). An algorithm whose errors are equivalent to perturbing the data by $\varepsilon$ is as good as the data. Do B1 by hand until the identity $\delta A = r\hat x^\top/\|\hat x\|^2$ is obvious.
+- **The Householder sign.** Two failure modes. Choosing $v = x - \|x\|\mathbf e_1$ works on every textbook example and fails on nearly triangular input, which is exactly what the later columns of a QR factorization look like. And the correct sign gives $R$ negative diagonal entries, so your $R$ will not match a hand computation until you normalize signs (the project's `qr_positive`).
+- **The QR algorithm "is" power iteration.** The induction in Theorem 3.16 is four lines; believing it takes longer. Print $Q^{(k)}\mathbf e_1$ next to the normalized $A^k\mathbf e_1$ (the project does), then write the induction without looking. The link between the shifted algorithm and inverse iteration on the *last* column (§3.8(b)) is harder; accept the sketch and come back with T&B lecture 29.
+- **The CG derivation needs three hours.** Not a figure of speech. The common failure is reading §3.10(iv) as a string of tricks. It has one idea (conjugate directions finish in $n$ steps), one choice (build them from residuals) and one fact (residuals are orthogonal) that collapses Gram–Schmidt. Write those three lines from memory, then rebuild the induction, then do Example 4.5 by hand. Expect to mix up which statement is proved at step $k$ and which at $k+1$.
+- **CG's residual is not monotone; its $A$-norm error is.** Wiggles in $\|r_k\|$ are not a bug.
+- **Randomized methods feel like cheating until the bound.** Do the four-step exact-rank derivation in §3.13 and Exercise C3; then (3.35) is a quantitative version of something you already believe. The randomness is in $\Omega$, which you generate, not in the data.
+- **"GEPP is backward stable"** is false as stated: B3 builds a matrix with $\kappa = 27$ on which it loses everything. Say "backward stable in practice" and know the growth factor is the reason.
+- **Sparse formats are a practical skill this module does not teach.** Build sparse matrices in COO or LIL format, convert to CSR to compute, never assign entries of a CSR matrix in a loop, and keep `A @ x` as the only operation in an inner loop. The `scipy.sparse` user guide is the reference; an hour with it saves days later.
+
+## 9. Check yourself
+
+1. What is $\varepsilon_{\text{mach}}$ for IEEE double, and why is `np.finfo(float).eps` twice as large?
+2. Subtracting two nearly equal doubles is exact. Why is it still dangerous? Give its condition number.
+3. Define backward stability in one sentence. How do you measure the backward error of a computed solution of $Ax = b$ without knowing $x$?
+4. Derive $\|\delta x\|/\|x\| \le \kappa(A)\|\delta b\|/\|b\|$ in two lines.
+5. A backward stable solver is applied to a system with $\kappa = 10^{10}$. How many correct digits do you expect?
+6. Why $v = x + \operatorname{sign}(x_1)\|x\|\mathbf e_1$ and not the other sign?
+7. Prove $\kappa_2(A^\top A) = \kappa_2(A)^2$. What does it imply for the normal equations?
+8. Why must every eigenvalue algorithm for $n \ge 5$ be iterative?
+9. Show $A_{k+1} = Q_k^\top A_kQ_k$ in the QR algorithm. What is the first column of $Q_1Q_2\cdots Q_k$?
+10. What do Hessenberg reduction, shifts and deflation each contribute to the practical QR algorithm?
+11. Why are the CG residuals mutually orthogonal, and why does that make the recurrence short?
+12. How many iterations do Jacobi and CG need on the $N\times N$ Poisson grid, as powers of $N$?
+13. In the randomized SVD, what does oversampling buy, and what do power iterations do to the singular values?
+
+## 10. Pair with
+
+- **Trefethen & Bau, *Numerical Linear Algebra*, lectures 12–16.** Conditioning, floating point, stability, backward stability, and the stability of Householder QR. The definitions here follow T&B; lecture 15's catalogue of stable and unstable algorithms and lecture 16's experiment are sharper than anything in these notes.
+- **Trefethen & Bau, lectures 10–11 (and 18–19).** Householder triangularization and least squares, with the normal-equations comparison done on a polynomial fit.
+- **Trefethen & Bau, lectures 24–30 (and 31 for the SVD).** Eigenvalue algorithms. Lecture 28 is the clearest account of "QR is simultaneous iteration"; lecture 29 does the shifted-QR bookkeeping that §3.8(b) only sketches.
+- **Trefethen & Bau, lectures 32–38 (and 40 on preconditioning).** Arnoldi, GMRES, Lanczos and CG, with the polynomial point of view throughout; better than §3.11 on GMRES convergence for nonnormal matrices.
+- **Golub & Van Loan, *Matrix Computations* (4th ed.).** The reference: exact flop counts, blocked and implicit versions of every algorithm here, and the Lanczos convergence theory (§10.1). Look things up; do not read it front to back.
+- **Higham, *Accuracy and Stability of Numerical Algorithms*, ch. 1–2.** The floating-point model, cancellation, and forward versus backward error, with many worked case studies. Chapter 1's closing list of lessons is worth rereading after every project.
+- **Shewchuk, "An Introduction to the Conjugate Gradient Method Without the Agonizing Pain" (1994, free online).** Pictures of every step of §3.10; read it alongside the derivation if the algebra is not landing.
+- **Halko, Martinsson & Tropp, "Finding structure with randomness" (*SIAM Review*, 2011).** Section 1 is a readable overview of §3.13; Sections 9–10 contain the proofs of (3.34) and (3.35).

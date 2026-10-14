@@ -365,15 +365,14 @@ W_mid = runs[1].y
 assert W_mid[1].min() < -0.99 * w0, "spin about the intermediate axis must flip"
 
 # Growth rate about axis 2, Example 4.4: sigma = w0 sqrt((I2-I1)(I3-I2)/(I1 I3)) = w0/sqrt(3).
-# The linearization (3.18) has a growing mode (dw1, dw3) ~ (1, -sigma I1/((I2-I3) w0)) ... for I = (1,2,3): dw3 = -sigma dw1.
+# The linearization behind (3.20) has a growing mode with dw3 = sigma I1 dw1/((I2 - I3) w0) = -sigma dw1 for I = (1,2,3).
 # A generic perturbation also excites the decaying mode, so |w1| first dips through zero (visible in the figure);
 # to measure sigma cleanly we start on the growing eigenvector with a tiny amplitude.
 sigma_theory = w0 * np.sqrt((I123[1] - I123[0]) * (I123[2] - I123[1]) / (I123[0] * I123[2]))
 assert np.isclose(sigma_theory, 1 / np.sqrt(3))
 amp = 1e-4
-w_grow = np.array([amp, w0, -sigma_theory * amp * I123[0] / ((I123[1] - I123[2]) * w0) * (-1)])   # dw3 = (I1 sigma/((I2-I3) w0)) dw1 ... sign worked out below
-# From (3.18): dw1-dot = (I2-I3) w0 dw3 / I1  =>  for growth e^{sigma t}: dw3 = sigma I1 dw1 / ((I2-I3) w0) = -sigma dw1 here.
-w_grow[2] = sigma_theory * I123[0] * amp / ((I123[1] - I123[2]) * w0)
+# From dw1-dot = (I2 - I3) w0 dw3 / I1 and growth e^{sigma t}: dw3 = sigma I1 dw1 / ((I2 - I3) w0).
+w_grow = np.array([amp, w0, sigma_theory * I123[0] * amp / ((I123[1] - I123[2]) * w0)])
 assert np.isclose(w_grow[2], -sigma_theory * amp)
 sol_g = solve_ivp(euler_rhs, (0, 12), w_grow, args=(I123,), method="DOP853", rtol=1e-11, atol=1e-14,
                   t_eval=np.linspace(0, 12, 4001))
@@ -513,19 +512,19 @@ print("Part 5 checks passed.")
 
 # %%
 def euler_R(phi, theta, psi):
-    """Rotation matrix of the z-x'-z'' Euler angles, eq. (3.19): r_space = R r_body."""
+    """Rotation matrix of the z-x'-z'' Euler angles, eq. (3.21): r_space = R r_body."""
     return R_z(phi) @ R_x(theta) @ R_z(psi)
 
 
 def omega_body_from_rates(phi, theta, psi, dphi, dtheta, dpsi):
-    """Body components of omega from Euler-angle rates, eq. (3.21)."""
+    """Body components of omega from Euler-angle rates, eq. (3.23)."""
     return np.array([dphi * np.sin(theta) * np.sin(psi) + dtheta * np.cos(psi),
                      dphi * np.sin(theta) * np.cos(psi) - dtheta * np.sin(psi),
                      dphi * np.cos(theta) + dpsi])
 
 
 def omega_space_from_rates(phi, theta, psi, dphi, dtheta, dpsi):
-    """Space components of omega from Euler-angle rates, eq. (3.22)."""
+    """Space components of omega from Euler-angle rates, eq. (3.24)."""
     return np.array([dtheta * np.cos(phi) + dpsi * np.sin(theta) * np.sin(phi),
                      dtheta * np.sin(phi) - dpsi * np.sin(theta) * np.cos(phi),
                      dphi + dpsi * np.cos(theta)])
@@ -588,7 +587,7 @@ print("Part 6 checks passed: R orthogonal, omega formulas by finite difference, 
 #
 # L = (I_1/2)(theta-dot^2 + phi-dot^2 sin^2 theta) + (I_3/2)(psi-dot + phi-dot cos theta)^2 - M g l cos theta.
 # SymPy forms the Euler–Lagrange equations (as in CM-3's `lagrangian_to_eom`), checks
-# that phi and psi are cyclic, verifies the V_eff reduction (3.27) symbolically, and
+# that phi and psi are cyclic, verifies the V_eff reduction (3.29) symbolically, and
 # hands `solve_ivp` the accelerations. Then: steady precession rates (slow and fast),
 # nutation frequency, the sleeping-top threshold, and the axis path on the unit sphere.
 
@@ -613,11 +612,11 @@ EL = [sp.diff(sp.diff(Lag, q.diff(t_sym)), t_sym) - sp.diff(Lag, q) for q in qs]
 acc_syms = [q.diff(t_sym, 2) for q in qs]
 acc_sol = sp.solve(EL, acc_syms, dict=True)[0]
 
-# The theta equation in the form used in the notes (3.26): I_1 theta-ddot = I_1 phi-dot^2 sin cos - p_psi phi-dot sin + M g l sin.
+# The theta equation in the form used in the notes (3.28): I_1 theta-ddot = I_1 phi-dot^2 sin cos - p_psi phi-dot sin + M g l sin.
 theta_eq_notes = I1s * phd**2 * sp.sin(th_f) * sp.cos(th_f) - p_psi_expr * phd * sp.sin(th_f) + Ms * gs * ls * sp.sin(th_f)
 assert sp.simplify(I1s * acc_sol[th_f.diff(t_sym, 2)] - theta_eq_notes) == 0
 
-# Effective potential (3.27): E - p_psi^2/(2 I_3) - I_1 theta-dot^2 / 2 = (p_phi - p_psi cos)^2 / (2 I_1 sin^2) + M g l cos.
+# Effective potential (3.29): E - p_psi^2/(2 I_3) - I_1 theta-dot^2 / 2 = (p_phi - p_psi cos)^2 / (2 I_1 sin^2) + M g l cos.
 pphi, ppsi = sp.symbols("p_phi p_psi")
 E_expr = thd * sp.diff(Lag, thd) + phd * p_phi_expr + psd * p_psi_expr - Lag          # energy function h = E (CM-4 (3.8))
 phd_of_p = (pphi - ppsi * sp.cos(th_f)) / (I1s * sp.sin(th_f)**2)
@@ -659,7 +658,7 @@ def V_eff(th, p_phi, p_psi):
 
 
 def turning_points(p_phi, p_psi, E):
-    """Roots in [-1, 1] of f(u) = (alpha - beta u)(1 - u^2) - (b - a u)^2, u = cos(theta), eq. (3.29)."""
+    """Roots in [-1, 1] of f(u) = (alpha - beta u)(1 - u^2) - (b - a u)^2, u = cos(theta), eq. (3.30)."""
     Ep = E - p_psi**2 / (2 * I3_g)
     alpha, beta = 2 * Ep / I1_g, 2 * M_g * g_g * l_g / I1_g
     a_, b_ = p_psi / I1_g, p_phi / I1_g
@@ -699,7 +698,7 @@ y_steady = [theta0, 0.0, 0.0, 0.0, phi_slow, w3_g - phi_slow * np.cos(theta0)]
 sol_st = solve_ivp(top_rhs, (0, 1.0), y_steady, method="DOP853", rtol=1e-10, atol=1e-12, t_eval=np.linspace(0, 1, 2001))
 assert np.allclose(sol_st.y[0], theta0, atol=1e-7) and np.allclose(sol_st.y[4], phi_slow, rtol=1e-6)
 
-# (b) Nutation: kick theta-dot. Measured frequency vs sqrt(V_eff''(theta0)/I_1), closed form (3.28).
+# (b) Nutation: kick theta-dot. Measured frequency vs sqrt(V_eff''(theta0)/I_1), closed form (3.32).
 y_nut = [theta0, 0.0, 0.0, 0.8, phi_slow, w3_g - phi_slow * np.cos(theta0)]
 t_end = 2.0
 sol_nut = solve_ivp(top_rhs, (0, t_end), y_nut, method="DOP853", rtol=1e-10, atol=1e-12, t_eval=np.linspace(0, t_end, 40001))
@@ -710,7 +709,7 @@ w_nut_meas = oscillation_frequency(sol_nut.t, sol_nut.y[0])
 w_nut_closed = np.sqrt(((p_psi_g - 2 * I1_g * phi_slow * np.cos(theta0))**2 + I1_g**2 * phi_slow**2 * np.sin(theta0)**2) / I1_g**2)
 h = 1e-5
 V2 = (V_eff(theta0 + h, p_phi_n, p_psi_n) - 2 * V_eff(theta0, p_phi_n, p_psi_n) + V_eff(theta0 - h, p_phi_n, p_psi_n)) / h**2
-assert np.isclose(np.sqrt(V2 / I1_g), w_nut_closed, rtol=1e-4)                   # closed form (3.28) = V_eff''/I_1
+assert np.isclose(np.sqrt(V2 / I1_g), w_nut_closed, rtol=1e-4)                   # closed form (3.32) = V_eff''/I_1
 assert np.isclose(w_nut_meas, w_nut_closed, rtol=5e-3), (w_nut_meas, w_nut_closed)
 assert np.isclose(w_nut_closed, 74.68, atol=0.02)
 # Turning points from the cubic agree with the simulated min/max theta.
@@ -843,15 +842,177 @@ print(f"Example 4.7: solar {rate_sun:.2f} arcsec/yr, lunar {rate_moon:.2f} arcse
 print("Part 8 checks passed.")
 
 # %% [markdown]
+# ## Part 9: Remaining worked-example numbers, and the exercise checks
+#
+# Every number quoted in the notes' worked examples that Parts 1-8 did not already
+# assert, then every number quoted in `solutions.md`, exercise by exercise.
+
+# %%
+# Notes, Examples 4.2-4.7: intermediate numbers.
+assert np.allclose(np.diag(I_plate_closed), [0.0016667, 0.015, 0.016667], atol=5e-7)
+assert np.allclose(w_plate, [298.04, 99.346, 0], atol=0.01) and np.allclose(L_plate, [0.49673, 1.4902, 0], atol=1e-4)
+assert np.isclose(np.linalg.norm(tau_bearing) / 0.4, 987, atol=1)                       # radial bearing force, N
+assert np.isclose(w_init[0], 2.7381, atol=1e-4) and np.isclose(Omega_s_theory, 62.65, atol=0.01)
+sig_toss = sigma_theory * 4 * np.pi                                                      # 2 rev/s
+assert np.isclose(sig_toss, 7.255, atol=1e-3) and np.isclose(np.log(100) / sig_toss, 0.635, atol=1e-3)
+assert np.isclose(p_psi_g**2, 1.9986e-4, rtol=1e-4) and np.isclose(4 * I1_g * Mgl * 0.5, 1.4323e-5, rtol=1e-4)
+assert np.isclose(GM_sun / r_sun**3, 3.964e-14, rtol=1e-3) and np.isclose(Omega_sun, 2.45e-12, rtol=2e-3)
+
+# A1: a cylinder with h = sqrt(3) R is a spherical top about its CM (all moments R^2/2).
+z_c = rng.uniform(-np.sqrt(3) / 2, np.sqrt(3) / 2, N)
+r_c, a_c = np.sqrt(rng.uniform(0, 1, N)), rng.uniform(0, 2 * np.pi, N)
+lam_cyl = np.linalg.eigvalsh(I_per_mass(np.c_[r_c * np.cos(a_c), r_c * np.sin(a_c), z_c]))
+assert np.allclose(lam_cyl, 0.5, rtol=0.01)
+
+# A2: hat map.
+w_a2, u_a2 = np.array([1.0, 2, 3]), np.array([4.0, 5, 6])
+assert np.allclose(hat(w_a2) @ u_a2, [-3, 6, -3]) and np.allclose(hat(w_a2) @ u_a2, np.cross(w_a2, u_a2))
+assert np.allclose(hat(w_a2) @ hat(w_a2), np.outer(w_a2, w_a2) - w_a2 @ w_a2 * np.eye(3))
+assert np.allclose(R_z(np.pi / 2) @ hat([1, 0, 0]) @ R_z(np.pi / 2).T, hat([0, 1, 0]))
+
+# A3: the bent-shaft dumbbell.
+al = np.radians(30); n_db = np.array([np.sin(al), 0, np.cos(al)])
+I_db = inertia_tensor([0.5, 0.5], [0.2 * n_db, -0.2 * n_db])
+assert np.allclose(I_db, 2 * 0.5 * 0.04 * (np.eye(3) - np.outer(n_db, n_db)))
+L_db = I_db @ np.array([0, 0, 10.0])
+assert np.allclose(L_db, [-0.17321, 0, 0.1], atol=1e-5) and np.isclose(np.linalg.norm(np.cross([0, 0, 10.0], L_db)), 1.7321, atol=1e-4)
+
+# A4: one evaluation of Euler's equations with torque.
+I_a4, w_a4, tau_a4 = np.array([2.0, 3, 4]), np.array([1.0, -2, 0.5]), np.array([0, 0, 1.0])
+wdot_a4 = (np.array(euler_rhs(0, w_a4, I_a4)) * I_a4 + tau_a4) / I_a4
+assert np.allclose(wdot_a4, [0.5, 1 / 3, 0.75])
+assert np.isclose(I_a4 * w_a4 @ wdot_a4, w_a4 @ tau_a4) and np.isclose(2 * (I_a4 * w_a4) @ (I_a4 * wdot_a4), 4.0)
+
+# A5: rotation about y from the identity has Euler angles (90 deg, t, -90 deg).
+R_y = lambda a: np.array([[np.cos(a), 0, np.sin(a)], [0, 1, 0], [-np.sin(a), 0, np.cos(a)]])
+assert np.allclose(euler_R(np.pi / 2, 0.3, -np.pi / 2), R_y(0.3)) and np.allclose(euler_R(0, 0.3, 0), R_x(0.3))
+
+# B2: cube about the midpoint of an edge; spherical top about any point; edge pendulum.
+I_edge = parallel_axis(np.eye(3) / 6, 1.0, [0.5, 0.5, 0])
+assert np.allclose(I_edge, [[5 / 12, -0.25, 0], [-0.25, 5 / 12, 0], [0, 0, 2 / 3]])
+lam_e, Q_e = np.linalg.eigh(I_edge)
+assert np.allclose(lam_e, [1 / 6, 2 / 3, 2 / 3]) and np.isclose(abs(Q_e[:, 0] @ [1, 1, 0]) / np.sqrt(2), 1)
+assert np.isclose(np.ptp(np.linalg.eigvalsh(parallel_axis(np.eye(3) / 6, 1.0, rng.standard_normal(3)))[1:]), 0, atol=1e-12)
+w_pend = np.sqrt(3 * 9.81 / (2 * np.sqrt(2) * 0.1))
+assert np.isclose(w_pend, 10.201, atol=1e-3) and np.isclose(2 * np.pi / w_pend, 0.6160, atol=1e-4)
+
+# B3: prolate free top, I_1 = 2, I_3 = 1, omega 10 deg from e3.
+thL_b3 = np.degrees(np.arctan(2 * np.tan(np.radians(10))))
+assert np.isclose(thL_b3, 19.425, atol=1e-3) and np.isclose(thL_b3 - 10, 9.425, atol=1e-3)
+assert np.isclose(np.sqrt(4 * np.tan(np.radians(10))**2 + 1) / 2, 0.5302, atol=1e-4)
+
+# B4: the phone (units M cm^2 / 12).
+Iph = np.array([7**2 + 0.8**2, 15**2 + 0.8**2, 15**2 + 7**2])
+s_ph = np.sqrt((Iph[1] - Iph[0]) * (Iph[2] - Iph[1]) / (Iph[0] * Iph[2]))
+f_long = np.sqrt((Iph[1] - Iph[0]) * (Iph[2] - Iph[0]) / (Iph[1] * Iph[2]))
+f_norm = np.sqrt((Iph[2] - Iph[0]) * (Iph[2] - Iph[1]) / (Iph[0] * Iph[1]))
+assert np.allclose(Iph, [49.64, 225.64, 274]) and np.isclose(s_ph, 0.79106, atol=1e-5)
+assert np.isclose(f_long, 0.79918, atol=1e-5) and np.isclose(f_norm, 0.98422, atol=1e-5)
+assert np.isclose(s_ph * 4 * np.pi, 9.941, atol=1e-3) and np.isclose(np.log(100) / (s_ph * 4 * np.pi), 0.463, atol=1e-3)
+print(f"B4 phone: sigma = {s_ph:.4f} w0 = {s_ph * 4 * np.pi:.3f}/s at 2 rev/s; wobble {f_long * 4 * np.pi:.2f}, {f_norm * 4 * np.pi:.2f} rad/s")
+
+# B5: d T/d psi = (I1 - I2) w1 w2 and the psi Euler-Lagrange equation is Euler's third equation.
+I1a, I2a, I3a = sp.symbols("I_1 I_2 I_3", positive=True)
+w1e = phd * sp.sin(th_f) * sp.sin(ps_f) + thd * sp.cos(ps_f)
+w2e = phd * sp.sin(th_f) * sp.cos(ps_f) - thd * sp.sin(ps_f)
+w3e = phd * sp.cos(th_f) + psd
+T_asym = (I1a * w1e**2 + I2a * w2e**2 + I3a * w3e**2) / 2
+assert sp.simplify(sp.diff(T_asym, ps_f) - (I1a - I2a) * w1e * w2e) == 0
+EL_psi = sp.diff(sp.diff(T_asym, psd), t_sym) - sp.diff(T_asym, ps_f)
+assert sp.simplify(EL_psi - (I3a * sp.diff(w3e, t_sym) - (I1a - I2a) * w1e * w2e)) == 0
+
+# B6: minimum spin for steady precession at 60 deg; bicycle wheel at 90 deg.
+w3_min = np.sqrt(4 * I1_g * Mgl * 0.5) / I3_g
+assert np.isclose(w3_min, 84.10, atol=0.01) and np.isclose(w3_min * 60 / (2 * np.pi), 803.1, atol=0.1)
+assert np.isclose(I3_g * w3_min / (2 * I1_g * 0.5), 20.74, atol=0.01) and np.isclose(w3_sleep / w3_min, np.sqrt(2))
+p_wheel, Mgl_wheel = 2 * 0.33**2 * 2 * np.pi * 5, 2 * 9.81 * 0.15
+assert np.isclose(p_wheel, 6.8424, atol=1e-4) and np.isclose(Mgl_wheel / p_wheel, 0.43011, atol=1e-5)
+assert np.isclose(2 * np.pi * p_wheel / Mgl_wheel, 14.61, atol=0.01)
+
+
+# B7: separatrices are the great circles L3 = +-sqrt(3) L1; flip period grows like (4/sigma) ln(1/delta).
+def flip_period(delta, I=I123):
+    """Period of omega_2(t) for a torque-free start at (delta, 1, delta): time between 1st and 3rd zero crossings."""
+    ev = lambda t, w, I: w[1]
+    sol = solve_ivp(euler_rhs, (0, 400), [delta, 1.0, delta], args=(I,), method="DOP853", rtol=1e-12, atol=1e-14, events=ev)
+    tz = sol.t_events[0]
+    return tz[2] - tz[0]
+
+
+P_flip = np.array([flip_period(d) for d in (1e-2, 1e-3, 1e-4)])
+assert np.allclose(P_flip, [39.106, 55.062, 71.015], atol=2e-3)
+assert np.allclose(np.diff(P_flip), 4 * np.log(10) / sigma_theory, atol=5e-3) and np.isclose(4 * np.log(10) / sigma_theory, 15.953, atol=1e-3)
+sol_sep = solve_ivp(euler_rhs, (0, 30), [1e-6, 1.0, -1e-6 * sigma_theory], args=(I123,), method="DOP853", rtol=1e-12, atol=1e-15)
+Lsep = I123[:, None] * sol_sep.y
+away = np.abs(Lsep[0]) > 0.05                                                          # off the saddle
+assert np.allclose(np.abs(Lsep[2][away] / Lsep[0][away]), np.sqrt(3), rtol=1e-3)
+print(f"B7: flip periods {np.round(P_flip, 3)}; differences {np.round(np.diff(P_flip), 3)} vs 4 ln10/sigma = {4 * np.log(10) / sigma_theory:.3f}")
+
+# B8: Monte Carlo hemisphere; rocking period.
+hemi = sample_sphere(1.0, N); hemi[:, 2] = np.abs(hemi[:, 2])                          # reflect the lower half up
+I_face = I_per_mass(hemi); c_h = hemi.mean(axis=0); I_hcm = I_per_mass(hemi - c_h)
+assert np.allclose(I_face, parallel_axis(I_hcm, 1.0, -c_h), atol=1e-12)
+assert np.allclose(np.diag(I_face), 0.4, rtol=0.015) and np.isclose(c_h[2], 3 / 8, rtol=0.01)
+assert np.allclose([I_hcm[0, 0], I_hcm[1, 1]], 83 / 320, rtol=0.015)
+w_rock = np.sqrt((3 / 8) / (83 / 320 + (5 / 8)**2) * 9.81 / 0.1)
+assert np.isclose(83 / 320 + 25 / 64, 0.65) and np.isclose(w_rock, 7.523, atol=1e-3) and np.isclose(2 * np.pi / w_rock, 0.8352, atol=1e-4)
+print(f"B8 hemisphere: CM z = {c_h[2]:.4f} (3/8), I_face diag = {np.round(np.diag(I_face), 4)}, I_1cm = {I_hcm[0, 0]:.4f} (83/320 = 0.2594)")
+
+# C1: at fixed |L|, T lies between L^2/(2 I_max) and L^2/(2 I_min).
+Lr = rng.standard_normal((1000, 3)); Lr /= np.linalg.norm(Lr, axis=1)[:, None]
+T_r = 0.5 * (Lr**2 / I123).sum(axis=1)
+assert T_r.min() >= 1 / (2 * I123[2]) - 1e-12 and T_r.max() <= 1 / (2 * I123[0]) + 1e-12
+
+
+# C2: booms along +-e3 between t = 10 and 20 s make e3 the intermediate axis.
+def boom_I(t):
+    """I(t) = diag(400 + 150 s, 500 + 150 s, 600) with a smoothstep s(t) on [10, 20] s, and its derivative."""
+    u = np.clip((t - 10) / 10, 0, 1)
+    s, ds = u * u * (3 - 2 * u), 6 * u * (1 - u) / 10
+    return np.array([400 + 150 * s, 500 + 150 * s, 600.0]), np.array([150 * ds, 150 * ds, 0.0])
+
+
+def boom_rhs(t, w):
+    """Euler's equations with time-dependent I: I w-dot = -I-dot w - w x (I w)."""
+    I, Idot = boom_I(t)
+    return (-Idot * w - np.cross(w, I * w)) / I
+
+
+def boom_rhs_aug(t, y):
+    """State (omega, W) where W-dot = -(1/2) w^T I-dot w accumulates the predicted change in T."""
+    I, Idot = boom_I(t)
+    return np.concatenate([boom_rhs(t, y[:3]), [-0.5 * (Idot * y[:3] ** 2).sum()]])
+
+
+sol_b = solve_ivp(boom_rhs_aug, (0, 250), [0.01, 0.01, 1.0, 0.0], method="DOP853", rtol=1e-11, atol=1e-13,
+                  t_eval=np.linspace(0, 250, 25001), max_step=0.5)
+Ib = np.array([boom_I(t)[0] for t in sol_b.t]).T
+Lb_mag = np.linalg.norm(Ib * sol_b.y[:3], axis=0)
+Tb = 0.5 * (Ib * sol_b.y[:3] ** 2).sum(axis=0)
+assert np.allclose(Lb_mag, Lb_mag[0], rtol=1e-9) and np.allclose(Tb - Tb[0], sol_b.y[3], atol=1e-9)
+assert np.abs(sol_b.y[:2, sol_b.t <= 10]).max() < 0.017 and sol_b.y[2].min() < -0.9         # steady, then the flip
+sig_boom = np.sqrt((600 - 550) * (650 - 600) / (550 * 650))
+assert np.isclose(sig_boom, 0.08362, atol=1e-5) and np.isclose(np.sqrt(0.1), 0.3162, atol=1e-4)
+win = (sol_b.t > 30) & (np.abs(sol_b.y[0]) > 0.02) & (sol_b.t < sol_b.t[np.argmax(np.abs(sol_b.y[0]) > 0.1)])    # clean exponential window
+sig_fit = np.polyfit(sol_b.t[win], np.log(np.abs(sol_b.y[0][win])), 1)[0]
+assert np.isclose(sig_fit, sig_boom, rtol=0.05), (sig_fit, sig_boom)
+print(f"C2 boom: e3 flips after deployment; fitted growth {sig_fit:.4f}/s vs {sig_boom:.4f}/s; |L| and dT/dt = -w.Idot.w/2 verified")
+
+# C3: bare gyrocompass at 45 deg latitude.
+w_s = 20000 * 2 * np.pi / 60
+w_gc2 = 0.02 * w_s * 7.2921e-5 * np.cos(np.radians(45)) / 0.01
+assert np.isclose(w_s, 2094.4, atol=0.1) and np.isclose(w_gc2, 0.21599, atol=1e-5)
+assert np.isclose(np.sqrt(w_gc2), 0.4647, atol=1e-4) and np.isclose(2 * np.pi / np.sqrt(w_gc2), 13.52, atol=0.01)
+print("Part 9 checks passed: all worked-example and solution numbers reproduced.")
+
+# %% [markdown]
 # ## Your turn
 #
-# 1. **Satellite with a deployed boom.** A spacecraft spins about its axis of largest
-#    moment (I_3). At t = 10 s it extends a boom along e_1, which raises I_2 and I_3 but
-#    leaves I_1 alone. Modify `euler_rhs` to take I(t) and make I_3 the *intermediate*
-#    moment after deployment. Does the spin flip? Angular momentum in space is still
-#    conserved; what happens to T = (1/2) w.I.w while I changes? (Hint: Euler's
-#    equations with time-dependent I pick up a term I-dot w; derive it from
-#    d(I w)/dt in the body frame before coding.)
+# 1. **Satellite with a deployed boom** (Exercise C2). A spacecraft spins about its axis
+#    of largest moment (I_3). At t = 10 s it extends booms along +-e_3, which raise I_1
+#    and I_2 but leave I_3 alone. Write your own version of `boom_rhs` (Part 9) before
+#    reading it, with the I-dot w term derived from d(I w)/dt in the body frame. Then
+#    change the boom direction to e_1: which axis is intermediate now, and does it flip?
 # 2. **Dzhanibekov T-handle.** Build a T-handle from two rods (use `inertia_tensor`
 #    on a dense sample of two cylinders), find its principal axes with `eigh`, and
 #    integrate Euler's equations from a spin about the intermediate axis with a 1%

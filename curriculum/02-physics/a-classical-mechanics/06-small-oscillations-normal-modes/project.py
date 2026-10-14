@@ -131,7 +131,7 @@ assert np.isclose(om_bar, 3.2843, atol=5e-5) and np.isclose(eps, 0.15224, atol=5
 assert np.isclose(om41[1] - om41[0], 0.30448, atol=5e-6)
 assert np.isclose(T_transfer, 10.318, atol=5e-4) and np.isclose(T_beat, 20.636, atol=5e-4)
 T_beat_weak = 2 * np.pi * m_p * om41[0] / k_p
-assert np.isclose(T_beat_weak, 19.68, atol=5e-3) and 0.04 < (T_beat - T_beat_weak) / T_beat < 0.05
+assert np.isclose(T_beat_weak, 19.68, atol=5e-3) and np.isclose((T_beat - T_beat_weak) / T_beat, 0.046, atol=5e-4)   # the 4.6% gap
 print(f"Example 4.1: omega = {om41.round(4)}, omega_bar = {om_bar:.4f}, eps = {eps:.5f}, "
       f"T_transfer = {T_transfer:.3f} s, T_beat = {T_beat:.3f} s (weak-coupling approx {T_beat_weak:.2f} s)")
 
@@ -244,7 +244,7 @@ norms_co2 = np.sqrt(np.einsum("ij,ij->j", shapes_co2, M_co2 @ shapes_co2))
 assert np.allclose(norms_co2**2, [44, 32, 117.33], atol=5e-3) and np.isclose(norms_co2[2], 10.832, atol=5e-4)
 assert np.allclose(sign_fix(A_co2), sign_fix(shapes_co2 / norms_co2))
 assert np.allclose(M_co2.diagonal() @ A_co2[:, 1:], 0)                               # vibrations do not move the centre of mass
-assert np.isclose(1.9149 / (2349 / 1388), 1.13, atol=5e-3)                             # model ratio vs measured: 13% high
+assert np.isclose(2349 / 1388, 1.69, atol=5e-3) and np.isclose(1.9149 / (2349 / 1388), 1.13, atol=5e-3)   # measured ratio 1.69; model 13% high
 print(f"CO2: omega^2 = {w2_co2.round(6)}, omega_a/omega_s = {om_co2[2] / om_co2[1]:.4f}, a_a^T M a_a = {norms_co2[2]**2:.2f}")
 
 fig, axes = plt.subplots(1, 3, figsize=(12, 2.8))
@@ -625,6 +625,14 @@ assert np.all(np.abs(np.array([f_bounce, f_pitch, f_hop_f, f_hop_r]) / f_car - 1
 assert np.isclose(w2_pitch - w2_bounce, 6.493, atol=5e-4) and np.isclose(2 * abs(coup) / (w2_pitch - w2_bounce), 0.90, atol=5e-3)
 assert np.isclose(np.degrees(np.arctan(2 * abs(coup) / (w2_pitch - w2_bounce)) / 2), 21, atol=0.5)
 assert np.allclose(om3, [0.76537, 1.41421, 1.84776], atol=5e-6)                                                             # C3(c)
+assert np.allclose([0.38268 * 0.54120, 0.92388 * 1.30656, 0.54120**2, 1.30656**2, 2 * 0.38268**2], [0.20711, 1.20711, 0.29289, 1.70711, 0.29289], atol=5e-5)  # A2 products
+assert np.isclose(9.81 / 0.6, 16.35) and np.isclose(E_modes.sum(), 5.405)                                                   # A6, B4(b)
+assert 9 < 10 / (2 * np.pi / np.sqrt((2 + SQ2) * g)) < 9.5                                                # B7(e): ~nine fast periods in 10 s
+assert np.allclose(s, [2 - SQ3, 1, 2, 3, 2 + SQ3])                                                                           # C1(b)
+mult = np.unique(np.unique(np.round(lam_lat, 8), return_counts=True)[1], return_counts=True)
+assert dict(zip(mult[0].tolist(), mult[1].tolist())) == {1: 4, 2: 8, 5: 1}                                                   # C1(d) tally
+assert np.allclose(K_car, [[80000, -3000, -45000, -35000], [-3000, 133200, -49500, 52500],
+                           [-45000, -49500, 245000, 0], [-35000, 52500, 0, 235000]])                                         # C2(a)
 print("Part 9: all exercise numbers reproduced.")
 
 # %% [markdown]
