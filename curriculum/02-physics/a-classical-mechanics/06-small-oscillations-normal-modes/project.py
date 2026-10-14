@@ -542,6 +542,7 @@ assert np.allclose(np.abs(xid_k), [16 / np.sqrt(44), 16 / np.sqrt(32), 16 / norm
 coef_x1 = A_co2[0] * xid_k; assert np.allclose(coef_x1, [4 / 11, 0.5, 3 / 22]) and np.allclose(coef_x1, [0.36364, 0.5, 0.13636], atol=5e-6)
 assert np.allclose(A_co2[1] * xid_k, [4 / 11, 0, -4 / 11]) and np.allclose(A_co2[2] * xid_k, [4 / 11, -0.5, 3 / 22])
 assert np.allclose(np.abs(xi_k), 0) and np.allclose([A_co2[i] @ xid_k for i in range(3)], [1, 0, 0])   # velocities reproduce v0
+assert np.allclose([0.5 / om_co2[1], (3 / 22) / om_co2[2], (4 / 11) / om_co2[2]], [2, 0.28485, 0.75961], atol=5e-6)  # sine amplitudes in x_i(t)
 # B7 (reference solution): double pendulum (m = l = 1) released from (theta0, 0) at rest.
 # Linear: xi = (0.13066, 0.054120) for theta0 = 0.1, E_1 = E_2 = g theta0^2 / 2 exactly. Exact (CM-3) equations:
 # [[2, c], [c, 1]] theta'' = (-w2^2 s - 2 g sin th1, w1^2 s - g sin th2), c = cos(th1 - th2), s = sin(th1 - th2).
@@ -568,6 +569,8 @@ print(f"B7: max|exact - modal|/theta0 over 10 s = {b7[0.1][0]:.3f} (0.1 rad), {b
 assert np.allclose(np.linalg.inv(K3), A3 @ np.diag(1 / w2_3) @ A3.T) and np.allclose(np.linalg.solve(K3, [1, 0, 0]), [0.75, 0.5, 0.25])
 assert np.allclose(np.linalg.inv(K3), np.array([[3, 2, 1], [2, 4, 2], [1, 2, 3]]) / 4)
 assert np.allclose(A3[0]**2 / w2_3, [0.42678, 0.25, 0.07322], atol=5e-6)            # modal pieces of the static 3/4
+pieces = A3 * (A3[0] / w2_3)                                                           # column j: a_j a_1j / omega_j^2
+assert np.allclose(np.abs(pieces.T), [[0.42678, 0.60355, 0.42678], [0.25, 0, 0.25], [0.07322, 0.10355, 0.07322]], atol=5e-6)
 assert np.allclose(np.abs(A3[:, 1]), [1 / SQ2, 0, 1 / SQ2]) and np.allclose(zeta3, [0.016892, 0.014142, 0.014651], atol=5e-7)
 peak_exact = np.abs(receptance(w2_3, A3, zeta3, np.array([1.0, 0, 0]), om3)[:, 0])  # |q_1| driven at mass 1, at omega = omega_j
 peak_single = A3[0]**2 / (2 * zeta3 * w2_3)                                          # one-mode estimate
@@ -578,6 +581,7 @@ K1 = 2 * np.eye(5) - np.eye(5, k=1) - np.eye(5, k=-1); K_lat = np.kron(K1, np.ey
 s = 4 * np.sin(np.arange(1, 6) * np.pi / 12)**2; lam_lat = np.sort(np.add.outer(s, s).ravel())
 assert np.allclose(np.linalg.eigvalsh(K_lat), lam_lat) and np.isclose(lam_lat[0], 2 * (2 - SQ3))
 distinct = np.unique(np.round(lam_lat, 8)); assert len(distinct) == 13 and np.sum(np.isclose(lam_lat, 4)) == 5
+assert np.allclose(lam_lat[:6], [0.5359, 1.2679, 1.2679, 2, 2.2679, 2.2679], atol=5e-5)                 # lowest six (Your turn 1)
 # C2: four-DOF car: body heave z, pitch theta (nose up), front/rear axles z_f, z_r.
 mb, Ib, mf, mr, a_f, b_r = 1200.0, 1800.0, 90.0, 70.0, 1.1, 1.5
 ksf, ksr, ktf, ktr = 45e3, 35e3, 200e3, 200e3
@@ -595,12 +599,32 @@ print("C2 car shapes (columns = modes; rows z [m], theta [rad], z_f, z_r [m]; la
 assert np.allclose(K_car[0], [ksf + ksr, ksf * a_f - ksr * b_r, -ksf, -ksr]) and np.isclose(K_car[0, 1], -3000)
 assert np.allclose(f_car, [1.170, 1.261, 8.323, 9.237], atol=5e-4) and np.allclose([f_bounce, f_pitch, f_hop_f, f_hop_r], [1.185, 1.252, 8.304, 9.222], atol=5e-4)
 assert np.allclose(x_node, [-3.170, 0.474], atol=5e-4) and np.allclose(shapes_car[:2, :2], [[1, -0.4741], [0.3155, 1]], atol=5e-4)
+w2_bounce, w2_pitch = (k_eff_f + k_eff_r) / mb, (k_eff_f * a_f**2 + k_eff_r * b_r**2) / Ib
+coup = (k_eff_f * a_f - k_eff_r * b_r) / np.sqrt(mb * Ib)                                # mass-normalized bounce-pitch coupling
+assert np.allclose([k_eff_f, k_eff_r], [36734.7, 29787.2], atol=0.05) and np.allclose([w2_bounce, w2_pitch, coup], [55.435, 61.928, -2.907], atol=5e-4)
 # C3: Caughey series C = M sum_l c_l (M^{-1}K)^l decouples: A^T C A = sum_l c_l Omega^{2l}; fit zeta = (0.02, 0.03, 0.05) on the 3-DOF chain.
 Vand = np.vander(w2_3, 3, increasing=True); c_l = np.linalg.solve(Vand, 2 * np.array([0.02, 0.03, 0.05]) * om3)
 MinvK3 = np.linalg.solve(M3, K3); C_caughey = M3 @ sum(c * np.linalg.matrix_power(MinvK3, l) for l, c in enumerate(c_l))
 assert np.allclose(C_caughey, C_caughey.T) and np.allclose(A3.T @ C_caughey @ A3, np.diag(2 * np.array([0.02, 0.03, 0.05]) * om3))
+y_c = 2 * np.array([0.02, 0.03, 0.05]) * om3; d_c = [y_c[1], (y_c[2] - y_c[0]) / (2 * SQ2), (y_c[0] + y_c[2] - 2 * y_c[1]) / 4]
+assert np.allclose(d_c, [0.084853, 0.054504, 0.011421], atol=5e-7) and np.allclose([d_c[0] - 2 * d_c[1] + 4 * d_c[2], d_c[1] - 4 * d_c[2], d_c[2]], c_l)
 assert np.allclose(c_l, [0.021529, 0.008819, 0.011421], atol=5e-7) and np.allclose(2 * np.array([0.02, 0.03, 0.05]) * om3, [0.030615, 0.084853, 0.184776], atol=5e-7)
 print(f"C3 Caughey coefficients (c0, c1, c2) = {c_l.round(6)}")
+# Intermediate values quoted in solutions.md.
+assert np.allclose(np.sqrt([4 + 2 * SQ2, 4 - 2 * SQ2]), [2.61313, 1.08239], atol=5e-6)                                   # A2
+assert np.allclose(M44 @ (A44 * np.sign(A44[0])), [[1.30656, 0.54120], [0.92388, -0.38268]], atol=5e-6) and np.isclose(2 - SQ2, 0.58579, atol=5e-6)
+assert np.isclose(om1 + dom / 2, 4.3053, atol=5e-5) and np.isclose(k_exact / k_weak, 1.065, atol=5e-4) and np.isclose(2 * k_exact / 0.2, 4.508, atol=5e-4)  # A6
+assert np.allclose([0.1 + 0.05 * 0.63397, 2 * om42[0], 0.1 + 0.05 * 2.36603, 2 * om42[1]], [0.13170, 1.59246, 0.21830, 3.07638], atol=5e-5)  # B1(c)
+assert np.isclose(om42.sum(), 2.33442, atol=5e-6) and np.isclose(om42.prod(), np.sqrt(1.5)) and np.isclose(np.sqrt(1.5), 1.22474, atol=5e-6)  # B1(d)
+assert np.allclose(Y42[1] / Y42[0], [SQ2 * (2 - w) for w in [(3 - SQ3) / 2, (3 + SQ3) / 2]]) and np.allclose(Y42[1] / Y42[0], [1.93185, -0.51764], atol=5e-6)  # B3(b)
+assert np.allclose([0.5 / (2 - SQ2), 0.5 / (2 + SQ2)], [0.85355, 0.14645], atol=5e-6) and np.isclose(0.42678 / 0.75, 0.569, atol=5e-4)  # B8(b)
+assert np.isclose(peak_exact[2] / peak_single[2] - 1, 0.023, atol=5e-4) and np.all(np.abs(peak_exact[:2] / peak_single[:2] - 1) < 0.002)  # B8(d)
+front_rear = [shapes_car[0, 0] + a_f * shapes_car[1, 0], shapes_car[0, 0] - b_r * shapes_car[1, 0]]
+assert np.allclose(front_rear, [1.347, 0.527], atol=5e-4)                                                                   # C2(d)
+assert np.all(np.abs(np.array([f_bounce, f_pitch, f_hop_f, f_hop_r]) / f_car - 1) < 0.015) and 7 < f_car[2] / f_car[0] and f_car[3] / f_car[1] < 8
+assert np.isclose(w2_pitch - w2_bounce, 6.493, atol=5e-4) and np.isclose(2 * abs(coup) / (w2_pitch - w2_bounce), 0.90, atol=5e-3)
+assert np.isclose(np.degrees(np.arctan(2 * abs(coup) / (w2_pitch - w2_bounce)) / 2), 21, atol=0.5)
+assert np.allclose(om3, [0.76537, 1.41421, 1.84776], atol=5e-6)                                                             # C3(c)
 print("Part 9: all exercise numbers reproduced.")
 
 # %% [markdown]

@@ -378,7 +378,7 @@ This is an ordinary function of $x$. The **conditional expectation $\mathbb{E}[Y
 
 The second sentence is the conceptual leap (§8). $\mathbb{E}[Y \mid X = 3]$ is a number. $\mathbb{E}[Y \mid X]$ is a random variable, a function of $X$, whose value is $\mathbb{E}[Y\mid X = 3]$ on the event $X = 3$. It is "the best guess of $Y$ once you know $X$," considered before you know $X$.
 
-Three properties, each immediate from the definition since conditioning on $X = x$ is just computing with the conditional distribution:
+Three properties, each immediate from the definition since conditioning on $X = x$ means computing with the conditional distribution:
 
 - **Linearity:** $\mathbb{E}[aY + bW \mid X] = a\,\mathbb{E}[Y \mid X] + b\,\mathbb{E}[W \mid X]$.
 - **Taking out what is known:** $\mathbb{E}[h(X)\,Y \mid X] = h(X)\,\mathbb{E}[Y \mid X]$. Given $X = x$, $h(X)$ is the constant $h(x)$, and constants come out of expectations. In particular $\mathbb{E}[h(X) \mid X] = h(X)$.
@@ -731,7 +731,7 @@ See [exercises.md](exercises.md). **A1–A5** are drills: a table that is uncorr
 8. **Markov chains.** `stationary(P)` returns the eigenvector of $P^\top$, and `simulate_chain` runs a chain. For the weather chain, the mixing curve has slope $\ln\lambda_2$ (figure `markov_mixing.png`). The script then checks detailed balance on the weather chain and shows it failing on a circulating chain. It also covers the graph walk with $\boldsymbol\pi \propto$ degree, B8's bipartite walk and its lazy fix, B10's Metropolis chain, and PageRank by power iteration.
 9. **Information theory.** The Bernoulli entropy curve (figure `bernoulli_entropy.png`), and Gibbs and $H(p,q) = H(p) + D(p\|q)$ on 1000 random pairs. KLs between Gaussians in closed form are compared with Monte Carlo and with SymPy integration. Entropies are compared at equal variance (Gaussian > Laplace > Uniform > Exponential), and A5, B9, C1–C3 are checked.
 
-**Build it yourself first:** `marginal` and `conditional` (Part 1), `box_muller` (Part 2), `sample_mvn` and `mvn_conditional` (Part 5), and `stationary` (Part 8). Each is under ten lines. If your `mvn_conditional` disagrees with the slice, you have $\Sigma_{12}$ and $\Sigma_{21}$ crossed.
+**Build it yourself first:** `marginal` and `conditional` (Part 1), `box_muller` (Part 2), `sample_mvn` and `mvn_conditional` (Part 5), and `stationary` (Part 8). Each is under ten lines. Test your `mvn_conditional` on a $\Sigma$ with unequal diagonal entries too: in Example 4.4 both diagonal blocks equal 2, so inverting the wrong block goes unnoticed there.
 
 **Your turn** (end of the script) has four tasks. First, the return probability of a 2D random walk, which is recurrent but slow; then 3D, which returns with probability about 0.34. Second, the entropy of B3's mixture by Monte Carlo, which must come out below $2.249$ nats by Theorem 3.46. Third, $I(X;Y) = -\tfrac12\ln(1-\rho^2)$ across $\rho$, then $I(X; X^2)$ by histogram, to see mutual information detect what covariance misses. Fourth, Metropolis with a continuous target.
 

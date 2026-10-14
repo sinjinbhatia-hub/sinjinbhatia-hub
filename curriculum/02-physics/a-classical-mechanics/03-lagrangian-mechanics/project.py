@@ -451,7 +451,7 @@ phid0 = np.sqrt(G / np.cos(th0))                        # conical pendulum, ell 
 Om_B6 = phid0 * np.sqrt(1 + 3 * np.cos(th0)**2)
 print(f"Example 4.7 / B6: theta0 = 40 deg: cos = {np.cos(th0):.5f}, g/(ell cos) = {G/np.cos(th0):.4f}, 1 + 3cos^2 = "
       f"{1 + 3*np.cos(th0)**2:.5f}; phi_dot0 = {phid0:.4f} rad/s, Omega = {Om_B6:.4f} rad/s, Omega/phi_dot0 = {Om_B6/phid0:.4f}, "
-      f"2pi/Omega = {2*np.pi/Om_B6:.4f} s")
+      f"2pi/Omega = {2*np.pi/Om_B6:.4f} s; azimuth advance per theta-period = {360*phid0/Om_B6:.1f} deg")
 assert 1 < Om_B6 / phid0 < 2
 # conical motion: theta stays constant
 sol_c = solve_ivp(sph.rhs, (0, 5), [th0, 0.0, 0.0, phid0], t_eval=np.linspace(0, 5, 501), **TIGHT)
@@ -762,7 +762,8 @@ spread_I = np.ptp(I_ad) / I_ad.mean(); spread_amp = np.ptp(amp_ad) / amp_ad.mean
 assert spread_I < 0.012 and spread_amp < 0.012
 assert E_ad[turning][-1] / E_ad[turning][0] < 0.75                 # E itself falls by ~ ell^{-1/2} = 1/sqrt(2)
 print(f"C3(d): E/omega flat to {100*spread_I:.2f}% and theta_max ell^(3/4) flat to {100*spread_amp:.2f}% over {len(turning)} turning points, "
-      f"while E falls to {E_ad[turning][-1]/E_ad[turning][0]:.3f} of its start (prediction ell^(-1/2) = {2**-0.5:.3f})")
+      f"while E falls to {E_ad[turning][-1]/E_ad[turning][0]:.3f} of its start (prediction ell^(-1/2) = {2**-0.5:.3f}); "
+      f"omega runs from {om_ad[0]:.3f} to {om_ad[-1]:.3f} rad/s, so elld/(ell omega) <= {(0.02/ell_t*1/om_ad).max():.4f}")
 fig, ax = plt.subplots(1, 2, figsize=(9, 3.4))
 ax[0].plot(tt[turning], I_ad / I_ad[0], ".-", ms=3, label=r"$E/\omega$ (normalized)")
 ax[0].plot(tt[turning], amp_ad / amp_ad[0], ".-", ms=3, label=r"$\theta_{\max}\ell^{3/4}$ (normalized)")
@@ -845,6 +846,10 @@ avg_force = a * gam**2 / ell * sp.integrate(sp.cos(u) * xi * sp.cos(Th), (u, 0, 
 VK = -m * g * ell * sp.cos(Th) + m * a**2 * gam**2 / 4 * sp.sin(Th)**2
 assert Z(-(g / ell) * sp.sin(Th) + avg_force + VK.diff(Th) / (m * ell**2))
 assert Z(VK.diff(Th, 2).subs(Th, sp.pi) - (m * a**2 * gam**2 / 2 - m * g * ell))
+# B4(c) comparison: the hoop's V_eff to fourth order; quartic coefficient m R^2 (w^2/6 - w0^2/24) = m R^2 w0^2/8 > 0 at w = w0
+ser_h = sp.series(-m * g * R * sp.cos(Th) - half * m * R**2 * w**2 * sp.sin(Th)**2, Th, 0, 5).removeO()
+assert Z(ser_h.coeff(Th, 2) - half * m * R**2 * (g / R - w**2)) and Z(ser_h.coeff(Th, 4) - m * R**2 * (w**2 / 6 - g / (24 * R)))
+assert Z(ser_h.coeff(Th, 4).subs(w, sp.sqrt(g / R)) - m * R * g / 8)
 # C3(a): ell(t) pendulum keeps the full T (with ½ m elld^2): same EOM; (c) exact dE/dt for the linearized motion
 lf = sp.Function("ell")(t)
 rv3 = lf * sp.Matrix([sp.sin(th), -sp.cos(th)])
@@ -854,7 +859,7 @@ assert Z(c3.acc[0] + (2 * lf.diff(t) * th.diff(t) + g * sp.sin(th)) / lf)
 E3 = half * m * lf**2 * th.diff(t)**2 + half * m * g * lf * th**2
 dE3 = E3.diff(t).subs(th.diff(t, 2), -(2 * lf.diff(t) * th.diff(t) + g * th) / lf)
 assert Z(dE3 - lf.diff(t) / lf * (half * m * g * lf * th**2 - m * lf**2 * th.diff(t)**2))
-print("Symbolic checks of solutions A3, A4, B1(c), B3, B5, B6, B8(a), C1(c,d), C2(a,c), C3(a,c) passed")
+print("Symbolic checks of solutions A3, A4, B1(c), B3, B4(c), B5, B6, B8(a), C1(c,d), C2(a,c), C3(a,c) passed")
 
 # %%
 if __name__ == "__main__":

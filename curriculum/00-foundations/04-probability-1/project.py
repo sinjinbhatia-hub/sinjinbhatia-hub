@@ -7,9 +7,8 @@
 # PMFs vs scipy.stats and Examples 4.9-4.10, (3) the Poisson limit, (4)
 # inverse-CDF sampling, (5) the Gaussian integral, (6) 68-95-99.7, (7) MGFs,
 # (8) the law of large numbers and the Cauchy, (9) linearity on dependent
-# variables, (10) every number in the exercise solutions.
-#
-# Run headless: `MPLBACKEND=Agg python3 project.py`. Figures go to ./figures/.
+# variables, (10) every number in the exercise solutions. Run headless:
+# `MPLBACKEND=Agg python3 project.py`. Figures go to ./figures/.
 
 # %%
 import itertools
@@ -87,6 +86,7 @@ def posterior(prior, sens=0.99, spec=0.99):
 p1 = posterior(1e-4); p2 = posterior(p1); p3 = posterior(p2)
 assert round(p1, 6) == 0.009804 and round(p2, 4) == 0.4950 and round(p3, 3) == 0.990
 assert round(0.99e-4 + 0.01 * 0.9999, 6) == 0.010098
+assert [round(9999 / 99), round(99**2 / 9999, 2), round(99**3 / 9999)] == [101, 0.98, 97]  # odds after 1, 2, 3 positives
 M = 2_000_000
 sick = rng.random(M) < 1e-4
 pos = np.where(sick, rng.random(M) < 0.99, rng.random(M) < 0.01)
@@ -175,8 +175,7 @@ def pois_pmf(k, lam):
 
 
 print("Part 2: named distributions")
-p, q, n, r, lam, (w, bk, m) = 0.3, 0.7, 12, 3, 4.0, (7, 13, 8)
-Nw, pw = w + bk, w / (w + bk)
+p, q, n, r, lam, (w, bk, m) = 0.3, 0.7, 12, 3, 4.0, (7, 13, 8); Nw, pw = w + bk, w / (w + bk)
 cases = {  # name: (our pmf, scipy dist, support, mean from §3.10 table, var from table, sampler)
     "Bin(12,0.3)": (lambda k: binom_pmf(k, n, p), stats.binom(n, p), range(n + 1), n * p, n * p * q,
                     lambda s: rng.binomial(n, p, s)),
@@ -405,9 +404,10 @@ assert np.var(heads + tails) == 0 and abs(np.var(heads) - 2.5) < 0.05 and abs(np
 print("Part 10: exercise numbers")
 assert [round(1 - (5 / 6) ** 4, 4), round(1 - (35 / 36) ** 24, 4), round(1 - (35 / 36) ** 25, 4)] == [0.5177, 0.4914, 0.5055]
 assert min(n for n in range(1, 60) if 1 - (35 / 36) ** n > 0.5) == 25 and round(1 - math.exp(-2 / 3), 4) == 0.4866
+assert round(math.log(2) / math.log(36 / 35), 1) == 24.6 and (5**4, 6**4) == (625, 1296)
 assert sum(math.comb(5, k) ** 2 for k in range(6)) == math.comb(10, 5) == 252                          # A2
 assert [Fr(150, 200), Fr(72, 80), Fr(78, 120), Fr(72, 150), Fr(8, 50)] == [Fr(3, 4), Fr(9, 10), Fr(13, 20), Fr(12, 25), Fr(4, 25)]
-assert Fr(9, 10) * Fr(80, 200) / Fr(3, 4) == Fr(12, 25)                                                 # A3 Bayes
+assert Fr(9, 10) * Fr(80, 200) / Fr(3, 4) == Fr(12, 25) and (Fr(72, 200), Fr(2, 5) * Fr(3, 4)) == (Fr(9, 25), Fr(3, 10))  # A3
 pmax = [Fr(2 * k - 1, 36) for k in range(1, 7)]                                                         # A4
 EXm = sum(k * pk for k, pk in zip(range(1, 7), pmax)); EX2m = sum(k * k * pk for k, pk in zip(range(1, 7), pmax))
 assert (EXm, EX2m, EX2m - EXm ** 2) == (Fr(161, 36), Fr(791, 36), Fr(2555, 1296))
@@ -424,7 +424,7 @@ cov_I = Fr(4, 52) * Fr(3, 51) - Fr(4, 52) ** 2                                  
 assert cov_I == -Fr(1, 13) * Fr(12, 13) / 51 == Fr(-12, 8619)
 var_aces = 5 * Fr(1, 13) * Fr(12, 13) * Fr(47, 51)
 assert var_aces == Fr(2820, 8619) and round(float(var_aces), 4) == 0.3272 and round(60 / 169, 4) == 0.3550
-p_ace = 1 - Fr(math.comb(48, 5), math.comb(52, 5))
+p_ace = 1 - Fr(math.comb(48, 5), math.comb(52, 5)); assert (math.comb(48, 5), math.comb(52, 5)) == (1_712_304, 2_598_960)
 assert round(float(p_ace), 4) == 0.3412 and round(1 - (12 / 13) ** 5, 4) == 0.3298 and round(5 / 13, 4) == 0.3846
 assert np.allclose(stats.hypergeom(52, 4, 5).pmf(range(6)), [hgeom_pmf(k, 4, 48, 5) for k in range(6)])
 g32 = stats.gamma(3, scale=1 / 2)                                                                         # B6(e)

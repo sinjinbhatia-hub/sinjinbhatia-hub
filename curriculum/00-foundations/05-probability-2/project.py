@@ -512,8 +512,11 @@ P_gt3 = (1 - pz) * stats.norm.sf(3) + pz * stats.norm.sf((3 - m1) / s1)
 post_z = pz * stats.norm.pdf(3, m1, s1) / ((1 - pz) * stats.norm.pdf(3, m0, s0) + pz * stats.norm.pdf(3, m1, s1))
 assert np.isclose(P_gt3, 0.2084, atol=5e-5) and np.isclose(post_z, 0.9445, atol=5e-5)
 assert abs(np.mean(Ym > 3) - P_gt3) < 3e-3
+# B3(e): third central moment sum_z P(z) [3 d s^2 + d^3], d = m_z - 1.2; a normal has 0
+mu3 = (1 - pz) * (3 * (m0 - 1.2) * s0**2 + (m0 - 1.2) ** 3) + pz * (3 * (m1 - 1.2) * s1**2 + (m1 - 1.2) ** 3)
+assert np.isclose(mu3, 12.936) and abs(np.mean((Ym - Ym.mean()) ** 3) - 12.936) < 0.4
 print(f"B3: E[Y] = {Ym.mean():.3f} (1.2); within {within:.3f} (1.9) + between {between:.3f} (3.36) = {within + between:.3f} (5.26); "
-      f"P(Y > 3) = {P_gt3:.4f}, P(Z = 1 | Y = 3) = {post_z:.4f}")
+      f"P(Y > 3) = {P_gt3:.4f}, P(Z = 1 | Y = 3) = {post_z:.4f}, third central moment {mu3:.3f} (MC {np.mean((Ym - Ym.mean()) ** 3):.3f})")
 
 # Example 4.5: Galton's heights, rho = 0.5, mu = 68, sigma = 2.5
 mu_h, sd_h, rho_h = 68.0, 2.5, 0.5
@@ -1032,6 +1035,19 @@ for _ in range(500):                                              # no other dis
     q_ /= q_.sum()                                                # ... then tilt it exactly onto mean 4.5
     assert np.isclose(faces @ q_, 4.5) and entropy(q_, 2) <= entropy(p_die, 2) + 1e-9
 print(f"C3: loaded die with mean 4.5: beta = {beta_die:.4f}, p = {np.round(p_die, 4)}, H = {entropy(p_die, 2):.3f} bits < log2 6 = {np.log2(6):.3f}")
+
+# Intermediate values quoted in solutions.md (A1, A5, B3, B4, B9, C3), so every printed digit is checked.
+assert np.isclose(marginal(PA1, 0)[0] * marginal(PA1, 1)[0], 0.12)                                   # A1
+assert np.isclose(np.log2(2 / 3), -0.5850, atol=5e-5) and np.isclose(2 * np.log2(4 / 3), 0.8301, atol=5e-5)  # A5
+assert np.isclose(stats.norm.sf(3), 0.00135, atol=5e-6) and np.isclose(stats.norm.sf(-0.5), 0.69146, atol=5e-6)  # B3(c)
+assert np.isclose(stats.norm.pdf(3, 4, 2), 0.17603, atol=5e-6) and np.isclose(stats.norm.pdf(3), 0.004432, atol=5e-7)  # B3(d)
+assert np.isclose(0.3 * stats.norm.pdf(3, 4, 2), 0.05281, atol=5e-6) and np.isclose(0.7 * stats.norm.pdf(3), 0.00310, atol=5e-6)
+assert np.isclose(-5.328 * 0.7 + 55.552 * 0.3, 12.936) and np.isclose(3 * 2.8 * 4 + 2.8**3, 55.552)   # B3(e)
+assert np.isclose(post.var(), 0.01709, atol=5e-6) and np.isclose(post.var(), 32 / (144 * 13))         # B4(a)
+assert np.isclose(-0.95 * np.log2(0.95), 0.0703, atol=5e-5) and np.isclose(-0.05 * np.log2(0.05), 0.2161, atol=5e-5)  # B9
+assert np.isclose(-np.log2(0.9), 0.1520, atol=5e-5) and np.isclose(-np.log2(0.05), 4.3219, atol=5e-5)
+assert np.isclose(np.exp(-beta_die), 1.449, atol=5e-4) and np.isclose(np.log2(6) - entropy(p_die, 2), 0.257, atol=5e-4)  # C3
+print("Solutions: intermediate values for A1, A5, B3, B4, B9, C3 check out.")
 
 # %% [markdown]
 # ## Your turn
