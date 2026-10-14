@@ -36,10 +36,10 @@ BLUE, ORANGE, AQUA, INK, MUTED = "#2a78d6", "#eb6834", "#1baf7a", "#0b0b0b", "#5
 # %% [markdown]
 # ## Part 1: Three algorithms for det A
 #
-# (3.2) elimination: det A = (-1)^s * product of pivots, s = number of row swaps.
-# (3.3) Leibniz: det A = sum over permutations sigma of sgn(sigma) prod_i a_{i,sigma(i)},
+# (3.7) elimination: det A = (-1)^s * product of pivots, s = number of row swaps.
+# (3.9) Leibniz: det A = sum over permutations sigma of sgn(sigma) prod_i a_{i,sigma(i)},
 #       with sgn(sigma) = (-1)^(number of inversions).
-# (3.4) Laplace: det A = sum_j (-1)^(1+j) a_{1j} M_{1j}, recursively.
+# (3.12) Laplace: det A = sum_j (-1)^(1+j) a_{1j} M_{1j}, recursively.
 #
 # **Build it yourself first:** write `det_elimination` and `det_leibniz` before
 # reading these.
@@ -58,7 +58,7 @@ def sign(perm):
 
 
 def leibniz_terms(A):
-    """The n! signed products of the Leibniz formula (3.3), keyed by permutation (0-based)."""
+    """The n! signed products of the Leibniz formula (3.9), keyed by permutation (0-based)."""
     A = np.asarray(A, float)
     n = A.shape[0]
     terms = {}
@@ -71,14 +71,14 @@ def leibniz_terms(A):
 
 
 def det_leibniz(A):
-    """det A by the Leibniz formula (3.3). n! terms, so refuse past n = 7."""
+    """det A by the Leibniz formula (3.9). n! terms, so refuse past n = 7."""
     A = np.asarray(A, float)
     assert A.shape[0] <= 7, "n! terms: use det_elimination for n > 7"
     return sum(leibniz_terms(A).values())
 
 
 def det_cofactor(A):
-    """det A by recursive Laplace expansion along the first row, eq. (3.4).
+    """det A by recursive Laplace expansion along the first row, eq. (3.12).
 
     Works on index tuples instead of copying submatrices, and stops the recursion
     at 2x2. Cost is still about e * n! / 2 scalar multiplications."""
@@ -105,7 +105,7 @@ def det_cofactor(A):
 
 
 def det_elimination(A, pivoting="partial"):
-    """det A = (-1)^s * prod(pivots), eq. (3.2), by Gaussian elimination.
+    """det A = (-1)^s * prod(pivots), eq. (3.7), by Gaussian elimination.
 
     pivoting="partial" picks the largest |entry| in the column (what LAPACK does);
     pivoting="first_nonzero" picks the first nonzero entry (what you do by hand).
@@ -197,8 +197,8 @@ for n in ns:
 assert t_cof[-1] > 50 * t_cof[2], "cofactor time should explode between n = 4 and n = 9"
 
 fig, ax = plt.subplots(figsize=(6.5, 4.2))
-ax.semilogy(ns, t_cof, "o-", color=BLUE, lw=2, ms=6, label="cofactor expansion (3.4)")
-ax.semilogy(ns, t_elim, "s-", color=ORANGE, lw=2, ms=6, label="elimination (3.2)")
+ax.semilogy(ns, t_cof, "o-", color=BLUE, lw=2, ms=6, label="cofactor expansion (3.12)")
+ax.semilogy(ns, t_elim, "s-", color=ORANGE, lw=2, ms=6, label="elimination (3.7)")
 fact = np.array([math.factorial(n) for n in ns], float)
 ax.semilogy(ns, t_cof[-1] * fact / fact[-1], "--", color=MUTED, lw=1.2, label="c · n!  (reference)")
 ax.set_xlabel("matrix size n"); ax.set_ylabel("seconds per determinant")
@@ -244,7 +244,7 @@ for _ in range(50):
 print("Part 3: row-operation rules, product/transpose/inverse/scaling identities, det P = sgn: all pass.")
 
 # %% [markdown]
-# ## Part 4: Adjugate (3.6) and Cramer (3.5)
+# ## Part 4: Adjugate (3.14) and Cramer (3.13)
 #
 # A adj A = det(A) I numerically and symbolically; Cramer on the circuit of
 # Example 4.5 (symbolic and numeric) and on the interpolation of Example 4.3.
@@ -252,7 +252,7 @@ print("Part 3: row-operation rules, product/transpose/inverse/scaling identities
 
 # %%
 def adjugate(A):
-    """adj A = C^T with C the cofactor matrix; A @ adj A = det(A) I, eq. (3.6)."""
+    """adj A = C^T with C the cofactor matrix; A @ adj A = det(A) I, eq. (3.14)."""
     A = np.asarray(A, float)
     n = A.shape[0]
     C = np.array([[cofactor(A, i, j) for j in range(n)] for i in range(n)])
@@ -260,7 +260,7 @@ def adjugate(A):
 
 
 def cramer(A, b):
-    """x_j = det(A_j) / det(A), A_j = A with column j replaced by b, eq. (3.5)."""
+    """x_j = det(A_j) / det(A), A_j = A with column j replaced by b, eq. (3.13)."""
     A = np.asarray(A, float); b = np.asarray(b, float)
     d = det_elimination(A)[0]
     x = np.empty(len(b))
@@ -312,7 +312,7 @@ assert np.allclose(np.polyval(c43[::-1], [1, 2, 4]), y43)
 print("Example 4.3: Cramer numerators", nums, "-> coefficients (c0, c1, c2) =", c43)
 
 # %% [markdown]
-# ## Part 5: The Vandermonde determinant (3.11)
+# ## Part 5: The Vandermonde determinant (3.19)
 #
 # det V = prod_{i<j} (x_j - x_i), checked numerically on random nodes and
 # symbolically for n = 3 (Example 4.3's factorization); nodes 0..3 give 1!2!3! = 12 (B4).
@@ -336,7 +336,7 @@ assert sp.expand(Vs.det() - (x2 - x1) * (x3 - x1) * (x3 - x2)) == 0
 print("Part 5: Vandermonde formula verified numerically (n = 2..6) and symbolically (n = 3).")
 
 # %% [markdown]
-# ## Part 6: The cross product is a determinant (3.7), Theorem 3.15
+# ## Part 6: The cross product is a determinant (3.15), Theorem 3.15
 #
 # Cofactor expansion along a symbolic first row; triple product = det; Lagrange's
 # identity |u x v|^2 = |u|^2 |v|^2 - (u . v)^2 symbolically; A5's numbers.
@@ -344,7 +344,7 @@ print("Part 5: Vandermonde formula verified numerically (n = 2..6) and symbolica
 
 # %%
 def cross_by_cofactors(u, v):
-    """u x v = sum_k (-1)^(1+k) M_{1k} e_k, the expansion of (3.7) along row 1."""
+    """u x v = sum_k (-1)^(1+k) M_{1k} e_k, the expansion of (3.15) along row 1."""
     M = np.array([[0, 0, 0], u, v], float)
     return np.array([(-1) ** k * np.linalg.det(np.delete(M[1:], k, axis=1)) for k in range(3)])
 

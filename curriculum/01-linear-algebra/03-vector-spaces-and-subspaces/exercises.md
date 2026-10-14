@@ -36,7 +36,7 @@ Conventions as in the notes: $A$ is $m \times n$, $R$ its RREF with $r$ pivots, 
 (a) Prove that $U + W = \{\mathbf{u} + \mathbf{w} : \mathbf{u} \in U, \mathbf{w} \in W\}$ is a subspace of $V$, and that it is the smallest subspace containing $U \cup W$.
 (b) Prove that $U \cup W$ is a subspace if and only if $U \subseteq W$ or $W \subseteq U$.
 
-**B2.** From the eight axioms and Theorem 3.2 only, prove:
+**B2.** From the eight axioms and the first statement of Theorem 3.2 ($0\mathbf{v} = \mathbf{0}$) only, prove:
 (a) $c\mathbf{0} = \mathbf{0}$ for every scalar $c$.
 (b) $(-1)\mathbf{v} = -\mathbf{v}$. (First show $(-1)\mathbf{v}$ is *a* negative of $\mathbf{v}$; then show negatives are unique.)
 (c) The zero vector is unique.
@@ -59,24 +59,28 @@ Conventions as in the notes: $A$ is $m \times n$, $R$ its RREF with $r$ pivots, 
 (b) Verify it numerically for the matrix of Example 4.2.
 (c) Use $A = C\tilde R$ to give a second proof that $\dim C(A^\top) = \dim C(A)$. (Show every row of $A$ is a combination of the $r$ rows of $\tilde R$, conclude $\dim C(A^\top) \le r$, and then apply the same inequality to $A^\top$.)
 
-**B7.** (The matrix $A^\top A$; needed in LA-5 and ST-3.)
+**B7.** (The matrix $A^\top A$; needed in LA-5 and ST-3.) Here $A$ is real. Over $\mathbb{C}$ part (a) is false: $A = (1, i)^\top$ has $A^\top A = 1 + i^2 = 0$. Replacing $A^\top$ by the conjugate transpose $A^\dagger$ repairs it (LA-8).
 (a) Prove $N(A^\top A) = N(A)$. (For $\subseteq$: if $A^\top A\mathbf{x} = \mathbf{0}$, compute $\mathbf{x}^\top A^\top A\mathbf{x}$.)
 (b) Deduce $\operatorname{rank}(A^\top A) = \operatorname{rank}(A)$.
 (c) Deduce that the $n \times n$ matrix $A^\top A$ is invertible if and only if the columns of $A$ are independent.
 (d) Prove $C(A^\top A) = C(A^\top)$.
 
 **B8.** (Code.) In `project.py`, Part 5 implements `in_span` and `extend_to_basis`. Add two functions:
-`basis_of_sum(U, W)` returning a basis of $U + W$ given bases $U$ ($n \times p$) and $W$ ($n \times q$) as columns; and `basis_of_intersection(U, W)` returning a basis of $U \cap W$. For the intersection, explain why $\mathbf{x} \in U \cap W$ iff $\mathbf{x} = U\mathbf{a} = W\mathbf{b}$ for some $\mathbf{a}, \mathbf{b}$, iff $(\mathbf{a}, \mathbf{b})$ is in the null space of the $n \times (p + q)$ matrix $[\,U \mid -W\,]$, and use `null_space_basis` on it. Test both on random subspaces of $\mathbb{R}^6$ (construct $U$ and $W$ sharing some columns so the intersection is nontrivial) and assert the dimension formula of C1, $\dim(U + W) = \dim U + \dim W - \dim(U \cap W)$.
+`basis_of_sum(U, W)` returning a basis of $U + W$ given bases $U$ ($n \times p$) and $W$ ($n \times q$) as columns; and `basis_of_intersection(U, W)` returning a basis of $U \cap W$. For the intersection, explain why $\mathbf{x} \in U \cap W$ iff $\mathbf{x} = U\mathbf{a} = W\mathbf{b}$ for some $\mathbf{a}, \mathbf{b}$, iff $(\mathbf{a}, \mathbf{b})$ is in the null space of the $n \times (p + q)$ matrix $[\,U \mid -W\,]$, and use `null_space_basis` on it. Test both on random subspaces of $\mathbb{R}^6$ (construct $U$ and $W$ sharing some columns so the intersection is nontrivial) and assert the dimension formula (3.8) of Theorem 3.35, $\dim(U + W) = \dim U + \dim W - \dim(U \cap W)$. Also assert that your intersection basis lies in both subspaces; compare ranks with an explicit tolerance (`np.linalg.matrix_rank(M, tol=1e-8)`), because the default threshold can misjudge exact rank deficiency by a few rounding errors.
 
 ## C. Challenge (do at least one)
 
-**C1.** (Dimension formula.) Let $U, W$ be subspaces of a finite-dimensional $V$. Prove
-$$\dim(U + W) = \dim U + \dim W - \dim(U \cap W).$$
-Strategy: take a basis $\mathbf{z}_1, \dots, \mathbf{z}_k$ of $U \cap W$; extend it to a basis of $U$ and, separately, to a basis of $W$; show the union of the three lists is a basis of $U + W$. The independence step needs an argument in two stages. Then apply the formula to show two distinct planes through $\mathbf{0}$ in $\mathbb{R}^3$ meet in a line.
+**C1.** (Direct sums and complements; §3.11.) Let $U, W$ be subspaces of a finite-dimensional $V$.
+(a) Prove $V = U \oplus W$ if and only if $U \cap W = \{\mathbf{0}\}$ and $\dim U + \dim W = \dim V$. (Theorems 3.34(b) and 3.35.)
+(b) Prove every subspace $U$ of $V$ has a **complement**: a subspace $W$ with $V = U \oplus W$. (Extend a basis of $U$.) Show by an example in $\mathbb{R}^2$ that the complement is not unique. Which complement does LA-5 single out?
+(c) Show that the dimension formula has no three-subspace version: find subspaces $U_1, U_2, U_3$ of $\mathbb{R}^2$ with
+$$\dim(U_1 + U_2 + U_3) \ne \textstyle\sum_i \dim U_i - \sum_{i<j}\dim(U_i \cap U_j) + \dim(U_1 \cap U_2 \cap U_3).$$
+Check that your three have $U_i \cap U_j = \{\mathbf{0}\}$ for all $i \ne j$, and prove their sum is not direct.
+(d) Let $U, W$ be subspaces of $\mathbb{R}^7$ with $\dim U = 4$ and $\dim W = 5$. Prove $\dim(U \cap W) \ge 2$, and give an example where equality holds.
 
 **C2.** (Exponentials are independent; LA-7 and F2.) Let $\lambda_1, \dots, \lambda_k$ be distinct real numbers. Prove that $e^{\lambda_1 t}, \dots, e^{\lambda_k t}$ are linearly independent in $C^\infty(\mathbb{R})$. (Induction on $k$: given a relation, divide by $e^{\lambda_k t}$, differentiate, and apply the induction hypothesis.) Then explain in one paragraph why the same proof works for distinct *complex* $\lambda_j$ if scalars are complex, and deduce that $1, \cos t, \sin t, \cos 2t, \sin 2t$ are independent over $\mathbb{R}$.
 
 **C3.** (Rank inequalities and numerical rank.)
 (a) Prove $\operatorname{rank}(A + B) \le \operatorname{rank} A + \operatorname{rank} B$.
 (b) Prove that if $P$ ($m \times m$) and $Q$ ($n \times n$) are invertible, then $\operatorname{rank}(PAQ) = \operatorname{rank} A$. (Two applications of (3.7), one of them to $A = P^{-1}(PAQ)Q^{-1}$.)
-(c) (Code.) For $A_\varepsilon = \begin{pmatrix} 1 & 1 \\ 1 & 1 + \varepsilon \end{pmatrix}$ with $\varepsilon = 10^{-6}, 10^{-12}, 10^{-16}$, compare the rank reported by `rref(A, tol=1e-10)` with `np.linalg.matrix_rank(A)` and with `np.linalg.det(A)`. Explain each disagreement, and say which answer is "right." (There is no single right answer; that is the point, and LA-13 is about it.)
+(c) (Code.) For $A_\varepsilon = \begin{pmatrix} 1 & 1 \\ 1 & 1 + \varepsilon \end{pmatrix}$ with $\varepsilon = 10^{-6}, 10^{-12}, 10^{-16}$, compare the rank reported by `rref(A, tol=1e-10)` with `np.linalg.matrix_rank(A)` and with `np.linalg.det(A)`. Explain each disagreement, and say which answer is "right." (There is no single right answer; that is the point. LA-9 Theorem 3.8 supplies the right question instead: how far is $A_\varepsilon$ from the nearest matrix of lower rank?)

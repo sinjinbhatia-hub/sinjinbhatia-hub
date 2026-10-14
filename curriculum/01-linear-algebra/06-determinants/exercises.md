@@ -4,15 +4,15 @@ Conventions as in the notes: $\det$ is defined on rows by (D1)–(D3); $M_{ij}$ 
 
 ## A. Warm-up (do all; 5–10 minutes each)
 
-**A1.** Let $A = \begin{pmatrix} 2 & 1 & 0 \\ 4 & 3 & 1 \\ -2 & 0 & 5 \end{pmatrix}$. Compute $\det A$ three ways: by elimination (3.2), recording any swaps; by cofactor expansion along row 1 (3.4); and by cofactor expansion down column 3. Confirm all three agree.
+**A1.** Let $A = \begin{pmatrix} 2 & 1 & 0 \\ 4 & 3 & 1 \\ -2 & 0 & 5 \end{pmatrix}$. Compute $\det A$ three ways: by elimination (3.7), recording any swaps; by cofactor expansion along row 1 (3.12); and by cofactor expansion down column 3. Confirm all three agree.
 
 **A2.** A $3\times 3$ matrix $A$ has $\det A = 5$. Without knowing $A$, find the determinant of: (a) $A$ with rows 1 and 3 swapped; (b) $A$ with row 2 multiplied by $3$; (c) $A$ with $4\times$(row 1) added to row 2; (d) $2A$; (e) $A^\top$; (f) $A^{-1}$; (g) $A^2$; (h) $-A$; (i) $A$ with rows 1 and 2 swapped and then column 1 multiplied by $-2$.
 
-**A3.** Compute $N(\sigma)$ and $\operatorname{sgn}(\sigma)$ for $\sigma = (3, 1, 2)$, $(2, 1, 4, 3)$, and $(4, 3, 1, 2)$. Write the term of the $4\times 4$ Leibniz formula (3.3) that corresponds to $(4, 3, 1, 2)$, with its sign. Then go the other way: which permutation produces the term $a_{13}a_{21}a_{34}a_{42}$, and what is its sign? How many of the $24$ permutations of $\{1,2,3,4\}$ have sign $+1$?
+**A3.** Compute $N(\sigma)$ and $\operatorname{sgn}(\sigma)$ for $\sigma = (3, 1, 2)$, $(2, 1, 4, 3)$, and $(4, 3, 1, 2)$. Write the term of the $4\times 4$ Leibniz formula (3.9) that corresponds to $(4, 3, 1, 2)$, with its sign. Then go the other way: which permutation produces the term $a_{13}a_{21}a_{34}a_{42}$, and what is its sign? How many of the $24$ permutations of $\{1,2,3,4\}$ have sign $+1$?
 
-**A4.** Solve $\begin{pmatrix} 3 & 1 \\ 4 & 2 \end{pmatrix}\mathbf{x} = \begin{pmatrix} 5 \\ 8 \end{pmatrix}$ by Cramer's rule (3.5). Then compute the cofactor matrix $C$ and the adjugate, verify $A\operatorname{adj}A = (\det A)I$ by direct multiplication, and recover $\mathbf{x} = A^{-1}\mathbf{b}$ from (3.6).
+**A4.** Solve $\begin{pmatrix} 3 & 1 \\ 4 & 2 \end{pmatrix}\mathbf{x} = \begin{pmatrix} 5 \\ 8 \end{pmatrix}$ by Cramer's rule (3.13). Then compute the cofactor matrix $C$ and the adjugate, verify $A\operatorname{adj}A = (\det A)I$ by direct multiplication, and recover $\mathbf{x} = A^{-1}\mathbf{b}$ from (3.14).
 
-**A5.** Let $\mathbf{u} = (1, 2, 0)^\top$ and $\mathbf{v} = (0, 1, 3)^\top$. Compute $\mathbf{u}\times\mathbf{v}$ by the cofactor expansion (3.7), check it is orthogonal to both $\mathbf{u}$ and $\mathbf{v}$, find the area of the parallelogram they span, and verify Theorem 3.15(c) numerically. Then compute the volume of the parallelepiped on $\mathbf{u}, \mathbf{v}, \mathbf{w} = (1,1,1)^\top$ two ways: as $|\mathbf{w}\cdot(\mathbf{u}\times\mathbf{v})|$ and as a $3\times 3$ determinant.
+**A5.** Let $\mathbf{u} = (1, 2, 0)^\top$ and $\mathbf{v} = (0, 1, 3)^\top$. Compute $\mathbf{u}\times\mathbf{v}$ by the cofactor expansion (3.15), check it is orthogonal to both $\mathbf{u}$ and $\mathbf{v}$, find the area of the parallelogram they span, and verify Theorem 3.15(c) numerically. Then compute the volume of the parallelepiped on $\mathbf{u}, \mathbf{v}, \mathbf{w} = (1,1,1)^\top$ two ways: as $|\mathbf{w}\cdot(\mathbf{u}\times\mathbf{v})|$ and as a $3\times 3$ determinant.
 
 ## B. Core (do all)
 
@@ -33,10 +33,10 @@ Conventions as in the notes: $\det$ is defined on rows by (D1)–(D3); $M_{ij}$ 
 (c) A function $f$ on pairs of vectors in $\mathbb{R}^2$ is bilinear and alternating, and $f\big((1,1)^\top, (1,-1)^\top\big) = 4$. Find $f\big((3,0)^\top, (0,2)^\top\big)$.
 
 **B4.** (Vandermonde consequences.)
-(a) For the nodes $x_i = i - 1$, $i = 1, \dots, n$ (that is $0, 1, \dots, n-1$), show that $\det V = \prod_{j=1}^{n-1} j!$. Evaluate for $n = 4$ and check it against (3.11) term by term.
+(a) For the nodes $x_i = i - 1$, $i = 1, \dots, n$ (that is $0, 1, \dots, n-1$), show that $\det V = \prod_{j=1}^{n-1} j!$. Evaluate for $n = 4$ and check it against (3.19) term by term.
 (b) Use $\det V \neq 0$ to prove: a polynomial of degree $\le n-1$ that vanishes at $n$ distinct points is the zero polynomial.
 (c) Conclude that the polynomial of degree $\le n-1$ through $n$ points with distinct $x$-coordinates is unique.
-(d) Suppose $x_2 \to x_1$ with the other nodes fixed. Using Cramer's rule (3.5), describe what happens to the coefficients of the interpolating polynomial when $y_1 \neq y_2$. Why is this the right behavior?
+(d) Suppose $x_2 \to x_1$ with the other nodes fixed. Using Cramer's rule (3.13), describe what happens to the coefficients of the interpolating polynomial when $y_1 \neq y_2$. Why is this the right behavior?
 
 **B5.** (Tetrahedra.)
 (a) Compute the volume of the standard simplex $\Delta = \{(t_1, t_2, t_3) : t_i \ge 0,\ t_1 + t_2 + t_3 \le 1\}$ by a triple integral.
@@ -53,8 +53,8 @@ Conventions as in the notes: $\det$ is defined on rows by (D1)–(D3); $M_{ij}$ 
 
 **B7.** (Adjugate facts.) Let $A$ be $n\times n$ with $n \ge 2$.
 (a) Prove $\det(\operatorname{adj}A) = (\det A)^{n-1}$ when $A$ is invertible.
-(b) Prove the same identity when $A$ is singular (both sides are $0$). Hint: if $\operatorname{adj}A$ were invertible, what would (3.6) say about $A$?
-(c) Prove that $\operatorname{adj}(A)\,A = (\det A)I$ as well (the notes proved $A\operatorname{adj}A$). Hint: apply (3.6) to $A^\top$ and show $\operatorname{adj}(A^\top) = (\operatorname{adj}A)^\top$.
+(b) Prove the same identity when $A$ is singular (both sides are $0$). Hint: if $\operatorname{adj}A$ were invertible, what would (3.14) say about $A$?
+(c) Prove that $\operatorname{adj}(A)\,A = (\det A)I$ as well (the notes proved $A\operatorname{adj}A$). Hint: apply (3.14) to $A^\top$ and show $\operatorname{adj}(A^\top) = (\operatorname{adj}A)^\top$.
 (d) Prove: if $A$ has integer entries, then $A^{-1}$ has integer entries if and only if $\det A = \pm 1$.
 
 **B8.** (Code.) In `project.py`, implement `adjugate(A)` using a `cofactor(A, i, j)` helper, and assert `A @ adjugate(A)` equals `det(A) * I` on random $4\times 4$ matrices. Then take the $4\times 4$ Hilbert matrix $H_{ij} = 1/(i + j - 1)$, compute its inverse as `adjugate(H) / det(H)` and as `np.linalg.inv(H)`, and compare both against the exact integer inverse (which SymPy gives you: `sympy.Matrix(4, 4, lambda i, j: sympy.Rational(1, i + j + 1)).inv()`). Report the maximum entrywise error of each, the condition number `np.linalg.cond(H)`, and write a short comment: does the adjugate formula buy accuracy? What does it cost for an $n\times n$ matrix?

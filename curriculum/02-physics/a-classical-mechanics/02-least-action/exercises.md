@@ -27,7 +27,7 @@ Conventions as in the notes: $L = T - V$; $\mathcal E_i = \frac{d}{dt}\frac{\par
 (d) Part (a) says the free particle alone cannot pin down $f$. In two or three sentences, what extra physical requirement do Landau & Lifshitz (§4) use, and how does $\frac12 mv^2$ satisfy it while $v^4$ does not?
 
 **B2.** (Covariance by hand.) For a particle in the plane with potential $V(x, y)$, let $\mathcal E_x, \mathcal E_y$ be the Cartesian E–L expressions and $\tilde{\mathcal E}_r, \tilde{\mathcal E}_\theta$ those of $\tilde L(r, \theta, \dot r, \dot\theta)$ obtained by substituting $x = r\cos\theta$, $y = r\sin\theta$.
-(a) Compute $\tilde{\mathcal E}_r$ and $\tilde{\mathcal E}_\theta$ directly, using $\partial V/\partial r = \cos\theta\,V_x + \sin\theta\,V_y$ and $\partial V/\partial\theta = -r\sin\theta\,V_x + r\cos\theta\,V_y$.
+(a) Compute $\tilde{\mathcal E}_r$ and $\tilde{\mathcal E}_\theta$ directly, using $\tilde V(r, \theta) := V(r\cos\theta, r\sin\theta)$, $\partial\tilde V/\partial r = \cos\theta\,V_x + \sin\theta\,V_y$ and $\partial\tilde V/\partial\theta = -r\sin\theta\,V_x + r\cos\theta\,V_y$.
 (b) Express $\ddot x$ and $\ddot y$ in terms of $r, \theta$ and their derivatives.
 (c) Verify (3.8): $\tilde{\mathcal E}_r = \cos\theta\,\mathcal E_x + \sin\theta\,\mathcal E_y$ and $\tilde{\mathcal E}_\theta = -r\sin\theta\,\mathcal E_x + r\cos\theta\,\mathcal E_y$.
 
@@ -35,7 +35,7 @@ Conventions as in the notes: $L = T - V$; $\mathcal E_i = \frac{d}{dt}\frac{\par
 (a) Show $\tilde L = \frac12 m\big[(\dot X - \Omega Y)^2 + (\dot Y + \Omega X)^2\big]$.
 (b) Derive the E–L equations and identify the centrifugal and Coriolis terms.
 (c) Compute $p_X$. Why is it not $m\dot X$? Relate it to the inertial momentum.
-(d) Which theorem guarantees, without solving anything, that the solutions are straight lines at constant speed seen from rotating axes? (CM-3 Example 4.9 does the general 3D case.)
+(d) Which theorem guarantees, without solving anything, that the solutions of (b) are exactly the inertial motions (straight lines at constant speed in the $(x, y)$ plane) written in rotating coordinates? (CM-3 Example 4.9 does the general 3D case.)
 
 **B4.** (Counting descending directions.) For the oscillator with $m = k = 1$ and endpoints fixed at $t = 0$ and $t = \tau$ (not a multiple of $\pi$):
 (a) Using (3.11), show that the number of independent descending directions equals the number of points $\pi, 2\pi, 3\pi, \dots$ strictly inside $(0, \tau)$.

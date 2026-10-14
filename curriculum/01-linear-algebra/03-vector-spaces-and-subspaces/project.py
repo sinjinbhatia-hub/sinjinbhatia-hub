@@ -2,12 +2,13 @@
 # # LA-3 Project: The Four Fundamental Subspaces from Scratch
 #
 # This script builds everything in LA-3 §3.3–§3.10 with no black boxes, then
-# checks it against SciPy. Parts: (1) `rref` with partial pivoting on [A | I],
-# returning R, the pivot columns, and E with EA = R; (2) bases for C(A), N(A),
+# checks it against SciPy. Parts: (1) `rref_with_E` with partial pivoting on
+# [A | I], returning R, the pivot columns, and E with EA = R (`rref` drops E); (2) bases for C(A), N(A),
 # C(A^T), N(A^T) built on `rref`, with the dimensions r, n-r, r, m-r asserted on
-# random matrices of known rank and the orthogonality N(A) ⟂ C(A^T),
-# N(A^T) ⟂ C(A) checked numerically; (3) every number in worked examples
-# 4.1–4.5 reproduced (4.5 symbolically with SymPy); (4) pictures of N(A) and
+# random matrices of known rank, the orthogonality N(A) ⟂ C(A^T),
+# N(A^T) ⟂ C(A) and the factorization A = C R~ (exercise B6) checked numerically;
+# (3) every number in worked examples 4.1–4.5 reproduced (4.5 symbolically with
+# SymPy); (4) pictures of N(A) and
 # C(A^T) in R^3; (5) an independence tester, `extend_to_basis`, and the rank
 # inequality rank(AB) <= min(rank A, rank B).
 #
@@ -38,7 +39,8 @@ rng = np.random.default_rng(0)
 # Theorem 3.31). `partial_pivoting=True` picks the largest available entry as
 # the pivot (what real codes do; LA-13 explains why); `False` picks the first
 # nonzero entry, which reproduces hand computations exactly. R is the same
-# either way (RREF is unique); E is not.
+# either way (the RREF is unique: the corollary after Theorem 3.28, and LA-2
+# §3.9); E is not.
 #
 # **Build it yourself first:** write `rref` before reading this one.
 
@@ -105,7 +107,7 @@ for _ in range(200):
         assert np.allclose(E @ A, R, atol=1e-8), "E A must equal R"
         assert len(piv) == r_true == np.linalg.matrix_rank(A), (len(piv), r_true)
         assert abs(np.linalg.det(E)) > 1e-12, "E must be invertible"
-    # RREF is unique: both pivoting strategies give the same R.
+    # The RREF is unique (corollary after Theorem 3.28): both pivoting strategies give the same R.
     assert np.allclose(rref_with_E(A, partial_pivoting=True)[0], rref_with_E(A, partial_pivoting=False)[0], atol=1e-8)
 print("Part 1: rref passes structure, EA = R, invertibility, and rank checks on 200 random matrices.")
 
@@ -198,8 +200,10 @@ for _ in range(300):
     assert same_span(S["N(A^T)"], null_space_basis(A.T))
     # Rank–Nullity (3.5) read off the shapes.
     assert S["C(A)"].shape[1] + S["N(A)"].shape[1] == n
+    # Exercise B6: A = C R~, pivot columns of A times nonzero rows of R.
+    assert np.allclose(S["C(A)"] @ S["C(A^T)"].T, A, atol=1e-8)
     n_checked += 1
-print(f"Part 2: dimensions r, n-r, r, m-r, orthogonality (3.6), and agreement with SciPy on {n_checked} random matrices.")
+print(f"Part 2: dimensions r, n-r, r, m-r, orthogonality (3.6), A = C R~, and agreement with SciPy on {n_checked} random matrices.")
 
 # %% [markdown]
 # ## Part 3: The worked examples, number by number
@@ -227,6 +231,10 @@ assert same_span(S42["N(A^T)"], np.array([[1, -1, 1]]).T)                       
 assert np.allclose(y @ A42, 0)
 # Free columns are the combinations R says they are (Theorem 3.28 step 4).
 assert np.allclose(A42[:, 1], 2 * A42[:, 0]) and np.allclose(A42[:, 3], 1 * A42[:, 0] + 2 * A42[:, 2])
+# Exercise B6(b): A = C R~ with C the pivot columns of A and R~ the nonzero rows of R.
+C42, Rt42 = A42[:, piv], R[:len(piv), :]
+assert np.allclose(C42, [[1, 0], [2, 1], [1, 1]]) and np.allclose(Rt42, [[1, 2, 0, 1], [0, 0, 1, 2]])
+assert np.allclose(C42 @ Rt42, A42)
 # Complete solution (3.3) for b = (1, 3, 2); inconsistency for b' = (1, 3, 3).
 b = np.array([1, 3, 2.]); Eb = E @ b
 assert np.allclose(Eb, [1, 1, 0]), Eb
@@ -240,7 +248,7 @@ assert np.allclose(A42 @ x_other, b)
 assert same_span(S42["N(A)"], np.column_stack([S42["N(A)"], x_other - x_p]))
 b_bad = np.array([1, 3, 3.])
 assert abs((E @ b_bad)[2]) > 1e-12 and np.isclose(y @ b_bad, 1.0)             # not in C(A)
-print("Example 4.2: R, E, all four bases, x_p = (1,0,1,0), and the inconsistent b' reproduced.")
+print("Example 4.2: R, E, all four bases, A = C R~, x_p = (1,0,1,0), and the inconsistent b' reproduced.")
 
 # ---- Example 4.3: rank-one matrix u v^T ----
 u = np.array([1, 2, 3.]); v = np.array([1, -1, 2.])
@@ -323,9 +331,12 @@ print("Example 4.4: [p]_C =", p_C, "and -1 + 4(1+x) - (1+x+x^2) == 2 + 3x - x^2 
 # ### Example 4.5: the solution space of y'' + y = 0, symbolically
 #
 # cos t and sin t solve the ODE; their Wronskian is 1 (so they are independent,
-# a second proof besides evaluating at t = 0 and t = pi/2); the energy
-# z'^2 + z^2 of any solution is constant; and SymPy's general solution of the
-# forced equation y'' + y = t is particular + homogeneous, i.e. eq. (3.3).
+# a second proof besides evaluating at t = 0 and t = pi/2); the energy identity
+# E' = 2 z'(z'' + z) holds for an *arbitrary* smooth z, which is what the
+# spanning proof uses (so E is constant along every solution, not only along
+# combinations of cos and sin); the coordinates of a cos t + b sin t are its
+# initial conditions (a, b); and SymPy's general solution of the forced
+# equation y'' + y = t is particular + homogeneous, i.e. eq. (3.3).
 
 
 # %%
@@ -335,10 +346,12 @@ L = lambda f: sp.diff(f, t, 2) + f                       # the linear operator L
 assert sp.simplify(L(sp.cos(t))) == 0 and sp.simplify(L(sp.sin(t))) == 0
 W = sp.Matrix([[sp.cos(t), sp.sin(t)], [sp.diff(sp.cos(t), t), sp.diff(sp.sin(t), t)]]).det()
 assert sp.simplify(W) == 1
-z = a * sp.cos(t) + b_ * sp.sin(t)
-energy = sp.diff(z, t)**2 + z**2
-assert sp.simplify(sp.diff(energy, t)) == 0 and sp.simplify(energy - (a**2 + b_**2)) == 0
+# Energy identity for an arbitrary function z(t): E' = 2 z' (z'' + z) = 2 z' L[z].
+zf = sp.Function("z")(t)
+Eng = zf.diff(t)**2 + zf**2
+assert sp.simplify(Eng.diff(t) - 2 * zf.diff(t) * L(zf)) == 0
 # Coordinates of a solution are its initial conditions: (z(0), z'(0)) = (a, b).
+z = a * sp.cos(t) + b_ * sp.sin(t)
 assert sp.simplify(z.subs(t, 0) - a) == 0 and sp.simplify(sp.diff(z, t).subs(t, 0) - b_) == 0
 # Forced oscillator: general solution = t + homogeneous (Theorem 3.9 for the operator L).
 yf = sp.Function("y")
@@ -347,7 +360,7 @@ assert sp.simplify(L(sol) - t) == 0
 consts = sorted(sol.free_symbols - {t}, key=str)
 assert len(consts) == 2 and sp.simplify(sol.subs({c: 0 for c in consts}) - t) == 0
 assert sp.simplify(L(sol - t)) == 0                       # the rest is in N(L) = span{cos, sin}
-print("Example 4.5: cos, sin solve the ODE, W = 1, energy constant; dsolve(y''+y=t) =", sol)
+print("Example 4.5: cos, sin solve the ODE, W = 1, energy identity E' = 2z'(z''+z); dsolve(y''+y=t) =", sol)
 
 # %% [markdown]
 # ## Part 4: Pictures of N(A) and C(A^T) in R^3
@@ -397,8 +410,8 @@ print("Part 4: figure saved to", FIG / "null_vs_row_space.png")
 #
 # `extend_to_basis` is the constructive version of Theorem 3.25: walk through
 # the standard basis and keep e_i iff it is not in the current span
-# (Lemma 3.20 keeps the list independent). `in_span` is Theorem 3.6 of LA-1:
-# v is in span(S) iff [S | v] has no pivot in the last column.
+# (Lemma 3.20 keeps the list independent). `in_span` is LA-1 Theorem 3.6 plus
+# LA-2 Theorem 3.7(a): v is in span(S) iff [S | v] has no pivot in the last column.
 
 
 # %%
@@ -483,8 +496,8 @@ print(f"Theorem 3.32 holds on 200 random products ({strict} strict) and is stric
 #    Which standard basis vector gets adjoined, and why not e_2 or e_3? Then
 #    adjoin a *random* vector instead and confirm you still get a basis.
 # 4. (B8) Write `basis_of_sum(U, W)` and `basis_of_intersection(U, W)` for two
-#    subspaces given by bases, and check the dimension formula of C1 on random
-#    pairs of subspaces of R^6.
+#    subspaces given by bases, and check the dimension formula (3.8) of
+#    Theorem 3.35 on random pairs of subspaces of R^6.
 #
 # Reference answers for 1–3 follow so you can compare.
 
@@ -497,6 +510,12 @@ assert same_span(Sym2, np.column_stack([E11, E12p21, E22]))
 # 3 x 3 symmetric: three equations a12 = a21, a13 = a31, a23 = a32 on 9 unknowns -> dimension 6.
 C9 = np.zeros((3, 9)); C9[0, 1] = 1; C9[0, 3] = -1; C9[1, 2] = 1; C9[1, 6] = -1; C9[2, 5] = 1; C9[2, 7] = -1
 assert null_space_basis(C9).shape == (9, 6)
+# Skew 3 x 3 (A^T = -A: zero diagonal, a_ij = -a_ji) has dimension 3, and M_3x3 = Sym_3 ⊕ Skew_3
+# (exercise B3(d), Theorem 3.34): the two bases together are 6 + 3 = 9 independent vectors in R^9.
+K9 = np.zeros((6, 9)); K9[[0, 1, 2], [0, 4, 8]] = 1
+K9[3, 1] = K9[3, 3] = 1; K9[4, 2] = K9[4, 6] = 1; K9[5, 5] = K9[5, 7] = 1
+assert null_space_basis(K9).shape == (9, 3)
+assert rank(np.hstack([null_space_basis(C9), null_space_basis(K9)])) == 9
 # 2. Cubics vanishing at 1: dimension 3, same span as {x - 1, x^2 - 1, x^3 - 1}.
 V1 = null_space_basis(np.array([[1, 1, 1, 1.]]))
 assert V1.shape == (4, 3)
@@ -506,7 +525,7 @@ assert same_span(V1, alt)
 B3 = extend_to_basis([[1, 1, 0], [0, 1, 1]])
 assert np.allclose(B3[:, 2], [1, 0, 0]) and len(rref(B3)[1]) == 3
 assert not in_span([1, 0, 0], B3[:, :2]) and in_span([1, 2, 1], B3[:, :2])
-print("Your turn reference: dim Sym(2x2) = 3, dim Sym(3x3) = 6, dim {p in P_3 : p(1) = 0} = 3, basis extended by", B3[:, 2])
+print("Your turn reference: dim Sym(2x2) = 3, dim Sym(3x3) = 6, dim Skew(3x3) = 3, dim {p in P_3 : p(1) = 0} = 3, basis extended by", B3[:, 2])
 
 # %%
 if __name__ == "__main__":

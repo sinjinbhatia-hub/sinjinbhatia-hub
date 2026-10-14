@@ -348,7 +348,7 @@ In Feynman's formulation of quantum mechanics (1948, building on Dirac 1933), th
 
 ### 3.11 What the principle does not cover
 
-Hamilton's principle as stated needs forces from a potential $V(q, t)$ or a generalized potential $U(q, \dot q, t)$. **Friction and drag have no such potential** in general: they remove energy, while the E–L expression of $T - V$ contains no damping term and the velocity-dependent forces a generalized potential produces, like the magnetic one, do no work. CM-3 §3.9 handles dissipation by adding Rayleigh's dissipation function to the E–L equations by hand. Exercise C3 shows a trick that works for one linearly damped oscillator and why it does not generalize. **Rolling without slipping** and other non-holonomic constraints also fall outside this form; CM-3 §3.2 says what to do.
+Hamilton's principle as stated needs forces from a potential $V(q, t)$ or a generalized potential $U(q, \dot q, t)$. **Friction and drag have no such potential** in general: they remove energy, while the E–L expression of $T - V$ contains no damping term and the velocity-dependent forces produced by a generalized potential linear in the velocities, like the magnetic one, do no work: for $U = U_0(\mathbf r, t) - \sum_jA_j(\mathbf r, t)v_j$, (3.14) gives them as $\sum_jv_j(\partial_iA_j - \partial_jA_i)$, as in step 5 of Theorem 3.7, and their power $\sum_{i,j}v_iv_j(\partial_iA_j - \partial_jA_i)$ vanishes because the bracket is antisymmetric in $i, j$. CM-3 §3.9 handles dissipation by adding Rayleigh's dissipation function to the E–L equations by hand. Exercise C3 shows a trick that works for one linearly damped oscillator and why it does not generalize. **Rolling without slipping** and other non-holonomic constraints also fall outside this form; CM-3 §3.2 says what to do.
 
 ## 4. Worked examples
 
@@ -413,7 +413,7 @@ $$
 - $\tau = 2 < \pi$: $S_{\text{cl}} = \frac12\cot2 = -0.22883$ and $c = \frac12(\pi^2/4 - 1) = \frac12(2.46740 - 1) = 0.73370$. A minimum.
 - $\tau = 4 > \pi$: $S_{\text{cl}} = \frac12\cot4 = 0.43185$ and $c = \pi^2/16 - 1 = 0.61685 - 1 = -0.38315$. Along $\sin(\pi t/4)$ the action goes *down*, quadratically and without bound, since the expansion is exact.
 
-The project confirms both coefficients by quadrature for $\varepsilon$ up to 2. The Hessian of the discrete action (2.1), here $(m/h)\,\mathrm{tridiag}(-1, 2, -1) - hk\,I$, has no negative eigenvalue at $\tau = 2$ and exactly one at $\tau = 4$, with eigenvector matching $\sin(\pi t/4)$ to overlap above $0.9999$. On the $\tau = 4$ problem L-BFGS-B runs off toward $S_h \to -\infty$: there is no minimum to find. The discretized action is a convex quadratic for $\tau < \pi$ and an unbounded nonconvex one for $\tau > \pi$.
+The project confirms both coefficients by quadrature for $\varepsilon$ up to 2. The Hessian of the discrete action (2.1), here $(m/h)\,\mathrm{tridiag}(-1, 2, -1) - hk\,I$, has no negative eigenvalue at $\tau = 2$ and exactly one at $\tau = 4$, with eigenvector matching $\sin(\pi t/4)$ to overlap above $0.9999$. On the $\tau = 4$ problem L-BFGS-B runs off toward $S_h \to -\infty$: there is no minimum to find. The discretized action is a convex quadratic below a threshold and an unbounded nonconvex one above it. The threshold is where the lowest Hessian eigenvalue, $(4m/h)\sin^2\!\big(\pi/(2(N+1))\big) - hk$, crosses zero: $\tau_h = \frac{2(N+1)}{\omega}\sin\frac{\pi}{2(N+1)} = \frac\pi\omega\big(1 - \frac{\pi^2}{24(N+1)^2} + \dots\big)$. That is $\pi$ up to $O(h^2)$, and $\pi - 8.0\times10^{-6}$ for the project's $N = 400$.
 
 ### Example 4.6: Charged particle in a uniform magnetic field
 
@@ -442,7 +442,7 @@ Numbers: $m = 2$, $q_e = 1$, $B = 1$, start at the origin with $\mathbf v = (1, 
 - **CM-8** builds $H = \sum_ip_i\dot q_i - L$ from this module's $p_i$, turns (3.12)–(3.13) into the Hamilton–Jacobi equation (§3.10 there), and its symplectic integrators include the discrete E–L equation of §2.
 - **EM-6**: the Lagrangian (3.15) and gauge freedom as a total derivative (3.17).
 - **QM-2, QM-9**: the momentum that becomes $-i\hbar\nabla$ is $p_i = \partial L/\partial\dot q_i$ (so $m\mathbf v + q_e\mathbf A$ for a charge), and the path integral weights paths by $e^{iS/\hbar}$.
-- **ML-2**: minimizing (2.1) is smooth unconstrained optimization, and Theorem 3.6 says exactly when it is convex; Example 4.5's negative eigenvalue is the saddle that convexity assumptions exclude.
+- **ML-2**: minimizing (2.1) is smooth unconstrained optimization, and for the oscillator Theorem 3.6 says when it is convex (up to Example 4.5's $O(h^2)$ shift of the threshold); Example 4.5's negative eigenvalue is the saddle that convexity assumptions exclude.
 
 ## 6. Exercises
 
@@ -450,7 +450,7 @@ See [exercises.md](exercises.md). A1–A5 are drills (actions along explicit pat
 
 ## 7. Coding project
 
-`project.py`, in seven parts: (1) the discrete action (2.1) with gradient (2.2), minimized by L-BFGS-B for a projectile, an oscillator ($\tau = 2$) and a pendulum ($\tau = 0.8$ s), asserted against shooting solutions of the ODE, plus (2.3) and Example 4.1; (2) $S[q_{\text{cl}} + \varepsilon\eta]$ plotted and its slope at $0$ asserted below $10^{-6}$ on the true path and above $10^{-2}$ on a straight line, plus Example 4.4; (3) Example 4.5, the discrete Hessian's negative eigenvalues for $\tau = 2, 4, 5, 7$, L-BFGS-B running away past $T/2$, and the endpoint derivatives (3.12)–(3.13); (4) a SymPy `euler_lagrange` verifying Theorems 3.2–3.5 and 3.7 with arbitrary $V$, $\Phi$, $\mathbf A$; (5) cyclotron motion; (6) CM-1's Cartesian pendulum against the one-line $\theta$ equation; (7) the numbers quoted in the solutions.
+`project.py`, in seven parts: (1) the discrete action (2.1) with gradient (2.2), minimized by L-BFGS-B for a projectile, an oscillator ($\tau = 2$) and a pendulum ($\tau = 0.8$ s), asserted against shooting solutions of the ODE, plus (2.3) and Example 4.1; (2) $S[q_{\text{cl}} + \varepsilon\eta]$ plotted and its slope at $0$ asserted below $10^{-6}$ on the true path and above $10^{-2}$ on a straight line, plus Example 4.4; (3) Example 4.5, the discrete Hessian's negative eigenvalues for $\tau = 2, 4, 5, 7$ and its convexity threshold $\tau_h$, L-BFGS-B running away past $T/2$, and the endpoint derivatives (3.12)–(3.13); (4) a SymPy `euler_lagrange` verifying Theorems 3.2–3.5 and 3.7 with arbitrary $V$, $\Phi$, $\mathbf A$, including Theorem 3.5 for the time-dependent rotating frame of Exercise B3; (5) cyclotron motion, integrating the SymPy E–L equations of Example 4.6; (6) CM-1's Cartesian pendulum against the one-line $\theta$ equation; (7) the numbers quoted in the solutions.
 
 **Build it yourself:** write `discrete_action` (value and gradient) and `euler_lagrange` before reading them. The gradient is the test of whether you understood (2.2): it is three lines.
 
@@ -483,5 +483,5 @@ See [exercises.md](exercises.md). A1–A5 are drills (actions along explicit pat
 
 - **Taylor, *Classical Mechanics*, ch. 6 and §7.1.** Ch. 6 is F6 at a gentler pace; §7.1 does Hamilton's principle for unconstrained motion with many worked problems. Use it for practice volume.
 - **Feynman, *Lectures on Physics* Vol. II, ch. 19 ("The Principle of Least Action").** A transcribed lecture with the best intuition anywhere for why $T - V$, how the classical path emerges from quantum interference, and what "least" means. Read it after §2.
-- **Landau & Lifshitz, *Mechanics*, §1–4.** Terse and complete. §2 states the principle; §3–4 derive the free-particle Lagrangian from Galilean relativity, which this module only cites (Exercise B1).
+- **Landau & Lifshitz, *Mechanics*, §1–2 (and §3–4).** Terse and complete. §2 states the principle; §3–4 derive the free-particle Lagrangian from Galilean relativity, which this module only cites (Exercise B1).
 - **Susskind & Hrabovsky, *The Theoretical Minimum*, lectures 6–7.** A conversational pass through action, Lagrangians, and the first conservation laws; good for a second reading once the formalism is familiar.

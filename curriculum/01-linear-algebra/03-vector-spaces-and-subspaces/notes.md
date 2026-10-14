@@ -366,7 +366,7 @@ So "the" RREF in the conventions box is earned: the free entries of $R$ are the 
 
 ### 3.8 The row space: row rank equals column rank
 
-▶ **Try it first.** Show that each row of $EA$ is a combination of rows of $A$. Then: which rows of $R$ are obviously independent, and why? (Look at the pivot columns.)
+▶ **Try it first.** Show that each row of $EA$ is a combination of rows of $A$. Then: why are the nonzero rows of $R$ independent? (Look at the entries in the pivot columns.)
 
 **Theorem 3.29 (Row space).** (a) If $E$ is invertible, $C((EA)^\top) = C(A^\top)$: row operations do not change the row space. (b) The nonzero rows of $R$ form a basis of $C(A^\top)$. (c) $\dim C(A^\top) = r = \dim C(A)$.
 
@@ -417,6 +417,8 @@ The symbol $\perp$ between the boxes is the content of LA-5, but one line of it 
 $$\mathbf{x} \in N(A),\ \mathbf{w} \in C(A^\top) \quad\Longrightarrow\quad \mathbf{x}\cdot\mathbf{w} = 0. \tag{3.6}$$
 Applying this to $A^\top$: $N(A^\top) \perp C(A)$. LA-5 proves more: the dimensions $r + (n - r) = n$ force these pairs to be orthogonal *complements*, and every $\mathbf{x} \in \mathbb{R}^n$ splits uniquely as $\mathbf{x}_{\text{row}} + \mathbf{x}_{\text{null}}$. The map $A$ sends $\mathbf{x}_{\text{null}}$ to $\mathbf{0}$ and $\mathbf{x}_{\text{row}}$ to $A\mathbf{x}$: all the action is between the two top boxes.
 
+All of this is about *real* matrices (conventions box). Over $\mathbb{C}$, (3.6) is still true as written, since $\mathbf{x}^\top A^\top\mathbf{y} = (A\mathbf{x})^\top\mathbf{y} = 0$, but $\mathbf{x}^\top\mathbf{w} = 0$ is not orthogonality there, and the complement statement fails: for $A = (1, i)$, $N(A) = \operatorname{span}\{(1, i)^\top\} = C(A^\top)$, so the two subspaces coincide instead of splitting $\mathbb{C}^2$. LA-8 repairs it with $A^\dagger$ in place of $A^\top$.
+
 ### 3.10 Rank of a product
 
 ▶ **Try it first.** Each column of $AB$ is $A$ times a column of $B$ (LA-1 (3.3)). Which subspace must it lie in? And if $B\mathbf{x} = \mathbf{0}$, what is $AB\mathbf{x}$?
@@ -431,6 +433,38 @@ $$\operatorname{rank}(AB) \le \min\big(\operatorname{rank} A, \operatorname{rank
 3. $B$ and $AB$ both have $n$ columns. Rank–Nullity (3.5) for each: $n - \operatorname{rank} B \le n - \operatorname{rank}(AB)$, i.e. $\operatorname{rank}(AB) \le \operatorname{rank} B$. ∎
 
 ■ **What just happened.** Multiplying can only lose rank, never create it. Strict inequality happens: $A = \begin{pmatrix}1 & 0\\0 & 0\end{pmatrix}$, $B = \begin{pmatrix}0 & 0\\0 & 1\end{pmatrix}$ both have rank $1$ and $AB = 0$ has rank $0$. If $A$ is invertible, $\operatorname{rank}(AB) = \operatorname{rank} B$ (exercise C3).
+
+### 3.11 Sums, intersections, direct sums
+
+Two subspaces $U, W$ of $V$ give two new ones. $U \cap W$ is a subspace (Example proof A in §3.0). So is the **sum** $U + W = \{\mathbf{u} + \mathbf{w} : \mathbf{u} \in U,\ \mathbf{w} \in W\}$: it contains $\mathbf{0} = \mathbf{0} + \mathbf{0}$, and $(\mathbf{u} + \mathbf{w}) + (\mathbf{u}' + \mathbf{w}') = (\mathbf{u} + \mathbf{u}') + (\mathbf{w} + \mathbf{w}')$ and $c(\mathbf{u} + \mathbf{w}) = c\mathbf{u} + c\mathbf{w}$ stay in it (exercise B1(a) writes this out with the axioms cited and shows $U + W$ is the smallest subspace containing $U \cup W$). The same goes for $U_1 + \dots + U_k$.
+
+**Definition 3.33 (Direct sum).** Let $U_1, \dots, U_k$ be subspaces of $V$. $V$ is the **direct sum** $V = U_1 \oplus \dots \oplus U_k$ if every $\mathbf{v} \in V$ can be written as $\mathbf{v} = \mathbf{u}_1 + \dots + \mathbf{u}_k$ with each $\mathbf{u}_i \in U_i$, in exactly one way.
+
+Existence of the splitting says $U_1 + \dots + U_k = V$. Uniqueness is the new part, and, as in Theorem 3.15, it reduces to a statement about $\mathbf{0}$.
+
+**Theorem 3.34 (Testing a direct sum).** (a) $V = U_1 \oplus \dots \oplus U_k$ iff $U_1 + \dots + U_k = V$ and the only way to write $\mathbf{0} = \mathbf{u}_1 + \dots + \mathbf{u}_k$ with $\mathbf{u}_i \in U_i$ is with every $\mathbf{u}_i = \mathbf{0}$. (b) For two subspaces: $V = U \oplus W$ iff $U + W = V$ and $U \cap W = \{\mathbf{0}\}$. (c) If $V = U_1 \oplus \dots \oplus U_k$, then a basis of $U_1$, followed by a basis of $U_2$, …, followed by a basis of $U_k$, is a basis of $V$. So $\dim V = \dim U_1 + \dots + \dim U_k$.
+
+*Proof.* (a) $(\Rightarrow)$ $\mathbf{0} = \mathbf{0} + \dots + \mathbf{0}$ is one splitting of $\mathbf{0}$, so by uniqueness it is the only one. $(\Leftarrow)$ If $\mathbf{v} = \sum_i\mathbf{u}_i = \sum_i\mathbf{u}_i'$, subtract: $\mathbf{0} = \sum_i(\mathbf{u}_i - \mathbf{u}_i')$ with $\mathbf{u}_i - \mathbf{u}_i' \in U_i$, so every $\mathbf{u}_i - \mathbf{u}_i' = \mathbf{0}$. (b) By (a) it is enough to show that "$\mathbf{0} = \mathbf{u} + \mathbf{w}$ forces $\mathbf{u} = \mathbf{w} = \mathbf{0}$" holds iff $U \cap W = \{\mathbf{0}\}$. If the first holds and $\mathbf{x} \in U \cap W$, then $\mathbf{0} = \mathbf{x} + (-\mathbf{x})$ with $\mathbf{x} \in U$, $-\mathbf{x} \in W$, so $\mathbf{x} = \mathbf{0}$. If $U \cap W = \{\mathbf{0}\}$ and $\mathbf{0} = \mathbf{u} + \mathbf{w}$, then $\mathbf{u} = -\mathbf{w}$ lies in both, so $\mathbf{u} = \mathbf{0}$ and then $\mathbf{w} = \mathbf{0}$. (c) *Spans:* every $\mathbf{v}$ is $\sum_i\mathbf{u}_i$, and each $\mathbf{u}_i$ is a combination of the basis of $U_i$. *Independent:* given a relation among all the basis vectors, let $\mathbf{u}_i$ be the part of it that uses the basis of $U_i$; then $\mathbf{u}_i \in U_i$ and $\mathbf{0} = \mathbf{u}_1 + \dots + \mathbf{u}_k$. By (a) every $\mathbf{u}_i = \mathbf{0}$, and independence of the basis of $U_i$ makes each of its coefficients zero. ∎
+
+For $k \ge 3$, pairwise intersections $\{\mathbf{0}\}$ are *not* enough. The lines $U_1 = \operatorname{span}\{(1, 0)\}$, $U_2 = \operatorname{span}\{(0, 1)\}$, $U_3 = \operatorname{span}\{(1, 1)\}$ in $\mathbb{R}^2$ meet pairwise only in $\mathbf{0}$, yet $(1, 0) + (0, 1) + (-1, -1) = \mathbf{0}$ is a nonzero splitting of $\mathbf{0}$.
+
+The worked instance is exercise B3(d): $\mathcal{M}_{n\times n} = \mathrm{Sym}_n \oplus \mathrm{Skew}_n$. Every square matrix is $\tfrac12(A + A^\top) + \tfrac12(A - A^\top)$, and a matrix that is both symmetric and skew is $0$, so Theorem 3.34(b) applies, and (c) says the two dimensions add to $n^2$.
+
+▶ **Try it first.** Let $U \ne W$ be two planes through $\mathbf{0}$ in $\mathbb{R}^3$. What are $U + W$ and $U \cap W$? Guess a formula linking $\dim(U + W)$, $\dim U$, $\dim W$, $\dim(U \cap W)$. Why does the intersection have to be subtracted?
+
+**Theorem 3.35 (Dimension formula).** If $U$ and $W$ are subspaces of a finite-dimensional $V$, then
+$$\dim(U + W) = \dim U + \dim W - \dim(U \cap W). \tag{3.8}$$
+
+**Derivation.**
+
+1. $U \cap W$ is a subspace of $V$, hence finite-dimensional (Corollary 3.26(d)). Let $\mathbf{z}_1, \dots, \mathbf{z}_k$ be a basis, $k = \dim(U \cap W)$.
+2. This list is independent and lies in $U$. Extend it to a basis $\mathbf{z}_1, \dots, \mathbf{z}_k, \mathbf{u}_1, \dots, \mathbf{u}_p$ of $U$ (Theorem 3.25), so $\dim U = k + p$. Separately, extend it to a basis $\mathbf{z}_1, \dots, \mathbf{z}_k, \mathbf{w}_1, \dots, \mathbf{w}_q$ of $W$, so $\dim W = k + q$.
+3. *Spans.* Let $L = (\mathbf{z}_1, \dots, \mathbf{z}_k, \mathbf{u}_1, \dots, \mathbf{u}_p, \mathbf{w}_1, \dots, \mathbf{w}_q)$. Every vector of $L$ lies in $U$ or in $W$, hence in $U + W$, so $\operatorname{span} L \subseteq U + W$ (Theorem 3.5). Conversely, $\mathbf{u} + \mathbf{w} \in U + W$ is a combination of the $\mathbf{z}$'s and $\mathbf{u}$'s plus a combination of the $\mathbf{z}$'s and $\mathbf{w}$'s, hence a combination of $L$.
+4. *Independent, stage 1.* Suppose $\sum_i a_i\mathbf{z}_i + \sum_j b_j\mathbf{u}_j + \sum_l c_l\mathbf{w}_l = \mathbf{0}$ $(*)$. Then $\mathbf{v} = \sum_l c_l\mathbf{w}_l$ equals $-\sum_i a_i\mathbf{z}_i - \sum_j b_j\mathbf{u}_j$. The first expression is in $W$, the second in $U$, so $\mathbf{v} \in U \cap W$ and $\mathbf{v} = \sum_i d_i\mathbf{z}_i$ for some $d_i$. Then $\sum_i d_i\mathbf{z}_i - \sum_l c_l\mathbf{w}_l = \mathbf{0}$ is a relation among the basis of $W$ from step 2, so every $c_l = 0$.
+5. *Stage 2.* With the $c_l$ gone, $(*)$ is a relation among the basis of $U$ from step 2, so every $a_i$ and every $b_j$ is $0$.
+6. $L$ is a basis of $U + W$ of length $k + p + q = (k + p) + (k + q) - k$. ∎
+
+■ **What just happened.** Adding $\dim U + \dim W$ counts the intersection twice; (3.8) subtracts it once. The real work is step 4: a relation among the combined list manufactures a vector lying in both $U$ and $W$, and the basis of $U \cap W$, built first, absorbs it. Two consequences get used later. (i) For two subspaces, $V = U \oplus W$ iff $U \cap W = \{\mathbf{0}\}$ and $\dim U + \dim W = \dim V$ (exercise C1(a)). (ii) In $\mathbb{R}^n$, if $\dim U + \dim W > n$ then $U \cap W$ contains a nonzero vector, because $\dim(U \cap W) = \dim U + \dim W - \dim(U + W) \ge \dim U + \dim W - n \ge 1$. For two distinct planes through $\mathbf{0}$ in $\mathbb{R}^3$: $U + W$ is strictly bigger than $U$ (otherwise $W \subseteq U$, and equal dimensions force $W = U$ by Corollary 3.26(d)), so $U + W = \mathbb{R}^3$ and $\dim(U \cap W) = 2 + 2 - 3 = 1$: they meet in a line. LA-8's Courant–Fischer theorem and the spectral-norm Eckart–Young theorem (LA-9 Theorem 3.8) both run on (ii). Exercise B8 checks (3.8) numerically.
 
 ## 4. Worked examples
 
@@ -560,23 +594,24 @@ The coordinates of a solution are its initial conditions. Changing basis to $(\c
 - **LA-5** completes the big picture: (3.6) upgrades to "orthogonal complements," and least squares projects $\mathbf{b}$ onto $C(A)$. Exercise B7's result, $N(A^\top A) = N(A)$, is why $A^\top A$ is invertible exactly when the columns are independent, which is the hypothesis of the normal equations.
 - **LA-6**: $\det A \ne 0$ iff the columns are independent iff $N(A) = \{\mathbf{0}\}$ (Theorem 3.12).
 - **LA-7**: an eigenspace is a null space, $N(A - \lambda I)$, and its dimension (geometric multiplicity) is $n - \operatorname{rank}(A - \lambda I)$. The solution space of $\dot{\mathbf{x}} = A\mathbf{x}$ is an $n$-dimensional vector space of functions, exactly as in Example 4.5.
-- **LA-9**: the SVD produces orthonormal bases for all four subspaces at once, and rank-$r$ matrices are sums of $r$ rank-one pieces (Example 4.3). `scipy.linalg.null_space` and `orth`, used as black boxes in the project, are SVD-based; LA-13 explains why RREF with a tolerance is the wrong tool numerically.
+- **LA-8, LA-9, LA-11** use §3.11. Consequence (ii) of the dimension formula (3.8) drives LA-8's Courant–Fischer theorem and LA-9 Theorem 3.8 (Eckart–Young in the spectral norm). LA-11 splits $\mathbb{C}^n$ as a direct sum of generalized eigenspaces (Definition 3.33) and builds the Jordan basis by concatenating bases of the pieces, which is Theorem 3.34(c).
+- **LA-9**: the SVD produces orthonormal bases for all four subspaces at once, and rank-$r$ matrices are sums of $r$ rank-one pieces (Example 4.3). `scipy.linalg.null_space` and `orth`, used as black boxes in the project, are SVD-based, and LA-9 Theorem 3.8 is the reason to prefer them numerically: the distance from $A$ to the nearest matrix of rank $\le k$ is exactly $\sigma_{k+1}$, so singular values say how far $A$ is from each lower rank, which a single pivot compared against a tolerance cannot. Exercise C3(c) shows the two answers disagreeing, and LA-13 §3.2 (catastrophic cancellation) explains why the pivot $(1 + \varepsilon) - 1$ that elimination computes there is inaccurate for tiny $\varepsilon$.
 - **F2**: $1, \cos kx, \sin kx$ are independent in the infinite-dimensional space of functions on $[-\pi, \pi]$, and Fourier coefficients are coordinates in that list. Peano's remark about infinite dimension comes due.
-- **CM-6**: the solutions of $n$ coupled oscillators form a $2n$-dimensional space; normal modes are a basis of it. **CM-7**: the inertia tensor is a symmetric $3 \times 3$ matrix, an element of the six-dimensional subspace of exercise B3.
-- **QM-4**: a quantum state space is a vector space; superposition is closure under addition; Heisenberg's and Schrödinger's pictures are two bases of one space (§1). **QC-1**: a qubit is a two-dimensional complex vector space, $n$ qubits a $2^n$-dimensional one.
+- **CM-6**: the solutions of $n$ coupled oscillators form a $2n$-dimensional space (two initial conditions per coordinate, as in Example 4.5). Each normal mode $\mathbf{q}_k$ with frequency $\omega_k$ contributes two basis solutions, $\mathbf{q}_k\cos\omega_k t$ and $\mathbf{q}_k\sin\omega_k t$ (or $\mathbf{q}_k$ and $t\,\mathbf{q}_k$ for a zero-frequency mode), giving a basis of $2n$ functions. **CM-7**: the inertia tensor is a symmetric $3 \times 3$ matrix, an element of the six-dimensional subspace of exercise B3.
+- **QM-4**: a quantum state space is a vector space; superposition is closure under addition. Heisenberg's matrix mechanics and Schrödinger's wave mechanics are one space written in two bases (§1). Do not confuse this with the Heisenberg and Schrödinger *pictures* of time evolution in QM-4, which differ in whether the states or the operators carry the time dependence. **QC-1**: a qubit is a two-dimensional complex vector space, $n$ qubits a $2^n$-dimensional one.
 - **ST-3**: the design matrix $X$ has $C(X)$ as the set of fittable mean vectors; multicollinearity is $N(X) \ne \{\mathbf{0}\}$, i.e. dependent predictor columns, and the resulting non-uniqueness of the fit is (3.3). **ML-6**: PCA is low-rank approximation of a data matrix.
 
 ## 6. Exercises
 
-See [exercises.md](exercises.md). A1–A5 drill the subspace test, special solutions, the independence test, and the four subspaces of a small matrix. B1–B8 are the module: B1 (sums and unions of subspaces), B3 (symmetric matrices as a subspace), B5 (the $n$-vectors-in-an-$n$-dimensional-space corollaries), B6 (the $A = CR$ factorization and a second proof that row rank equals column rank), B7 ($N(A^\top A) = N(A)$), and B8 (extend `project.py`) are essential. C1 (the dimension formula for $U + W$), C2 (independence of exponentials), and C3 (rank inequalities and numerical rank) go one step beyond.
+See [exercises.md](exercises.md). A1–A5 drill the subspace test, special solutions, the independence test, and the four subspaces of a small matrix. B1–B8 are the module: B1 (sums and unions of subspaces), B3 (symmetric matrices as a subspace), B5 (every subspace of $\mathbb{R}^3$ is $\{\mathbf{0}\}$, a line, a plane, or $\mathbb{R}^3$; the span and null-space descriptions of a plane), B6 (the $A = CR$ factorization and a second proof that row rank equals column rank), B7 ($N(A^\top A) = N(A)$), and B8 (extend `project.py`) are essential. C1 (direct sums, complements, and why the dimension formula (3.8) has no three-subspace version), C2 (independence of exponentials), and C3 (rank inequalities and numerical rank) go one step beyond.
 
 ## 7. Coding project
 
 `project.py` builds everything in §3.3–§3.10 from scratch and checks it against SciPy:
 
-1. **`rref(A, tol)`**: Gauss–Jordan with partial pivoting on $[A \mid I]$, returning $R$, the pivot columns, and $E$ with $EA = R$. Checked on random matrices (RREF structure, $EA = R$, $E$ invertible).
-2. **Four subspaces**: `column_space_basis` (Theorem 3.28), `null_space_basis` (Theorem 3.18), `row_space_basis` (Theorem 3.29), `left_null_space_basis` (Theorem 3.31). Random rank-$r$ matrices are built as products $BC$ with $B$ an $m \times r$ and $C$ an $r \times n$ random matrix, so the rank is known in advance; the dimensions $r, n - r, r, m - r$ are asserted, the orthogonality relations (3.6) are checked, and each basis is compared to `scipy.linalg.null_space` / `orth` by checking the two bases span the same subspace.
-3. **Examples 4.1–4.4 reproduced exactly**: the matrices $R$ and $E$, the special solutions, the left-null vector $(1, -1, 1)$, the complete solution, the coordinates $(-1, 4, -1)$. Example 4.5 is checked symbolically with SymPy (both basis functions solve the ODE, the Wronskian is $1$, `dsolve` returns particular plus homogeneous).
+1. **`rref_with_E(A, tol)`** (and the wrapper `rref`, which drops $E$): Gauss–Jordan with partial pivoting on $[A \mid I]$, returning $R$, the pivot columns, and $E$ with $EA = R$. Checked on random matrices (RREF structure, $EA = R$, $E$ invertible, and the same $R$ from two pivoting strategies, as the uniqueness corollary after Theorem 3.28 says).
+2. **Four subspaces**: `column_space_basis` (Theorem 3.28), `null_space_basis` (Theorem 3.18), `row_space_basis` (Theorem 3.29), `left_null_space_basis` (Theorem 3.31). Random rank-$r$ matrices are built as products $BC$ with $B$ an $m \times r$ and $C$ an $r \times n$ random matrix, so the rank is known in advance; the dimensions $r, n - r, r, m - r$ are asserted, the orthogonality relations (3.6) and the factorization $A = C\tilde R$ of exercise B6 are checked, and each basis is compared to `scipy.linalg.null_space` / `orth` by checking the two bases span the same subspace.
+3. **Examples 4.1–4.4 reproduced exactly**: the matrices $R$ and $E$, the special solutions, the left-null vector $(1, -1, 1)$, the complete solution, the coordinates $(-1, 4, -1)$. Example 4.5 is checked symbolically with SymPy (both basis functions solve the ODE, the Wronskian is $1$, the energy identity $\mathcal{E}' = 2z'(z'' + z)$ holds for an arbitrary function $z$, the coordinates of $a\cos t + b\sin t$ are its initial conditions, `dsolve` returns particular plus homogeneous).
 4. **Pictures**: $N(A)$ and $C(A^\top)$ drawn in $\mathbb{R}^3$ for a $1 \times 3$ matrix (plane and line) and a $2 \times 3$ matrix (line and plane), saved to `figures/`.
 5. **`is_independent`**, **`extend_to_basis`**, and the rank inequality (3.7) on random products, including a strict case.
 
@@ -591,7 +626,7 @@ See [exercises.md](exercises.md). A1–A5 drill the subspace test, special solut
 - **$\dim N(A) = n - r$, not $r$, and $n$ is the number of columns.** Three slips happen here. Using $m$ instead of $n$ (the null space lives in $\mathbb{R}^n$, the input space). Counting pivots instead of free columns. Thinking a wide matrix (more columns than rows) might have a trivial null space; it cannot, because $r \le m < n$ forces free columns (Theorem 3.14).
 - **Taking the pivot columns of $R$ instead of $A$.** $C(R) \ne C(A)$. $R$ tells you *which* columns; you take them from $A$. The project's `column_space_basis` does this and asserts it against `orth(A)`; break it deliberately and watch the assertion fail.
 - **Steinitz.** The exchange proof is the hardest in the module and the first one where the induction hypothesis has structure ("a spanning list of length $n$ containing $\mathbf{u}_1, \dots, \mathbf{u}_j$"). Do the ▶ Try-it-first case with $k = 2$, $n = 3$ by hand with explicit vectors before reading the general proof. If you only ever read it, it will not stick.
-- **Exercise C1 (dimension of $U + W$)** is harder than it looks because you have to *construct* a basis of $U + W$ from bases of $U$, $W$, and $U \cap W$ and then prove independence by a two-stage argument. Budget an hour.
+- **Theorem 3.35 (dimension of $U + W$)** is harder than it looks because you have to *construct* a basis of $U + W$ from bases of $U$, $W$, and $U \cap W$ and then prove independence by a two-stage argument. Close the notes and rebuild step 4 yourself; budget an hour. Then do exercise C1(c), which shows why the "inclusion–exclusion" pattern stops at two subspaces.
 
 ## 9. Check yourself
 
@@ -607,10 +642,11 @@ See [exercises.md](exercises.md). A1–A5 drill the subspace test, special solut
 10. Give the one-line reason $N(A) \perp C(A^\top)$.
 11. Why is $\operatorname{rank}(AB) \le \operatorname{rank} B$? (Which null space contains which?)
 12. Why does the energy argument in Example 4.5 prove that $\cos t, \sin t$ *span* the solution space, rather than that they are independent?
+13. When is $V = U \oplus W$? Three lines through $\mathbf{0}$ in $\mathbb{R}^2$ meet pairwise only in $\mathbf{0}$; why is their sum not direct?
 
 ## 10. Pair with
 
 - **Strang, *Introduction to Linear Algebra*, ch. 3** (§3.1–3.5). The four subspaces are Strang's organizing idea and his §3.5 big-picture figure is the one drawn in §3.9. His worked $3 \times 4$ examples and the "special solutions" recipe are better rehearsed than anything here.
 - **MIT 18.06, lectures 5–10** (OCW). Lecture 6 (column space and null space), 7 (special solutions), 8 (complete solution $\mathbf{x}_p + \mathbf{x}_n$), 9 (independence, basis, dimension), 10 (the four subspaces). Watch 9 and 10 after §3.9; Strang draws the picture live and talks through the dimension count.
-- **Axler, *Linear Algebra Done Right*, 4th ed., ch. 1–2.** The abstract side done properly: axioms, subspaces, span, independence, the linear dependence lemma (his 2.19), and the proof that independent lists are no longer than spanning lists (his 2.22, the model for Theorem 3.21). Read ch. 2 slowly and do his exercises; this is the proof style LA-4 continues. He uses "list" where this module says "list" and avoids matrices entirely, which is useful discomfort.
+- **Axler, *Linear Algebra Done Right*, 4th ed., ch. 1–2.** The abstract side done properly: axioms, subspaces, span, independence, the linear dependence lemma (his 2.19), and the proof that independent lists are no longer than spanning lists (his 2.22, the model for Theorem 3.21). Read ch. 2 slowly and do his exercises; this is the proof style LA-4 continues. He uses "list" exactly as this module does, and in these chapters avoids matrices entirely, which is useful discomfort.
 - **Hammack, *Book of Proof*, ch. 4–8** (F1's text) if the §3.0 patterns feel foreign: direct proof, contrapositive, contradiction, proving set equality by double inclusion.

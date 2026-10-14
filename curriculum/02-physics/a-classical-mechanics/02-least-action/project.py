@@ -107,6 +107,7 @@ for h in (0.3, 1.0, 2.0):
     assert np.isclose(S_of_h(h), 8 * m * h**2 / (3 * tau) - 2 / 3 * m * G * h * tau)
 h_star = G * tau**2 / 8
 S_cl_ball = -m * G**2 * tau**3 / 24
+assert np.isclose(h_star, 1.22625) and np.isclose(S_cl_ball, -4.00984, atol=5e-6)   # numbers quoted in Example 4.1
 assert np.isclose(S_of_h(h_star), S_cl_ball) and S_of_h(h_star - .1) > S_cl_ball < S_of_h(h_star + .1)
 S_pert = action(lambda t: 0.5 * G * t * (tau - t) + np.sin(np.pi * t),   # η = sin(πt), η(0) = η(1) = 0
                 lambda t: 0.5 * G * (tau - 2 * t) + np.pi * np.cos(np.pi * t), 0, tau, m, lambda y: m * G * y)
@@ -122,10 +123,12 @@ print(f"§3.10: |S_cl|/ħ for this ball = {abs(S_cl_ball) / 1.054571817e-34:.1e}
 
 # %%
 def S_eps(q, qd, eta, etad, a, b, M, V, eps):
+    """S[q + εη] for a perturbation η with η(a) = η(b) = 0 (§3.1)."""
     return action(lambda t: q(t) + eps * eta(t), lambda t: qd(t) + eps * etad(t), a, b, M, V)
 
 
 def dS_deps(*args, e=1e-3):
+    """Central difference for dS[q + εη]/dε at ε = 0: the first variation (3.2)."""
     return (S_eps(*args, e) - S_eps(*args, -e)) / (2 * e)
 
 
@@ -183,6 +186,7 @@ for tau in (2.0, 4.0):
             label=f"τ = {tau:g} ({'<' if tau < np.pi else '>'} T/2 = π)")
     print(f"Example 4.5: τ = {tau}: S_cl = ½cot τ = {S0:+.5f}, c(τ) = {c_coeff(tau):+.5f}")
 assert np.isclose(c_coeff(2.0), 0.73370, atol=5e-6) and np.isclose(c_coeff(4.0), -0.38315, atol=5e-6)
+assert np.isclose(0.5 / np.tan(2.0), -0.22883, atol=5e-6) and np.isclose(0.5 / np.tan(4.0), 0.43185, atol=5e-6)
 print(f"Example 4.5: π²/4 = {np.pi**2 / 4:.5f}, π²/16 = {np.pi**2 / 16:.5f}, threshold τ = π = {np.pi:.4f}")
 ax.set_xlabel("ε"); ax.set_ylabel("S[q_cl + ε sin(πt/τ)]"); ax.legend(); ax.set_title("Minimum, then saddle")
 fig.tight_layout(); fig.savefig(FIG / "oscillator_minimum_vs_saddle.png", dpi=120); plt.close(fig)
@@ -204,6 +208,13 @@ for tau in (2.0, 4.0, 5.0, 7.0):
         assert abs(U[:, 0] @ ref) > 0.9999
 assert n_neg == {2.0: 0, 4.0: 1, 5.0: 1, 7.0: 2}, n_neg
 print("Negative Hessian eigenvalues (descending directions) by τ:", n_neg, "(B4)")
+# The discrete threshold is not exactly π: the lowest eigenvalue (4M/h) sin²(π/(2(N+1))) − hk vanishes at
+# τ_h = 2(N+1) sin(π/(2(N+1))) = π − π³/(24(N+1)²) + ...  (Example 4.5), here π − 8.0e-6.
+N_h = 400
+tau_h = 2 * (N_h + 1) * np.sin(np.pi / (2 * (N_h + 1)))
+assert np.isclose(np.pi - tau_h, 8.0e-6, rtol=1e-2)
+assert np.linalg.eigvalsh(discrete_hessian(tau_h - 1e-6, N_h))[0] > 0 > np.linalg.eigvalsh(discrete_hessian(tau_h + 1e-6, N_h))[0]  # τ_h + 1e-6 < π
+print(f"Discrete convexity threshold for N = {N_h}: τ_h = {tau_h:.7f} = π − {np.pi - tau_h:.1e}")
 with warnings.catch_warnings(), np.errstate(all="ignore"):  # L-BFGS-B runs away past T/2
     warnings.simplefilter("ignore")
     t_ = np.linspace(0, 4.0, 101)[1:-1]
@@ -239,6 +250,7 @@ t = sp.symbols("t", real=True)
 
 
 def total_d(f, qs, vs, accs):
+    """Total time derivative along a path: ∂f/∂t + Σ q̇_i ∂f/∂q_i + Σ q̈_i ∂f/∂q̇_i (the d/dt of (3.3))."""
     return sp.diff(f, t) + sum(sp.diff(f, q) * v for q, v in zip(qs, vs)) + \
         sum(sp.diff(f, v) * a for v, a in zip(vs, accs))
 
@@ -265,6 +277,9 @@ assert sp.simplify(E_ab - (al * m_ * ax_ - be * sp.diff(Vf(x), x))) == 0
 q1, q2, v1, v2, a1, a2 = sp.symbols("q1 q2 v1 v2 a1 a2", real=True)
 dFdt = total_d(Ff(q1, q2, t), [q1, q2], [v1, v2], [a1, a2])
 assert all(sp.simplify(Ei) == 0 for Ei in euler_lagrange(dFdt, [q1, q2], [v1, v2], [a1, a2]))
+L12 = m_ / 2 * (v1**2 + v2**2) - Vf(q1, q2, t)
+assert all(sp.simplify(Ec - c_ * Ei) == 0 for Ec, Ei in zip(euler_lagrange(c_ * L12, [q1, q2], [v1, v2], [a1, a2]),
+                                                           euler_lagrange(L12, [q1, q2], [v1, v2], [a1, a2])))
 # Example 4.2: polar coordinates.
 Lpol = m_ / 2 * (vr**2 + r**2 * vth**2) - Vf(r)
 Er, Eth = euler_lagrange(Lpol, [r, th], [vr, vth], [ar, ath])
@@ -280,7 +295,18 @@ Er_c, Eth_c = euler_lagrange((m_ / 2 * (vx**2 + vy**2) - Vf(x, y)).subs(to_polar
 Exp, Eyp = Ex.subs(to_polar), Ey.subs(to_polar)
 assert sp.simplify((Er_c - (sp.diff(X, r) * Exp + sp.diff(Y, r) * Eyp)).doit()) == 0
 assert sp.simplify((Eth_c - (sp.diff(X, th) * Exp + sp.diff(Y, th) * Eyp)).doit()) == 0
-print("SymPy: Newton (Thm 3.2), αT+βV (Thm 3.3), dF/dt (Thm 3.4), polar E–L and covariance (Thm 3.5) verified.")
+# Theorem 3.5 with a time-dependent map (B3): rotating axes x = X cos Ωt − Y sin Ωt, y = X sin Ωt + Y cos Ωt.
+Om = sp.symbols("Omega", positive=True)
+Xr, Yr, VXr, VYr, AXr, AYr = sp.symbols("X_r Y_r V_X V_Y A_X A_Y", real=True)
+xr, yr = Xr * sp.cos(Om * t) - Yr * sp.sin(Om * t), Xr * sp.sin(Om * t) + Yr * sp.cos(Om * t)
+Dr = lambda f: total_d(f, [Xr, Yr], [VXr, VYr], [AXr, AYr])
+to_rot = {x: xr, y: yr, vx: Dr(xr), vy: Dr(yr), ax_: Dr(Dr(xr)), ay_: Dr(Dr(yr))}
+EX_r, EY_r = euler_lagrange((m_ / 2 * (vx**2 + vy**2) - Vf(x, y)).subs(to_rot), [Xr, Yr], [VXr, VYr], [AXr, AYr])
+Exr, Eyr = Ex.subs(to_rot), Ey.subs(to_rot)
+assert sp.simplify((EX_r - (sp.diff(xr, Xr) * Exr + sp.diff(yr, Xr) * Eyr)).doit()) == 0
+assert sp.simplify((EY_r - (sp.diff(xr, Yr) * Exr + sp.diff(yr, Yr) * Eyr)).doit()) == 0
+print("SymPy: Newton (Thm 3.2), αT+βV (Thm 3.3), dF/dt and cL (Thm 3.4), polar E–L, and covariance (Thm 3.5) "
+      "for polar and rotating coordinates verified.")
 
 # Theorem 3.7: L = ½mv² − qΦ + q v·A gives m a = q(E + v × B) for arbitrary Φ(r, t), A(r, t).
 Lem = m_ / 2 * sum(v**2 for v in V3) - qe * Phi(x, y, z, t) + qe * sum(v * Ai for v, Ai in zip(V3, A))
@@ -305,7 +331,11 @@ print("SymPy: Lorentz force from L (Thm 3.7); symmetric and Landau gauges give i
 # %%
 mc, qc, Bc = 2.0, 1.0, 1.0
 wc = qc * Bc / mc
-rhs_B = lambda t, s: [s[3], s[4], s[5], qc * Bc * s[4] / mc, -qc * Bc * s[3] / mc, 0.0]
+assert np.isclose(wc, 0.5)
+# Integrate the SymPy E–L equations of Part 4 themselves: solve E_sym = 0 for the accelerations, then lambdify.
+acc_sym = sp.solve(E_sym, A3, dict=True)[0]
+acc_num = sp.lambdify((x, y, z, vx, vy, vz), [acc_sym[ai].subs({m_: mc, qe: qc, B: Bc}) for ai in A3], "numpy")
+rhs_B = lambda t, s: [s[3], s[4], s[5], *acc_num(*s)]
 Tc = 2 * np.pi / wc
 sol = solve_ivp(rhs_B, (0, Tc), [0, 0, 0, 1, 0, 0], rtol=1e-11, atol=1e-12, dense_output=True)
 tt = np.linspace(0, Tc, 400)
@@ -345,8 +375,9 @@ cart = solve_ivp(rhs_cart, (0, 5), [ell * np.sin(th0), -ell * np.cos(th0), 0, 0]
 lag = solve_ivp(lambda t, s: [s[1], -G / ell * np.sin(s[0])], (0, 5), [th0, 0], t_eval=tt, rtol=1e-12, atol=1e-12)
 th_cart = np.arctan2(cart.y[0], -cart.y[1])
 dev = np.abs(th_cart - lag.y[0]).max()
-assert dev < 1e-6, dev
+assert dev < 1e-9, dev   # Example 4.3 quotes "about 1e-11"
 print(f"Example 4.3: Cartesian-with-tension vs θ-Lagrangian pendulum, max |Δθ| over 5 s = {dev:.1e}")
+assert np.isclose(G * np.sin(np.pi / 6), 4.905)
 print(f"Example 4.3: inclined plane at 30°: s̈ = g sin α = {G * np.sin(np.pi / 6):.3f} m/s²")
 fig, ax = plt.subplots(figsize=(7, 3.5))
 ax.plot(tt, lag.y[0], lw=4, alpha=.35, label="θ from L(θ, θ̇): one line")
@@ -384,9 +415,14 @@ print(f"A1: S = 4.5, 6.0 (diff 1.5); A2, A4 by SymPy; B7: S' − S = sin 2 = {np
 kep = lambda t, s: [s[2], s[3], -s[0] / np.hypot(s[0], s[1])**3, -s[1] / np.hypot(s[0], s[1])**3,
                     0.5 * (s[2]**2 + s[3]**2) + 1 / np.hypot(s[0], s[1])]   # last slot accumulates S
 for gam in (0.0, 0.3):
-    s = solve_ivp(kep, (0, 2 * np.pi), [1, 0, np.sin(gam), np.cos(gam), 0], rtol=1e-12, atol=1e-12).y[:, -1]
+    kep_sol = solve_ivp(kep, (0, 2 * np.pi), [1, 0, np.sin(gam), np.cos(gam), 0], rtol=1e-12, atol=1e-12,
+                        dense_output=True)
+    s = kep_sol.y[:, -1]
     assert np.allclose(s[:2], [1, 0], atol=1e-7) and np.isclose(s[4], 3 * np.pi)
-    print(f"C2: γ = {gam}: e = sin γ = {np.sin(gam):.4f}, returns to (1, 0) at t = 2π, S = {s[4]:.6f} = 3π")
+    rr = np.hypot(*kep_sol.sol(np.linspace(0, 2 * np.pi, 4001))[:2])
+    e_orbit = (rr.max() - rr.min()) / (rr.max() + rr.min())          # e = (r_a − r_p)/(r_a + r_p), CM-5 (3.13)
+    assert np.isclose(e_orbit, np.sin(gam), atol=1e-6) and np.isclose(0.5 * (rr.max() + rr.min()), 1.0, atol=1e-6)
+    print(f"C2: γ = {gam}: measured e = {e_orbit:.4f} = sin γ, a = 1, returns to (1, 0) at t = 2π, S = {s[4]:.6f} = 3π")
 S_rad = lambda e: gl_integrate(lambda t: 0.5 * ((0.5 * e * np.cos(t / 2))**2 + (1 + e * np.sin(t / 2))**2)
                                + 1 / (1 + e * np.sin(t / 2)), 0, 2 * np.pi)
 e = 1e-3
@@ -406,8 +442,14 @@ print("C3: E–L of e^{γt}(T − V) is e^{γt}(m q̈ + mγ q̇ + k q)  (SymPy)"
 #    S' − S is the same number for every path with the same endpoints. Part 7
 #    has a reference; write yours first. Then discretize L' and minimize it.
 # 2. Push the pendulum interval in Part 1 from τ = 0.8 s to τ = 1.5 s (past half
-#    a small-oscillation period, π√(ℓ/g) ≈ 1.003 s). Watch L-BFGS-B fail, then
-#    find the descending direction from the Hessian of S_h, as Part 3 does.
+#    a small-oscillation period, π√(ℓ/g) ≈ 1.003 s). The minimizer and `shoot`
+#    now disagree, and neither is "wrong": scan q̇(0) over [−20, 20] and you find
+#    three true paths (q̇(0) ≈ −5.62, 0.57, 5.68). Unlike the oscillator, the
+#    pendulum's V is bounded, so S_h is bounded below and L-BFGS-B converges, to
+#    the large swing q̇(0) ≈ 5.68. Build the Hessian of S_h at each path, as Part 3
+#    does: the small-amplitude path (q̇(0) ≈ 0.57) has one negative eigenvalue (a
+#    saddle), the two large swings have none. Then continue Part 1's τ = 0.8
+#    solution to τ = 1.5 in small steps of τ: it grows into the q̇(0) ≈ 5.68 swing.
 # 3. (C1) The brachistochrone as mechanics: treat x as time and y as the
 #    coordinate, with "Lagrangian" √((1 + y'²)/(2 g y)). Minimize its discrete
 #    "action" between (0, small) and (1, 0.65) and compare with the cycloid of F6
