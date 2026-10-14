@@ -84,7 +84,7 @@ Conventions as in the notes: Gamma and Exponential use the **rate** $\lambda$; M
 **B10.** (Metropolis; needs code.) Target $\pi_k \propto k$ on $\{1, \dots, 5\}$. From state $k$, propose $k \pm 1$ with probability $\tfrac12$ each. Reject proposals that leave $\{1, \dots, 5\}$. Accept a proposal $j$ with probability $\min(1, \pi_j/\pi_k)$; otherwise stay.
 (a) Prove that, for *any* target $\boldsymbol\pi > 0$ and any symmetric proposal $Q$ ($Q_{kj} = Q_{jk}$), the Metropolis chain satisfies detailed balance (3.27) with respect to $\boldsymbol\pi$.
 (b) Write out the $5\times5$ transition matrix and verify $\boldsymbol\pi P = \boldsymbol\pi$ directly for one column.
-(c) In `project.py`, `metropolis_discrete` implements this chain. Change the target to $\pi_k \propto k^2$ on $\{1, \dots, 10\}$ and assert that the visit frequencies after $2\times10^5$ steps are within $0.01$ of the normalized target. Where is the normalizing constant used?
+(c) In `project.py`, `metropolis_discrete` implements this chain. Change the target to $\pi_k \propto k^2$ on $\{1, \dots, 10\}$ and assert that the visit frequencies after $4\times10^5$ steps are within $0.01$ of the normalized target. Where is the normalizing constant used?
 
 ## C. Challenge (do at least one)
 

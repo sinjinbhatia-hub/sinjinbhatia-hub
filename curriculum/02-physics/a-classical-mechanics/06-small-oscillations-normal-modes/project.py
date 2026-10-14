@@ -379,7 +379,8 @@ for j, ax in enumerate(axes.ravel()):
     ax.plot(tri[:, 0], tri[:, 1], "0.6", lw=1); ax.scatter(R_t[:, 0], R_t[:, 1], s=120, c="k", zorder=3)
     ax.quiver(R_t[:, 0], R_t[:, 1], a[:, 0], a[:, 1], angles="xy", scale_units="xy", scale=1, color="C3", width=0.012, zorder=4)
     ax.set_aspect("equal"); ax.set_xlim(-1.6, 1.6); ax.set_ylim(-1.3, 1.6); ax.set_xticks([]); ax.set_yticks([])
-    ax.set_title(f"{labels[j]}: omega^2 = {w2_t[j]:.3f} k/m (as eigh returned it)", fontsize=9)
+    ax.set_title(f"{labels[j]}: omega^2 = {abs(w2_t[j]):.3f} k/m", fontsize=9)
+fig.suptitle("Triangle modes as eigh returned them (degenerate subspaces in an arbitrary basis)")
 fig.tight_layout(); fig.savefig(FIG / "triangle_modes.png", dpi=120); plt.close(fig)
 
 # %% [markdown]

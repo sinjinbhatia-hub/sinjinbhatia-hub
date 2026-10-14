@@ -434,6 +434,7 @@ See [exercises.md](exercises.md). A1–A6 are drills: the generalized eigenprobl
 6. **The triangle** (Example 4.6): $K = kB^\top B$ assembled from geometry, $\operatorname{rank}B = 3$, spectrum $(0,0,0,1.5,1.5,3)k/m$ asserted, the degenerate pair identified by near-equal eigenvalues, mode shapes plotted.
 7. **Frequency response** of a damped, driven 3-DOF chain: (3.16) against a direct solve of $(K - \omega^2M + i\omega C)\hat q = \mathbf{F}$, three resonance peaks located at the $\omega_j$.
 8. **`fit_initial_conditions(q0, v0, modes)`** by $M$-projection (3.13), zero modes included, asserted against direct integration of (3.3) for CO₂ with a drifting initial condition.
+9. **Exercise checks.** Every number quoted in `solutions.md`, including the reference solution to B7 (the exact double pendulum against its modal solution) and the car model of C2.
 
 **Build it yourself first:** before reading Part 1, write `normal_modes(K, M)` (Cholesky, form $\tilde K$, `eigh`, map back with `solve_triangular`, sort) and `fit_initial_conditions`. The two things you will get wrong the first time are forgetting to $M$-normalize and dividing by $\omega = 0$.
 

@@ -201,9 +201,10 @@ for ax, (name, (pmf, dist, supp, mu, var, sampler)) in zip(axes.flat, cases.item
     assert math.isclose(dist.mean(), mu) and math.isclose(dist.var(), var)
     x = sampler(100_000)
     check(x.mean(), mu, math.sqrt(var / x.size), k=4, label=f"{name} sample mean")
-    kk = k[: int(np.searchsorted(np.cumsum(pk), 0.9995)) + 2]
+    cut = int(np.searchsorted(np.cumsum(pk), 0.9995)) + 2
+    kk = k[:cut]
     ax.bar(kk, np.bincount(x, minlength=kk.max() + 1)[kk] / x.size, color="C0", alpha=0.5, label="sample")
-    ax.plot(kk, pk[: kk.size] if kk[0] == 0 else [pmf(int(i)) for i in kk], "ko", ms=3, label="formula")
+    ax.plot(kk, pk[:cut], "ko", ms=3, label="formula")
     ax.set_title(f"{name}: mean {mu:.3g}, var {var:.3g}"); ax.legend(fontsize=7)
 fig.tight_layout(); fig.savefig(FIG / "named_pmfs.png", dpi=120); plt.close(fig)
 assert round(math.sqrt(35 / 12), 3) == 1.708
@@ -391,7 +392,7 @@ print("Part 9: linearity on dependent variables")
 vals = np.array([-1, 0, 1]); pX = np.full(3, Fr(1, 3))
 EX = sum(pX * vals); EY = sum(pX * vals ** 2); EXY = sum(pX * vals ** 3)
 assert EX == 0 and EY == Fr(2, 3) and sum(pX * (vals + vals ** 2)) == EX + EY and EXY - EX * EY == 0
-assert Fr(1, 3) != Fr(1, 3) * Fr(1, 3)   # P(X=0, Y=0) = 1/3 but P(X=0)P(Y=0) = 1/9: dependent
+assert pX[1] != pX[1] * pX[1]   # P(X=0, Y=0) = P(X=0) = 1/3, but P(X=0)P(Y=0) = 1/9: dependent
 xs_ = rng.choice(vals, 100_000); check((xs_ + xs_ ** 2).mean(), 2 / 3, (xs_ + xs_ ** 2).std() / math.sqrt(1e5),
                                        label="E[X + X^2]")
 heads = rng.binomial(10, 0.5, 100_000); tails = 10 - heads
@@ -445,8 +446,7 @@ assert np.allclose([stats.norm(1, 2).moment(j) for j in (2, 3, 4)], [5, 13, 73])
 days = [(s, d) for s in "BG" for d in range(7)]                                                           # C1
 fam = list(itertools.product(days, repeat=2)); tb = lambda c: c == ("B", 2)
 assert len(fam) == 196 and cond(lambda f: f[0][0] == f[1][0] == "B", lambda f: tb(f[0]) or tb(f[1]), fam) == Fr(13, 27)
-assert all(Fr(2) - rr == (Fr(2) - rr) and (2 - rr) / (4 - rr) == ((2 * rr - rr**2) / 4) / (rr - rr**2 / 4)
-           for rr in (Fr(1, 7), Fr(1, 2), Fr(1, 365)))
+assert all((2 - rr) / (4 - rr) == ((2 * rr - rr**2) / 4) / (rr - rr**2 / 4) for rr in (Fr(1, 7), Fr(1, 2), Fr(1, 365)))
 sx = rng.integers(0, 2, (200_000, 2)); dy = rng.integers(0, 7, (200_000, 2)); tbs = (sx == 0) & (dy == 2)
 sel = tbs.any(axis=1); check((sx[sel] == 0).all(axis=1).mean(), 13 / 27, prop_se(13 / 27, sel.sum()), label="C1 Tuesday boy")
 

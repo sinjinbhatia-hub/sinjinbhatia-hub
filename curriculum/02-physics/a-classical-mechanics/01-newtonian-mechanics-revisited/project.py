@@ -432,7 +432,8 @@ print("Parts 7 and 8 passed.")
 # %% [markdown]
 # ## Part 9: SymPy checks of the derivations
 #
-# (3.17) Euler energy factor; C2 symplectic determinant and modified energy;
+# (3.17) Euler energy factor and its general form (3.18); C2 symplectic
+# determinant and modified energy;
 # the C1 series from `elliptic_k`; the resonance peak ω² = ω0² - γ²/2;
 # elimination of λ in the bead problem, eq. (3.14); curl tests for A2.
 
@@ -445,6 +446,9 @@ J = sp.Matrix([[sp.diff(x1, x), sp.diff(x1, v)], [sp.diff(v1, x), sp.diff(v1, v)
 assert sp.simplify(J.det()) == 1                                                                # C2(b)
 E_mod = lambda X, V: V**2 / 2 + w**2 * X**2 / 2 - h * w**2 * X * V / 2
 assert sp.expand(E_mod(x1, v1) - E_mod(x, v)) == 0                                             # C2(c)
+Vf = sp.Function("V"); a_ = -sp.diff(Vf(x), x)                                                  # (3.18): general a = -V'
+dE = sp.series((v + h * a_) ** 2 / 2 + Vf(x + h * v) - v**2 / 2 - Vf(x), h, 0, 3).removeO().doit()
+assert sp.simplify(dE - h**2 / 2 * (a_**2 + sp.diff(Vf(x), x, 2) * v**2)) == 0
 
 mm, th = sp.symbols("m theta", positive=True)
 K_ser = sp.series(sp.elliptic_k(mm), mm, 0, 3).removeO()
