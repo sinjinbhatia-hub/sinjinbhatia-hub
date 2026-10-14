@@ -109,7 +109,7 @@ $$
 \mathbf{u} + \mathbf{v} = \begin{pmatrix} u_1 + v_1 \\ \vdots \\ u_n + v_n \end{pmatrix}, \qquad c\mathbf{v} = \begin{pmatrix} c v_1 \\ \vdots \\ c v_n \end{pmatrix}.
 $$
 
-These satisfy the rules you'd expect: addition is commutative and associative, there is a zero vector $\mathbf{0}$, every vector has a negative, and scalar multiplication distributes over both kinds of addition: $c(\mathbf{u} + \mathbf{v}) = c\mathbf{u} + c\mathbf{v}$ and $(c + d)\mathbf{v} = c\mathbf{v} + d\mathbf{v}$. In LA-3 these eight rules become the *definition* of a vector space, and you'll see that functions, polynomials, and matrices are vectors too. For now, they're facts about lists of numbers that you can check entry by entry.
+These satisfy the rules you'd expect: addition is commutative and associative, there is a zero vector $\mathbf{0}$, every vector has a negative, scalar multiplication distributes over both kinds of addition: $c(\mathbf{u} + \mathbf{v}) = c\mathbf{u} + c\mathbf{v}$ and $(c + d)\mathbf{v} = c\mathbf{v} + d\mathbf{v}$, scalars multiply consistently, $(cd)\mathbf{v} = c(d\mathbf{v})$, and $1\mathbf{v} = \mathbf{v}$. In LA-3 these eight rules become the *definition* of a vector space, and you'll see that functions, polynomials, and matrices are vectors too. For now, they're facts about lists of numbers that you can check entry by entry.
 
 **Definition 3.2 (Linear combination, span).** A linear combination of $\mathbf{v}_1, \dots, \mathbf{v}_k$ is any vector of the form $c_1 \mathbf{v}_1 + \cdots + c_k \mathbf{v}_k$ with $c_i \in \mathbb{R}$. The **span** of $\{\mathbf{v}_1, \dots, \mathbf{v}_k\}$ is the set of all such combinations:
 
@@ -211,16 +211,19 @@ Properties, each checkable entry by entry: $\mathbf{u}\cdot\mathbf{v} = \mathbf{
 
 Why is $\|\mathbf{v}\|$ the length? In $\mathbb{R}^2$, $\sqrt{v_1^2 + v_2^2}$ is the Pythagorean theorem. In $\mathbb{R}^3$, apply Pythagoras twice: first in the $xy$-plane to get $\sqrt{v_1^2 + v_2^2}$, then with the $z$-leg. In $\mathbb{R}^n$ we *define* length this way; it agrees with geometry wherever geometry exists.
 
-**Theorem 3.10 (Angle formula).** For nonzero $\mathbf{u}, \mathbf{v} \in \mathbb{R}^n$, let $\theta$ be the angle between them in the plane they span. Then
+**Theorem 3.10 (Angle formula).** For nonzero $\mathbf{u}, \mathbf{v}$ in $\mathbb{R}^2$ or $\mathbb{R}^3$, let $\theta \in [0, \pi]$ be the geometric angle between them. Then
 
 $$
 \mathbf{u} \cdot \mathbf{v} = \|\mathbf{u}\| \|\mathbf{v}\| \cos\theta. \tag{3.4}
 $$
 
+The hypothesis "$\mathbb{R}^2$ or $\mathbb{R}^3$" matters: those are the spaces where "angle" already has a meaning from geometry, and where we checked above that $\|\cdot\|$ is geometric length. In $\mathbb{R}^n$ for $n \ge 4$ there is no angle to start from, and (3.5) below handles that case.
+
 ▶ **Try it first.** The three vectors $\mathbf{u}$, $\mathbf{v}$, and $\mathbf{u} - \mathbf{v}$ form a triangle. Write the law of cosines for it, then expand $\|\mathbf{u} - \mathbf{v}\|^2$ using the dot product.
 
 **Derivation.**
 
+0. *Parallel case.* If $\mathbf{v} = c\mathbf{u}$, the "triangle" is flat, so check (3.4) directly. Here $\mathbf{u}\cdot\mathbf{v} = c\|\mathbf{u}\|^2$ and $\|\mathbf{v}\| = |c|\,\|\mathbf{u}\|$. If $c > 0$ then $\theta = 0$ and the right side is $c\|\mathbf{u}\|^2$. If $c < 0$ then $\theta = \pi$ and the right side is $-|c|\,\|\mathbf{u}\|^2 = c\|\mathbf{u}\|^2$. Either way (3.4) holds. From now on assume $\mathbf{u}, \mathbf{v}$ are not parallel, so the triangle is a genuine one.
 1. Law of cosines, with sides $\|\mathbf{u}\|$, $\|\mathbf{v}\|$, and the opposite side $\|\mathbf{u} - \mathbf{v}\|$:
    $$\|\mathbf{u} - \mathbf{v}\|^2 = \|\mathbf{u}\|^2 + \|\mathbf{v}\|^2 - 2\|\mathbf{u}\|\|\mathbf{v}\|\cos\theta.$$
 2. Expand the left side with the dot product, using linearity and symmetry:
@@ -233,7 +236,7 @@ $$
 $$|\mathbf{u}\cdot\mathbf{v}| \le \|\mathbf{u}\|\|\mathbf{v}\|,$$
 with equality if and only if one vector is a scalar multiple of the other.
 
-In $\mathbb{R}^n$ this follows from (3.4) because $|\cos\theta| \le 1$. But (3.4) leaned on geometry (the law of cosines), and in LA-8 we'll want Cauchy–Schwarz in spaces with no geometry at all, like spaces of functions. So here is a proof that uses only the three algebraic properties of the dot product.
+In $\mathbb{R}^2$ and $\mathbb{R}^3$ this follows from (3.4) because $|\cos\theta| \le 1$. But (3.4) leaned on geometry (the law of cosines), so that argument says nothing in $\mathbb{R}^4$, and in LA-8 we'll want Cauchy–Schwarz in spaces with no geometry at all, like spaces of functions. So here is a proof that uses only the three algebraic properties of the dot product, in every $\mathbb{R}^n$.
 
 ▶ **Try it first.** For any real $t$, $\|\mathbf{u} - t\mathbf{v}\|^2 \ge 0$. Expand it as a quadratic in $t$. A quadratic that's never negative has a non-positive discriminant.
 
@@ -247,7 +250,15 @@ In $\mathbb{R}^n$ this follows from (3.4) because $|\cos\theta| \le 1$. But (3.4
 4. Rearranging: $(\mathbf{u}\cdot\mathbf{v})^2 \le \|\mathbf{u}\|^2\|\mathbf{v}\|^2$. Take square roots.
 5. Equality holds iff the discriminant is $0$ iff $q$ has a real root $t_0$ iff $\|\mathbf{u} - t_0\mathbf{v}\| = 0$ iff $\mathbf{u} = t_0\mathbf{v}$. ∎
 
-■ **What just happened.** The minimizing $t$ in step 3 is $t^* = (\mathbf{u}\cdot\mathbf{v})/\|\mathbf{v}\|^2$, and $t^*\mathbf{v}$ is the **projection** of $\mathbf{u}$ onto the line through $\mathbf{v}$. We just proved Cauchy–Schwarz by projecting. Keep this: it's the first appearance of the formula that runs all of LA-5 and all of least squares.
+■ **What just happened.** The quadratic $q$ in step 3 is smallest at its vertex: $q'(t) = 2\|\mathbf{v}\|^2 t - 2\,\mathbf{u}\cdot\mathbf{v} = 0$ gives $t^* = (\mathbf{u}\cdot\mathbf{v})/\|\mathbf{v}\|^2$, and $q(t^*) = \|\mathbf{u}\|^2 - (\mathbf{u}\cdot\mathbf{v})^2/\|\mathbf{v}\|^2 \ge 0$ is Cauchy–Schwarz again. The vector $t^*\mathbf{v}$ is the **projection** of $\mathbf{u}$ onto the line through $\mathbf{v}$: the closest point on that line to $\mathbf{u}$. We just proved Cauchy–Schwarz by projecting. Keep this: it's the first appearance of the formula that runs all of LA-5 and all of least squares.
+
+**The angle in $\mathbb{R}^n$.** Now turn (3.4) around. For nonzero $\mathbf{u}, \mathbf{v} \in \mathbb{R}^n$ with any $n$, *define* the angle $\theta \in [0, \pi]$ between them by
+
+$$
+\cos\theta = \frac{\mathbf{u}\cdot\mathbf{v}}{\|\mathbf{u}\|\,\|\mathbf{v}\|}. \tag{3.5}
+$$
+
+Cauchy–Schwarz is what guarantees the right side lies in $[-1, 1]$, so that $\theta$ exists. In $\mathbb{R}^2$ and $\mathbb{R}^3$, Theorem 3.10 says this is the geometric angle; for $n \ge 4$, (3.5) is the definition. This is the order of logic: algebraic Cauchy–Schwarz first, angle second. Example 4.4 uses (3.5) in $\mathbb{R}^4$.
 
 **Theorem 3.12 (Triangle inequality).** $\|\mathbf{u} + \mathbf{v}\| \le \|\mathbf{u}\| + \|\mathbf{v}\|$.
 

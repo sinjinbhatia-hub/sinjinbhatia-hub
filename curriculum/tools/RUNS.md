@@ -21,3 +21,4 @@ Script: `curriculum/tools/build_modules_workflow.js`. Resume a run with
 | wf_6c57abdb-8b7 | (resumed) verify+fix: LA-1..LA-12, LA-14, F1 |
 | wf_6a49dba9-e21 | combined: write F5, LA-13, CM-2, CM-3, CM-5 |
 | wf_336d9009-da2 | combined: write CM-6, CM-7, CM-8; review F4, CM-1, CM-4 |
+| wf_7b8457b9-8e2 | combined: write EM-1..EM-4 |

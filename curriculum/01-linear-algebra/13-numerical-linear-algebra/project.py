@@ -1244,6 +1244,11 @@ print(f"B4: fl(AᵀA) = {GL.tolist()} (singular, solve raises LinAlgError); κ(A
 tmax = np.array([rv[-1] for rv in ritz_hist]); tmin = np.array([rv[0] for rv in ritz_hist])
 assert np.all(np.diff(tmax) >= -1e-9 * lam_max) and np.all(np.diff(tmin) <= 1e-9 * lam_max)
 print(f"B5: largest Ritz value nondecreasing and smallest nonincreasing over k = 1..{K_LZ} ✓; κ estimates {r30[-1]/r30[0]:.0f} (k=30) ≤ {laplacian_condition(N):.0f}")
+# B5(c): κ ≥ 574 means (3.30) cannot guarantee 1e-8 in fewer than 229 steps; actual CG on this grid (N = 100 row above): ≈ 300.
+rho574 = (np.sqrt(574) - 1) / (np.sqrt(574) + 1); k574 = math.ceil(np.log(1e-8 / 2) / np.log(rho574))
+it_N100 = int(res[res[:, 0] == 100, 3][0])
+assert round(rho574, 3) == 0.920 and k574 == 229 and abs(it_N100 - 300) <= 10
+print(f"   κ ≥ 574 ⇒ ρ ≥ {rho574:.3f}, (3.30) needs k ≥ {k574} for 1e-8; measured CG on N = 100: {it_N100} iterations")
 
 # B6: a shifted QR step with an exact eigenvalue as shift deflates at once; the Rayleigh shift stalls on [[0,1],[1,0]].
 mu6 = 2 - np.sqrt(2); Q6s, R6s = qr_positive(A44 - mu6 * np.eye(2)); A1s = R6s @ Q6s + mu6 * np.eye(2)
