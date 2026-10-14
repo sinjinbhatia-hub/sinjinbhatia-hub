@@ -169,7 +169,7 @@ Now $k = \sin(\theta_0/2) = \dfrac{\theta_0}{2} - \dfrac{\theta_0^3}{48} + O(\th
 $$\frac{T}{T_0} = \frac{2K}{\pi} = 1 + \frac14\left(\frac{\theta_0^2}{4} - \frac{\theta_0^4}{48}\right) + \frac{9}{64}\cdot\frac{\theta_0^4}{16} + O(\theta_0^6) = 1 + \frac{\theta_0^2}{16} + \theta_0^4\left(-\frac{1}{192} + \frac{9}{1024}\right) + O(\theta_0^6).$$
 Common denominator 3072: $-\dfrac{16}{3072} + \dfrac{27}{3072} = \dfrac{11}{3072}$. So $T = T_0\left(1 + \dfrac{\theta_0^2}{16} + \dfrac{11\theta_0^4}{3072} + O(\theta_0^6)\right)$. ∎
 
-At $\theta_0 = \pi/2$: $\theta_0^2 = 2.4674$, $\theta_0^4 = 6.0881$. One term: $1 + 0.15421 = 1.15421$. Two terms: $1.15421 + 11\times 6.0881/3072 = 1.15421 + 0.02180 = 1.17601$. Exact: $1.18034$. The error drops from 2.6% to 0.4%. SymPy (project, Part 9) reproduces the series from `elliptic_k`.
+At $\theta_0 = \pi/2$: $\theta_0^2 = 2.4674$, $\theta_0^4 = 6.0881$. One term: $1 + 0.15421 = 1.15421$. Two terms: $1.15421 + 11\times 6.0881/3072 = 1.15421 + 0.02180 = 1.17601$. Exact: $1.18034$. The relative error drops from 2.2% to 0.37%. SymPy (project, Part 9) reproduces the series from `elliptic_k`.
 
 **C2.** (a) $\Phi(x, v) = (x + hv,\ v + ha(x))$. Jacobian $\begin{pmatrix}\partial_x(x + hv) & \partial_v(x + hv)\\ \partial_x(v + ha) & \partial_v(v + ha)\end{pmatrix} = \begin{pmatrix}1 & h\\ ha'(x) & 1\end{pmatrix}$, determinant $1 - h^2a'(x)$. For $a = -\omega^2x$, $a' = -\omega^2$ and the determinant is $1 + h^2\omega^2$: the area inflation factor of (3.17). ∎
 

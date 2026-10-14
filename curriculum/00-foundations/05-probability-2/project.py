@@ -503,6 +503,7 @@ Zm = rng.random(400_000) < pz
 Ym = np.where(Zm, m1 + s1 * rng.standard_normal(400_000), m0 + s0 * rng.standard_normal(400_000))
 EY_th = (1 - pz) * m0 + pz * m1; EV_th = (1 - pz) * s0**2 + pz * s1**2; VE_th = pz * (1 - pz) * (m1 - m0) ** 2
 assert np.isclose(EY_th, 1.2) and np.isclose(EV_th, 1.9) and np.isclose(VE_th, 3.36) and np.isclose(EV_th + VE_th, 5.26)
+assert np.isclose(0.5 * np.log(2 * np.pi * np.e * 5.26), 2.249, atol=5e-4)     # Gaussian entropy at the mixture's variance
 assert abs(Ym.mean() - 1.2) < 0.01 and abs(Ym.var() - 5.26) < 0.05
 within = (1 - pz) * Ym[~Zm].var() + pz * Ym[Zm].var()
 between = (1 - pz) * (Ym[~Zm].mean() - Ym.mean()) ** 2 + pz * (Ym[Zm].mean() - Ym.mean()) ** 2
@@ -825,6 +826,13 @@ chain_m = metropolis_discrete(np.log(target_unnorm), 5, 200_000, rng)
 freq_m = np.bincount(chain_m, minlength=5) / len(chain_m)
 assert np.abs(freq_m - pi_true).max() < 0.01, freq_m
 print(f"B10: Metropolis frequencies {np.round(freq_m, 4)} vs target {np.round(pi_true, 4)}; detailed-balance gap {detailed_balance_gap(P_met, pi_true):.1e}")
+# B10(c): target k^2 on {1..10}; the code only ever sees log-ratios, the constant 385 is used only to check
+k10 = np.arange(1, 11, dtype=float)
+assert (k10**2).sum() == 385
+chain_10 = metropolis_discrete(2 * np.log(k10), 10, 400_000, rng)
+freq_10 = np.bincount(chain_10, minlength=10) / len(chain_10)
+assert np.abs(freq_10 - k10**2 / 385).max() < 0.01, freq_10
+print(f"B10(c): target k^2/385 on 1..10: max |freq - target| = {np.abs(freq_10 - k10**2 / 385).max():.4f}")
 
 # PageRank on a four-page web, alpha = 0.85
 links = {0: [1, 2], 1: [2], 2: [0], 3: [2]}

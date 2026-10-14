@@ -28,7 +28,7 @@ So the arc of this module is: Newton's laws, done properly; the conservation law
 
 Forget "force causes acceleration." Think: **momentum is a conserved substance, and force is its flow rate.** $\mathbf{F} = \dot{\mathbf{p}}$ says a force on a body is a rate at which momentum is being delivered to it. The third law then says momentum delivered to one body is taken from another: momentum is never created, only moved. The center-of-mass theorem in §3.2 is nothing more than this bookkeeping: internal transfers cancel in the total, so the total momentum of a system changes only by what flows in from outside.
 
-This picture survives into field theory, where the third law in its naive form does not (§3.1). Two moving charges can push on each other with forces that are *not* equal and opposite. Momentum is still conserved, because the electromagnetic field itself carries momentum, and the "missing" momentum is in the field. Force as momentum flow is the version of Newton that survives; "action equals reaction between pairs of bodies" is the version that does not.
+This picture survives into field theory, where the naive third law does not (§3.1): two moving charges can push on each other with forces that are *not* equal and opposite, and the "missing" momentum is carried by the electromagnetic field. Force as momentum flow is the version of Newton that survives; "action equals reaction between pairs of bodies" is not.
 
 ### Conservation laws are symmetries in disguise
 
@@ -441,16 +441,17 @@ See [exercises.md](exercises.md). A1–A5 are drills: center of mass, curl tests
 
 ## 7. Coding project
 
-`project.py` makes every claim in the notes checkable and makes §3.11 visible:
+`project.py` checks every number in the notes and solutions and makes §3.11 visible:
 
-1. **Three integrators on the nonlinear pendulum** for 100 periods: Euler, RK4 (hand-written, plus `solve_ivp`), and symplectic Euler. Plots energy error versus time. Asserts: on the harmonic oscillator, (3.17) exactly and the §3.11 numbers ($E/E_0 = 1.484$, $51.8$); on the pendulum, Euler up about 41% at 10 periods and past the separatrix by period 61, RK4's error below $10^{-6}$ (it is $7\times10^{-11}$; at $h = T_0/100$ it drifts down to $7\times10^{-6}$), symplectic Euler bounded with no trend.
-2. **Phase portrait** of the pendulum with the separatrix $E = 2mg\ell$ drawn in.
-3. **Period versus amplitude:** numerical (from `solve_ivp` events) versus the elliptic integral (4.1) versus the small-angle correction (4.2) and the C1 term; SymPy regenerates the series.
-4. **Projectiles:** linear drag closed form (3.9) versus numerics, Example 4.3 numbers; quadratic drag versus no drag.
-5. **Driven oscillator:** numerical steady-state amplitude across frequency overlaid on (3.10); Example 4.4 numbers; the power FWHM.
-6. **Bead on the parabolic wire:** integrates (3.14), computes $N(t)$, asserts Example 4.5 and energy conservation; SymPy re-derives (3.14) by eliminating $\lambda$.
-7. **Atwood machine done the Newtonian way:** solves the $3\times 3$ linear system for $(\ddot{y}_1, \ddot{y}_2, T)$ at every step and integrates; asserts (3.16).
-8. **Exploding shell and rocket:** Example 4.1 and 4.6 numbers.
+1. **Three integrators on the pendulum** for 100 periods: Euler, RK4 (hand-written, checked against `solve_ivp`), symplectic Euler; energy error versus time. Asserts (3.17) and the §3.11 numbers on the harmonic oscillator ($E/E_0 = 1.484$, $51.8$); on the pendulum, Euler up 41% at 10 periods and past the separatrix at period 61, RK4's error below $10^{-6}$ (it is $7\times10^{-11}$; at $h = T_0/100$ it drifts down to $7\times10^{-6}$), symplectic Euler bounded with no trend.
+2. **Phase portrait** with the separatrix $E = 2mg\ell$.
+3. **Period versus amplitude:** `solve_ivp` events versus (4.1), (4.2), and the C1 term.
+4. **Drag:** (3.9) versus numerics (Example 4.3); quadratic drag versus none.
+5. **Driven oscillator:** numerical steady state overlaid on (3.10); Example 4.4; the power FWHM.
+6. **Bead on the wire:** integrates (3.14), computes $N(t)$, asserts Example 4.5 and energy conservation.
+7. **Atwood, the Newtonian way:** solves the $3\times 3$ system for $(\ddot{y}_1, \ddot{y}_2, T)$ at every step; asserts (3.16).
+8. **Shell and rocket:** Examples 4.1 and 4.6.
+9. **SymPy and the rest:** re-derives (3.14), (3.17), the C1 series, the C2 identities, and the curl tests; a last cell asserts the remaining numbers in `solutions.md`.
 
 **Build it yourself:** before reading the code, write `euler_step`, `rk4_step`, and `symplectic_euler_step` for a generic $\ddot{x} = a(x)$, and `pendulum_period_elliptic(theta0, l)`. Then compare. The "Your turn" section asks for Coulomb friction on the oscillator (linear amplitude decay; B7 derives the rate), the period of $V = \alpha x^4$ versus amplitude (B4 predicts $T \propto 1/A$), and a rocket simulation against the closed form of §3.9.
 

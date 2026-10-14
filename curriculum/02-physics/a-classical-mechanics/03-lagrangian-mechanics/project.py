@@ -449,8 +449,9 @@ assert sp.simplify(sph.acc[0].subs(ph.diff(t), pphi / (m * ell**2 * sp.sin(th)**
 th0 = np.radians(40.0)
 phid0 = np.sqrt(G / np.cos(th0))                        # conical pendulum, ell = 1
 Om_B6 = phid0 * np.sqrt(1 + 3 * np.cos(th0)**2)
-print(f"Example 4.7 / B6: theta0 = 40 deg: phi_dot0 = {phid0:.4f} rad/s, Omega = {Om_B6:.4f} rad/s, "
-      f"Omega/phi_dot0 = {Om_B6/phid0:.4f}")
+print(f"Example 4.7 / B6: theta0 = 40 deg: cos = {np.cos(th0):.5f}, g/(ell cos) = {G/np.cos(th0):.4f}, 1 + 3cos^2 = "
+      f"{1 + 3*np.cos(th0)**2:.5f}; phi_dot0 = {phid0:.4f} rad/s, Omega = {Om_B6:.4f} rad/s, Omega/phi_dot0 = {Om_B6/phid0:.4f}, "
+      f"2pi/Omega = {2*np.pi/Om_B6:.4f} s")
 assert 1 < Om_B6 / phid0 < 2
 # conical motion: theta stays constant
 sol_c = solve_ivp(sph.rhs, (0, 5), [th0, 0.0, 0.0, phid0], t_eval=np.linspace(0, 5, 501), **TIGHT)
@@ -733,7 +734,8 @@ assert A_K**2 * 150**2 > 2 * G * ELL_K > A_K**2 * 60**2       # 56.25 > 19.62 > 
 assert dev150 < 0.3 and dev60 > 2.0
 Om_eff = np.sqrt(A_K**2 * 150**2 / (2 * ELL_K**2) - G / ELL_K)
 print(f"C2(d): a^2 gamma^2 = {A_K**2*150**2:.2f} (gamma=150) and {A_K**2*60**2:.2f} (gamma=60) vs 2 g ell = {2*G*ELL_K:.2f}. "
-      f"gamma=150: max|theta - pi| = {dev150:.3f} rad (stays inverted; slow period {2*np.pi/Om_eff:.2f} s); "
+      f"gamma=150: max|theta - pi| = {dev150:.3f} rad (stays inverted; Omega_eff^2 = {Om_eff**2:.3f}, Omega_eff = {Om_eff:.3f} rad/s, "
+      f"slow period {2*np.pi/Om_eff:.2f} s); "
       f"gamma=60: max|theta - pi| = {dev60:.2f} rad (falls)")
 fig, ax = plt.subplots(figsize=(6.5, 3.4))
 for gamma_v, s in kap.items():

@@ -475,11 +475,14 @@ ax.set_title("CO2 given a push: vibration on top of drift, (3.13) with the zero 
 # A1: m = (1, 2), springs (1, 2, 2): K = [[3,-2],[-2,4]], omega^2 = 1, 4, shapes (1,1)/sqrt3, (2,-1)/sqrt6.
 w2, A = normal_modes([[3.0, -2], [-2, 4]], np.diag([1.0, 2]))
 assert np.allclose(w2, [1, 4]) and np.allclose(sign_fix(A), np.c_[[1, 1] / SQ3, [2, -1] / np.sqrt(6)])
+assert np.isclose(abs(A[:, 0] @ A[:, 1]), 1 / (3 * SQ2)) and np.isclose(1 / (3 * SQ2), 0.2357, atol=5e-5)   # ordinary dot != 0
 # A2: double-pendulum shapes M-normalized; A^T K A = g diag(2 -+ sqrt2).
 assert np.allclose(A44 * np.sign(A44[0]), [[0.38268, 0.92388], [0.54120, -1.30656]], atol=5e-6)   # first entries positive
 assert np.allclose(A44.T @ K44 @ A44, np.diag([5.7466, 33.4934]), atol=5e-4)
+assert np.allclose(A44 @ A44.T, np.linalg.inv(M44)) and np.allclose(np.linalg.inv(M44), [[1, -1], [-1, 2]])   # A A^T = M^{-1}
 # A3: M = [[1,2],[2,1]] is symmetric but not PD: v = (1,-1) gives -2; eigenvalues 3, -1.
 assert np.array([1, -1]) @ np.array([[1, 2], [2, 1]]) @ np.array([1, -1]) == -2 and np.allclose(np.linalg.eigvalsh([[1, 2], [2, 1]]), [-1, 3])
+Mb = np.array([[1.0, 1], [0, 1]]); assert np.allclose(np.linalg.eigvalsh((Mb + Mb.T) / 2), [0.5, 1.5]) and Mb[0, 1] != Mb[1, 0]   # PD form, not symmetric
 # A4: V = (x^2-1)^2/4 + (y-x)^2: equilibria (0,0) saddle, (+-1,+-1) stable.
 x, y = sp.symbols("x y"); V_a4 = (x**2 - 1)**2 / 4 + (y - x)**2
 eqs = sp.solve([sp.diff(V_a4, x), sp.diff(V_a4, y)], [x, y], dict=True)
@@ -487,7 +490,8 @@ assert sorted((e[x], e[y]) for e in eqs) == [(-1, -1), (0, 0), (1, 1)]
 H0 = np.array(sp.hessian(V_a4, (x, y)).subs({x: 0, y: 0}), float); H1 = np.array(sp.hessian(V_a4, (x, y)).subs({x: 1, y: 1}), float)
 assert np.allclose(H0, [[1, -2], [-2, 2]]) and np.allclose(H1, [[4, -2], [-2, 2]])
 assert np.allclose(np.linalg.eigvalsh(H0), [(3 - np.sqrt(17)) / 2, (3 + np.sqrt(17)) / 2]) and np.allclose(np.linalg.eigvalsh(H0), [-0.5616, 3.5616], atol=5e-5)
-assert np.isclose(np.sqrt(0.5616), 0.7494, atol=5e-5) and np.allclose(np.linalg.eigvalsh(H1), [3 - np.sqrt(5), 3 + np.sqrt(5)])
+assert np.isclose(np.sqrt(0.5616), 0.7494, atol=5e-5) and np.isclose(np.sqrt((3 + np.sqrt(17)) / 2), 1.8872, atol=5e-5)
+assert np.allclose(np.linalg.eigvalsh(H1), [3 - np.sqrt(5), 3 + np.sqrt(5)]) and np.allclose(np.linalg.eigvalsh(H1), [0.7639, 5.2361], atol=5e-5)
 assert np.allclose(np.sqrt(np.linalg.eigvalsh(H1)), [0.8740, 2.2882], atol=5e-5)
 # A5: N = 3 string shapes (1/sqrt2, 1, 1/sqrt2), (1, 0, -1), (1/sqrt2, -1, 1/sqrt2) are eigenvectors with 2 -+ sqrt2, 2.
 K, M, d, m = string_KM(3); om0sq = 1 / d**2
@@ -496,6 +500,7 @@ for a, lam in [([1 / SQ2, 1, 1 / SQ2], 2 - SQ2), ([1, 0, -1], 2), ([1 / SQ2, -1,
 # A6: l = 0.6, m = 0.2, T_beat = 12 s -> k = m (omega2^2 - omega1^2)/2 = 0.4508; weak-coupling k ~ m omega1 dOmega = 0.4234.
 om1 = np.sqrt(9.81 / 0.6); dom = 2 * np.pi / 12; k_exact = 0.2 * ((om1 + dom)**2 - om1**2) / 2; k_weak = 0.2 * om1 * dom
 assert np.isclose(k_exact, 0.4508, atol=5e-5) and np.isclose(k_weak, 0.4234, atol=5e-5) and np.isclose(om1, 4.0435, atol=5e-5)
+assert np.isclose(dom, 0.5236, atol=5e-5) and np.isclose((k_exact - k_weak) / k_exact, 0.061, atol=5e-4)
 # B1: Example 4.2 with a damper on mass 1 only: A^T C A is full. Rayleigh alpha=0.1, beta=0.05: zeta = (0.0827, 0.0710). Fit zeta = 0.02 twice.
 ACA = A42.T @ np.diag([1.0, 0]) @ A42
 assert np.allclose(ACA, [[(3 - SQ3) / 6, 1 / np.sqrt(6)], [1 / np.sqrt(6), (3 + SQ3) / 6]]) and np.allclose(ACA, [[0.21132, 0.40825], [0.40825, 0.78868]], atol=5e-6)
@@ -521,7 +526,10 @@ assert np.allclose(E_modes, [2.4525, 2.9525]) and np.isclose(E_modes.sum(), 0.5 
 tt = np.linspace(0, 30, 7); Qb = q_b(tt); Vb = (q_b(tt + 1e-6) - q_b(tt - 1e-6)) / 2e-6
 Xi_t, Xid_t = Qb @ M41 @ A41, Vb @ M41 @ A41
 assert np.allclose(0.5 * (Xid_t**2 + np.array([9.81, 11.81]) * Xi_t**2), E_modes, atol=1e-6)
-assert np.allclose(q_b(T_transfer)[0, 0], 0, atol=1e-12)                 # pendulum 1 stops dead at T_transfer
+assert np.allclose(q_b(T_transfer)[0, 0], 0, atol=1e-12)                 # pendulum 1 passes through 0 at T_transfer ...
+thd1 = (q_b(T_transfer + 1e-6) - q_b(T_transfer - 1e-6))[0, 0] / 2e-6      # ... with |theta1'| <= eps theta0 (theta0 = 1 here)
+E_pend1 = 0.5 * thd1**2 * M41[0, 0]; assert abs(thd1) <= eps + 1e-9 and E_pend1 / E_modes.sum() < 0.0025
+print(f"B4: E_modes = {E_modes} theta0^2; at T_transfer theta1' = {thd1:.4f} theta0, pendulum-1 share of E = {E_pend1 / E_modes.sum():.5f}")
 # B5: N = 5, q0 = (1,2,3,2,1): sine coefficients c_j = (2/(N+1)) sum_k q0_k sin(jk pi/6).
 N = 5; kk = np.arange(1, N + 1); S5 = np.sin(np.outer(kk, kk) * np.pi / (N + 1))
 assert np.allclose(S5.T @ S5, (N + 1) / 2 * np.eye(N))
@@ -531,7 +539,8 @@ assert np.allclose(c5, [2.48803, 0, -1 / 3, 0, 0.17863], atol=5e-6) and np.allcl
 q_k, xi_k, xid_k = fit_initial_conditions([0, 0, 0.0], [1.0, 0, 0], (w2_co2, A_co2, M_co2))
 assert np.allclose(np.abs(xid_k), [16 / np.sqrt(44), 16 / np.sqrt(32), 16 / norms_co2[2]]) and np.allclose(np.abs(xid_k), [2.41209, 2.82843, 1.47710], atol=5e-6)
 coef_x1 = A_co2[0] * xid_k; assert np.allclose(coef_x1, [4 / 11, 0.5, 3 / 22]) and np.allclose(coef_x1, [0.36364, 0.5, 0.13636], atol=5e-6)
-assert np.allclose(A_co2[1] * xid_k, [4 / 11, 0, -4 / 11])
+assert np.allclose(A_co2[1] * xid_k, [4 / 11, 0, -4 / 11]) and np.allclose(A_co2[2] * xid_k, [4 / 11, -0.5, 3 / 22])
+assert np.allclose(np.abs(xi_k), 0) and np.allclose([A_co2[i] @ xid_k for i in range(3)], [1, 0, 0])   # velocities reproduce v0
 # B7 (reference solution): double pendulum (m = l = 1) released from (theta0, 0) at rest.
 # Linear: xi = (0.13066, 0.054120) for theta0 = 0.1, E_1 = E_2 = g theta0^2 / 2 exactly. Exact (CM-3) equations:
 # [[2, c], [c, 1]] theta'' = (-w2^2 s - 2 g sin th1, w1^2 s - g sin th2), c = cos(th1 - th2), s = sin(th1 - th2).
@@ -556,6 +565,7 @@ print(f"B7: max|exact - modal|/theta0 over 10 s = {b7[0.1][0]:.3f} (0.1 rad), {b
       f"relative swing of E_1 = {b7[0.1][1]:.4f}, {b7[1.0][1]:.3f}")
 # B8: K^{-1} = A Omega^{-2} A^T; static response to F = e1 is (3/4, 1/2, 1/4); mode 2 has a node at mass 2.
 assert np.allclose(np.linalg.inv(K3), A3 @ np.diag(1 / w2_3) @ A3.T) and np.allclose(np.linalg.solve(K3, [1, 0, 0]), [0.75, 0.5, 0.25])
+assert np.allclose(np.linalg.inv(K3), np.array([[3, 2, 1], [2, 4, 2], [1, 2, 3]]) / 4)
 assert np.allclose(A3[0]**2 / w2_3, [0.42678, 0.25, 0.07322], atol=5e-6)            # modal pieces of the static 3/4
 assert np.allclose(np.abs(A3[:, 1]), [1 / SQ2, 0, 1 / SQ2]) and np.allclose(zeta3, [0.016892, 0.014142, 0.014651], atol=5e-7)
 peak_exact = np.abs(receptance(w2_3, A3, zeta3, np.array([1.0, 0, 0]), om3)[:, 0])  # |q_1| driven at mass 1, at omega = omega_j
@@ -588,7 +598,8 @@ assert np.allclose(x_node, [-3.170, 0.474], atol=5e-4) and np.allclose(shapes_ca
 Vand = np.vander(w2_3, 3, increasing=True); c_l = np.linalg.solve(Vand, 2 * np.array([0.02, 0.03, 0.05]) * om3)
 MinvK3 = np.linalg.solve(M3, K3); C_caughey = M3 @ sum(c * np.linalg.matrix_power(MinvK3, l) for l, c in enumerate(c_l))
 assert np.allclose(C_caughey, C_caughey.T) and np.allclose(A3.T @ C_caughey @ A3, np.diag(2 * np.array([0.02, 0.03, 0.05]) * om3))
-print(f"C3 Caughey coefficients (c0, c1, c2) = {c_l.round(5)}")
+assert np.allclose(c_l, [0.021529, 0.008819, 0.011421], atol=5e-7) and np.allclose(2 * np.array([0.02, 0.03, 0.05]) * om3, [0.030615, 0.084853, 0.184776], atol=5e-7)
+print(f"C3 Caughey coefficients (c0, c1, c2) = {c_l.round(6)}")
 print("Part 9: all exercise numbers reproduced.")
 
 # %% [markdown]
