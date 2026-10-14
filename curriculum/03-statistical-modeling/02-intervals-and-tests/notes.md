@@ -68,7 +68,7 @@ $$\bar X\sim\mathcal N(\mu,\sigma^2/n),\qquad (n-1)S^2/\sigma^2\sim\chi^2_{n-1}.
 5. Its squared length, by Pythagoras for orthonormal vectors (LA-5 Theorem 3.2): $(n-1)S^2 = \|\mathbf X-\bar X\mathbf 1\|^2 = \sigma^2\sum_{i=2}^nW_i^2$. A sum of $n-1$ squared iid standard Normals is $\chi^2_{n-1}$ (F5 §3.5). That is (b).
 6. $\bar X$ is a function of $W_1$ alone and $S^2$ of $W_2,\dots,W_n$ alone, so they are independent. That is (c). ∎
 
-■ **What just happened.** The data vector splits into a component along $\mathbf 1$ (one dimension: the mean) and a component perpendicular to it ($n-1$ dimensions: the spread). Spherical Gaussian noise does not care which axes you use, so the components are independent. **Degrees of freedom are the dimension of the subspace the residual lives in.** You lose one because you projected out one direction; ST-3 projects out $p$ and gets $n-p$. Part (c) is special to the Normal: for Exponential data the project finds $\operatorname{corr}(\bar X,S^2)\approx0.69$.
+■ **What just happened.** The data vector splits into a component along $\mathbf 1$ (one dimension: the mean) and a component perpendicular to it ($n-1$ dimensions: the spread). Spherical Gaussian noise does not care which axes you use, so the components are independent. **Degrees of freedom are the dimension of the subspace the residual lives in.** You lose one because you projected out one direction; ST-3 projects out $p$ and gets $n-p$. Part (c) is special to the Normal: for Exponential data the project finds $\operatorname{corr}(\bar X,S^2)\approx0.68$.
 
 **Definition 3.2 ($t$ and $F$).** If $Z\sim\mathcal N(0,1)$ and $V\sim\chi^2_k$ are independent,
 $$T = \frac{Z}{\sqrt{V/k}}\sim t_k. \tag{3.2}$$
@@ -131,7 +131,7 @@ Keep two errors apart. The *Monte Carlo error* $\widehat{\rm se}_B-\widehat{\rm 
 
 **Bootstrap intervals.** With $\hat\theta^*_{(a)}$ the $a$-quantile of the replicates:
 $$\text{normal: }\hat\theta\pm z_{\alpha/2}\widehat{\rm se}_B;\qquad\text{percentile: }\big[\hat\theta^*_{(\alpha/2)},\,\hat\theta^*_{(1-\alpha/2)}\big];\qquad\text{basic: }\big[2\hat\theta-\hat\theta^*_{(1-\alpha/2)},\,2\hat\theta-\hat\theta^*_{(\alpha/2)}\big]. \tag{3.10}$$
-The basic (pivotal) interval needs a derivation. Treat $\Delta = \hat\theta-\theta$ as an approximate pivot and approximate its distribution by that of $\Delta^* = \hat\theta^*-\hat\theta$, the same quantity in the bootstrap world where $\hat\theta$ plays the truth. (1) In the bootstrap world, $P^*(\hat\theta^*_{(\alpha/2)}-\hat\theta\le\Delta^*\le\hat\theta^*_{(1-\alpha/2)}-\hat\theta) = 1-\alpha$. (2) Transfer: $P(\hat\theta^*_{(\alpha/2)}-\hat\theta\le\hat\theta-\theta\le\hat\theta^*_{(1-\alpha/2)}-\hat\theta)\approx1-\alpha$. (3) Solve for θ to get (3.10)'s basic interval. The percentile interval is right when some monotone transform of $\hat\theta$ is a symmetric pivot, and it respects the parameter's range. Neither dominates: in the project (skewed data, $n = 30$) both cover the mean 90–93% of the time, and for the median the basic interval drops to 0.83. **BCa** (Efron 1987; Efron and Tibshirani ch. 14) corrects the percentile endpoints for bias and skewness. The **parametric bootstrap** resamples from a fitted model $p(x;\hat\theta)$ instead of $\hat F_n$.
+The basic (pivotal) interval needs a derivation. Treat $\Delta = \hat\theta-\theta$ as an approximate pivot and approximate its distribution by that of $\Delta^* = \hat\theta^*-\hat\theta$, the same quantity in the bootstrap world where $\hat\theta$ plays the truth. (1) In the bootstrap world, $P^*(\hat\theta^*_{(\alpha/2)}-\hat\theta\le\Delta^*\le\hat\theta^*_{(1-\alpha/2)}-\hat\theta) = 1-\alpha$. (2) Transfer: $P(\hat\theta^*_{(\alpha/2)}-\hat\theta\le\hat\theta-\theta\le\hat\theta^*_{(1-\alpha/2)}-\hat\theta)\approx1-\alpha$. (3) Solve for θ to get (3.10)'s basic interval. The percentile interval is right when some monotone transform of $\hat\theta$ is a symmetric pivot, and it respects the parameter's range. Neither dominates: in the project (Exponential data, $n = 30$) percentile and basic cover the mean 91% and 89% of the time, and for the median the basic interval drops to 0.82. **BCa** (Efron 1987; Efron and Tibshirani ch. 14) corrects the percentile endpoints for bias and skewness. The **parametric bootstrap** resamples from a fitted model $p(x;\hat\theta)$ instead of $\hat F_n$.
 
 **When it fails: the maximum.** Let $X_i\sim\mathrm{Unif}(0,\theta)$ and $\hat\theta = X_{(n)}$, the sample maximum (ST-1's MLE here).
 
@@ -141,9 +141,9 @@ The basic (pivotal) interval needs a derivation. Treat $\Delta = \hat\theta-\the
 2. Bootstrap world: $\hat\theta^* = \hat\theta$ exactly when at least one of the $n$ draws is the observation $X_{(n)}$. Each draw misses it with probability $1-1/n$, so
 $$P^*(\hat\theta^* = \hat\theta) = 1-(1-1/n)^n\to1-e^{-1}\approx0.632. \tag{3.11}$$
 3. The bootstrap law of $n(\hat\theta-\hat\theta^*)$ has an atom of mass ≈ 0.632 at 0; the true law of $n(\theta-\hat\theta)$ has none. They do not approach each other.
-4. Worse, $\hat\theta^*\le\hat\theta<\theta$ always, so the percentile interval lies entirely below θ: its coverage is exactly **0**. The project gets 0.000 for percentile and 0.875 for basic. ∎
+4. Worse, $\hat\theta^*\le\hat\theta<\theta$ always, so the percentile interval lies entirely below θ: its coverage is exactly **0**. The project gets 0.000 for percentile and 0.877 for basic. ∎
 
-■ **What just happened.** The maximum depends on $F$ only through the edge of its support, and $\hat F_n$ has nothing beyond $X_{(n)}$. Smoothness in $F$ is what the bootstrap needs, and the maximum does not have it. Here an exact pivot exists: $X_{(n)}/\theta\sim\mathrm{Beta}(n,1)$, so $[X_{(n)},X_{(n)}/\alpha^{1/n}]$ has coverage exactly $1-\alpha$ (0.955 in the project's 400 replications). Other failures: **heavy tails** (with infinite variance the bootstrap of the mean is inconsistent), **dependent data** (resampling points destroys the dependence; block bootstraps resample stretches), and **small $n$** (Example 4.4's bootstrap distribution of a median sits on three or four values).
+■ **What just happened.** The maximum depends on $F$ only through the edge of its support, and $\hat F_n$ has nothing beyond $X_{(n)}$. Smoothness in $F$ is what the bootstrap needs, and the maximum does not have it. Here an exact pivot exists: $X_{(n)}/\theta\sim\mathrm{Beta}(n,1)$, so $[X_{(n)},X_{(n)}/\alpha^{1/n}]$ has coverage exactly $1-\alpha$ (0.948 in the project's 1,000 replications). Other failures: **heavy tails** (with infinite variance the bootstrap of the mean is inconsistent), **dependent data** (resampling points destroys the dependence; block bootstraps resample stretches), and **small $n$** (Example 4.4's bootstrap distribution of a median sits on three or four values).
 
 **The jackknife** (Quenouille 1949, Tukey 1958), the bootstrap's ancestor, recomputes $\hat\theta_{(-i)}$ without observation $i$ and estimates ${\rm se}^2$ by $\frac{n-1}{n}\sum_i(\hat\theta_{(-i)}-\bar\theta_{(\cdot)})^2$. It agrees with the bootstrap for smooth statistics and is inconsistent for the median, which takes only two values when one point is deleted.
 
@@ -209,7 +209,7 @@ For $\theta\in\mathbb R^k$ and $H_0$ fixing all $k$ coordinates, the limit is $\
 
 **The trinity.** The same parabola can be measured three ways:
 $$\text{LRT: }2[\ell(\hat\theta)-\ell(\theta_0)],\qquad\text{Wald: }W = n I_1(\hat\theta)(\hat\theta-\theta_0)^2,\qquad\text{score (Rao): }S = \frac{\ell'(\theta_0)^2}{nI_1(\theta_0)}. \tag{3.16}$$
-The LRT measures the vertical drop, Wald the horizontal distance scaled by curvature at $\hat\theta$, and the score test the slope at $\theta_0$ scaled by curvature there (no fit under $H_1$ needed). They agree to first order. $W$ is step 6's bracket squared with $I_1(\hat\theta)\to I_1(\theta_0)$. For $S$: expand the score, $\ell'(\theta_0) = \ell'(\hat\theta)+\ell''(\tilde\theta)(\theta_0-\hat\theta) = \ell''(\tilde\theta)(\theta_0-\hat\theta)$, so $S = [\ell''(\tilde\theta)/n]^2\,n(\hat\theta-\theta_0)^2/I_1(\theta_0)\approx nI_1(\theta_0)(\hat\theta-\theta_0)^2$. So all three are asymptotically $\chi^2_1$ under $H_0$. At finite $n$ the LRT and score test are invariant to reparametrization and Wald is not (exercise B4: Wald = 2.31 in the rate, 0.98 in the mean, same data). Inverting Wald gives the Wald interval; inverting the score test gives Wilson. For a Poisson mean, $\ell(\lambda) = n\bar x\log\lambda-n\lambda+\text{const}$, $\hat\lambda = \bar x$, $I_1 = 1/\lambda$, so $-2\log\lambda = 2n[\bar x\log(\bar x/\lambda_0)-(\bar x-\lambda_0)]$, $W = n(\bar x-\lambda_0)^2/\bar x$, $S = n(\bar x-\lambda_0)^2/\lambda_0$. The project's sample with $\bar x = 2.167$, $\lambda_0 = 2$, $n = 30$ gives 0.406, 0.385, 0.417.
+The LRT measures the vertical drop, Wald the horizontal distance scaled by curvature at $\hat\theta$, and the score test the slope at $\theta_0$ scaled by curvature there (no fit under $H_1$ needed). They agree to first order. $W$ is step 6's bracket squared with $I_1(\hat\theta)\to I_1(\theta_0)$. For $S$: expand the score, $\ell'(\theta_0) = \ell'(\hat\theta)+\ell''(\tilde\theta)(\theta_0-\hat\theta) = \ell''(\tilde\theta)(\theta_0-\hat\theta)$, so $S = [\ell''(\tilde\theta)/n]^2\,n(\hat\theta-\theta_0)^2/I_1(\theta_0)\approx nI_1(\theta_0)(\hat\theta-\theta_0)^2$. So all three are asymptotically $\chi^2_1$ under $H_0$. At finite $n$ the LRT and score test are invariant to reparametrization and Wald is not (exercise B4: Wald = 2.31 in the rate, 0.98 in the mean, same data). Inverting Wald gives the Wald interval; inverting the score test gives Wilson. For a Poisson mean, $\ell(\lambda) = n\bar x\log\lambda-n\lambda+\text{const}$, $\hat\lambda = \bar x$, $I_1 = 1/\lambda$, so $-2\log\lambda = 2n[\bar x\log(\bar x/\lambda_0)-(\bar x-\lambda_0)]$, $W = n(\bar x-\lambda_0)^2/\bar x$, $S = n(\bar x-\lambda_0)^2/\lambda_0$. On the project's sample ($n = 30$, $\bar x = 3.067$, $\lambda_0 = 2$) they give 14.65, 11.13 and 17.07: all reject, but far from $\theta_0$, where the log-likelihood is no longer a parabola, they disagree by 50%.
 
 ### 3.7 The χ² tests and ANOVA
 
@@ -300,7 +300,7 @@ $$\mathbb E\Big[\frac{\mathbf 1\{H_i\text{ rej.}\}}{\max(R,1)}\Big] = \sum_{k=1}
 using independence, $P(p_i\le u) = u$, and $\sum_kP(R^{(i)} = k) = 1$.
 5. Sum over the $m_0$ true nulls: ${\rm FDR} = m_0q/m\le q$. ∎
 
-■ **What just happened.** Each true null contributes exactly $q/m$, because the step-up threshold $kq/m$ grows in proportion to the number $k$ of rejections it gets divided by. Independence was used once, in step 4. BH still controls FDR under positive dependence (Benjamini and Yekutieli 2001); under arbitrary dependence, replace $q$ by $q/\sum_{j\le m}j^{-1}$. In the project (80 true nulls, 20 real effects), BH has FDR 0.041 (theory 0.040) and power 0.72 against Holm's 0.40, while its FWER is 0.46: it buys power by accepting some false discoveries.
+■ **What just happened.** Each true null contributes exactly $q/m$, because the step-up threshold $kq/m$ grows in proportion to the number $k$ of rejections it gets divided by. Independence was used once, in step 4. BH still controls FDR under positive dependence (Benjamini and Yekutieli 2001); under arbitrary dependence, replace $q$ by $q/\sum_{j\le m}j^{-1}$. In the project (80 true nulls, 20 real effects), BH has FDR 0.041 (theory 0.040) and power 0.72 against Holm's 0.40, while its FWER is 0.47: it buys power by accepting some false discoveries.
 
 **The look-elsewhere effect.** A physicist scanning a mass spectrum in 100 bins runs 100 tests. Under background only, a local $3\sigma$ excess ($p = 1.35\times10^{-3}$, one-sided) somewhere among 100 independent bins has probability $1-(1-1.35\times10^{-3})^{100} = 0.126$. Particle physics adopted the $5\sigma$ discovery threshold ($p = 2.87\times10^{-7}$) partly because $3\sigma$ effects kept evaporating (Lyons, "Discovering the significance of 5σ," 2013), and the 2012 Higgs announcements quoted global significances, corrected for this effect, alongside the local ones.
 
@@ -339,7 +339,7 @@ A pendulum lab gives ten measurements of $g$ (m/s²): 9.79, 9.83, 9.76, 9.85, 9.
 - $t_{9,0.025} = 2.2622$, so the half-width is $2.2622\times0.01318 = 0.0298$.
 - 95% interval for μ: $[9.7762,\ 9.8358]$ m/s².
 
-It came from a procedure that covers the true $g$ in 95% of repetitions; that is all the 95% says. Using 1.96 in place of 2.262 gives the "z with $S$" interval, whose coverage at $n = 10$ the project measures as 0.916.
+It came from a procedure that covers the true $g$ in 95% of repetitions; that is all the 95% says. Using 1.96 in place of 2.262 gives the "z with $S$" interval, whose coverage at $n = 10$ the project measures as 0.912.
 
 For σ, (3.4) with $\chi^2_{9,0.025} = 19.023$ and $\chi^2_{9,0.975} = 2.700$ gives $\sigma^2\in[0.01564/19.023,\ 0.01564/2.700]$, so $\sigma\in[0.0287,\ 0.0761]$ m/s². Ten points pin down a mean far better than a spread.
 
@@ -347,7 +347,7 @@ For σ, (3.4) with $\chi^2_{9,0.025} = 19.023$ and $\chi^2_{9,0.975} = 2.700$ gi
 
 $\hat p = 0.1$, $z = 1.960$.
 - *Wald* (3.5): ${\rm se} = \sqrt{0.1\times0.9/20} = 0.0671$; interval $0.1\pm0.1315 = [-0.0315,\ 0.2315]$. The lower end is impossible.
-- *Wilson* (3.6): $z^2/n = 0.1921$; centre $(0.1+0.0960)/1.1921 = 0.1645$; half-width $1.96\sqrt{0.0045+0.0024}/1.1921 = 0.1365$; interval $[0.0279,\ 0.3010]$.
+- *Wilson* (3.6): $z^2/n = 0.1921$; centre $(0.1+0.0960)/1.1921 = 0.1645$; half-width $1.96\sqrt{0.0045+0.0024}/1.1921 = 0.1366$; interval $[0.0279,\ 0.3010]$.
 
 *Coverage by enumeration.* At a true $p$, coverage is the finite sum $C(p) = \sum_{x=0}^{20}\binom{20}{x}p^x(1-p)^{20-x}\mathbf 1\{p\in{\rm CI}(x)\}$; no simulation needed. At $p = 0.10$: Wald 0.876, Wilson 0.957. At $p = 0.05$, Wald contains 0.05 only for $x\in\{1,2,3,4\}$ (at $x = 0$ the interval is $\{0\}$; at $x = 5$ it is $[0.060,0.440]$), so $C = 1-P(X = 0)-P(X\ge5) = 0.639$; Wilson contains it for $x\in\{0,1,2\}$, giving 0.925. Averaged over $p\in[0.01,0.99]$ at $n = 20$, Wilson's coverage is 0.954 and Wald's 0.858. At $p = 0.05$ the "95%" Wald interval is a 64% interval.
 
@@ -355,17 +355,17 @@ $\hat p = 0.1$, $z = 1.960$.
 
 Repair times (hours): 3.1, 4.7, 2.2, 8.9, 5.0, 3.8, 12.4, 4.1, 6.3, 2.9, 5.6, 4.4, 7.2, 3.5, 19.8. Sorted, the 8th value is the median, 4.7. The asymptotic formula for a median's standard error needs the unknown density at the median, so bootstrap it.
 
-*Algorithm output.* $B = 10^4$ resamples of size 15 (seed 0 in the project) give $\widehat{\rm se}_B = 0.802$.
+*Algorithm output.* $B = 10^4$ resamples of size 15 (seed 3 in the project) give $\widehat{\rm se}_B = 0.798$.
 
 *The ideal bootstrap, exactly.* A resample's median is $\le x_{(k)}$ iff at least 8 of its 15 draws are $\le x_{(k)}$, and each draw is with probability $k/15$. So $P^*(\text{median}^*\le x_{(k)}) = P(\mathrm{Bin}(15,k/15)\ge8)$; differencing in $k$ gives the exact bootstrap distribution, whose standard deviation, the $B = \infty$ answer, is 0.798. The Monte Carlo error at $B = 10^4$ is under 1%.
 
-*What to notice.* The bootstrap distribution sits on a few values: median* = 4.7 with probability 0.207, and 4.4 or 5.0 with probability 0.183 each (`figures/bootstrap_median.png` is spiky). The standard error is usable; a percentile interval from it is crude at $n = 15$. For contrast, the mean's standard error $s/\sqrt n = 1.181$ is inflated by the 19.8, which barely touches the median.
+*What to notice.* The bootstrap distribution sits on a few values: median* = 4.7 with probability 0.207, and 4.4 or 5.0 with probability 0.183 each; the histogram the project draws is spiky. The standard error is usable; a percentile interval from it is crude at $n = 15$. For contrast, the mean's standard error $s/\sqrt n = 1.181$ is inflated by the 19.8, which barely touches the median.
 
 ### Example 4.5: Neyman–Pearson for a Normal mean
 
 $X_1,\dots,X_{16}\sim\mathcal N(\mu,2^2)$; $H_0:\mu = 0$ versus $H_1:\mu = 1$; α = 0.05.
 - Likelihood ratio (Theorem 3.8, step 1, with $n = 16$, $\sigma^2 = 4$): $\log\Lambda = 4\bar x-2$, increasing in $\bar x$. Reject for $\bar x>c$.
-- Size: under $H_0$, $\bar X\sim\mathcal N(0,0.5^2)$, so $c = z_{0.05}\times0.5 = 1.6449\times0.5 = 0.8224$ (equivalently $k = e^{4(0.8224)-2} = 3.73$).
+- Size: under $H_0$, $\bar X\sim\mathcal N(0,0.5^2)$, so $c = z_{0.05}\times0.5 = 1.6449\times0.5 = 0.8224$ (equivalently $k = e^{4(0.8224)-2} = 3.63$).
 - Power: under $H_1$, $\bar X\sim\mathcal N(1,0.5^2)$, so $\beta(1) = 1-\Phi\big((0.8224-1)/0.5\big) = \Phi(0.355) = 0.639$.
 
 No level-0.05 test of these hypotheses has power above 0.639. The type II error rate is 0.361: this design misses a half-σ effect more than a third of the time.
@@ -399,7 +399,7 @@ The report that matters: the improvement rate is higher by 0.24 under treatment,
 
 ### Example 4.8: Sample size to detect half a standard deviation
 
-Two-sided α = 0.05, power 0.80 at $\delta = 0.5\sigma$. By (3.21) with $z_{0.025} = 1.960$ and $z_{0.20} = 0.8416$: $n = \big((1.960+0.8416)/0.5\big)^2 = 5.603^2 = 31.4$, so $n = 32$. Check: the $z$ test's power at $n = 32$ is 0.807. Since σ will be estimated, the real test is a $t$ test, with power from the noncentral $t$ distribution: 0.782 at $n = 32$; the smallest $n$ reaching 0.80 is 34 (power 0.808; the project's $2\times10^4$ simulated studies give 0.804). The formula is a good first answer; add a few observations for the $t$ correction and more for dropouts.
+Two-sided α = 0.05, power 0.80 at $\delta = 0.5\sigma$. By (3.21) with $z_{0.025} = 1.960$ and $z_{0.20} = 0.8416$: $n = \big((1.960+0.8416)/0.5\big)^2 = 5.603^2 = 31.4$, so $n = 32$. Check: the $z$ test's power at $n = 32$ is 0.807. Since σ will be estimated, the real test is a $t$ test, with power from the noncentral $t$ distribution: 0.782 at $n = 32$; the smallest $n$ reaching 0.80 is 34 (power 0.808; the project's $2\times10^4$ simulated studies give 0.811). The formula is a good first answer; add a few observations for the $t$ correction and more for dropouts.
 
 ### Example 4.9: Bonferroni, Holm and BH on ten p-values
 
@@ -424,7 +424,7 @@ See [exercises.md](exercises.md). A1–A6 drill the pivot intervals, Wilson at $
 
 ## 7. Coding project
 
-`project.py` checks every promise in this module by brute force, in nine parts: (1) Example 4.1's rotation and simulated $\chi^2_4$, $t_4$ against SciPy, with $\operatorname{corr}(\bar X,S^2)\approx0$ for Normal data and 0.69 for Exponential; (2) coverage of $z$, $t$ and "z with $S$" intervals ($10^4$ replications) and of Wald and Wilson by exact enumeration, with coverage curves over $p$; (3) a bootstrap library (`bootstrap_se`, `bootstrap_ci` with normal, percentile, basic) on the mean, median and correlation with coverage by simulation, Example 4.4 against the exact ideal bootstrap, and the maximum's 0.632 atom and zero coverage; (4) a permutation test over all 924 relabelings; (5) Example 4.5, power curves from the noncentral $t$, Example 4.8; (6) Example 4.6, Wilks for a Poisson rate (QQ plot, SymPy expansion) and the trinity; (7) Example 4.7 and ANOVA from explicit projection matrices, with traces equal to degrees of freedom and $F$ equal to `scipy.stats.f_oneway`; (8) uniform null p-values, the winner's curse, p-hacking; (9) Example 4.9 and FWER/FDR/power of Bonferroni, Holm and BH on 2,000 simulated families.
+`project.py` checks every promise in this module by brute force, in nine parts: (1) Example 4.1's rotation and simulated $\chi^2_4$, $t_4$ against SciPy, with $\operatorname{corr}(\bar X,S^2)\approx0$ for Normal data and 0.68 for Exponential; (2) coverage of $z$, $t$ and "z with $S$" intervals ($10^4$ replications) and of Wald and Wilson by exact enumeration, with coverage curves over $p$; (3) a bootstrap library (`bootstrap_se`, `bootstrap_ci` with normal, percentile, basic) on the mean, median and correlation with coverage by simulation, Example 4.4 against the exact ideal bootstrap, and the maximum's 0.632 atom and zero coverage; (4) a permutation test over all 924 relabelings; (5) Example 4.5, power curves from the noncentral $t$, Example 4.8; (6) Example 4.6, Wilks for a Poisson rate (QQ plot, SymPy expansion) and the trinity; (7) Example 4.7 and ANOVA from explicit projection matrices, with traces equal to degrees of freedom and $F$ equal to `scipy.stats.f_oneway`; (8) uniform null p-values, the winner's curse, p-hacking; (9) Example 4.9 and FWER/FDR/power of Bonferroni, Holm and BH on 2,000 simulated families.
 
 **Build it yourself:** before reading the code, write `wilson_prop` from (3.6), `bootstrap_ci` from (3.10), and `bh` from Theorem 3.13, about ten lines each. "Your turn" asks for a bootstrapped regression slope (B8), optional stopping (C3), a look-elsewhere bump hunt, and heavy-tailed data; reference solutions for B8 and C3 are at the bottom.
 

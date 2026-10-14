@@ -56,7 +56,13 @@ With $W = I$ this is $A^\top$. ✓
 
 (c) Self-adjoint iff $W^{-1}A^\top W = A$ iff $A^\top W = WA$ iff $(WA)^\top = WA$, i.e. $WA$ is symmetric. ∎
 
-(d) $A = M^{-1}K$ has $MA = K = K^\top$, symmetric, so by (c) $A$ is self-adjoint for $\langle\cdot,\cdot\rangle_M$. And $K\mathbf{v} = \lambda M\mathbf{v}\iff M^{-1}K\mathbf{v} = \lambda\mathbf{v}\iff A\mathbf{v} = \lambda\mathbf{v}$. Theorems 3.9 and 3.10 were proved for *any* self-adjoint operator on *any* inner product space, using only the axioms and $\langle Au, v\rangle = \langle u, Av\rangle$; so the generalized eigenvalues are real and eigenvectors for distinct eigenvalues satisfy $\langle\mathbf{v}_i,\mathbf{v}_j\rangle_M = \mathbf{v}_i^\top M\mathbf{v}_j = 0$. In CM-6, $\lambda = \omega^2$ real is why normal modes oscillate rather than grow or decay, and $M$-orthogonality is why the modes decouple the kinetic energy $\tfrac12\dot{\mathbf{x}}^\top M\dot{\mathbf{x}}$.
+(d) $A = M^{-1}K$ has $MA = K = K^\top$, symmetric, so by (c) $A$ is self-adjoint for $\langle\cdot,\cdot\rangle_M$. And $K\mathbf{v} = \lambda M\mathbf{v}\iff M^{-1}K\mathbf{v} = \lambda\mathbf{v}\iff A\mathbf{v} = \lambda\mathbf{v}$, so the generalized eigenvalues are the roots of $\det(K - \lambda M) = \det M\,\det(A - \lambda I)$.
+
+*Reality.* On the real space $(\mathbb{R}^n, \langle\cdot,\cdot\rangle_M)$, Theorem 3.9 says nothing about complex roots, because an eigenvalue of an operator on a real space is real by definition. So extend to $\mathbb{C}^n$ with $\langle\mathbf{u},\mathbf{v}\rangle_M = \mathbf{u}^\dagger M\mathbf{v}$. This is an inner product by B4(d): $M$ is real symmetric, hence Hermitian, and for $\mathbf{u} = \mathbf{a} + i\mathbf{b}$ with $\mathbf{a}, \mathbf{b}$ real, $\mathbf{u}^\dagger M\mathbf{u} = \mathbf{a}^\top M\mathbf{a} + \mathbf{b}^\top M\mathbf{b} + i(\mathbf{a}^\top M\mathbf{b} - \mathbf{b}^\top M\mathbf{a}) = \mathbf{a}^\top M\mathbf{a} + \mathbf{b}^\top M\mathbf{b} > 0$ for $\mathbf{u}\ne\mathbf{0}$ (the imaginary part cancels because $M$ is symmetric). For this complex inner product, using $M^\dagger = M$ and $K^\dagger = K$ ($K$ is real symmetric),
+$$\langle A\mathbf{u},\mathbf{v}\rangle_M = \mathbf{u}^\dagger A^\dagger M\mathbf{v} = \mathbf{u}^\dagger(MA)^\dagger\mathbf{v} = \mathbf{u}^\dagger K\mathbf{v} = \mathbf{u}^\dagger MA\mathbf{v} = \langle\mathbf{u}, A\mathbf{v}\rangle_M,$$
+so $A$ is self-adjoint on $(\mathbb{C}^n, \langle\cdot,\cdot\rangle_M)$. Every complex root $\lambda$ of $\det(A - \lambda I)$ has a nonzero eigenvector in $\mathbb{C}^n$, and Theorem 3.9, which was proved for any self-adjoint operator on any inner product space, makes $\lambda$ real. (C3(a)–(b) reach the same conclusion by a different route.)
+
+*Orthogonality.* For real $\lambda$, $A - \lambda I$ is a real singular matrix, so the eigenvectors can be taken real, and Theorem 3.10 for $\langle\cdot,\cdot\rangle_M$ gives $\langle\mathbf{v}_i,\mathbf{v}_j\rangle_M = \mathbf{v}_i^\top M\mathbf{v}_j = 0$ when $\lambda_i\ne\lambda_j$. In CM-6, $\lambda = \omega^2$ real is why normal modes oscillate rather than grow or decay, and $M$-orthogonality is why the modes decouple the kinetic energy $\tfrac12\dot{\mathbf{x}}^\top M\dot{\mathbf{x}}$.
 
 **B2.** (a) $\langle S, K\rangle_F = \operatorname{tr}(S^\top K) = \operatorname{tr}(SK)$. Transposing inside the trace and using cyclicity: $\operatorname{tr}(SK) = \operatorname{tr}((SK)^\top) = \operatorname{tr}(K^\top S^\top) = \operatorname{tr}(-KS) = -\operatorname{tr}(KS) = -\operatorname{tr}(SK)$. So $\operatorname{tr}(SK) = 0$. ∎
 
@@ -68,7 +74,7 @@ With $W = I$ this is $A^\top$. ✓
 
 **B3.** (a) $\nabla f = (3x^2 - 3y^2,\ -6xy)$. $H = \begin{pmatrix}f_{xx}&f_{xy}\\f_{xy}&f_{yy}\end{pmatrix} = \begin{pmatrix}6x&-6y\\-6y&-6x\end{pmatrix}$. Critical points: $xy = 0$ and $x^2 = y^2$. If $x = 0$ then $y = 0$; if $y = 0$ then $x = 0$. The only critical point is $(0, 0)$.
 
-(b) $H$ has trace $0$ and determinant $-36x^2 - 36y^2$, so its eigenvalues are $\pm6\sqrt{x^2 + y^2}$: indefinite at every point other than the origin. At the critical point $H(0,0) = 0$, singular; Theorem 3.19 gives no conclusion.
+(b) $H$ has trace $0$ and determinant $-36x^2 - 36y^2$, so its eigenvalues are $\pm6\sqrt{x^2 + y^2}$: indefinite at every point other than the origin. At the critical point $H(0,0) = 0$: both eigenvalues are $0$, so $H$ is semidefinite and singular, the one case in which Theorem 3.19 gives no conclusion. (A singular $H$ with eigenvalues of both signs would still give a saddle.)
 
 (c) Along the $x$-axis $f(t, 0) = t^3$, which is positive for $t > 0$ and negative for $t < 0$. So $f$ takes values above and below $f(0,0) = 0$ arbitrarily close to the origin: neither a maximum nor a minimum, hence a saddle. In polar coordinates $f = r^3\cos3\varphi$ (the real part of $(x + iy)^3$): three ridges and three valleys alternate around the origin, the "monkey saddle" (two legs and a tail).
 
@@ -82,11 +88,11 @@ With $W = I$ this is $A^\top$. ✓
 
 (d) *Complex version.* Let $\langle\cdot,\cdot\rangle$ be an inner product on $\mathbb{C}^n$ (Definition 3.2) and $G_{ij} = \langle\mathbf{e}_i,\mathbf{e}_j\rangle$. Then
 $$\langle\mathbf{u},\mathbf{v}\rangle = \Big\langle\sum_iu_i\mathbf{e}_i, \sum_jv_j\mathbf{e}_j\Big\rangle = \sum_{i,j}\bar u_iv_jG_{ij} = \mathbf{u}^\dagger G\mathbf{v},$$
-the conjugate coming from the **first** slot. $G$ is Hermitian: $G_{ji} = \langle\mathbf{e}_j,\mathbf{e}_i\rangle = \overline{\langle\mathbf{e}_i,\mathbf{e}_j\rangle} = \overline{G_{ij}}$. And $\mathbf{u}^\dagger G\mathbf{u} = \|\mathbf{u}\|^2 > 0$: positive definite. Conversely any Hermitian PD $G$ makes $\mathbf{u}^\dagger G\mathbf{v}$ an inner product in our convention. In Axler's convention the same computation produces $\mathbf{v}^\dagger G^\top\mathbf{u}$, i.e. the formula $\mathbf{u}^\top G\bar{\mathbf{v}}$, conjugating the second vector. ∎
+the conjugate coming from the **first** slot. $G$ is Hermitian: $G_{ji} = \langle\mathbf{e}_j,\mathbf{e}_i\rangle = \overline{\langle\mathbf{e}_i,\mathbf{e}_j\rangle} = \overline{G_{ij}}$. And $\mathbf{u}^\dagger G\mathbf{u} = \|\mathbf{u}\|^2 > 0$: positive definite. Conversely, let $G$ be Hermitian PD ($\mathbf{x}^\dagger G\mathbf{x} > 0$ for $\mathbf{x}\ne\mathbf{0}$, as defined after Theorem 3.14) and set $\langle\mathbf{u},\mathbf{v}\rangle = \mathbf{u}^\dagger G\mathbf{v}$. It is linear in $\mathbf{v}$ because matrix multiplication is. It is conjugate symmetric: a $1\times1$ matrix's conjugate is its conjugate transpose, so $\overline{\langle\mathbf{v},\mathbf{u}\rangle} = (\mathbf{v}^\dagger G\mathbf{u})^\dagger = \mathbf{u}^\dagger G^\dagger\mathbf{v} = \mathbf{u}^\dagger G\mathbf{v} = \langle\mathbf{u},\mathbf{v}\rangle$. And $\langle\mathbf{u},\mathbf{u}\rangle = \mathbf{u}^\dagger G\mathbf{u} > 0$ for $\mathbf{u}\ne\mathbf{0}$. So it is an inner product in our convention, and inner products on $\mathbb{C}^n$ correspond exactly to Hermitian PD matrices. In Axler's convention the same computation produces $\mathbf{v}^\dagger G^\top\mathbf{u}$, i.e. the formula $\mathbf{u}^\top G\bar{\mathbf{v}}$, conjugating the second vector. ∎
 
 **B5.** (a) Suppose $\mathbf{w} = A\mathbf{v} = \mathbf{0}$. Then $A^\top A\mathbf{v} = \mathbf{0}$, but $A^\top A\mathbf{v} = \lambda\mathbf{v}\ne\mathbf{0}$. Contradiction, so $\mathbf{w}\ne\mathbf{0}$. Then $AA^\top\mathbf{w} = A(A^\top A\mathbf{v}) = A(\lambda\mathbf{v}) = \lambda\mathbf{w}$. ∎
 
-(b) Let $E = \{\mathbf{v} : A^\top A\mathbf{v} = \lambda\mathbf{v}\}$ and $F = \{\mathbf{w} : AA^\top\mathbf{w} = \lambda\mathbf{w}\}$. By (a), $\phi(\mathbf{v}) = A\mathbf{v}$ maps $E\to F$; it is linear, and injective because $A\mathbf{v} = \mathbf{0}$ with $\mathbf{v}\in E$ forces $\lambda\mathbf{v} = A^\top A\mathbf{v} = \mathbf{0}$, so $\mathbf{v} = \mathbf{0}$. By the same argument with $A$ and $A^\top$ swapped, $\psi(\mathbf{w}) = A^\top\mathbf{w}$ maps $F\to E$ injectively ($A^\top A(A^\top\mathbf{w}) = A^\top(\lambda\mathbf{w})$). Injective linear maps $E\to F$ and $F\to E$ give $\dim E\le\dim F\le\dim E$, so the multiplicities agree. In fact $\psi\circ\phi(\mathbf{v}) = A^\top A\mathbf{v} = \lambda\mathbf{v}$, so $\psi/\lambda$ is the inverse of $\phi$. ∎
+(b) Let $E = \{\mathbf{v} : A^\top A\mathbf{v} = \lambda\mathbf{v}\}$ and $F = \{\mathbf{w} : AA^\top\mathbf{w} = \lambda\mathbf{w}\}$. By (a), $\phi(\mathbf{v}) = A\mathbf{v}$ maps $E\to F$; it is linear, and injective because $A\mathbf{v} = \mathbf{0}$ with $\mathbf{v}\in E$ forces $\lambda\mathbf{v} = A^\top A\mathbf{v} = \mathbf{0}$, so $\mathbf{v} = \mathbf{0}$. By the same argument with $A$ and $A^\top$ swapped, $\psi(\mathbf{w}) = A^\top\mathbf{w}$ maps $F\to E$ injectively ($A^\top A(A^\top\mathbf{w}) = A^\top(\lambda\mathbf{w})$). Injective linear maps $E\to F$ and $F\to E$ give $\dim E\le\dim F\le\dim E$, so the eigenspaces have equal dimension. For the symmetric matrices $A^\top A$ and $AA^\top$ that is the same as equal multiplicity: writing $A^\top A = Q\Lambda Q^\top$ (Theorem 3.11), $\det(A^\top A - tI) = \prod_i(\lambda_i - t)$, so the multiplicity of $\lambda$ as a root counts the $i$ with $\lambda_i = \lambda$, and those $\mathbf{q}_i$ form a basis of $E$ (the Remark after Theorem 3.13, step 1). The same holds for $AA^\top$ and $F$. So the nonzero eigenvalues agree with multiplicity. ∎ (In fact $\psi\circ\phi(\mathbf{v}) = A^\top A\mathbf{v} = \lambda\mathbf{v}$, so $\psi/\lambda$ is the inverse of $\phi$.)
 
 (c) If $A$ ($m\times n$, $m > n$) has independent columns, $A^\top A$ is $n\times n$ and positive definite (Theorem 3.16): $n$ positive eigenvalues, no zeros. $AA^\top$ is $m\times m$ with the same $n$ positive eigenvalues by (b), and rank $AA^\top = \operatorname{rank}A = n$, so its remaining $m - n$ eigenvalues are $0$. **$m - n$ more zeros.** The project's "Your turn" 3 checks a $5\times3$ example: three shared positive eigenvalues, two extra zeros, and the square roots of the shared eigenvalues equal `np.linalg.svd(A)`'s singular values.
 
@@ -109,13 +115,43 @@ For $i\notin\{p,q\}$: $(AG)_{ip} = ca_{ip} + sa_{iq}$ and $(AG)_{iq} = -sa_{ip} 
 The $2\times2$ block: $\begin{pmatrix}a'_{pp}&a'_{pq}\\a'_{pq}&a'_{qq}\end{pmatrix} = R^\top\begin{pmatrix}a_{pp}&a_{pq}\\a_{pq}&a_{qq}\end{pmatrix}R$ with $R = \begin{pmatrix}c&-s\\s&c\end{pmatrix}$, an orthogonal similarity; by (a) its Frobenius norm is preserved: $a'^2_{pp} + 2a'^2_{pq} + a'^2_{qq} = a_{pp}^2 + 2a_{pq}^2 + a_{qq}^2$. With $a'_{pq} = 0$: $a'^2_{pp} + a'^2_{qq} = a_{pp}^2 + a_{qq}^2 + 2a_{pq}^2$.
 Now $\|A'\|_F^2 = \|A\|_F^2$ by (a), and the sum of squared diagonal entries went up by exactly $2a_{pq}^2$ (only $a_{pp}, a_{qq}$ changed on the diagonal). Since $\operatorname{off}^2 = \|\cdot\|_F^2 - (\text{diagonal squares})$, $\operatorname{off}(A')^2 = \operatorname{off}(A)^2 - 2a_{pq}^2$. ∎
 
-(c) There are $N = n(n-1)$ off-diagonal entries, and the largest of their squares is at least their average: $a_{pq}^2\ge\operatorname{off}(A)^2/N$. So $\operatorname{off}(A')^2\le\operatorname{off}(A)^2(1 - 2/N)$, and after $k$ rotations $\operatorname{off}^2\le(1 - 2/N)^k\operatorname{off}(A_0)^2\to0$. The eigenvalues never change (orthogonal similarity), so the diagonal converges to them. (In practice convergence becomes quadratic near the end, which is what the project's semilog plot shows: the slope steepens.)
+(c) There are $N = n(n-1)$ off-diagonal entries, and the largest of their squares is at least their average: $a_{pq}^2\ge\operatorname{off}(A)^2/N$. So $\operatorname{off}(A')^2\le\operatorname{off}(A)^2(1 - 2/N)$, and after $k$ rotations $\operatorname{off}(A_k)^2\le(1 - 2/N)^k\operatorname{off}(A_0)^2\to0$.
 
-(d) In `project.py`, inside `jacobi_eigh`, after computing `A_new`:
+*The diagonal converges to the eigenvalues.* $\operatorname{off}(A_k)\to0$ only says $A_k$ approaches its own diagonal part $D_k = \operatorname{diag}(a^{(k)}_{11}, \dots, a^{(k)}_{nn})$. To conclude that the diagonal entries approach the eigenvalues you need a perturbation bound, and Weyl's inequality (the corollary to Theorem 3.18) is exactly that. Apply it with $X = A_k$ and $Y = D_k$. The eigenvalues of $A_k$ are those of $A$ (orthogonal similarity), the eigenvalues of $D_k$ are its diagonal entries, and $\|X - Y\|_F = \operatorname{off}(A_k)$. So if $d^{(k)}_{(1)}\ge\cdots\ge d^{(k)}_{(n)}$ is the diagonal of $A_k$ sorted in decreasing order,
+$$|d^{(k)}_{(i)} - \lambda_i|\le\operatorname{off}(A_k)\to0\qquad\text{for every } i.$$
+The sorted diagonal converges to the sorted eigenvalues, which is all the algorithm needs, since it sorts the diagonal at the end (`jacobi_eigh` does).
+
+*Each entry converges too.* A rotation changes only $a_{pp}$ and $a_{qq}$. Column $p$ of $G$ is $c\,\mathbf{e}_p + s\,\mathbf{e}_q$, so $a'_{pp} = c^2a_{pp} + 2cs\,a_{pq} + s^2a_{qq}$. The zeroing condition from (b) is $(c^2 - s^2)a_{pq} = cs(a_{pp} - a_{qq})$; with $t = s/c = \tan\theta$,
+$$a'_{pp} - a_{pp} = -s^2(a_{pp} - a_{qq}) + 2cs\,a_{pq} = -t(c^2 - s^2)a_{pq} + 2tc^2a_{pq} = t(c^2 + s^2)a_{pq} = t\,a_{pq},$$
+and $a'_{qq} = a_{qq} - t\,a_{pq}$ because the trace of the $2\times2$ block is unchanged. The project picks $|\theta|\le\pi/4$, so $|t|\le1$ and each diagonal entry moves by at most $|a^{(k)}_{pq}|\le\operatorname{off}(A_k)\le(1 - 2/N)^{k/2}\operatorname{off}(A_0)$ at step $k$. These bounds have a finite (geometric) sum, so each diagonal entry is a Cauchy sequence and converges, and by the Weyl bound its limit is one of the $\lambda_i$. The project's "Your turn" 5 asserts both the Weyl bound and $|a'_{pp} - a_{pp}|\le|a_{pq}|$ after every rotation.
+
+(In practice convergence becomes quadratic near the end: once the diagonal entries have separated, every $n(n-1)/2$ rotations roughly square $\operatorname{off}(A)$. The project's semilog plot shows the slope steepening over the last few dozen rotations.)
+
+(d) Reference implementation (the same as "Your turn" 4 in `project.py`):
 ```python
-assert np.isclose(off_norm2(A_new), off_norm2(A) - 2 * apq**2, atol=1e-9 * max(1, np.sum(A**2)))
+def cyclic_jacobi_eigh(A, tol=1e-12, max_sweeps=50):
+    A = np.array(A, float); n = A.shape[0]; Q = np.eye(n); rotations = 0
+    for sweep in range(1, max_sweeps + 1):
+        for p in range(n - 1):
+            for q in range(p + 1, n):
+                if abs(A[p, q]) < tol:
+                    continue
+                apq = A[p, q]
+                A_new, G = jacobi_rotate(A, p, q)
+                assert_off_drop(A, A_new, apq)   # off(A')^2 = off(A)^2 - 2 a_pq^2, to rounding
+                A, Q = A_new, Q @ G; rotations += 1
+        if np.abs(A - np.diag(np.diag(A))).max() < tol:
+            break
+    w = np.diag(A); order = np.argsort(w)[::-1]
+    return w[order], Q[:, order], rotations, sweep
 ```
-This line is already present in the reference implementation; it passes on every rotation for every test matrix.
+`assert_off_drop` is the helper that `jacobi_eigh` already uses; its tolerance is $10^{-14}\,\|A\|_F\operatorname{off}(A)$, because rounding in the rotated rows and columns perturbs $\operatorname{off}(A)^2$ by about $\varepsilon\|A\|_F\operatorname{off}(A)$. On the project's `M8` the classical method needs **91** rotations and the cyclic method **124**, in 5 sweeps of $28$ pairs; both give the eigenvalues of `np.linalg.eigh` and an orthogonal $Q$ with $Q\Lambda Q^\top = $ `M8`.
+
+*Why more rotations.* The cyclic method also rotates on small entries, and a rotation lowers $\operatorname{off}^2$ by only $2a_{pq}^2$, which is little when $a_{pq}$ is small.
+
+*Why the identity still holds.* The proof of (b) never used that $a_{pq}$ was the largest entry: it holds for a rotation in any plane $(p, q)$. What does break is the convergence argument in (c), which needed $a_{pq}^2\ge\operatorname{off}(A)^2/N$. Convergence of the cyclic method is still true, but needs a different proof (Forsythe and Henrici, 1960).
+
+*Why people use the cyclic version anyway.* Finding the largest of the $n(n-1)/2$ entries above the diagonal costs $O(n^2)$ comparisons per rotation, while the rotation itself changes only rows and columns $p$ and $q$, which is $O(n)$ work when coded that way. (Our `jacobi_rotate` forms $G^\top AG$ with full matrix products for clarity, at $O(n^3)$ cost, so timing this code would not show the difference.) For large $n$ the search dominates, and $124$ cheap rotations beat $91$ expensive ones.
 
 **B8.** (a) $B^\top = (V^\top AV)^\top = V^\top A^\top V = V^\top AV = B$. ∎
 
@@ -129,7 +165,7 @@ $$A\mathbf{x} = VV^\top A\mathbf{x} = V(V^\top AV)\mathbf{z} = VB\mathbf{z} = \m
 **C1.** Let $V$ be the first $n-1$ columns of $I_n$, so $B = V^\top AV$, $V^\top V = I_{n-1}$, and the range of $V$ is the hyperplane $W = \{\mathbf{x} : x_n = 0\}$. For $\mathbf{z}\in\mathbb{R}^{n-1}$, $\mathbf{z}^\top B\mathbf{z}/\mathbf{z}^\top\mathbf{z} = (V\mathbf{z})^\top A(V\mathbf{z})/\|V\mathbf{z}\|^2 = R_A(V\mathbf{z})$. The map $S'\mapsto VS'$ is a bijection from $k$-dimensional subspaces of $\mathbb{R}^{n-1}$ to $k$-dimensional subspaces of $W$. So Courant–Fischer for $B$ reads
 $$\mu_k = \max_{\substack{S\subseteq W\\\dim S = k}}\ \min_{\mathbf{x}\in S\setminus0}R_A(\mathbf{x}).$$
 *Upper bound.* The maximum over $k$-dimensional subspaces contained in $W$ is at most the maximum over all $k$-dimensional subspaces of $\mathbb{R}^n$, which is $\lambda_k$ by (3.14). So $\mu_k\le\lambda_k$.
-*Lower bound.* Let $S$ be any $(k+1)$-dimensional subspace of $\mathbb{R}^n$. By LA-3's dimension formula, $\dim(S\cap W)\ge(k+1) + (n-1) - n = k$. Choose $T\subseteq S\cap W$ with $\dim T = k$. Shrinking the set can only raise a minimum: $\min_{S}R_A\le\min_TR_A$. And $T$ is a $k$-dimensional subspace of $W$, so $\min_TR_A\le\mu_k$. Hence $\min_SR_A\le\mu_k$ for every such $S$; taking the maximum over $S$ gives $\lambda_{k+1}\le\mu_k$ by (3.14). ∎
+*Lower bound.* Let $S$ be any $(k+1)$-dimensional subspace of $\mathbb{R}^n$. By LA-3's dimension formula (Theorem 3.35), $\dim(S\cap W)\ge(k+1) + (n-1) - n = k$. Choose $T\subseteq S\cap W$ with $\dim T = k$. Shrinking the set can only raise a minimum: $\min_{S}R_A\le\min_TR_A$. And $T$ is a $k$-dimensional subspace of $W$, so $\min_TR_A\le\mu_k$. Hence $\min_SR_A\le\mu_k$ for every such $S$; taking the maximum over $S$ gives $\lambda_{k+1}\le\mu_k$ by (3.14). ∎
 *Check.* Example 4.2: $A$ has $\lambda = 4, 1, 1$; the leading block $B = \begin{pmatrix}2&1\\1&2\end{pmatrix}$ has $\mu = 3, 1$. Interlacing: $4\ge3\ge1\ge1\ge1$. ✓
 
 **C2.** (a) $\|u+v\|^2 = \|u\|^2 + 2\langle u, v\rangle + \|v\|^2$ and $\|u-v\|^2 = \|u\|^2 - 2\langle u, v\rangle + \|v\|^2$. Subtract: $\|u+v\|^2 - \|u-v\|^2 = 4\langle u, v\rangle$. ∎

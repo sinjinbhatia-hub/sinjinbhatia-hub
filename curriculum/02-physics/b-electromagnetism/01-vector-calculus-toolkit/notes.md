@@ -10,7 +10,7 @@ You can differentiate and integrate in several variables. What you lack is the t
 
 ## 1. The problem that forced this idea
 
-In 1865 Maxwell published "A Dynamical Theory of the Electromagnetic Field": twenty equations in twenty unknowns, written component by component, so the reader had to notice that several were one statement written three times. Maxwell saw the structure (in 1870 he proposed the names "curl" and "convergence," minus our divergence), and his 1873 *Treatise* used some of Hamilton's quaternion notation, which mixed scalar and vector parts awkwardly.
+In 1865 Maxwell published "A Dynamical Theory of the Electromagnetic Field": twenty equations in twenty unknowns, written component by component, so the reader had to notice that several were one statement written three times. Maxwell saw the structure (in the early 1870s he proposed the names "curl" and "convergence," minus our divergence), and his 1873 *Treatise* used some of Hamilton's quaternion notation, which mixed scalar and vector parts awkwardly.
 
 Two people cut the knot independently. Josiah Willard Gibbs printed *Elements of Vector Analysis* privately for his Yale students (1881 and 1884). Oliver Heaviside, a self-taught telegraph engineer, developed the same notation through the 1880s, collected in *Electromagnetic Theory* (1893), and rewrote Maxwell's equations as the four we use now. Written as $\nabla\cdot\mathbf E$ and $\nabla\times\mathbf B$, they say where each field's sources are and how it circulates.
 
@@ -133,7 +133,7 @@ $$\hat{\mathbf n}\cdot(\nabla\times\mathbf F)(\mathbf r_0) = \lim_{\Delta a\to0}
 4. *Any direction.* Rotate the axes so $\hat{\mathbf n}$ is the new $z'$-axis. The circulation is built from dot products, so it is axis-independent, and step 3 in the new axes gives $(\nabla'\times\mathbf F')_{z'}\Delta a = \hat{\mathbf n}\cdot(\nabla\times\mathbf F)\,\Delta a$, because the curl transforms as a vector (§3.2).
 5. *Any shape.* Fill the loop with tiny rectangles; shared edges cancel (§2). ∎
 
-■ **What just happened.** The curl's component along $\hat{\mathbf n}$ is circulation per unit area around $\hat{\mathbf n}$; a paddlewheel with axle $\hat{\mathbf n}$ turns at $\tfrac12\hat{\mathbf n}\cdot(\nabla\times\mathbf F)$ (the whirlpool: curl 2, rate 1). The project shrinks a tilted parallelogram by factors of 10 and the error in (3.8) falls by 100 each time.
+■ **What just happened.** The curl's component along $\hat{\mathbf n}$ is circulation per unit area around $\hat{\mathbf n}$; a paddlewheel with axle $\hat{\mathbf n}$ turns at $\tfrac12\hat{\mathbf n}\cdot(\nabla\times\mathbf F)$ (the whirlpool: curl 2, rate 1). The project shrinks a tilted parallelogram by factors of 10 and the error in (3.8) falls by about 100 each time.
 
 ### 3.5 Product rules
 

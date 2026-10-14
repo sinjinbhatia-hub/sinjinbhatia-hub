@@ -8,7 +8,8 @@
 # and curl on a grid vs the analytic answers; (4) a divergence-theorem checker;
 # (5) a Stokes checker; (6) the flux of r̂/r² through spheres; (7) the delta
 # function three ways; (8) Helmholtz decomposition by FFT; (9) potentials;
-# (10) numbers quoted in the exercise solutions.
+# (10) numbers quoted in the exercise solutions. Reference solutions for B8,
+# C1(c), and C4 sit after "Your turn".
 #
 # Run headless: `MPLBACKEND=Agg python3 project.py`. Figures go to ./figures/.
 
@@ -530,8 +531,8 @@ fig.tight_layout(); fig.savefig(FIG / "helmholtz_fft.png", dpi=110); plt.close(f
 
 # %%
 F46 = sp.Matrix([2 * x * y - z, x**2 + z**2, 2 * y * z - x])
-V46 = -x**2 * y - y * z**2 + x * z
-assert curl(F46) == Z3 and sp.expand(-grad(V46) - F46) == Z3
+U46 = -x**2 * y - y * z**2 + x * z
+assert curl(F46) == Z3 and sp.expand(-grad(U46) - F46) == Z3
 F46n = numfield(F46)
 paths = {"straight line": (lambda t: np.array([t, 2 * t, 3 * t]), lambda t: np.array([1 + 0 * t, 2 + 0 * t, 3 + 0 * t])),
          "curve (t², 2 sin(πt/2), 3t³)": (lambda t: np.array([t**2, 2 * np.sin(PI * t / 2), 3 * t**3]),
@@ -539,7 +540,7 @@ paths = {"straight line": (lambda t: np.array([t, 2 * t, 3 * t]), lambda t: np.a
 work = {"axis path": polyline(F46n, [(0, 0, 0), (1, 0, 0), (1, 2, 0), (1, 2, 3)], 10)}
 work.update({name: circulation(F46n, *pc, 0, 1, 60) for name, pc in paths.items()})
 assert all(np.isclose(wv, 17) for wv in work.values()), work
-print("Example 4.6: V(1,2,3) =", V46.subs({x: 1, y: 2, z: 3}), "; work along three paths:", {k: round(float(v), 10) for k, v in work.items()})
+print("Example 4.6: U(1,2,3) =", U46.subs({x: 1, y: 2, z: 3}), "; work along three paths:", {k: round(float(v), 10) for k, v in work.items()})
 
 # B7: F = (y², z², x²), W from (3.36), then the Coulomb-gauge W' = W + ∇(y³z/3).
 F_B7 = sp.Matrix([y**2, z**2, x**2])
@@ -562,7 +563,9 @@ assert list(grad(fA1).subs(pt)) == [2, 2, 3] and lap(fA1).subs(pt) == 8
 assert div(FA1).subs(pt) == 3 and list(curl(FA1)) == [-y, -z, -x]
 assert curl(grad(fA1)) == Z3 and div(curl(FA1)) == 0
 Av, Bv, Cv = np.array([1, 2, 0]), np.array([0, 1, 3]), np.array([2, 0, 1])
-assert Av @ np.cross(Bv, Cv) == 13
+assert Av @ np.cross(Bv, Cv) == 13 and Bv @ np.cross(Cv, Av) == 13
+assert np.array_equal(np.cross(Bv, Cv), [1, 6, -2]) and np.array_equal(np.cross(Av, Bv), [6, -3, 1])
+assert np.array_equal(np.cross(Cv, Av), [-2, 1, 4]) and (Av @ Cv, Av @ Bv, Bv @ Cv) == (2, 2, 3)
 assert np.array_equal(np.cross(Av, np.cross(Bv, Cv)), [-4, 2, 4]) and np.array_equal(np.cross(np.cross(Av, Bv), Cv), [-3, -4, 6])
 T_A3 = x**2 + 2 * y**2 + 3 * z**2 + x * y
 gT = np.array(grad(T_A3).subs({x: 1, y: -1, z: 2}), float).ravel()
@@ -585,7 +588,25 @@ helix = sp.Matrix([sp.cos(t_), sp.sin(t_), t_ / (2 * sp.pi)])
 F_A6 = sp.Matrix([y, -x, z])
 I_A6 = sp.integrate(F_A6.subs({x: helix[0], y: helix[1], z: helix[2]}).dot(helix.diff(t_)), (t_, 0, 2 * sp.pi))
 assert sp.simplify(I_A6 - (sp.Rational(1, 2) - 2 * sp.pi)) == 0 and curl(F_A6) == sp.Matrix([0, 0, -2])
-print(f"A6: ∫F·dl along the helix = 1/2 − 2π = {float(I_A6):.4f}")
+seg_A6 = polyline(numfield(F_A6), [(1, 0, 0), (1, 0, 1)], 10)
+assert np.isclose(seg_A6, 0.5) and np.isclose(float(I_A6) - seg_A6, -2 * PI)
+proj_area = circulation(numfield(sp.Matrix([-y, x, 0]) / 2), lambda t: np.array([np.cos(t), np.sin(t), t / (2 * PI)]),
+                        lambda t: np.array([-np.sin(t), np.cos(t), 0 * t + 1 / (2 * PI)]), 0, 2 * PI)
+assert np.isclose(proj_area, PI)                      # ẑ-component of the vector area spanned by helix + segment
+print(f"A6: helix {float(I_A6):.4f} = 1/2 − 2π, segment {seg_A6:.4f}, difference {float(I_A6) - seg_A6:.4f} = −2π")
+Fv_n = numfield(F_v)
+ring = lambda c, a: (lambda t: np.array([c + a * np.cos(t), a * np.sin(t), 0 * t]),
+                     lambda t: np.array([-a * np.sin(t), a * np.cos(t), 0 * t]))
+circ_B2 = [circulation(Fv_n, *ring(0, a), 0, 2 * PI) for a in (0.5, 3.0)] + [circulation(Fv_n, *ring(2, 1), 0, 2 * PI)]
+assert np.allclose(circ_B2, [2 * PI, 2 * PI, 0], atol=1e-10)
+print(f"B2: vortex circulation around the axis (a = 0.5, 3): {circ_B2[0]:.6f}, {circ_B2[1]:.6f}; "
+      f"around the circle centred (2,0,0): {circ_B2[2]:.1e}")
+edges_B4 = [polyline(numfield(F_B4), V3[i:i + 2], 10) for i in range(3)]
+assert np.allclose(edges_B4, -0.5)
+big = [disk_solid_angle(a, 1.0, 400) for a in (10, 100, 1000)]
+assert np.allclose(big, [2 * PI * (1 - 1 / np.sqrt(1 + a * a)) for a in (10, 100, 1000)], rtol=1e-10)
+print(f"B4: edge integrals {np.round(edges_B4, 12)}; C1(b): z0 = 1, a = 10, 100, 1000: "
+      f"{np.round(big, 6)} → 2π = {2 * PI:.6f}")
 yuk = 4 * PI * quad(lambda r: r * np.exp(-1.5 * r) * (4 * r**2 - 6 - 1.5**2) * np.exp(-r**2), 0, np.inf)[0]
 assert np.isclose(yuk, -4 * PI)
 print(f"C3: ⟨(∇² − μ²)(e^(-μr)/r), e^(-r²)⟩ with μ = 1.5: {yuk:.10f} = −4π")
@@ -594,7 +615,7 @@ print(f"C3: ⟨(∇² − μ²)(e^(-μr)/r), e^(-r²)⟩ with μ = 1.5: {yuk:.10
 # ## Your turn
 #
 # 1. (Exercise B8.) Product rule (P3) on a grid: with `fd_div_curl`'s grid, take
-#    f = e^{-(x²+y²+z²)} and A = (y, z², sin x). Compute ∇·(fA) by finite
+#    f = e^{-(x²+y²+z²)} and A = (xy, yz, zx). Compute ∇·(fA) by finite
 #    differences directly, and f∇·A + A·∇f from separately differenced pieces.
 #    Assert they agree to O(h²); halve h and confirm the error drops by ≈ 4.
 # 2. (Exercise C1.) Write `square_solid_angle(z0)`: the flux of r̂/r² through the
@@ -607,6 +628,58 @@ print(f"C3: ⟨(∇² − μ²)(e^(-μr)/r), e^(-r²)⟩ with μ = 1.5: {yuk:.10
 #    lower half circles: you get +π and −π. Which hypothesis of Theorem 3.16 fails?
 # 4. In Part 8, replace the random field by (cos z, sin z, sin x) and predict the
 #    split by hand before running it.
+# 5. (Exercise C4.) Check that the curl of F' (x') = R F(Rᵀx') equals det(R) R curl F
+#    for a rotation and for a reflection.
+#
+# Reference solutions for B8, C1(c), and C4 are in the next cell. Write your own
+# first, then delete that cell and rerun.
+
+# %% [markdown]
+# ## Reference solutions: B8, C1(c), C4
+
+# %%
+# B8(a): (P3) on a grid. Difference the product, or apply the product rule to differenced pieces.
+f_b8, A_b8 = sp.exp(-(x**2 + y**2 + z**2)), sp.Matrix([x * y, y * z, z * x])
+p3_gap = {}
+for n in (21, 41):
+    G, dv_fA, _ = fd_div_curl(numfield(f_b8 * A_b8), n)
+    _, dv_A, _ = fd_div_curl(numfield(A_b8), n)
+    h = G[0][1, 0, 0] - G[0][0, 0, 0]
+    fg = np.broadcast_to(sp.lambdify(X, f_b8, "numpy")(*G), dv_A.shape)
+    rule = fg * dv_A + sum(Ac * np.gradient(fg, h, axis=ax, edge_order=2) for ax, Ac in enumerate(numfield(A_b8)(*G)))
+    p3_gap[n] = np.abs(dv_fA - rule).max()
+assert 3.5 < p3_gap[21] / p3_gap[41] < 4.5 and p3_gap[41] < 1e-2
+print(f"B8(a): max |FD(∇·(fA)) − (f FD(∇·A) + A·FD(∇f))|: n=21 {p3_gap[21]:.2e}, n=41 {p3_gap[41]:.2e}, "
+      f"ratio {p3_gap[21] / p3_gap[41]:.2f}")
+# B8(b): a fourth path for Example 4.6, and the vortex along two half circles.
+w4 = circulation(F46n, lambda t: np.array([np.sin(PI * t / 2), 2 * t, 3 * t**2]),
+                 lambda t: np.array([PI / 2 * np.cos(PI * t / 2), 2 + 0 * t, 6 * t]), 0, 1, 60)
+up, down = (circulation(Fv_n, *ring(0, 1), 0, end) for end in (PI, -PI))
+assert np.isclose(w4, 17) and np.isclose(up, PI) and np.isclose(down, -PI)
+print(f"B8(b): path (sin(πt/2), 2t, 3t²) gives {w4:.10f}; vortex upper half {up:.6f}, lower half {down:.6f}")
+
+# C1(c): one face of the unit cube seen from its centre subtends 4π/6.
+def square_solid_angle(z0, n=40):
+    """Flux of r̂/r² through the square [-1/2, 1/2]² at height z0 (normal +ẑ)."""
+    (u, wu), (v, wv) = gl(-0.5, 0.5, n), gl(-0.5, 0.5, n)
+    U_, V_ = np.meshgrid(u, v, indexing="ij")
+    return np.sum(np.outer(wu, wv) * z0 / (U_**2 + V_**2 + z0**2) ** 1.5)
+
+assert np.isclose(square_solid_angle(0.5), 2 * PI / 3, rtol=1e-10)
+print(f"C1(c): square face from the cube centre: {square_solid_angle(0.5):.10f}; 2π/3 = {2 * PI / 3:.10f}")
+
+# C4: under x' = R x, F'(x') = R F(x): div is a scalar, curl picks up det R.
+c45 = (sp.Rational(3, 5), sp.Rational(4, 5))
+for Rm in (sp.Matrix([[c45[0], -c45[1], 0], [c45[1], c45[0], 0], [0, 0, 1]]), sp.diag(1, 1, -1)):
+    old = dict(zip(X, Rm.T * sp.Matrix(X)))
+    for F in (F_test, F_w):
+        Fp = Rm * F.subs(old, simultaneous=True)
+        assert sp.expand(div(Fp) - div(F).subs(old, simultaneous=True)) == 0
+        assert sp.expand(curl(Fp) - Rm.det() * Rm * curl(F).subs(old, simultaneous=True)) == Z3
+Fw_mirror = sp.diag(1, 1, -1) * F_w.subs(z, -z)
+assert curl(Fw_mirror) == sp.Matrix([0, 0, 2]) and sp.diag(1, 1, -1) * curl(F_w) == sp.Matrix([0, 0, -2])
+print("C4: div invariant and curl' = det(R) R curl under a rotation and the reflection z → −z; "
+      "mirrored whirlpool still has curl (0, 0, 2)")
 
 # %%
 if __name__ == "__main__":

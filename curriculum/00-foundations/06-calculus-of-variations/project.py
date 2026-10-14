@@ -168,6 +168,7 @@ y_cyc_nodes = cycloid_y_of_x(xb[1:-1], a_cyc, th1)
 rel_T = (res_br.fun - T_cyc) / T_cyc
 assert abs(rel_T) < 5e-3, rel_T
 assert rel_T > 0, "a faithful discretization cannot beat the true minimum"
+assert rel_T < 1e-3, rel_T                 # §7 quotes "0.06% high"
 dev_br = np.max(np.abs(res_br.x - y_cyc_nodes))
 assert dev_br < 2e-2, dev_br
 assert polygon_descent_time(yb0, xb, 0.0, y1) > res_br.fun  # the line is slower
@@ -245,10 +246,10 @@ H_exact = 1 / np.sqrt(2 * g * 2 * a_cyc)
 assert np.ptp(H_cyc) / H_cyc.mean() < 1e-12 and np.isclose(H_cyc.mean(), H_exact, rtol=1e-12)
 y_num = with_ends(res_br.x, 0.0, y1)                                               # the L-BFGS-B polygon of Part 2
 H_num = beltrami_H(y_num[1:-1], central_slope(xb, y_num))[10:]                     # skip the first nodes near the vertical start
-assert np.ptp(H_num) / H_num.mean() < 2e-3 and abs(H_num.mean() - H_exact) / H_exact < 2e-3
+assert np.ptp(H_num) / H_num.mean() < 6e-4 and abs(H_num.mean() - H_exact) / H_exact < 6e-4   # §7: spread 5e-4
 xs_line = np.linspace(0.01, 1, 400)
 H_line = beltrami_H(xs_line[1:-1], central_slope(xs_line, xs_line))                # the straight wire y = x
-assert H_line.max() / H_line.min() > 5
+assert H_line.max() / H_line.min() > 8.5   # §7: "varies by a factor of 9"
 print(f"        Beltrami H = 1/sqrt(4ga) = {H_exact:.5f}: along the cycloid spread/mean = {np.ptp(H_cyc) / H_cyc.mean():.1e}; "
       f"along the numerical polygon {np.ptp(H_num) / H_num.mean():.1e} (mean {H_num.mean():.5f}); "
       f"along the line max/min = {H_line.max() / H_line.min():.1f}")
@@ -286,12 +287,12 @@ res_cat = minimize(polygon_potential, yc0, args=(xc, 0.0, 0.0), method="SLSQP",
                    options=dict(maxiter=1000, ftol=1e-12))
 assert res_cat.success and np.isclose(polygon_length(res_cat.x, xc, 0, 0), ell, atol=1e-8)
 dev_cat = np.max(np.abs(res_cat.x - y_cat(xc[1:-1])))
-assert dev_cat < 1e-3, dev_cat
+assert dev_cat < 3e-4, dev_cat            # Example 4.4: 2.3e-4
 res_tc = minimize(polygon_potential, yc0, args=(xc, 0.0, 0.0), method="trust-constr",
                   constraints=[NonlinearConstraint(lambda yy: polygon_length(yy, xc, 0.0, 0.0), ell, ell)],
                   options=dict(maxiter=3000, xtol=1e-10, gtol=1e-10))
 mult = float(np.ravel(res_tc.v[0])[0])
-assert abs(mult - lam_cat) < 2e-3, (mult, lam_cat)
+assert abs(mult - lam_cat) < 2e-4 and np.isclose(mult, 1.6216, atol=5e-5), (mult, lam_cat)   # Example 4.4: 1.6216, within 1.5e-4
 print(f"        SLSQP: max deviation from cosh {dev_cat:.1e}; trust-constr multiplier {mult:.4f} vs λ = {lam_cat:.4f}")
 
 fig, ax = plt.subplots(figsize=(6, 4))
@@ -431,6 +432,8 @@ for Ng in (50, 100, 200, 400):
     errs.append(np.max(np.abs(grad_J_h(yg, xg) - hg * EL_f(xg[1:-1])))); hs_list.append(hg)
 ratios = np.array(errs[:-1]) / np.array(errs[1:])
 assert np.all(ratios > 3.5) and np.all(ratios < 4.5), ratios
+# The values quoted in solutions.md B4: 2.75e-4, 7.16e-5, 1.83e-5, 4.62e-6 with ratios 3.83, 3.92, 3.96.
+assert np.allclose(errs, [2.75e-4, 7.16e-5, 1.83e-5, 4.62e-6], rtol=5e-3) and np.allclose(ratios, [3.83, 3.92, 3.96], atol=6e-3)
 print(f"Part 8: max|∂J_h/∂y_i − h·EL(x_i)| = {errs[0]:.2e}, {errs[1]:.2e}, {errs[2]:.2e}, {errs[3]:.2e}; "
       f"ratios on halving h: {np.round(ratios, 2)} -> O(h^2)")
 fig, ax = plt.subplots(figsize=(5, 4))
@@ -471,7 +474,8 @@ for Ng in (50, 100, 200, 400):
     errs_t.append(np.max(np.abs(grad_J_trap(yg, xg) - hg * EL_f(xg[1:-1]))))
 ratios_t = np.array(errs_t[:-1]) / np.array(errs_t[1:])
 assert np.all(ratios_t > 7.0) and np.all(ratios_t < 9.0), ratios_t
-assert np.isclose(errs_t[0], 3.82e-6, rtol=2e-2) and np.isclose(ratios_t[0], 7.72, atol=0.02)
+# The values quoted in solutions.md B4: 3.82e-6, 4.95e-7, 6.29e-8, 7.94e-9 with ratios 7.72, 7.86, 7.93.
+assert np.allclose(errs_t, [3.82e-6, 4.95e-7, 6.29e-8, 7.94e-9], rtol=5e-3) and np.allclose(ratios_t, [7.72, 7.86, 7.93], atol=6e-3)
 print(f"Part 8b: trapezoid rule: max|∂J_h/∂y_i − h·EL(x_i)| = {errs_t[0]:.2e}, {errs_t[1]:.2e}, {errs_t[2]:.2e}, {errs_t[3]:.2e}; "
       f"ratios on halving h: {np.round(ratios_t, 2)} -> O(h^3)")
 
@@ -500,7 +504,15 @@ dydx = sp.diff(Yc, tht) / sp.diff(Xc, tht)
 assert sp.simplify(Yc * (1 + dydx**2) - 2 * aa) == 0                                      # Beltrami first integral
 assert sp.simplify(2 * Yc * sp.diff(dydx, tht) / sp.diff(Xc, tht) + 1 + dydx**2) == 0      # second-order E–L: 2yy'' + 1 + y'^2 = 0
 assert sp.simplify(EL_of(yf * sp.sqrt(1 + yp_**2)).subs(yf, cc * sp.cosh((xs_ - x0s) / cc)).doit()) == 0   # catenary / catenoid
-print("Part 9: SymPy: Beltrami identity on four Lagrangians, falling-particle energy, line, cycloid and cosh all check.")
+# §3.10 Dido: the upward-bulging arc y = y0 + sqrt(R^2 − x^2) solves the E–L equation of y + λ sqrt(1 + y'^2)
+# with λ = −R (λ < 0), and not with λ = +R. Checked at sample points (SymPy cannot cancel sqrt(a) sqrt(1/a) symbolically).
+Rd, y0d = sp.symbols("R_d y0_d", positive=True)
+arc_up = y0d + sp.sqrt(Rd**2 - xs_**2)
+for lam_sign, expected in ((-1, 0), (+1, 2)):
+    res_d = EL_of(yf + lam_sign * Rd * sp.sqrt(1 + yp_**2)).subs(yf, arc_up).doit()
+    for xv in (sp.Rational(-3, 2), sp.Rational(3, 10), sp.Rational(6, 5)):
+        assert sp.nsimplify(res_d.subs({Rd: 2, y0d: sp.Rational(1, 2), xs_: xv})) == expected
+print("Part 9: SymPy: Beltrami identity on four Lagrangians, falling-particle energy, line, cycloid, cosh and Dido's arc all check.")
 
 # Example 4.6: catenoid exists iff d/R <= 1 / min_u (cosh u / u); the minimizer solves u tanh u = 1.
 u_star = brentq(lambda u: u * np.tanh(u) - 1, 0.5, 2)
@@ -632,7 +644,7 @@ assert np.max(np.abs(approx_fprime(0.9 * np.ones(Nk), polygon_area, 1e-7, xk, 1.
 res_cnd = minimize(polygon_area, np.ones(Nk), args=(xk, 1.0, 1.0), jac=polygon_area_grad, method="L-BFGS-B",
                    bounds=[(0.0, None)] * Nk, options=opts_k)                                   # start: the cylinder, area 2π
 dev_cnd = np.max(np.abs(res_cnd.x - c_hi * np.cosh(xk[1:-1] / c_hi)))
-assert dev_cnd < 1e-4 and np.isclose(res_cnd.fun, 5.9920, atol=5e-5) and res_cnd.fun < 2 * np.pi
+assert dev_cnd < 2e-5 and np.isclose(res_cnd.fun, 5.9920, atol=5e-5) and res_cnd.fun < 2 * np.pi   # solutions B8: 1.3e-5
 res_cnd2 = minimize(polygon_area, c_lo * np.cosh(xk[1:-1] / c_lo), args=(xk, 1.0, 1.0), jac=polygon_area_grad, method="L-BFGS-B",
                     bounds=[(0.0, None)] * Nk, options=opts_k)                                  # start ON the thin-neck catenoid
 assert np.isclose(res_cnd2.fun, res_cnd.fun, atol=1e-4), "the thin-neck catenoid is a saddle: the minimizer leaves it"
@@ -669,11 +681,13 @@ fig.tight_layout(); fig.savefig(FIG / "catenoid.png", dpi=120); plt.close(fig)
 #    (two roots; the smaller area belongs to the larger c). Then try d = 0.8 > 0.6627
 #    and watch the minimizer pinch toward the axis: no catenoid exists, and the
 #    polygon heads for the two-disk (Goldschmidt) configuration. Exercise B8.
-# 2. **Brachistochrone with friction.** With Coulomb friction μ on a wire whose
-#    slope stays below 45°, energy gives v^2 = 2g(y − μx) (y down). Replace the
-#    speed law in `polygon_descent_time`, minimize for μ = 0.1 from (0,0) to (1,1),
-#    and compare the shape and time with the frictionless cycloid. Does the start
-#    still look vertical?
+# 2. **Brachistochrone with friction.** With Coulomb friction μ, and the normal
+#    force taken as the weight component mg cos α (neglecting its centripetal part
+#    m v^2 κ, the usual simplification), the friction work over ds is μ m g dx, so
+#    energy gives v^2 = 2g(y − μx) (y down). Replace the speed law in
+#    `polygon_descent_time`, minimize for μ = 0.1 from (0,0) to (1,1), and compare
+#    the shape and time with the frictionless cycloid. Does the start still look
+#    vertical?
 # 3. **Newton's law from the action.** Store q(t) at N interior times on [0, T]
 #    with q(0) = 0, q(T) = 0, T = 1, and minimize the discretized action
 #    Σ h [ (Δq_i/h)^2 / 2 − g (q_i + q_{i+1})/2 ]. Compare the minimizer with the

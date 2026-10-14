@@ -2,11 +2,11 @@
 
 **Time:** ~12 hours · **Prerequisites:** F5 (and LA-14 for the multiparameter calculus) · **Unlocks:** ST-2, ML-1; through §3.10, also ST-4 and ST-5
 
-> **Conventions in this module.** Data $X_1, \dots, X_n$ are iid from a density or PMF $p(x;\theta)$ with $\theta \in \Theta \subseteq \mathbb{R}^k$; lowercase $x_i$ are observed values; $\theta_0$ is the true value. An **estimator** $\hat\theta_n = T(X_1, \dots, X_n)$ is a function of the data alone, hence a random variable. $\mathbb{E}_\theta, \mathrm{Var}_\theta$ are computed with parameter $\theta$. Logs are natural. Log-likelihood $\ell_n(\theta) = \sum_i \log p(X_i;\theta)$; per-observation score $s(\theta;x) = \nabla_\theta \log p(x;\theta)$ (a column); total score $s_n = \nabla\ell_n$. Fisher information per observation $I_1(\theta) = \mathbb{E}_\theta[ss^\top] = -\mathbb{E}_\theta[\nabla^2\log p]$; for $n$ observations $nI_1$. Bias $b(\theta) = \mathbb{E}_\theta\hat\theta - \theta$; $\mathrm{MSE} = \mathbb{E}_\theta(\hat\theta - \theta)^2$. $\xrightarrow{p}$, $\xrightarrow{d}$ are F5 Definition 3.33. Parametrizations: $\mathrm{Exponential}(\lambda)$ has **rate** $\lambda$, density $\lambda e^{-\lambda x}$; $\mathrm{Gamma}(\alpha, \beta)$ has shape $\alpha$ and **rate** $\beta$, density $\beta^\alpha x^{\alpha-1}e^{-\beta x}/\Gamma(\alpha)$ (F5's $\mathrm{Gamma}(a, \lambda)$); $\mathcal{N}(\mu, \sigma^2)$ is parametrized by the **variance**. $S^2 = \frac{1}{n-1}\sum(X_i - \bar X)^2$ and $\hat\sigma^2 = \frac1n\sum(X_i - \bar X)^2$. $\psi = \Gamma'/\Gamma$ is the digamma function. $A \succeq B$ means $A - B$ is positive semidefinite (LA-8).
+> **Conventions in this module.** Data $X_1, \dots, X_n$ are iid from a density or PMF $p(x;\theta)$, $\theta \in \Theta \subseteq \mathbb{R}^k$; $x_i$ are observed values; $\theta_0$ is the truth. An **estimator** $\hat\theta_n = T(X_1, \dots, X_n)$ is a random variable. $\mathbb{E}_\theta, \mathrm{Var}_\theta$ are computed with parameter $\theta$. Logs are natural. Log-likelihood $\ell_n(\theta) = \sum_i \log p(X_i;\theta)$; per-observation score $s(\theta;x) = \nabla_\theta \log p(x;\theta)$ (a column); total score $s_n = \nabla\ell_n$. Fisher information per observation $I_1(\theta) = \mathbb{E}_\theta[ss^\top] = -\mathbb{E}_\theta[\nabla^2\log p]$; for $n$ observations $nI_1$. Bias $b(\theta) = \mathbb{E}_\theta\hat\theta - \theta$; $\mathrm{MSE} = \mathbb{E}_\theta(\hat\theta - \theta)^2$. $\xrightarrow{p}$, $\xrightarrow{d}$ are F5 Definition 3.33. Parametrizations: $\mathrm{Exponential}(\lambda)$ has **rate** $\lambda$, density $\lambda e^{-\lambda x}$; $\mathrm{Gamma}(\alpha, \beta)$ has shape $\alpha$ and **rate** $\beta$, density $\beta^\alpha x^{\alpha-1}e^{-\beta x}/\Gamma(\alpha)$ (F5's $\mathrm{Gamma}(a, \lambda)$); $\mathcal{N}(\mu, \sigma^2)$ is parametrized by the **variance**. $S^2 = \frac{1}{n-1}\sum(X_i - \bar X)^2$ and $\hat\sigma^2 = \frac1n\sum(X_i - \bar X)^2$. $\psi = \Gamma'/\Gamma$ is the digamma function. $A \succeq B$ means $A - B$ is positive semidefinite (LA-8).
 
 ## 0. Where this sits
 
-You need F5 fluently: independence as factorization (Theorem 3.4), the weak law (Theorem 3.34), the CLT (3.24), Adam's and Eve's laws (Theorems 3.26, 3.28), Cauchy–Schwarz for covariances (Theorem 3.17), and KL divergence with Gibbs' inequality (Theorem 3.45). LA-14 supplies gradients, Hessians, and §3.9's Gaussian log-likelihood gradients (3.38)–(3.39); only §3.5(f) and the matrix statements need it.
+You need F5 fluently: independence as factorization (F5 Theorem 3.4), the weak law (F5 Theorem 3.34), the CLT (F5 (3.24)), Adam's and Eve's laws (F5 Theorems 3.26, 3.28), Cauchy–Schwarz for covariances (F5 Theorem 3.17), and Gibbs' inequality (F5 Theorem 3.45). LA-14 supplies gradients, Hessians, and the Gaussian log-likelihood gradients LA-14 (3.38)–(3.39); only §3.5(f) and the matrix statements need it.
 
 Probability went from a known model to data. Inference goes backwards. This module builds the vocabulary every later statistics and ML module assumes: estimator, standard error, likelihood, score, Fisher information, sufficiency. ST-2 turns sampling distributions into intervals and tests. ML-1 reuses the bias–variance decomposition and recognizes log-loss minimization as maximum likelihood. ST-4 (GLMs) and ST-5 (conjugate priors) are built on the exponential families of §3.10.
 
@@ -14,19 +14,19 @@ Probability went from a known model to data. Inference goes backwards. This modu
 
 In *Theoria motus* (1809) Gauss justified least squares, the method behind his recovery of the asteroid Ceres, by asking which error distribution makes the arithmetic mean of repeated measurements the most probable value. The answer was the normal law. A year later Laplace connected this to his central limit theorem: errors built from many small independent causes are approximately normal. So by 1810 there was a method and a justification, but for one model only, and no account of how accurate the answer was.
 
-In 1894 Karl Pearson was handed W. F. R. Weldon's measurements of 1,000 Naples crabs. The histogram of one body ratio was lopsided, and Pearson guessed it was a mixture of two normal populations, with five unknown parameters. He estimated them by setting the first five sample moments equal to the model's moments, which led to a ninth-degree polynomial he solved by hand. That is the **method of moments**. It gives *an* answer. It says nothing about whether the answer is good.
+In 1894 Karl Pearson fitted W. F. R. Weldon's measurements of 1,000 Naples crabs, whose histogram was lopsided, with a mixture of two normals: five unknown parameters. He set the first five sample moments equal to the model's, which led to a ninth-degree polynomial he solved by hand. That is the **method of moments**. It gives *an* answer, and says nothing about whether the answer is good.
 
 R. A. Fisher attacked that gap. As a Cambridge undergraduate he proposed (1912) choosing the parameters that make the observed sample most probable. In "On the mathematical foundations of theoretical statistics" (1922) he defined **consistency**, **efficiency**, and **sufficiency**, called his criterion **maximum likelihood**, and showed that Pearson's moments can waste much of the information in the data. In 1925 he defined the **amount of information** and claimed that maximum likelihood asymptotically extracts all of it.
 
-The optimality theory followed. C. R. Rao (1945) and Harald Cramér (*Mathematical Methods of Statistics*, 1946) proved that no unbiased estimator can have variance below one over the information; Fréchet (1943) and Darmois (1945) found the same bound independently. Rao's 1945 paper and Blackwell (1947) showed how to improve any estimator by conditioning on a sufficient statistic. Wald (1949) gave conditions under which maximum likelihood is consistent, and Neyman and Scott (1948) showed one way it can fail.
+The optimality theory followed. C. R. Rao (1945) and Harald Cramér (*Mathematical Methods of Statistics*, 1946) proved that no unbiased estimator has variance below one over the information; Fréchet (1943) and Darmois (1945) found the bound independently. Rao's 1945 paper and Blackwell (1947) showed how to improve any estimator by conditioning on a sufficient statistic. Wald (1949) proved maximum likelihood consistent under conditions, and Neyman and Scott (1948) showed one way it fails.
 
-The forcing question has three parts. Given data from a distribution with unknown parameters: how do you estimate them, how good is the estimate, and is there a best possible one? Answering the second part needs a conceptual move that probability alone does not supply. **The estimate is a number; the estimator is a random variable**, and its distribution over hypothetical repetitions of the experiment is what we study.
+The forcing question: given data from a distribution with unknown parameters, how do you estimate them, how good is the estimate, and is there a best possible one? The second part needs a new idea: **the estimate is a number; the estimator is a random variable**, and its distribution over hypothetical repetitions of the experiment is what we study.
 
 ## 2. Intuition
 
 ### An estimator is a recipe, and recipes have distributions
 
-Take ten draws from $\mathcal{N}(\mu, 1)$ with $\mu$ unknown. The recipe "average them" gives a number, say 4.83. Another ten draws would give 5.12. Repeat the experiment forever and the outputs pile up into a histogram: the **sampling distribution** of the estimator. Every statement about how good an estimator is, is a statement about that histogram, *not* about the one number you computed.
+Take ten draws from $\mathcal{N}(\mu, 1)$ with $\mu$ unknown. The recipe "average them" gives one number; another ten draws would give another. Repeat the experiment forever and the outputs pile up into a histogram: the **sampling distribution** of the estimator. Every statement about how good an estimator is, is about that histogram, *not* about the one number you computed.
 
 ```
                truth
@@ -36,7 +36,7 @@ Take ten draws from $\mathcal{N}(\mu, 1)$ with $\mu$ unknown. The recipe "averag
                  |
 ```
 
-Two numbers summarize the histogram relative to the truth. **Bias** is how far its center sits from the truth. **Variance** is how spread out it is. The overall quality is the average squared distance from the truth, the **mean squared error**. Think of the center as a point and the spread as fluctuation around that point: squared distance to the truth should then split like Pythagoras into (center offset)$^2$ + (spread)$^2$. That guess is right, and it means estimator B can beat estimator A: a little bias can buy a lot of variance.
+**Bias** is how far the histogram's center sits from the truth; **variance** is its spread; the **mean squared error** is its average squared distance from the truth. Treat the spread as fluctuation around the center and Pythagoras suggests MSE = (center offset)$^2$ + (spread)$^2$. That guess is right, and it means B can beat A: a little bias can buy a lot of variance.
 
 ### The likelihood is surprise, read backwards
 
@@ -55,7 +55,7 @@ Now take $n$ flips with $T$ heads. The log-likelihood $\ell(p) = T\log p + (n-T)
             ^ 0.7                                   ^ 0.7
 ```
 
-A flat peak means many parameters explain the data about equally well; a sharp peak means the data pin the parameter down. Now compare with something you already know: $\mathrm{Var}(\hat p) = p(1-p)/n$, which is exactly **one over the curvature**. Guess the general rule: an estimator's variance is at least $1/(\text{expected curvature of the log-likelihood})$, and maximum likelihood achieves it for large $n$. The expected curvature per observation is the **Fisher information**. The first half of the guess is the Cramér–Rao bound (§3.7), the second half is the asymptotic efficiency of the MLE (§3.8).
+A flat peak means many parameters explain the data about equally well; a sharp peak means the data pin the parameter down. Compare with what you know: $\mathrm{Var}(\hat p) = p(1-p)/n$ is exactly **one over the curvature**. Guess the general rule: an estimator's variance is at least $1/(\text{expected curvature of the log-likelihood})$, and maximum likelihood achieves it for large $n$. The expected curvature per observation is the **Fisher information**. The first half of the guess is the Cramér–Rao bound (§3.7), the second half is the asymptotic efficiency of the MLE (§3.8).
 
 So before §3 you should be able to guess three results: MSE = bias² + variance; the MLE's variance is about $1/(nI_1)$; and no unbiased estimator does better than $1/(nI_1)$.
 
@@ -94,7 +94,7 @@ $$\mathrm{MSE} = \mathrm{Var}(\hat\theta) + b^2. \tag{3.2}$$ ∎
 2. Markov: $P\big((\hat\theta_n - \theta)^2 \ge \epsilon^2\big) \le \mathbb{E}(\hat\theta_n - \theta)^2/\epsilon^2 = \mathrm{MSE}_n/\epsilon^2 \to 0$.
 3. By (3.2), $\mathrm{MSE}_n = b_n^2 + \mathrm{Var}_n$, so $b_n \to 0$ and $\mathrm{Var}_n \to 0$ give $\mathrm{MSE}_n \to 0$. ∎
 
-■ **What just happened.** This is Chebyshev's inequality centered at the truth instead of the mean. It is how the weak law (F5 Theorem 3.34) was proved, and it is the first thing to try for any new estimator.
+■ **What just happened.** Chebyshev's inequality centered at the truth instead of the mean: the same argument that proved the weak law (F5 Theorem 3.34).
 
 ### 3.3 The running example: sample mean and sample variance
 
@@ -110,7 +110,7 @@ $\mathbb{E}\bar X = \mu$ and $\mathrm{Var}\,\bar X = \sigma^2/n$ (F5 §3.11), so
 $$\sum_i(X_i - \bar X)^2 = \sum_i(X_i - \mu)^2 - n(\bar X - \mu)^2. \tag{3.3}$$
 3. Take expectations with $\mu$ the true mean: $n\sigma^2 - n\cdot\sigma^2/n = (n-1)\sigma^2$. Divide by $n - 1$. ∎
 
-■ **What just happened.** $\bar X$ is the point closest to the data in squared distance, so deviations from it are systematically smaller than deviations from $\mu$. The shortfall is exactly one $\sigma^2$: one degree of freedom spent estimating $\mu$.
+■ **What just happened.** $\bar X$ is the point closest to the data, so deviations from it are systematically smaller than deviations from $\mu$, by exactly one $\sigma^2$ in expectation: a degree of freedom spent estimating $\mu$.
 
 **Theorem 3.7 (Normal samples).** If $X_i \overset{\text{iid}}{\sim} \mathcal{N}(\mu, \sigma^2)$, then $\bar X$ and $S^2$ are independent, $(n-1)S^2/\sigma^2 \sim \chi^2_{n-1}$, and
 $$\mathrm{Var}(S^2) = \frac{2\sigma^4}{n-1}. \tag{3.4}$$
@@ -124,11 +124,11 @@ $$\mathrm{Var}(S^2) = \frac{2\sigma^4}{n-1}. \tag{3.4}$$
 4. So $(n-1)S^2/\sigma^2 = \sum_{i=2}^n (Y_i/\sigma)^2$ is a sum of $n-1$ independent squared standard normals, $\chi^2_{n-1}$ by definition. It depends only on $Y_2, \dots, Y_n$, while $\bar X$ depends only on $Y_1$: independent.
 5. For $Z \sim \mathcal{N}(0,1)$, $\mathbb{E}Z^4 = 3$, so $\mathrm{Var}(Z^2) = 2$ and $\mathrm{Var}(\chi^2_{n-1}) = 2(n-1)$. Then $\mathrm{Var}(S^2) = \frac{\sigma^4}{(n-1)^2}\cdot 2(n-1)$. ∎
 
-■ **What just happened.** One rotation splits the data into the mean direction and $n-1$ directions orthogonal to it. The residuals live in that $(n-1)$-dimensional subspace, which is what "$n-1$ degrees of freedom" means. ST-3 does the same with $p$ regression directions instead of one; ST-2 uses the independence of $\bar X$ and $S^2$ to build the $t$ statistic.
+■ **What just happened.** One rotation splits the data into the mean direction and $n-1$ directions orthogonal to it; the residuals live in that $(n-1)$-dimensional subspace, which is what "$n-1$ degrees of freedom" means. ST-2 uses the independence of $\bar X$ and $S^2$ to build the $t$ statistic.
 
 **The MLE of $\sigma^2$ has lower MSE.** §3.5 shows the MLE is $\hat\sigma^2 = \frac{n-1}{n}S^2$. From Theorem 3.6 and (3.4):
 $$b = -\frac{\sigma^2}{n}, \qquad \mathrm{Var}(\hat\sigma^2) = \frac{2(n-1)\sigma^4}{n^2}, \qquad \mathrm{MSE}(\hat\sigma^2) = \frac{(2n-1)\sigma^4}{n^2} < \frac{2\sigma^4}{n-1} = \mathrm{MSE}(S^2), \tag{3.5}$$
-because $(2n-1)(n-1) = 2n^2 - 3n + 1 < 2n^2$. Shrinking $S^2$ by $(n-1)/n$ costs bias² $\sigma^4/n^2$ and saves more than that in variance. This is the bias–variance trade-off's first appearance; Exercise B1 finds the best divisor ($n+1$), and Example 4.1 has numbers. Unbiasedness is a convention, not a law of nature.
+because $(2n-1)(n-1) = 2n^2 - 3n + 1 < 2n^2$. Shrinking $S^2$ by $(n-1)/n$ costs bias² $\sigma^4/n^2$ and saves more in variance: the bias–variance trade-off's first appearance (Example 4.1; Exercise B1 finds the best divisor, $n+1$). Unbiasedness is a convention, not a law of nature.
 
 ### 3.4 The method of moments
 
@@ -143,15 +143,15 @@ $$\hat\beta_{\text{MoM}} = \bar X/\hat\sigma^2, \qquad \hat\alpha_{\text{MoM}} =
 
 **Theorem 3.9 (Consistency of MoM).** Suppose $\mathbb{E}[X^{2k}] < \infty$ and the moment map $\theta \mapsto (m_1(\theta), \dots, m_k(\theta))$ has an inverse $h$ that is continuous at the true moments. Then $\hat\theta = h(\hat m_1, \dots, \hat m_k) \xrightarrow{p} \theta_0$.
 
-*Proof.* By the weak law applied to $X^j$ (which has finite variance because $\mathbb{E}X^{2j} < \infty$), $\hat m_j \xrightarrow{p} m_j(\theta_0)$ for each $j$. **Continuous mapping:** if $\mathbf{Y}_n \xrightarrow{p} \mathbf{c}$ and $h$ is continuous at $\mathbf{c}$, then $h(\mathbf{Y}_n) \xrightarrow{p} h(\mathbf{c})$, because for any $\epsilon$ there is a $\delta$ with $\|\mathbf{y} - \mathbf{c}\| < \delta \Rightarrow \|h(\mathbf{y}) - h(\mathbf{c})\| < \epsilon$, so $P(\|h(\mathbf{Y}_n) - h(\mathbf{c})\| \ge \epsilon) \le P(\|\mathbf{Y}_n - \mathbf{c}\| \ge \delta) \le \sum_j P(|Y_{n,j} - c_j| \ge \delta/\sqrt k) \to 0$. ∎
+*Proof.* 1. The weak law applied to $X^j$ (finite variance since $\mathbb{E}X^{2j} < \infty$) gives $\hat m_j \xrightarrow{p} m_j(\theta_0)$ for each $j$. 2. **Continuous mapping:** if $\mathbf{Y}_n \xrightarrow{p} \mathbf{c}$ and $h$ is continuous at $\mathbf{c}$, pick $\delta$ with $\|\mathbf{y} - \mathbf{c}\| < \delta \Rightarrow \|h(\mathbf{y}) - h(\mathbf{c})\| < \epsilon$; then $P(\|h(\mathbf{Y}_n) - h(\mathbf{c})\| \ge \epsilon) \le P(\|\mathbf{Y}_n - \mathbf{c}\| \ge \delta) \le \sum_j P(|Y_{n,j} - c_j| \ge \delta/\sqrt k) \to 0$. ∎
 
-MoM is consistent for the cheapest possible reason: averages converge. It is often inefficient. For the Gamma shape at $\alpha = 2$, its asymptotic variance is $2\alpha(\alpha+1)/n = 12/n$ (delta method on $(\hat m_1, \hat m_2)$; the project derives it) against the MLE's $6.90/n$ (Example 4.5): an asymptotic efficiency of $0.575$. That was Fisher's 1922 complaint.
+MoM is consistent because averages converge, but often inefficient: for the Gamma shape at $\alpha = 2$ its asymptotic variance is $2\alpha(\alpha+1)/n = 12/n$ (delta method on $(\hat m_1, \hat m_2)$) against the MLE's $6.90/n$ (Example 4.5), an asymptotic efficiency of $0.575$. That was Fisher's 1922 complaint.
 
 ### 3.5 Maximum likelihood
 
 **Definition 3.10.** Given observed data, the **likelihood** is $L(\theta) = \prod_i p(x_i;\theta)$, the log-likelihood is $\ell(\theta) = \sum_i\log p(x_i;\theta)$, and the **maximum likelihood estimator** is $\hat\theta = \arg\max_\theta L(\theta) = \arg\max_\theta\ell(\theta)$. $L$ is a function of $\theta$, not a density in $\theta$; it need not integrate to 1.
 
-**Theorem 3.11 (Invariance).** If $\hat\theta$ is the MLE of $\theta$, then $g(\hat\theta)$ is the MLE of $\eta = g(\theta)$ for any function $g$, where for non-injective $g$ the likelihood of $\eta$ is the **profile** $L^*(\eta) = \sup\{L(\theta) : g(\theta) = \eta\}$.
+**Theorem 3.11 (Invariance).** If $\hat\theta$ is the MLE of $\theta$, then $g(\hat\theta)$ is the MLE of $\eta = g(\theta)$ for any $g$, where the likelihood of $\eta$ is the **profile** $L^*(\eta) = \sup\{L(\theta) : g(\theta) = \eta\}$.
 
 ▶ **Try it first.** Do the case of a bijection $g$ first.
 
@@ -174,7 +174,7 @@ MoM is consistent for the cheapest possible reason: averages converge. It is oft
 $$\ell(\mu, v) = -\frac n2\log(2\pi v) - \frac{1}{2v}\sum_i(x_i - \mu)^2. \tag{3.8}$$
 The gradient (LA-14 (3.38)–(3.39) with $p = 1$) is $\partial_\mu\ell = \sum(x_i - \mu)/v$, $\partial_v\ell = -\frac{n}{2v} + \frac{1}{2v^2}\sum(x_i - \mu)^2$; its zero is $\hat\mu = \bar x$, $\hat v = \frac1n\sum(x_i - \bar x)^2$. The Hessian entries are $\partial^2_\mu\ell = -n/v$, $\partial_\mu\partial_v\ell = -\sum(x_i - \mu)/v^2$, $\partial^2_v\ell = \frac{n}{2v^2} - \frac{1}{v^3}\sum(x_i - \mu)^2$. At the MLE the cross term is zero and $\partial_v^2\ell = \frac{n}{2\hat v^2} - \frac{n\hat v}{\hat v^3} = -\frac{n}{2\hat v^2}$. The Hessian $\mathrm{diag}(-n/\hat v, -n/(2\hat v^2))$ is negative definite, so this is a strict local maximum (LA-8 Theorem 3.19); it is the only critical point and $\ell \to -\infty$ at the edges, so it is global.
 
-(e) **Uniform$(0, \theta)$: where calculus fails.** $p(x;\theta) = 1/\theta$ on $[0, \theta]$. If $\theta < \max_i x_i$, some observation is impossible and $L(\theta) = 0$. For $\theta \ge \max_i x_i$, $L(\theta) = \theta^{-n}$, strictly decreasing. So $\hat\theta = X_{(n)} = \max_i X_i$. The derivative $\ell'(\theta) = -n/\theta$ never vanishes; the maximum sits at a discontinuity, where setting a derivative to zero finds nothing. Example 4.4 shows the regularity behind §3.6–§3.8 fails here too.
+(e) **Uniform$(0, \theta)$: where calculus fails.** $p(x;\theta) = 1/\theta$ on $[0, \theta]$. If $\theta < \max_i x_i$, some observation is impossible and $L(\theta) = 0$; for $\theta \ge \max_i x_i$, $L(\theta) = \theta^{-n}$ is strictly decreasing. So $\hat\theta = X_{(n)} = \max_i X_i$, at a discontinuity where $\ell'(\theta) = -n/\theta$ never vanishes: setting a derivative to zero finds nothing. Example 4.4 shows the regularity behind §3.6–§3.8 fails too.
 
 (f) **Multivariate normal $\mathcal{N}(\boldsymbol\mu, \Sigma)$ on $\mathbb{R}^d$.** LA-14 §3.9 derived, using $\nabla\log\det\Sigma = \Sigma^{-1}$ (LA-14 (3.17)) and $d(\Sigma^{-1}) = -\Sigma^{-1}(d\Sigma)\Sigma^{-1}$ (LA-14 (3.6)), that $\nabla_{\boldsymbol\mu}\ell = \Sigma^{-1}\sum_i(\mathbf{x}_i - \boldsymbol\mu)$ and $\nabla_\Sigma\ell = \frac12(\Sigma^{-1}S_{\boldsymbol\mu}\Sigma^{-1} - n\Sigma^{-1})$ with $S_{\boldsymbol\mu} = \sum_i(\mathbf{x}_i - \boldsymbol\mu)(\mathbf{x}_i - \boldsymbol\mu)^\top$. Setting both to zero and multiplying by $\Sigma$:
 $$\hat{\boldsymbol\mu} = \bar{\mathbf{x}}, \qquad \hat\Sigma = \frac1n\sum_i(\mathbf{x}_i - \bar{\mathbf{x}})(\mathbf{x}_i - \bar{\mathbf{x}})^\top. \tag{3.9}$$
@@ -202,7 +202,7 @@ $$\mathbb{E}_\theta[s(\theta;X)] = \mathbf{0}, \qquad I_1(\theta) = \mathrm{Cov}
 4. The second integral is $\int s^2 p\,dx = \mathbb{E}[s^2]$; the first is $\mathbb{E}[\partial^2_\theta\log p]$. So $\mathbb{E}[s^2] = -\mathbb{E}[\partial^2_\theta\log p]$.
 5. Since $\mathbb{E}[s] = 0$, $\mathbb{E}[s^2] = \mathrm{Var}(s)$. ∎
 
-■ **What just happened.** Two faces of one number: how much the data jostle the slope of the log-likelihood equals the average curvature of the log-likelihood. The curvature form is usually easier to compute. Step 1 is where (R1) matters: if the limits of integration move with $\theta$, differentiating the integral produces boundary terms (Leibniz's rule), and Example 4.4 shows the identity then fails.
+■ **What just happened.** How much the data jostle the slope of the log-likelihood equals its average curvature; the curvature form is usually easier to compute. Step 1 is where (R1) matters: if the limits of integration move with $\theta$, Leibniz's rule adds boundary terms and the identity fails (Example 4.4).
 
 **The standard families**, per observation, from $-\mathbb{E}[\partial^2_\theta\log p]$:
 
@@ -225,7 +225,7 @@ $$I^{(\phi)}(\boldsymbol\phi) = J^\top I^{(\theta)}\big(h(\boldsymbol\phi)\big)\
 
 *Proof.* By the chain rule (LA-14 Theorem 3.6), $\nabla_{\boldsymbol\phi}\log p(x;h(\boldsymbol\phi)) = J^\top\nabla_\theta\log p$, i.e., $s_\phi = J^\top s_\theta$. Then $\mathbb{E}[s_\phi s_\phi^\top] = J^\top\mathbb{E}[s_\theta s_\theta^\top]J$. ∎
 
-Information transforms like a metric (a covariant 2-tensor, LA-12), not like a function value. Example: for $\mathcal{N}(0, \sigma^2)$ parametrized by $\sigma$, $v = \sigma^2$ and $dv/d\sigma = 2\sigma$, so $I_\sigma = 4\sigma^2\cdot\frac{1}{2\sigma^4} = 2/\sigma^2$. Exercise B4 does the Bernoulli log-odds.
+Information transforms like a metric (LA-12's covariant 2-tensor), not like a function value. For $\mathcal{N}(0, \sigma^2)$ parametrized by $\sigma$, $v = \sigma^2$ and $dv/d\sigma = 2\sigma$, so $I_\sigma = 4\sigma^2\cdot\frac{1}{2\sigma^4} = 2/\sigma^2$. Exercise B4 does the Bernoulli log-odds.
 
 ### 3.7 The Cramér–Rao bound and efficiency
 
@@ -241,12 +241,12 @@ $$\mathrm{Var}_\theta(\hat\theta) \ge \frac{1}{nI_1(\theta)}. \tag{3.14}$$
 4. Cauchy–Schwarz for covariances (F5 Theorem 3.17; it is LA-8 Theorem 3.4 in the inner product $\mathbb{E}[UV]$ on centered variables): $\mathrm{Cov}(\hat\theta, s_n)^2 \le \mathrm{Var}(\hat\theta)\,\mathrm{Var}(s_n)$.
 5. $\mathrm{Var}(s_n) = nI_1$ (Theorems 3.12 and 3.13). So $1 \le \mathrm{Var}(\hat\theta)\cdot nI_1$. ∎
 
-■ **What just happened.** In the space of random variables with inner product $\mathbb{E}[UV]$, the score is the direction along which the data move when $\theta$ moves, and it has length $\sqrt{nI_1}$. Unbiasedness forces $\hat\theta - \theta$ to have inner product exactly 1 with that direction. A vector with a fixed inner product with a given direction is shortest when it points along that direction, and then its length is $1/\sqrt{nI_1}$. That is the whole proof.
+■ **What just happened.** In the space of random variables with inner product $\mathbb{E}[UV]$, the score is a direction of length $\sqrt{nI_1}$, and unbiasedness forces $\hat\theta - \theta$ to have inner product exactly 1 with it. The shortest such vector points along the score and has length $1/\sqrt{nI_1}$. That is the whole proof.
 
 **Variants** (same proof, different step 3):
 - **Biased estimators.** If $\mathbb{E}\hat\theta = \theta + b(\theta)$, step 2 gives $\mathrm{Cov}(\hat\theta, s_n) = 1 + b'(\theta)$, so
 $$\mathrm{Var}(\hat\theta) \ge \frac{(1 + b'(\theta))^2}{nI_1(\theta)}. \tag{3.15}$$
-For $\hat\sigma^2$, $b = -\sigma^2/n$ and the bound is $(1 - 1/n)^2\cdot 2\sigma^4/n$; the actual variance $2(n-1)\sigma^4/n^2$ is above it by the factor $n/(n-1)$. So $\hat\sigma^2$ legitimately has variance *below* the unbiased bound $2\sigma^4/n$, by the factor $(n-1)/n$ (project Part 5).
+For $\hat\sigma^2$, $b = -\sigma^2/n$, the bound is $(1 - 1/n)^2\cdot 2\sigma^4/n$, and the actual variance $2(n-1)\sigma^4/n^2$ sits above it, yet *below* the unbiased bound $2\sigma^4/n$ by the factor $(n-1)/n$ (project Part 5). Biased estimators may beat (3.14).
 - **Unbiased estimators of $g(\theta)$:** $\mathrm{Var} \ge g'(\theta)^2/(nI_1)$, since now $\mathrm{Cov}(\hat g, s_n) = g'(\theta)$.
 - **Multiparameter.** If $\hat\theta \in \mathbb{R}^k$ is unbiased, $\mathrm{Cov}(\hat\theta) \succeq (nI_1)^{-1}$: $\mathbf{a}^\top\mathrm{Cov}(\hat\theta)\mathbf{a} \ge \mathbf{a}^\top(nI_1)^{-1}\mathbf{a}$ for all $\mathbf{a}$ (Exercise C3 proves it). In particular $\mathrm{Var}(\hat\theta_j) \ge [(nI_1)^{-1}]_{jj}$, which is at least $1/[nI_1]_{jj}$: having to estimate the other parameters can only cost you.
 
@@ -254,7 +254,7 @@ For $\hat\sigma^2$, $b = -\sigma^2/n$ and the bound is $(1 - 1/n)^2\cdot 2\sigma
 
 - $\bar X$ for a normal mean: $\mathrm{Var} = \sigma^2/n = 1/(n\cdot\sigma^{-2})$. Efficient.
 - $\hat p$ (Bernoulli), $\hat\lambda = \bar X$ (Poisson): variances $p(1-p)/n$ and $\lambda/n$ equal $1/(nI_1)$. Efficient, at every $n$.
-- $S^2$ for $\sigma^2$ with $\mu$ unknown: the bound from (3.12) is $[I_1^{-1}]_{22}/n = 2\sigma^4/n$, while $\mathrm{Var}(S^2) = 2\sigma^4/(n-1)$. Efficiency $(n-1)/n$: not efficient at any finite $n$. (No unbiased estimator does better; $S^2$ is the best unbiased one, by the Lehmann–Scheffé theorem, Casella & Berger §7.3.)
+- $S^2$ for $\sigma^2$ with $\mu$ unknown: the bound from (3.12) is $[I_1^{-1}]_{22}/n = 2\sigma^4/n$, while $\mathrm{Var}(S^2) = 2\sigma^4/(n-1)$. Efficiency $(n-1)/n$, never 1; yet no unbiased estimator does better (Lehmann–Scheffé, Casella & Berger §7.3).
 
 **Theorem 3.17 (When the bound is attained).** Under (R), an unbiased $\hat\theta$ attains (3.14) at every $\theta$ if and only if
 $$s_n(\theta;\mathbf{x}) = nI_1(\theta)\,\big(\hat\theta(\mathbf{x}) - \theta\big), \tag{3.16}$$
@@ -284,7 +284,7 @@ with equality iff $p_\theta = p_{\theta_0}$. If the model is **identifiable** ($
 
 ■ **What just happened.** This is the conceptual core of likelihood. By the weak law, $\frac1n\ell_n(\theta) \xrightarrow{p} M(\theta)$ for each $\theta$: the average log-likelihood is a noisy copy of a function whose peak is exactly the truth. Maximizing likelihood is minimizing an empirical estimate of the KL divergence from the truth (F5 (3.30)).
 
-**Consistency (sketch, with the gap named).** We have $\frac1n\ell_n \to M$ pointwise and $\theta_0 = \arg\max M$. Pointwise convergence of functions does not make their maximizers converge; you need the convergence to be uniform in $\theta$ and the maximum of $M$ to be well separated. Both hold, for example, when $\Theta$ is compact and $\log p(x;\theta)$ is continuous in $\theta$ and dominated by an integrable function (Wald 1949; van der Vaart, *Asymptotic Statistics*, Theorem 5.7). Then $\hat\theta_n \xrightarrow{p} \theta_0$. We assume consistency from here on.
+**Consistency (sketch, gap named).** $\frac1n\ell_n \to M$ pointwise and $\theta_0 = \arg\max M$, but pointwise convergence does not make maximizers converge. You need uniform convergence in $\theta$ and a well-separated maximum; both hold, e.g., for compact $\Theta$ with $\log p(x;\theta)$ continuous in $\theta$ and dominated by an integrable function (Wald 1949; van der Vaart, *Asymptotic Statistics*, Theorem 5.7). Then $\hat\theta_n \xrightarrow{p} \theta_0$, which we assume from here on.
 
 We need one tool from outside F5. **Slutsky's theorem** (cited; van der Vaart Lemma 2.8): if $A_n \xrightarrow{d} A$ and $B_n \xrightarrow{p} c$ for a constant $c$, then $A_n + B_n \xrightarrow{d} A + c$, $B_nA_n \xrightarrow{d} cA$, and $A_n/B_n \xrightarrow{d} A/c$ if $c \ne 0$.
 
@@ -302,7 +302,7 @@ $$\sqrt n(\hat\theta - \theta_0) = \frac{n^{-1/2}\,\ell_n'(\theta_0)}{-n^{-1}\,\
 5. Denominator: $-\frac1n\ell_n''(\theta_0) = \frac1n\sum_i\big(-\partial^2_\theta\log p(X_i;\theta_0)\big) \xrightarrow{p} I_1(\theta_0)$ by the weak law and (3.11). Moving from $\theta_0$ to $\tilde\theta$ costs at most $|\tilde\theta - \theta_0|\cdot\frac1n\sum_iK(X_i)$, which is $\xrightarrow{p} 0\cdot\mathbb{E}K = 0$ because $\tilde\theta \xrightarrow{p} \theta_0$. [Third-derivative bound; consistency.]
 6. Slutsky: the ratio converges in distribution to $\mathcal{N}(0, I_1)/I_1 = \mathcal{N}(0, 1/I_1)$. [(R4): $I_1 > 0$.] ∎
 
-■ **What just happened.** The MLE is the truth plus (score noise)/(curvature). The score noise has variance $nI_1$, the curvature is $nI_1$, so the error variance is $nI_1/(nI_1)^2 = 1/(nI_1)$: **the MLE attains the Cramér–Rao bound asymptotically**. It is asymptotically efficient, and unlike Theorem 3.15 this needs no unbiasedness. Every bracket above is a place where the conclusion can fail: Uniform$(0, \theta)$ breaks step 1 (no zero derivative at the maximum), a true value on the boundary of $\Theta$ breaks (R3), and a likelihood with several roots (§3.12) means step 1 must be applied to the right root.
+■ **What just happened.** The MLE is the truth plus (score noise)/(curvature). Score noise has variance $nI_1$ and curvature is $nI_1$, so the error variance is $nI_1/(nI_1)^2 = 1/(nI_1)$: **the MLE attains the Cramér–Rao bound asymptotically**, with no unbiasedness needed. Every bracket is a place the conclusion can fail: Uniform$(0, \theta)$ breaks step 1, a boundary $\theta_0$ breaks (R3), and with several roots (§3.12) step 1 must use the right one.
 
 **Theorem 3.20 (Delta method).** If $\sqrt n(\hat\theta_n - \theta_0) \xrightarrow{d} \mathcal{N}(0, v)$ and $g$ is continuously differentiable near $\theta_0$, then
 $$\sqrt n\big(g(\hat\theta_n) - g(\theta_0)\big) \xrightarrow{d} \mathcal{N}\big(0,\; g'(\theta_0)^2 v\big) \qquad \big(\text{vector: } \mathcal{N}(0, \nabla g^\top V\nabla g)\big). \tag{3.19}$$
@@ -313,13 +313,13 @@ For the MLE, $v = 1/I_1$, so $g(\hat\theta)$ (the MLE of $g(\theta)$, by invaria
 
 **Standard errors in practice.** $\theta_0$ is unknown, so plug in the estimate. The **Wald standard error** and the **observed-information** standard error are
 $$\widehat{\mathrm{se}} = \frac{1}{\sqrt{nI_1(\hat\theta)}}, \qquad \widehat{\mathrm{se}}_{\text{obs}} = \frac{1}{\sqrt{J_n}}, \quad J_n = -\ell_n''(\hat\theta). \tag{3.20}$$
-They coincide in many exponential families (Poisson: $J_n = T/\hat\lambda^2 = n/\hat\lambda = nI_1(\hat\lambda)$) and differ in general; Efron and Hinkley (1978) argued for the observed version. The interval $\hat\theta \pm 1.96\,\widehat{\mathrm{se}}$ is the Wald 95% interval of ST-2. Example 4.2 checks the normal approximation against the exact Binomial.
+They coincide in many exponential families (Poisson: $J_n = T/\hat\lambda^2 = n/\hat\lambda = nI_1(\hat\lambda)$) and differ in general; Efron and Hinkley (1978) argued for the observed version. $\hat\theta \pm 1.96\,\widehat{\mathrm{se}}$ is ST-2's Wald 95% interval; Example 4.2 checks the normal approximation against the exact Binomial.
 
 ### 3.9 Sufficiency and Rao–Blackwell
 
 **Definition 3.21.** A statistic $T = T(\mathbf{X})$ is **sufficient** for $\theta$ if the conditional distribution of $\mathbf{X}$ given $T$ does not depend on $\theta$.
 
-Once you know $T$, the rest of the data is noise with a known distribution: you could generate a fake dataset with the same distribution as the real one without knowing $\theta$.
+Once you know $T$, the rest of the data is noise with a known distribution: you could simulate a fake dataset distributed like the real one without knowing $\theta$.
 
 **Theorem 3.22 (Factorization, Fisher–Neyman).** $T$ is sufficient iff $p_n(\mathbf{x};\theta) = g(T(\mathbf{x});\theta)\,h(\mathbf{x})$ for some nonnegative functions $g, h$. (Proof for discrete $\mathbf{X}$.)
 
@@ -328,7 +328,7 @@ Once you know $T$, the rest of the data is noise with a known distribution: you 
 *Proof.* ($\Leftarrow$) 1. Fix $t$ and $\mathbf{x}$ with $T(\mathbf{x}) = t$ (otherwise the conditional probability is 0, free of $\theta$). Since $\{\mathbf{X} = \mathbf{x}\} \subseteq \{T = t\}$, $P(\mathbf{X} = \mathbf{x} \mid T = t) = P(\mathbf{X} = \mathbf{x})/P(T = t)$. 2. $P(T = t) = \sum_{\mathbf{y}:T(\mathbf{y}) = t}g(t;\theta)h(\mathbf{y}) = g(t;\theta)\sum_{T(\mathbf{y}) = t}h(\mathbf{y})$. 3. The ratio is $h(\mathbf{x})/\sum_{T(\mathbf{y}) = t}h(\mathbf{y})$: no $\theta$.
 ($\Rightarrow$) 4. If $T$ is sufficient, $p_n(\mathbf{x};\theta) = P_\theta(T = T(\mathbf{x}))\cdot P(\mathbf{X} = \mathbf{x} \mid T = T(\mathbf{x}))$. The second factor is free of $\theta$; call it $h(\mathbf{x})$, and call the first $g(T(\mathbf{x});\theta)$. ∎
 
-(The continuous case has the same statement; its proof needs conditional densities, Casella & Berger Theorem 6.2.6.) Factorizing the joint densities of §3.5: Bernoulli $p^{\sum x}(1-p)^{n-\sum x}$, Poisson $\lambda^{\sum x}e^{-n\lambda}\cdot\prod(x_i!)^{-1}$ and Exponential $\lambda^ne^{-\lambda\sum x}$ all have $T = \sum x_i$; the Normal density $(2\pi\sigma^2)^{-n/2}\exp\big(-\frac{\sum x^2 - 2\mu\sum x + n\mu^2}{2\sigma^2}\big)$ has $T = (\sum x_i, \sum x_i^2)$; Uniform$(0,\theta)$, $\theta^{-n}\mathbb{1}\{\max x \le \theta\}\cdot\mathbb{1}\{\min x \ge 0\}$, has $T = \max x_i$; Gamma, $(\beta^\alpha/\Gamma(\alpha))^n(\prod x)^{\alpha-1}e^{-\beta\sum x}$, has $T = (\sum\log x_i, \sum x_i)$. Every MLE in §3.5 is a function of these, as it must be: the likelihood sees the data only through $g(T(\mathbf{x});\theta)$.
+(The continuous case has the same statement; its proof needs conditional densities, Casella & Berger Theorem 6.2.6.) Factorizing the joint densities of §3.5: Bernoulli $p^{\sum x}(1-p)^{n-\sum x}$, Poisson $\lambda^{\sum x}e^{-n\lambda}\cdot\prod(x_i!)^{-1}$ and Exponential $\lambda^ne^{-\lambda\sum x}$ all have $T = \sum x_i$; the Normal density $(2\pi\sigma^2)^{-n/2}\exp\big(-\frac{\sum x^2 - 2\mu\sum x + n\mu^2}{2\sigma^2}\big)$ has $T = (\sum x_i, \sum x_i^2)$; Uniform$(0,\theta)$, $\theta^{-n}\mathbb{1}\{\max x \le \theta\}\cdot\mathbb{1}\{\min x \ge 0\}$, has $T = \max x_i$; Gamma, $(\beta^\alpha/\Gamma(\alpha))^n(\prod x)^{\alpha-1}e^{-\beta\sum x}$, has $T = (\sum\log x_i, \sum x_i)$. Every MLE in §3.5 is a function of these, as it must be.
 
 **Minimal sufficiency.** The whole dataset is trivially sufficient. A sufficient $T$ is **minimal** if it is a function of every other sufficient statistic: maximal compression with no information about $\theta$ lost. Criterion (Lehmann and Scheffé, 1950): $T$ is minimal if $p_n(\mathbf{x};\theta)/p_n(\mathbf{y};\theta)$ is free of $\theta$ exactly when $T(\mathbf{x}) = T(\mathbf{y})$. For Poisson the ratio is $\lambda^{\sum x_i - \sum y_i}\prod y_i!/\prod x_i!$, so $\sum x_i$ is minimal; the same check works for each statistic above.
 
@@ -342,7 +342,7 @@ Once you know $T$, the rest of the data is noise with a known distribution: you 
 3. Eve's law (F5 (3.21)): $\mathrm{Var}\,\hat\theta = \mathbb{E}[\mathrm{Var}(\hat\theta \mid T)] + \mathrm{Var}(\tilde\theta) \ge \mathrm{Var}(\tilde\theta)$.
 4. Same bias and no larger variance, so by (3.2) no larger MSE. Equality iff $\mathbb{E}[\mathrm{Var}(\hat\theta \mid T)] = 0$, i.e., $\hat\theta$ is determined by $T$. ∎
 
-■ **What just happened.** Averaging an estimator over the part of the data that $T$ certifies as pure noise can only help. In F5's projection picture (Theorem 3.29), $\tilde\theta$ is the orthogonal projection of $\hat\theta$ onto the functions of $T$. If $T$ is also *complete* (Casella & Berger §6.2), the Rao–Blackwellized unbiased estimator is the unique best unbiased estimator (Lehmann–Scheffé); we cite this without proof. Example 4.7 and Exercise B5 use the theorem.
+■ **What just happened.** Averaging an estimator over the part of the data that $T$ certifies as pure noise can only help: $\tilde\theta$ is the orthogonal projection of $\hat\theta$ onto the functions of $T$ (F5 Theorem 3.29). If $T$ is also *complete* (Casella & Berger §6.2), the result is the unique best unbiased estimator (Lehmann–Scheffé; cited, not proved).
 
 ### 3.10 Exponential families
 
@@ -370,9 +370,9 @@ so $A$ is convex.
 1. $e^{A(\eta)} = \int h(x)e^{\eta T(x)}dx$. Differentiate under the integral (legitimate in the interior; Casella & Berger Theorem 2.4.3): $A'(\eta)e^{A(\eta)} = \int T\,h\,e^{\eta T}dx$.
 2. Divide by $e^{A}$: $A'(\eta) = \int T\,h\,e^{\eta T - A}dx = \mathbb{E}_\eta[T]$.
 3. Differentiate step 1 again: $\big(A'' + (A')^2\big)e^A = \int T^2h\,e^{\eta T}dx$, so $A'' + (A')^2 = \mathbb{E}[T^2]$ and $A'' = \mathrm{Var}(T)$.
-4. With $\partial/\partial\eta_j$ and $\partial^2/\partial\eta_j\partial\eta_k$ the same steps give $\nabla^2A = \mathbb{E}[\mathbf{T}\mathbf{T}^\top] - \mathbb{E}\mathbf{T}\,\mathbb{E}\mathbf{T}^\top = \mathrm{Cov}(\mathbf{T})$, which is PSD (F5 Theorem 3.19). A function with PSD Hessian is convex (LA-14 Theorem 3.13). ∎
+4. With $\partial/\partial\eta_j$ and $\partial^2/\partial\eta_j\partial\eta_k$ the same steps give $\nabla^2A = \mathbb{E}[\mathbf{T}\mathbf{T}^\top] - \mathbb{E}\mathbf{T}\,\mathbb{E}\mathbf{T}^\top = \mathrm{Cov}(\mathbf{T})$, which is PSD (F5 Theorem 3.19). A PSD Hessian everywhere makes $A$ convex: second-order Taylor (LA-14 Theorem 3.13) with the mean-value remainder gives $A(\boldsymbol\eta') \ge A(\boldsymbol\eta) + \nabla A(\boldsymbol\eta)^\top(\boldsymbol\eta' - \boldsymbol\eta)$. ∎
 
-■ **What just happened.** $A$ is a cumulant generating function in disguise: its derivatives are the cumulants of $\mathbf{T}$. Check: Poisson $A = e^\eta$ gives $A' = A'' = e^\eta = \lambda$ (mean = variance); Bernoulli $A' = e^\eta/(1 + e^\eta) = p$, $A'' = p(1-p)$. **SM-4's canonical ensemble is this object.** $p_i = e^{-\beta E_i}/Z$ is an exponential family with $T = E$ (energy), $\eta = -\beta$, $A = \ln Z$. Then $\langle E\rangle = -\partial\ln Z/\partial\beta$ and $\mathrm{Var}(E) = \partial^2\ln Z/\partial\beta^2 = k_BT^2C_V$ are (3.22): same function, same derivatives, different names.
+■ **What just happened.** $A$ is a cumulant generating function in disguise. Check: Poisson $A = e^\eta$ gives $A' = A'' = e^\eta = \lambda$ (mean = variance); Bernoulli $A' = e^\eta/(1 + e^\eta) = p$, $A'' = p(1-p)$. **SM-4's canonical ensemble is this object.** $p_i = e^{-\beta E_i}/Z$ is an exponential family with $T = E$ (energy), $\eta = -\beta$, $A = \ln Z$. Then $\langle E\rangle = -\partial\ln Z/\partial\beta$ and $\mathrm{Var}(E) = \partial^2\ln Z/\partial\beta^2 = k_BT^2C_V$ are (3.22): same function, same derivatives, different names.
 
 **Theorem 3.26 (MLE in an exponential family).** The log-likelihood $\ell(\boldsymbol\eta) = \sum\log h(x_i) + \boldsymbol\eta^\top\sum\mathbf{T}(x_i) - nA(\boldsymbol\eta)$ is concave in $\boldsymbol\eta$, and the MLE (when it exists) solves the moment-matching equation
 $$\mathbb{E}_{\hat{\boldsymbol\eta}}[\mathbf{T}] = \bar{\mathbf{T}} := \frac1n\sum_i\mathbf{T}(x_i). \tag{3.23}$$
@@ -389,9 +389,9 @@ The Fisher information in $\boldsymbol\eta$ is $I_1(\boldsymbol\eta) = \nabla^2A
 
 **Theorem 3.27 (Maximum entropy).** Fix $\mathbf{T}$ and take $h = 1$ (counting or Lebesgue measure). Among all distributions $q$ with $\mathbb{E}_q[\mathbf{T}] = \boldsymbol\tau$, the entropy $H(q) = -\mathbb{E}_q[\log q]$ is maximized by $p_{\boldsymbol\eta}(x) = \exp(\boldsymbol\eta^\top\mathbf{T}(x) - A(\boldsymbol\eta))$ with $\boldsymbol\eta$ chosen so that $\mathbb{E}_{\boldsymbol\eta}\mathbf{T} = \boldsymbol\tau$ (when such $\boldsymbol\eta$ exists).
 
-*Where the form comes from (outline).* Maximize $-\sum_xq(x)\log q(x)$ subject to $\sum q = 1$ and $\sum q\mathbf{T} = \boldsymbol\tau$ with multipliers $\lambda_0, \boldsymbol\eta$. Stationarity in each $q(x)$: $-\log q(x) - 1 + \lambda_0 + \boldsymbol\eta^\top\mathbf{T}(x) = 0$, so $q(x) \propto e^{\boldsymbol\eta^\top\mathbf{T}(x)}$. This is F5 Theorem 3.46's calculation with general $\mathbf{T}$.
+*Outline.* Lagrange multipliers $\lambda_0, \boldsymbol\eta$ for $\sum q = 1$ and $\sum q\mathbf{T} = \boldsymbol\tau$; stationarity of $-\sum q\log q$ in each $q(x)$ gives $-\log q(x) - 1 + \lambda_0 + \boldsymbol\eta^\top\mathbf{T}(x) = 0$, so $q \propto e^{\boldsymbol\eta^\top\mathbf{T}}$ (F5 Theorem 3.46's calculation with general $\mathbf{T}$).
 
-*Proof that it is the maximum.* For any $q$ with $\mathbb{E}_q\mathbf{T} = \boldsymbol\tau$: $-\mathbb{E}_q[\log p_{\boldsymbol\eta}] = -\boldsymbol\eta^\top\boldsymbol\tau + A(\boldsymbol\eta)$, which is the same number as $-\mathbb{E}_{p_{\boldsymbol\eta}}[\log p_{\boldsymbol\eta}] = H(p_{\boldsymbol\eta})$, because both expectations of $\mathbf{T}$ equal $\boldsymbol\tau$. So $H(p_{\boldsymbol\eta}) - H(q) = -\mathbb{E}_q[\log p_{\boldsymbol\eta}] + \mathbb{E}_q[\log q] = D(q\,\|\,p_{\boldsymbol\eta}) \ge 0$ by Gibbs. ∎
+*Proof that it is the maximum.* For any $q$ with $\mathbb{E}_q\mathbf{T} = \boldsymbol\tau$, $-\mathbb{E}_q[\log p_{\boldsymbol\eta}] = -\boldsymbol\eta^\top\boldsymbol\tau + A(\boldsymbol\eta) = H(p_{\boldsymbol\eta})$, since $q$ and $p_{\boldsymbol\eta}$ give $\mathbf{T}$ the same mean. So $H(p_{\boldsymbol\eta}) - H(q) = -\mathbb{E}_q[\log p_{\boldsymbol\eta}] + \mathbb{E}_q[\log q] = D(q\,\|\,p_{\boldsymbol\eta}) \ge 0$ by Gibbs. ∎
 
 Fix the mean on $(0, \infty)$ and you get the Exponential; mean and variance on $\mathbb{R}$, the Normal; mean energy, Boltzmann (SM-4). Setting $\boldsymbol\tau = \bar{\mathbf{T}}$ reproduces (3.23): maximum entropy and maximum likelihood pick the same member of the family.
 
@@ -401,14 +401,14 @@ Treat $\theta$ as random with a **prior** $\pi(\theta)$. Bayes' rule gives the *
 $$\pi(\theta \mid \mathbf{x}) = \frac{p_n(\mathbf{x};\theta)\,\pi(\theta)}{\int p_n(\mathbf{x};\theta')\,\pi(\theta')\,d\theta'} \propto L(\theta)\,\pi(\theta). \tag{3.24}$$
 The **posterior mean** $\hat\theta_B = \mathbb{E}[\theta \mid \mathbf{x}]$ is a function of the data, so it is an estimator with a sampling distribution, a bias and a variance like any other. For Bernoulli data with a $\mathrm{Beta}(a, b)$ prior, F5 Theorem 3.12 gives $p \mid \mathbf{x} \sim \mathrm{Beta}(a + T, b + n - T)$ and
 $$\hat p_B = \frac{a + T}{a + b + n} = w\,\hat p + (1 - w)\frac{a}{a + b}, \qquad w = \frac{n}{a + b + n}. \tag{3.25}$$
-A weighted average of the MLE and the prior mean: **shrinkage**. At a fixed true $p$, its bias is $(1 - w)\big(\frac{a}{a+b} - p\big)$ and its variance is $w^2p(1-p)/n$, smaller than the MLE's by $w^2$. Laplace's rule of succession is $a = b = 1$, $\hat p_B = (T + 1)/(n + 2)$. With $n = 50$ and $T = 15$ it gives $0.3077$ instead of $0.3$, and if the truth is $p = 0.3$ its MSE is $0.003942$ against $0.0042$ for $\hat p$. It wins near $1/2$ and loses near 0 and 1 (Exercise B6 finds the crossovers $0.1447$ and $0.8553$). The posterior mean minimizes the prior-averaged MSE (it is a conditional expectation, F5 Theorem 3.29). ST-5 is the full subject.
+A weighted average of the MLE and the prior mean: **shrinkage**. At a fixed true $p$ its bias is $(1 - w)\big(\frac{a}{a+b} - p\big)$ and its variance $w^2p(1-p)/n$, smaller than the MLE's by $w^2$. Laplace's rule of succession ($a = b = 1$) turns $n = 50$, $T = 15$ into $16/52 = 0.3077$; if the truth is $p = 0.3$ its MSE is $0.003942$ against $0.0042$ for $\hat p$. It wins near $1/2$ and loses near 0 and 1 (Exercise B6: crossovers at $0.1447$ and $0.8553$). The posterior mean minimizes the prior-averaged MSE (F5 Theorem 3.29). ST-5 is the full subject.
 
 ### 3.12 What can go wrong
 
 - **Non-identifiability.** If $p_\theta = p_{\theta'}$ for $\theta \ne \theta'$, (3.17) only locates the set $\{\theta : p_\theta = p_{\theta_0}\}$. In $X \sim \mathcal{N}(\theta_1 + \theta_2, 1)$ only the sum is estimable; mixture labels can be swapped (Exercise B8).
-- **No MLE, or one on the boundary.** Bernoulli data with $T = 0$ give $\hat p = 0$ with Wald standard error 0: nonsense. Logistic regression on separable data (ST-4) has likelihood increasing forever as coefficients grow. A Gaussian mixture with free variances has unbounded likelihood: center a component on a data point and shrink its variance to 0.
+- **No MLE, or one on the boundary.** Bernoulli data with $T = 0$ give $\hat p = 0$ with Wald standard error 0: nonsense. Logistic regression with complete separation (ST-4) has likelihood increasing forever as coefficients grow. A Gaussian mixture with free variances has unbounded likelihood: center a component on a data point and shrink its variance to 0.
 - **Multiple maxima.** The Cauchy location likelihood can have several local maxima (Exercise C2); mixtures always do. Theorem 3.19 concerns the root near $\theta_0$: start from a consistent estimator (the median, for Cauchy) and take Newton steps.
-- **Neyman–Scott (1948).** Pairs $X_{i1}, X_{i2} \sim \mathcal{N}(\mu_i, \sigma^2)$, $i = 1, \dots, n$, each with its own mean. The MLE of $\sigma^2$ converges to $\sigma^2/2$ (Exercise C1). The number of parameters grows with $n$, each $\mu_i$ is estimated from two points forever, and the argument behind Theorem 3.18 never applies to them. The fix is to eliminate the nuisance means, e.g. via $X_{i1} - X_{i2} \sim \mathcal{N}(0, 2\sigma^2)$ (REML in ST-3 generalizes this).
+- **Neyman–Scott (1948).** Pairs $X_{i1}, X_{i2} \sim \mathcal{N}(\mu_i, \sigma^2)$, $i = 1, \dots, n$, each with its own mean. The MLE of $\sigma^2$ converges to $\sigma^2/2$ (Exercise C1). The number of parameters grows with $n$, each $\mu_i$ is estimated from two points forever, and the argument behind Theorem 3.18 never applies to them. The fix is to eliminate the nuisance means, e.g. via $X_{i1} - X_{i2} \sim \mathcal{N}(0, 2\sigma^2)$.
 - **Misspecification.** The data come from some $q$ that is not in the model.
 
 **Theorem 3.28 (The MLE targets the KL projection).** If $X_i$ are iid from $q$, then $\frac1n\ell_n(\theta) \xrightarrow{p} -H(q) - D(q\,\|\,p_\theta)$, so the MLE targets
@@ -416,7 +416,7 @@ $$\theta^* = \arg\min_\theta D\big(q\,\|\,p_\theta\big). \tag{3.26}$$
 
 *Derivation.* 1. Weak law under $q$: $\frac1n\sum\log p(X_i;\theta) \xrightarrow{p} \mathbb{E}_q[\log p_\theta]$. 2. $\mathbb{E}_q[\log p_\theta] = \mathbb{E}_q[\log q] - \mathbb{E}_q\big[\log\frac{q}{p_\theta}\big] = -H(q) - D(q\|p_\theta)$. 3. $H(q)$ does not depend on $\theta$, so maximizing the limit means minimizing $D(q\|p_\theta)$; with the same uniform-convergence caveat as before, $\hat\theta \xrightarrow{p} \theta^*$. ∎ Theorem 3.18 is the special case $q = p_{\theta_0}$, where the minimum is 0.
 
-*Example.* Fit $\mathcal{N}(\mu, \sigma^2)$ to Exponential$(\lambda)$ data. $-\mathbb{E}_q[\log p_{\mu,\sigma^2}] = \frac12\log(2\pi\sigma^2) + \mathbb{E}_q[(X - \mu)^2]/(2\sigma^2)$ is minimized at $\mu^* = \mathbb{E}_qX = 1/\lambda$ and $\sigma^{*2} = \mathrm{Var}_qX = 1/\lambda^2$ (moment matching again: (3.23) with the expectation under $q$). The gap is $D = \frac12\log(2\pi e\sigma^{*2}) - h(q) = \frac12\log(2\pi e) - 1 \approx 0.4189$ nats for every $\lambda$, using $h(\mathrm{Exp}(\lambda)) = 1 - \log\lambda$. Project Part 10 confirms both. Under misspecification (3.11) fails, since it needed the data to come from the model, and the asymptotic variance becomes the **sandwich** $J^{-1}KJ^{-1}$ with $J = -\mathbb{E}_q[\nabla^2\log p_{\theta^*}]$, $K = \mathrm{Cov}_q(\nabla\log p_{\theta^*})$ (Huber 1967; White 1982), used in ST-2 and ST-3.
+*Example.* Fit $\mathcal{N}(\mu, \sigma^2)$ to Exponential$(\lambda)$ data. $-\mathbb{E}_q[\log p_{\mu,\sigma^2}] = \frac12\log(2\pi\sigma^2) + \mathbb{E}_q[(X - \mu)^2]/(2\sigma^2)$ is minimized at $\mu^* = \mathbb{E}_qX = 1/\lambda$ and $\sigma^{*2} = \mathrm{Var}_qX = 1/\lambda^2$ (moment matching again). The gap is $D = \frac12\log(2\pi e\sigma^{*2}) - H(q) = \frac12\log(2\pi e) - 1 \approx 0.4189$ nats for every $\lambda$, using the differential entropy $H(\mathrm{Exp}(\lambda)) = 1 - \log\lambda$ (F5 §3.13). Project Part 10 confirms both. Under misspecification (3.11) fails and the asymptotic variance becomes the **sandwich** $J^{-1}KJ^{-1}$ with $J = -\mathbb{E}_q[\nabla^2\log p_{\theta^*}]$, $K = \mathrm{Cov}_q(\nabla\log p_{\theta^*})$ (Huber 1967; White 1982), used in ST-3.
 
 ## 4. Worked examples
 
@@ -426,15 +426,15 @@ Normal data, $n = 10$, in units of $\sigma^4$ (set $\sigma^2 = 1$). From (3.4)�
 - $S^2$: bias 0, variance $2/9$, so $\mathrm{MSE} = 0.2222$.
 - $\hat\sigma^2$: bias $-1/10$, variance $2\cdot 9/100 = 0.18$, so $\mathrm{MSE} = 0.18 + 0.01 = 0.19$.
 
-The biased estimator wins. Exercise B1's divisor $n + 1$ does better still, $\mathrm{MSE} = 2/11 = 0.1818$. Project Part 2 simulates $10^4$ datasets and confirms each figure to within Monte Carlo error; Part 1 does the same at $n = 5, 20, 100$ with $\sigma^2 = 4$, where for example at $n = 5$ the theory gives $\mathrm{MSE}(S^2) = 8.0$ and $\mathrm{MSE}(\hat\sigma^2) = 5.76$. At $n = 100$ the three MSEs differ in the third digit: the trade-off matters only for small samples.
+The biased estimator wins. Exercise B1's divisor $n + 1$ does better still, $\mathrm{MSE} = 2/11 = 0.1818$. Project Part 2 confirms each figure on $10^4$ simulated datasets. Part 1 repeats this with $\sigma^2 = 4$: at $n = 5$, $\mathrm{MSE}(S^2) = 8.0$ against $5.76$ for $\hat\sigma^2$; at $n = 100$ the three MSEs are within about 2% of each other. The trade-off matters for small samples.
 
 ### Example 4.2: Bernoulli: MLE, information, Cramér–Rao attained, exact vs asymptotic
 
-$n = 50$ trials, $T = 15$ successes. $\hat p = 0.3$. The curvature at the peak is $\ell''(\hat p) = -15/0.09 - 35/0.49 = -166.67 - 71.43 = -238.1$, which equals $-n/(\hat p(1 - \hat p)) = -50/0.21$. Per observation, $I_1(\hat p) = 1/0.21 = 4.7619$. The Wald standard error is $1/\sqrt{238.1} = 0.0648$ and the 95% Wald interval is $(0.173, 0.427)$.
+$n = 50$ trials, $T = 15$ successes: $\hat p = 0.3$. The curvature at the peak is $\ell''(\hat p) = -15/0.09 - 35/0.49 = -166.67 - 71.43 = -238.1$, which equals $-n/(\hat p(1 - \hat p)) = -50/0.21$. Per observation, $I_1(\hat p) = 1/0.21 = 4.7619$. The Wald standard error is $1/\sqrt{238.1} = 0.0648$ and the 95% Wald interval is $(0.173, 0.427)$.
 
 Cramér–Rao is attained *exactly*, at every $n$: $\mathrm{Var}(\hat p) = p(1-p)/n = 1/(nI_1(p))$. Theorem 3.17 predicted this: $s_n = \frac{T}{p} - \frac{n - T}{1 - p} = \frac{T - np}{p(1-p)} = nI_1(p)(\hat p - p)$, affine in $\hat p$.
 
-**Exact versus asymptotic.** Suppose the truth is $p = 0.3$. How likely is $\hat p \le 0.2$, i.e., $T \le 10$? Exactly, $P(T \le 10) = 0.0789$ (Binomial CDF). The asymptotic $\hat p \approx \mathcal{N}(0.3, 0.0042)$ gives $z = (0.2 - 0.3)/0.0648 = -1.543$ and probability $0.0614$, noticeably low. With the continuity correction (F5 §3.11), $\Phi\big((10.5 - 15)/\sqrt{10.5}\big) = 0.0825$, much closer. At $n = 50$ Theorem 3.19 is a good description of the center of the sampling distribution and a rough one of the tails.
+**Exact versus asymptotic.** If the truth is $p = 0.3$, how likely is $\hat p \le 0.2$, i.e., $T \le 10$? The Binomial CDF gives $0.0789$. The asymptotic $\hat p \approx \mathcal{N}(0.3, 0.0042)$ gives $z = -0.1/0.0648 = -1.543$ and $0.0614$, noticeably low; with the continuity correction (F5 §3.11), $\Phi\big((10.5 - 15)/\sqrt{10.5}\big) = 0.0825$. At $n = 50$, (3.18) describes the center of the sampling distribution well and the tails roughly.
 
 ### Example 4.3: Normal $(\mu, \sigma^2)$ jointly: MLE, Fisher matrix, inverse
 
@@ -444,15 +444,15 @@ By §3.5(d) the Hessian at the MLE is $\mathrm{diag}(-n/\hat\sigma^2, -n/(2\hat\
 $$nI_1(\hat\theta) = \begin{pmatrix}8/0.07 & 0\\ 0 & 8/(2\cdot 0.0049)\end{pmatrix} = \begin{pmatrix}114.29 & 0\\ 0 & 816.33\end{pmatrix}, \qquad (nI_1)^{-1} = \begin{pmatrix}0.00875 & 0\\ 0 & 0.001225\end{pmatrix}.$$
 Observed and expected information agree here. The standard errors are $\mathrm{se}(\hat\mu) = \sqrt{0.00875} = 0.0935$ Ω and $\mathrm{se}(\hat\sigma^2) = \sqrt{0.001225} = 0.0350$ Ω². The zero off-diagonal says the two estimates are asymptotically uncorrelated; Theorem 3.7 says they are exactly independent.
 
-Project Part 3 draws the log-likelihood surface in $(\mu, \sigma)$ with the MLE and the ellipse $\frac12(\theta - \hat\theta)^\top J(\theta - \hat\theta) = c$ from the observed information $J = \mathrm{diag}(n/\hat\sigma^2, 2n/\hat\sigma^2)$ (Theorem 3.14 with $v = \sigma^2$). The exact contours are lopsided in $\sigma$, steep toward $\sigma \to 0$ and gentle toward large $\sigma$; the ellipse is symmetric. With $n = 8$ the quadratic approximation is only local. Here $\hat\sigma^2 \pm 1.96\,\mathrm{se}$ reaches down almost to zero, a sign to use the exact $\chi^2$ distribution of Theorem 3.7 instead (ST-2).
+Project Part 3 draws the log-likelihood surface in $(\mu, \sigma)$ with the ellipse from the observed information $J = \mathrm{diag}(n/\hat\sigma^2, 2n/\hat\sigma^2)$ (by (3.13) with $v = \sigma^2$). The exact contours are lopsided, steep toward $\sigma \to 0$; the ellipse is symmetric. At $n = 8$ the quadratic approximation is only local: $\hat\sigma^2 \pm 1.96\,\mathrm{se}$ reaches nearly to zero, a sign to use Theorem 3.7's exact $\chi^2$ distribution instead (ST-2).
 
 ### Example 4.4: Uniform$(0, \theta)$: the maximum, its bias, the fix, and why Cramér–Rao does not apply
 
 By F5 Theorem 3.9 (with $k = n$), $X_{(n)}$ has density $nx^{n-1}/\theta^n$ on $[0, \theta]$. So
 $$\mathbb{E}X_{(n)} = \int_0^\theta x\,\frac{nx^{n-1}}{\theta^n}dx = \frac{n\theta}{n+1}, \qquad \mathbb{E}X_{(n)}^2 = \frac{n\theta^2}{n+2}, \qquad \mathrm{Var}X_{(n)} = \frac{n\theta^2}{(n+1)^2(n+2)}.$$
-The MLE is biased low by $\theta/(n+1)$: the sample maximum can never exceed $\theta$. The unbiased correction $\tilde\theta = \frac{n+1}{n}X_{(n)}$ has variance $\frac{(n+1)^2}{n^2}\cdot\frac{n\theta^2}{(n+1)^2(n+2)} = \frac{\theta^2}{n(n+2)}$. At $n = 10$ that is $0.00833\,\theta^2$, against $0.0333\,\theta^2$ for the MoM estimator $2\bar X$: four times better, and the ratio $(n+2)/3$ grows with $n$.
+The MLE is biased low by $\theta/(n+1)$, since the maximum never exceeds $\theta$. The unbiased correction $\tilde\theta = \frac{n+1}{n}X_{(n)}$ has variance $\frac{(n+1)^2}{n^2}\cdot\frac{n\theta^2}{(n+1)^2(n+2)} = \frac{\theta^2}{n(n+2)}$. At $n = 10$ that is $0.00833\,\theta^2$, against $0.0333\,\theta^2$ for MoM's $2\bar X$: the ratio $(n+2)/3$ grows with $n$.
 
-Now compute the "Cramér–Rao bound" naively. $\log p = -\log\theta$ on $[0, \theta]$, so $s = -1/\theta$ and $\mathbb{E}s^2 = 1/\theta^2$, giving $\theta^2/n = 0.1\,\theta^2$ at $n = 10$. The unbiased $\tilde\theta$ beats this by the factor $n + 2 = 12$, and its variance decays like $1/n^2$, faster than any Cramér–Rao rate. There is no contradiction: (R1) fails. Step 1 of Theorem 3.12 breaks: $\mathbb{E}_\theta[s] = -1/\theta \ne 0$, because $\frac{d}{d\theta}\int_0^\theta\frac1\theta dx = 0$ while $\int_0^\theta\partial_\theta\frac1\theta\,dx = -\frac1\theta$; the difference is Leibniz's boundary term $p(\theta;\theta) = 1/\theta$. A sharp edge in the density pins the parameter down much harder than smooth curvature can. Project Part 1 checks all three estimators at $n = 5, 20, 100$; Exercise B2 finds the MSE-optimal multiple of $X_{(n)}$.
+Now compute the "Cramér–Rao bound" naively. $\log p = -\log\theta$ on $[0, \theta]$, so $s = -1/\theta$ and $\mathbb{E}s^2 = 1/\theta^2$, giving $\theta^2/n = 0.1\,\theta^2$ at $n = 10$. The unbiased $\tilde\theta$ beats this by the factor $n + 2 = 12$, and its variance decays like $1/n^2$. No contradiction: (R1) fails, and step 1 of Theorem 3.12 breaks: $\mathbb{E}_\theta[s] = -1/\theta \ne 0$, because $\frac{d}{d\theta}\int_0^\theta\frac1\theta dx = 0$ while $\int_0^\theta\partial_\theta\frac1\theta\,dx = -\frac1\theta$; the difference is Leibniz's boundary term $p(\theta;\theta) = 1/\theta$. A sharp edge in the density pins the parameter far harder than smooth curvature can. Project Part 1 checks all three estimators; Exercise B2 finds the MSE-optimal multiple of $X_{(n)}$.
 
 ### Example 4.5: Gamma by moments and by likelihood
 
@@ -462,9 +462,9 @@ Ten waiting times (minutes): $0.8, 1.9, 2.4, 0.5, 3.1, 1.2, 2.0, 1.6, 0.9, 2.6$.
 
 *MLE*, (3.10): $\frac1n\sum\log x_i = 0.3928$, so $s = \log 1.7 - 0.3928 = 0.1378$. Solving $\log\alpha - \psi(\alpha) = 0.1378$ numerically gives $\hat\alpha = 3.7865$, and $\hat\beta = \hat\alpha/\bar x = 2.2273$. Project Part 4 gets the same root three ways: a bracketing root-finder on (3.10), direct numerical maximization of $\ell$, and `scipy.stats.gamma.fit`.
 
-The two methods disagree by 15% in $\hat\alpha$. Which to trust? The Fisher matrix in $(\alpha, \beta)$, from $-\partial^2\log p$, is
+The two answers differ substantially. Which to trust? The Fisher matrix in $(\alpha, \beta)$, from $-\partial^2\log p$, is
 $$I_1 = \begin{pmatrix}\psi'(\alpha) & -1/\beta\\ -1/\beta & \alpha/\beta^2\end{pmatrix}, \qquad [I_1^{-1}]_{\alpha\alpha} = \frac{\alpha/\beta^2}{(\alpha\psi'(\alpha) - 1)/\beta^2} = \frac{\alpha}{\alpha\psi'(\alpha) - 1}.$$
-At $\alpha = 2$ this is $6.90$, against $2\alpha(\alpha + 1) = 12$ for MoM: the MLE needs about 58% as many observations for the same precision. In the project's simulation at $\alpha = 2$, $n = 50$, $n\mathrm{Var}(\hat\alpha_{\text{MoM}}) = 12.53$ and $n\mathrm{Var}(\hat\alpha_{\text{MLE}}) = 8.26$. The MLE is clearly better, though at $n = 50$ still about 20% above its asymptotic value: (3.18) is a large-sample statement.
+At $\alpha = 2$ this is $6.90$, against $2\alpha(\alpha + 1) = 12$ for MoM (efficiency $0.575$). Simulating $\alpha = 2$, $n = 50$, the project finds $n\mathrm{Var}(\hat\alpha_{\text{MoM}}) = 12.53$ and $n\mathrm{Var}(\hat\alpha_{\text{MLE}}) = 8.26$: the MLE is better, though still above its asymptotic $6.90$, since (3.18) is a large-sample statement.
 
 ### Example 4.6: Counting decays: asymptotic normality, a Wald interval, and the delta method
 
@@ -472,76 +472,63 @@ A Geiger counter records counts in twenty one-second windows: $3, 5, 2, 4, 3, 1,
 
 $\hat\lambda = 64/20 = 3.2$. By (3.18) with $I_1 = 1/\lambda$, $\sqrt n(\hat\lambda - \lambda) \xrightarrow{d} \mathcal{N}(0, \lambda)$. The Wald standard error is $\sqrt{\hat\lambda/n} = \sqrt{0.16} = 0.4$; the observed information $J_n = T/\hat\lambda^2 = 64/10.24 = 6.25 = n/\hat\lambda$ gives the same. The 95% Wald interval is $3.2 \pm 1.96(0.4) = (2.416, 3.984)$ decays per second. In the project's simulation at $\lambda = 3.2$, $n = 20$, this recipe covers the truth $94.5\%$ of the time.
 
-Now estimate the probability that a one-second window is empty, $g(\lambda) = e^{-\lambda}$. By invariance the MLE is $e^{-3.2} = 0.04076$. By the delta method (3.19), $\mathrm{se} \approx |g'(\hat\lambda)|\cdot 0.4 = e^{-3.2}\cdot 0.4 = 0.01630$. The simulated standard deviation of $e^{-\bar X}$ at $n = 20$ is $0.01779$ (ratio 1.091); at $n = 200$ the ratio is 1.014. The delta method linearizes $e^{-\lambda}$, which curves noticeably over $\pm 0.4$.
+Now estimate the probability that a one-second window is empty, $g(\lambda) = e^{-\lambda}$. By invariance the MLE is $e^{-3.2} = 0.04076$. By the delta method (3.19), $\mathrm{se} \approx |g'(\hat\lambda)|\cdot 0.4 = e^{-3.2}\cdot 0.4 = 0.01630$. The simulated standard deviation of $e^{-\bar X}$ at $n = 20$ is $0.01779$ (ratio 1.091), and at $n = 200$ the ratio is 1.014: the delta method linearizes $e^{-\lambda}$, which curves noticeably over $\pm 0.4$.
 
 ### Example 4.7: Rao–Blackwellizing $X_1$ for the Poisson mean
 
 Start from a deliberately bad unbiased estimator of $\lambda$: the first observation, $\hat\theta = X_1$, with variance $\lambda$. Condition on the sufficient statistic $T = \sum X_i$. Using that $T \sim \mathrm{Poisson}(n\lambda)$ and $\sum_{i \ge 2}X_i \sim \mathrm{Poisson}((n-1)\lambda)$ independent of $X_1$ (sums of independent Poissons, F5 §3.4):
 $$P(X_1 = k \mid T = t) = \frac{\frac{e^{-\lambda}\lambda^k}{k!}\cdot\frac{e^{-(n-1)\lambda}((n-1)\lambda)^{t-k}}{(t-k)!}}{\frac{e^{-n\lambda}(n\lambda)^t}{t!}} = \binom tk\Big(\frac1n\Big)^k\Big(1 - \frac1n\Big)^{t-k}.$$
-$\lambda$ cancels, which is sufficiency at work: $X_1 \mid T = t \sim \mathrm{Binomial}(t, 1/n)$. So $\tilde\theta = \mathbb{E}[X_1 \mid T] = T/n = \bar X$. Rao–Blackwell turned the worst reasonable estimator into the efficient one, and the variance dropped from $\lambda$ to $\lambda/n$. With $\lambda = 3.2$ and $n = 20$, from $3.2$ to $0.16$; the project's $10^4$ simulated datasets give $3.181$ and $0.1593$, and it checks $\mathbb{E}[X_1 \mid T = t] = t/n$ for several $t$. Exercise B5 does the same for $e^{-\lambda}$, where the answer is not something you would guess.
+$\lambda$ cancels, which is sufficiency at work: $X_1 \mid T = t \sim \mathrm{Binomial}(t, 1/n)$. So $\tilde\theta = \mathbb{E}[X_1 \mid T] = T/n = \bar X$. Rao–Blackwell turned the worst reasonable estimator into the efficient one: variance $\lambda \to \lambda/n$, i.e. $3.2 \to 0.16$ at $\lambda = 3.2$, $n = 20$ (simulated: $3.267$ and $0.1596$; the project also checks $\mathbb{E}[X_1 \mid T = t] = t/n$). Exercise B5 does this for $e^{-\lambda}$, where the answer is not one you would guess.
 
 ## 5. Why it matters and where it connects
 
-- **ST-2** turns sampling distributions into confidence intervals (pivots such as Theorem 3.7's $\chi^2$, Wald intervals from (3.20)) and tests; Wilks' theorem for likelihood-ratio tests is the Taylor expansion of Theorem 3.19 taken one order further; the bootstrap simulates the sampling distribution from the data.
-- **ST-3**: least squares is the Normal MLE; Gauss–Markov is an efficiency theorem; ridge regression is Example 4.1's trade-off in $p$ dimensions; the residual variance with divisor $n - p$ is Theorem 3.7 with $p$ rotated-out directions.
-- **ST-4**: a GLM is an exponential family with $\eta = \mathbf{x}^\top\boldsymbol\beta$; Theorem 3.26 gives concavity and $I = \nabla^2A$, so Fisher scoring = Newton = IRLS.
-- **ST-5**: conjugate priors exist for every exponential family, generalizing (3.25); the posterior concentrates at the rate $1/\sqrt{nI_1}$ (Bernstein–von Mises).
-- **ST-6, ML-10**: variational inference minimizes $D(q\|p)$, the KL divergence in the opposite direction from Theorem 3.28's projection.
-- **ML-1**: the bias–variance decomposition of prediction error is (3.2) applied to a fitted function; minimizing cross-entropy is maximizing likelihood (F5 (3.30)).
-- **ML-2**: the natural gradient is $I_1^{-1}\nabla\ell$, LA-14 §3.1's Riesz representative with the Fisher metric of Theorem 3.14.
-- **ML-6**: EM maximizes mixture likelihoods, the non-concave case of §3.12 and Exercise B8.
+- **ST-2**: intervals from sampling distributions (Theorem 3.7's $\chi^2$ pivot, Wald intervals from (3.20)); Wilks' theorem is Theorem 3.19's Taylor expansion taken one order further; the bootstrap simulates the sampling distribution from the data.
+- **ST-3**: least squares is the Normal MLE; Gauss–Markov is an efficiency theorem; ridge is Example 4.1's trade-off in $p$ dimensions; the divisor $n - p$ is Theorem 3.7 with $p$ rotated-out directions.
+- **ST-4**: a GLM is an exponential family with $\eta = \mathbf{x}^\top\boldsymbol\beta$; Theorem 3.26 gives concavity, so Fisher scoring = Newton = IRLS.
+- **ST-5**: every exponential family has a conjugate prior, generalizing (3.25); posteriors concentrate at rate $1/\sqrt{nI_1}$.
+- **ST-6, ML-10**: variational inference minimizes $D(q\|p)$, the reverse of Theorem 3.28's projection.
+- **ML-1**: prediction-error bias–variance is (3.2) for a fitted function; cross-entropy minimization is maximum likelihood (F5 (3.30)).
+- **ML-2**: the natural gradient $I_1^{-1}\nabla\ell$ is LA-14 §3.1's Riesz representative in the Fisher metric (3.13). **ML-6**: EM handles §3.12's non-concave mixtures.
 - **SM-4**: $\ln Z$ is $A(\eta)$, and the heat capacity is the Fisher information about $\beta$ (Theorem 3.25).
 
 ## 6. Exercises
 
-See [exercises.md](exercises.md). A1–A6 drill bias/MSE, an MLE with invariance, method of moments, both forms of Fisher information, an exponential-family rewrite, and factorization. B1–B8 are the module: B1 (best divisor for $\sigma^2$), B3 (the Exponential rate cannot be estimated efficiently), B5 (Rao–Blackwell for $e^{-\lambda}$, which misses Cramér–Rao), and B8 (code: mixture likelihoods) are essential. C1 proves Neyman–Scott inconsistency, C2 (code) is the Cauchy location model, C3 proves the multiparameter Cramér–Rao bound.
+See [exercises.md](exercises.md). A1–A6 drill MSE, invariance, moments, both forms of Fisher information, an exponential-family rewrite, and factorization. B1–B8 are the module; B1 (best divisor for $\sigma^2$), B3 (no efficient estimator of a rate), B5 (Rao–Blackwell for $e^{-\lambda}$) and B8 (code: mixtures) are essential. C1 is Neyman–Scott, C2 (code) the Cauchy location model, C3 the multiparameter Cramér–Rao bound.
 
 ## 7. Coding project
 
-`project.py` makes "an estimator is a random variable" literal by drawing $10^4$ datasets for every setting:
+`project.py` makes "an estimator is a random variable" literal by drawing $10^4$ datasets per setting. Parts: (1) sampling distributions of MoM, MLE and unbiased estimators for Normal, Exponential and Uniform$(0,\theta)$ at $n = 5, 20, 100$, with bias, variance and MSE asserted against §3.3, Exercise B3 and Example 4.4 within 4 Monte Carlo standard errors; (2) the variance-estimator trade-off against $n$; (3) Example 4.3's likelihood surface with its Fisher ellipse; (4) the Gamma MLE three ways and MoM vs MLE efficiency; (5) Cramér–Rao ratios against $n$ for Bernoulli, Poisson, Exponential rate and Normal variance; (6) QQ plots of $\sqrt n(\hat\lambda - \lambda)/\lambda$ at $n = 5, 20, 100, 500$ and Example 4.2's exact check; (7) Example 4.6 with simulated coverage; (8) Rao–Blackwell; (9) $A' = \mathbb{E}T$, $A'' = \mathrm{Var}\,T$ numerically and in SymPy; (10) a Normal fitted to Exponential data converging to the KL projection.
 
-1. **Sampling-distribution simulator.** Normal, Exponential, Uniform$(0, \theta)$ at $n = 5, 20, 100$; MoM, MLE and unbiased corrections; histograms of all sampling distributions; a table of bias, variance and MSE against the formulas of §3.3, Exercise B3 and Example 4.4, asserted within 4 Monte Carlo standard errors.
-2. **Bias–variance plot** for the three variance estimators against $n$ (Example 4.1, Exercise B1).
-3. **Likelihood surface** of Example 4.3 with the MLE and the Fisher ellipse; finite-difference Hessian checked against (3.12).
-4. **Gamma MLE** from (3.10) three ways, plus a simulation comparing MoM and MLE with their asymptotic variances (Example 4.5).
-5. **Cramér–Rao ratios** $\mathrm{Var}(\text{MLE})\cdot nI_1$ against $n$ for Bernoulli, Poisson (exactly 1), Exponential rate ($n^3/((n-1)^2(n-2))$), and Normal variance ($(n-1)/n$).
-6. **QQ plots** of $\sqrt n(\hat\lambda - \lambda)/\lambda$ for the Exponential MLE at $n = 5, 20, 100, 500$, and Example 4.2's exact-vs-normal check.
-7. **Wald interval and delta method** (Example 4.6), with simulated coverage.
-8. **Rao–Blackwell** (Example 4.7, Exercise B5).
-9. **Exponential-family identities**: $A' = \mathbb{E}T$, $A'' = \mathrm{Var}\,T$ by finite differences for Poisson and Bernoulli, and symbolically with SymPy.
-10. **Misspecification**: a Normal fitted to Exponential(1) data converges to the KL projection $\mathcal{N}(1, 1)$, found independently by numerically minimizing the KL divergence.
-
-**Build it yourself first:** write `mc_check` (Monte Carlo bias/variance/MSE with standard errors), the vectorized Newton solver `gamma_shape_mle` for (3.10), and the Part 8 Rao–Blackwell comparison before reading the file's versions. "Your turn" then asks for the mixture-weight likelihood (B8), the Cauchy location model (C2), and a bootstrap standard error for the Gamma MLE (a preview of ST-2); reference solutions for B8 and C2 sit at the bottom of the file.
+**Build it yourself first:** write `mc_check` (Monte Carlo bias/variance/MSE with standard errors), the vectorized Newton solver `gamma_shape_mle` for (3.10), and Part 8 before reading the file's versions. "Your turn" asks for the mixture likelihood (B8), the Cauchy location model (C2), and a bootstrap standard error (ST-2 preview); reference solutions for B8 and C2 are at the bottom.
 
 ## 8. Where you'll struggle
 
-- **What is random.** The single hardest step in this module is that an estimator is a random variable, and "the standard error" is the standard deviation of its sampling distribution over imagined repetitions, not a property of your one dataset. People compute $\hat p \pm 1.96\sqrt{\hat p(1-\hat p)/n}$ without being able to say what varies. The fix: for every standard error you compute this month, write one sentence saying what is being repeated, then simulate it as in project Part 1.
+- **What is random.** The hardest step in this module is that an estimator is a random variable, and "the standard error" is the standard deviation of its sampling distribution over imagined repetitions, not a property of your one dataset. People compute $\hat p \pm 1.96\sqrt{\hat p(1-\hat p)/n}$ without being able to say what varies. The fix: for every standard error you compute this month, write one sentence saying what is being repeated, then simulate it as in project Part 1.
 - **MLE is not a guarantee.** It is not always unbiased ($\hat\sigma^2$, $1/\bar X$), not always consistent (Neyman–Scott), and not always computable (Gamma needs a root-finder; mixtures have many roots). The Uniform example exists to show that the regularity conditions are not decoration: drop (R1) and both Cramér–Rao and the $1/\sqrt n$ rate fail.
 - **Which covariance equals 1.** The Cramér–Rao proof is three lines of Cauchy–Schwarz and everyone forgets the key fact. It is $\mathrm{Cov}(\hat\theta, s_n) = 1$, the estimator against the *total* score, from differentiating $\mathbb{E}_\theta\hat\theta = \theta$. If you can derive that line, you can rebuild the whole proof, including the biased and $g(\theta)$ variants.
 - **The asymptotic-normality derivation hides an assumption at every step.** Read it with the brackets: interior maximum, Taylor expansion, CLT for the score, LLN for the Hessian, consistency to move from $\theta_0$ to $\tilde\theta$, Slutsky. When an exam or a paper says "under regularity conditions", this list is what they mean.
-- **Sufficiency feels like a formality** until Rao–Blackwell (§3.9) and exponential families (§3.10) use it. Do Example 4.7 by hand; watching $\lambda$ cancel is what makes the definition stick.
-- **The exponential-family section is dense** and pays off three modules later, in ST-4 and ST-5. Read §3.10 twice, and fill in the table yourself for one family before checking it.
-- **Parametrization conventions.** Rate vs scale for Exponential and Gamma, variance vs standard deviation for the Normal: the Fisher information changes with the parametrization (3.13), and scipy uses scale. Write the density down before computing anything.
+- **Sufficiency feels like a formality** until Rao–Blackwell and exponential families use it. Do Example 4.7 by hand; watching $\lambda$ cancel makes the definition stick.
+- **The exponential-family section is dense** and pays off three modules later (ST-4, ST-5). Read §3.10 twice, and fill in one row of its table yourself before checking.
+- **Parametrizations.** Rate vs scale (scipy uses scale), variance vs standard deviation: Fisher information changes with the parametrization (3.13). Write the density down before computing anything.
 
 ## 9. Check yourself
 
 1. What is the sampling distribution of an estimator, and what is its standard deviation called?
-2. Derive $\mathrm{MSE} = b^2 + \mathrm{Var}$ in two lines.
-3. Why does $S^2$ divide by $n - 1$? Which estimator of $\sigma^2$ has the smaller MSE for normal data, $S^2$ or $\hat\sigma^2$?
-4. Write the MoM and MLE estimators of $\theta$ for Uniform$(0, \theta)$. Which is better, and why does Cramér–Rao not settle it?
-5. State the invariance property of the MLE. Is unbiasedness invariant?
-6. State the two expressions for Fisher information and the condition that makes them equal.
-7. In the Cramér–Rao proof, which covariance equals 1, and why?
-8. When can an unbiased estimator attain the Cramér–Rao bound?
-9. Why does the average log-likelihood peak at $\theta_0$? Name the inequality.
-10. Write the asymptotic distribution of the MLE and the delta-method variance of $g(\hat\theta)$.
-11. State the factorization theorem and use it to find a sufficient statistic for Poisson data.
-12. In an exponential family, what are $A'(\eta)$ and $A''(\eta)$, and what equation does the MLE solve?
+2. Why does $S^2$ divide by $n - 1$? Which estimator of $\sigma^2$ has the smaller MSE for normal data, $S^2$ or $\hat\sigma^2$?
+3. Write the MoM and MLE estimators of $\theta$ for Uniform$(0, \theta)$. Which is better, and why does Cramér–Rao not settle it?
+4. State the invariance property of the MLE. Is unbiasedness invariant?
+5. State the two expressions for Fisher information and the condition that makes them equal.
+6. In the Cramér–Rao proof, which covariance equals 1, and why?
+7. When can an unbiased estimator attain the Cramér–Rao bound?
+8. Why does the average log-likelihood peak at $\theta_0$? Name the inequality.
+9. Write the asymptotic distribution of the MLE and the delta-method variance of $g(\hat\theta)$.
+10. State the factorization theorem and use it to find a sufficient statistic for Poisson data.
+11. In an exponential family, what are $A'(\eta)$ and $A''(\eta)$, and what equation does the MLE solve?
 
 ## 10. Pair with
 
-- **Wasserman, *All of Statistics*, ch. 6–7 and 9.** The same material, terser and with more examples; ch. 9 on parametric inference is the closest match to §3.5–§3.8. (Ch. 8, the bootstrap, belongs to ST-2.)
-- **MIT 18.650 (Rigollet), lecture slides and notes ch. 1–3** on OCW. A modern statistician's framing of models, identifiability, MLE and Fisher information, with the KL view of §3.8 front and center.
-- **Casella & Berger, *Statistical Inference*, ch. 6–7.** The reference: full proofs of factorization in the continuous case, completeness, Lehmann–Scheffé, and many more exercises. Use it when these notes cite it.
-- **Rice, *Mathematical Statistics and Data Analysis*, ch. 8.** Gentle and concrete, with real datasets for MoM and MLE and a clear treatment of the Gamma example.
-- **Efron & Hastie, *Computer Age Statistical Inference*, ch. 1–4** (free PDF). The big picture: how frequentist, Bayesian and Fisherian inference relate, and why Fisher's information still organizes the field.
+- **Wasserman, *All of Statistics*, ch. 6–7 and 9.** Terser, more examples; ch. 9 matches §3.5–§3.8. (Ch. 8, the bootstrap, belongs to ST-2.)
+- **MIT 18.650 (Rigollet), slides and notes ch. 1–3** (OCW). A modern framing of models, identifiability, MLE and Fisher information, with §3.8's KL view front and center.
+- **Casella & Berger, *Statistical Inference*, ch. 6–7.** The reference: continuous factorization, completeness, Lehmann–Scheffé, many exercises.
+- **Rice, *Mathematical Statistics and Data Analysis*, ch. 8.** Gentle and concrete, real datasets for MoM and MLE, a good Gamma treatment.
+- **Efron & Hastie, *Computer Age Statistical Inference*, ch. 1–4** (free PDF). How frequentist, Bayesian and Fisherian inference relate, and why Fisher information still organizes the field.

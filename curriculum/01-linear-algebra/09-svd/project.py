@@ -1,8 +1,8 @@
 # %% [markdown]
 # # LA-9 Project: The SVD, Low-Rank Approximation, PCA, Conditioning, Pseudoinverse, Polar
 #
-# This script implements the §3.2 derivation as code and then checks every
-# numerical claim in the notes. Parts: (1) `svd_via_eig` and why it is not how
+# This script implements the §3.2 derivation as code and then checks the
+# numbers in the notes' worked examples and main theorems. Parts: (1) `svd_via_eig` and why it is not how
 # the SVD is computed, (2) every number in Examples 4.1–4.5, (3) image
 # compression with the Eckart–Young error curve, (4) PCA on a 3-D Gaussian
 # cloud two ways, (5) condition number and error amplification, (6) the
@@ -18,6 +18,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from pathlib import Path
 from scipy.linalg import sqrtm
+import sympy as sp
 
 FIG = Path(__file__).resolve().parent / "figures"
 FIG.mkdir(exist_ok=True)
@@ -109,6 +110,8 @@ for trial in range(30):
     # Signs and null-space bases differ; subspaces (as projectors) must not.
     assert np.allclose(projector(U[:, :r]), projector(U2[:, :r])), "C(A) projector"
     assert np.allclose(projector(Vt[:r].T), projector(Vt2[:r].T)), "C(A^T) projector"
+    assert np.allclose(projector(Vt[r:].T), projector(Vt2[r:].T)), "N(A) projector"
+    assert np.allclose(A @ Vt[r:].T, 0, atol=1e-6 * s[0]), "svd_via_eig's own null vectors are killed by A"
     # (3.1'): A v_i = σ_i u_i, and A kills v_{r+1..n}.
     assert np.allclose(A @ Vt.T, U * s, atol=1e-6 * s[0])
     # Theorem 3.3: the four subspaces, checked as "A maps / kills" statements.
@@ -127,8 +130,9 @@ print("Part 1a: svd_via_eig agrees with np.linalg.svd on 30 random matrices (up 
 # ### Part 1b: where `svd_via_eig` fails
 # λ_i of A^T A is computed with absolute error ≈ ε‖A^T A‖ = ε σ_1². For σ_3 = 1e-9,
 # λ_3 = 1e-18 is far below that noise (ε σ_1² ≈ 2e-16), so σ_3 comes back as
-# garbage. `np.linalg.svd` (Golub–Kahan, LA-13) gets absolute error ≈ ε σ_1 in
-# σ_i itself, so σ_3 is correct to about 7 digits.
+# garbage, and σ_2 (relative error ≈ ε σ_1²/σ_2²) keeps only about half its digits.
+# `np.linalg.svd` (Golub–Kahan, LA-13) gets absolute error a small multiple of
+# ε σ_1 in σ_i itself, so σ_3 is correct to about 7 digits.
 
 # %%
 true_s = np.array([1.0, 1e-5, 1e-9])
@@ -140,7 +144,8 @@ rel_lapack = np.abs(s_lapack - true_s) / true_s
 print("Part 1b: true σ        =", true_s)
 print("         via eigh(A^TA) =", s_eig, " rel. err =", rel_eig)
 print("         np.linalg.svd  =", s_lapack, " rel. err =", rel_lapack)
-assert rel_lapack[2] < 1e-5, "LAPACK gets the tiny singular value to ~7 digits"
+assert rel_lapack[2] < 10 * EPS * true_s[0] / true_s[2], "LAPACK: |error| <= 10 ε σ_1, so σ_3 to ~7 digits"
+assert rel_eig[1] < 10 * EPS * (true_s[0] / true_s[1]) ** 2, "A^T A route: relative error ~ ε σ_1²/σ_2² for σ_2"
 assert rel_eig[2] > 1e-2, "the A^T A route loses the tiny singular value"
 assert rel_eig[0] < 1e-12 and rel_lapack[0] < 1e-12, "both get σ_1"
 
@@ -175,6 +180,9 @@ assert np.isclose(s[0] * s[1], abs(np.linalg.det(A41))) and np.isclose(np.sum(s 
 A1 = rank_k(U, s, Vt, 1)
 assert np.allclose(A1, [[1.5, 1.5], [4.5, 4.5]]) and np.isclose(np.linalg.norm(A41 - A1, "fro") ** 2, 5)
 assert np.isclose(np.linalg.cond(A41), 3.0)
+ang_u1 = np.degrees(np.arctan2(*(U[::-1, 0] * np.sign(U[0, 0]))))            # u1 = (1,3)/√10
+assert abs(ang_u1 - 71.57) < 0.01 and np.isclose(np.linalg.norm(A41, 2), 6.708, atol=1e-3)
+assert np.isclose(np.linalg.norm(A41, "fro"), 7.071, atol=1e-3)
 print("Example 4.1: σ =", s, "; NumPy's signs:", np.sign(U[0, 0]), np.sign(Vt[0, 0]), "(both flipped together)")
 
 # Figure: the unit circle and its image ellipse, with the singular vectors.
@@ -216,6 +224,8 @@ S43 = X43.T @ X43 / 3
 assert np.allclose(X43.T @ X43, [[10, 6], [6, 10]])
 lam, Vs = np.linalg.eigh(S43)
 assert np.allclose(lam[::-1], [16 / 3, 4 / 3])
+assert np.isclose(S43[0, 0], 10 / 3) and np.isclose(S43[0, 1] / np.sqrt(S43[0, 0] * S43[1, 1]), 0.6)   # correlation 0.6
+w45 = np.array([1, 1]) / np.sqrt(2); assert np.isclose(w45 @ S43 @ w45, 16 / 3)   # variance along v1
 U, s, Vt = np.linalg.svd(X43, full_matrices=False)
 assert np.allclose(s, [4, 2]) and np.allclose(s ** 2 / 3, lam[::-1])          # Theorem 3.12(a)
 assert same_up_to_sign(Vt[0], [1, 1] / np.sqrt(2)) and same_up_to_sign(Vt[1], [1, -1] / np.sqrt(2))
@@ -229,6 +239,7 @@ lam_raw, V_raw = np.linalg.eigh(raw.T @ raw)
 assert np.allclose(raw.T @ raw, [[46, 30], [30, 26]]) and np.allclose(lam_raw[::-1], [36 + np.sqrt(1000), 36 - np.sqrt(1000)])
 ang_raw = np.degrees(np.arctan2(*V_raw[::-1, -1] * np.sign(V_raw[0, -1])))
 assert abs(ang_raw - 35.8) < 0.1, ang_raw
+assert np.allclose(lam_raw[::-1], [67.6, 4.4], atol=0.05) and abs(np.degrees(np.arctan2(mu[1], mu[0])) - 33.7) < 0.05
 print(f"Example 4.3: σ = {s}, eigenvalues of S = {lam[::-1]}, PC1 at 45°, uncentered 'PC1' at {ang_raw:.1f}°.")
 
 # --- Example 4.4 ---
@@ -244,6 +255,11 @@ assert np.allclose(np.linalg.inv(A44), [[10001, -10000], [-10000, 10000]], rtol=
 rel_x = np.linalg.norm(dx) / np.linalg.norm(x44); rel_b = np.linalg.norm(db) / np.linalg.norm(b44)
 assert rel_x <= kappa44 * rel_b * (1 + 1e-9), "bound (3.10)"
 assert abs(rel_x / rel_b - kappa44) < 1e-3 * kappa44, "bound (3.10) essentially attained"
+assert np.isclose(np.log10(kappa44), 4.60, atol=0.005), "expect to lose about 4.6 digits"
+assert np.isclose(np.linalg.norm(b44), 2.8285, atol=1e-4) and np.isclose(np.linalg.norm(db), 1.414e-4, rtol=1e-3)
+assert np.isclose(rel_b, 5.0e-5, rtol=1e-3) and np.isclose(rel_x, 2.00005, atol=1e-5)
+U44 = np.linalg.svd(A44)[0]                                     # b ∝ u1 and δb ∝ u2, to four decimals
+assert abs(abs(U44[:, 0] @ [1, 1]) / np.sqrt(2) - 1) < 1e-4 and abs(abs(U44[:, 1] @ [1, -1]) / np.sqrt(2) - 1) < 1e-4
 print(f"Example 4.4: κ2 = {kappa44:.5f}; rel. change in b = {rel_b:.3e}, in x = {rel_x:.5f}, ratio = {rel_x / rel_b:.2f}")
 
 # --- Example 4.5 ---
@@ -263,7 +279,28 @@ assert np.allclose(V_left * np.sqrt(5), [[3, 1], [1, 2]]) and np.allclose(V_left
 E = 0.5 * (F.T @ F - np.eye(2))
 assert np.allclose(np.sort(np.linalg.eigvalsh(E)), [-1 / (2 * phi), phi / 2])
 assert np.isclose(np.linalg.cond(F), phi ** 2) and np.isclose(np.linalg.cond(F, 1), 4) and np.isclose(np.linalg.cond(F, np.inf), 4)
+for gam in (0.5, 1.0, 2.0, 100.0):                          # any simple shear: tan θ = −γ/2
+    Ug, _, Vtg = np.linalg.svd(np.array([[1.0, gam], [0.0, 1.0]])); Rg = Ug @ Vtg
+    assert np.isclose(Rg[1, 0] / Rg[0, 0], -gam / 2) and Rg[0, 0] > 0 and np.isclose(np.linalg.det(Rg), 1)
+assert np.isclose(np.linalg.cond(np.array([[1.0, 100.0], [0.0, 1.0]])), 1.0002e4, rtol=1e-4), "§8: det 1, κ2 ≈ 1e4"
 print(f"Example 4.5: stretches {s[0]:.4f}, {s[1]:.4f} (φ, 1/φ); rotation {theta:.2f}°; κ2 = φ² = {phi**2:.4f}, κ1 = κ∞ = 4.")
+
+# --- Examples 4.4 and 4.5 in exact arithmetic (SymPy) ---
+zero = lambda e: all(sp.simplify(x) == 0 for x in (e if isinstance(e, sp.MatrixBase) else [e]))   # scalar or every entry
+ev44 = sorted(sp.Matrix([[1, 1], [1, sp.Rational(10001, 10000)]]).eigenvals(), key=float)
+assert zero(ev44[1] - (20001 + sp.sqrt(400000001)) / 20000) and zero(ev44[0] - (20001 - sp.sqrt(400000001)) / 20000)
+assert abs(float(ev44[1]) - 2.00005000125) < 1e-12 and abs(float(ev44[0]) - 0.00004999875) < 1e-12
+ph = (1 + sp.sqrt(5)) / 2
+assert all(zero(e) for e in (ph**2 - ph - 1, ph**-2 - (3 - sp.sqrt(5)) / 2, sp.sqrt(5) * ph - (ph + 2), 1 + ph**2 - (ph + 2), ph + 1 / ph - sp.sqrt(5)))
+evC = sorted((sp.Matrix([[1, 0], [1, 1]]) * sp.Matrix([[1, 1], [0, 1]])).eigenvals(), key=float)
+assert zero(evC[1] - ph**2) and zero(evC[0] - ph**-2), "eigenvalues of C = F^T F are φ², φ^-2"
+g = sp.symbols("gamma", positive=True)
+c_, s_ = 2 / sp.sqrt(4 + g**2), -g / sp.sqrt(4 + g**2)                   # cos θ, sin θ with tan θ = −γ/2
+Rs, Fg = sp.Matrix([[c_, -s_], [s_, c_]]), sp.Matrix([[1, g], [0, 1]])
+Sg = sp.simplify(Rs.T * Fg)                                             # the stretch R^T F
+assert zero(Sg - Sg.T) and zero(Rs.T * Rs - sp.eye(2)) and zero(Sg.det() - 1) and zero(Sg.trace() - sp.sqrt(4 + g**2))
+assert zero(Rs.subs(g, 1) - sp.Matrix([[2, 1], [-1, 2]]) / sp.sqrt(5)) and zero(Sg.subs(g, 1) - sp.Matrix([[2, 1], [1, 3]]) / sp.sqrt(5))
+print("SymPy: Example 4.4 eigenvalues and Example 4.5 identities exact; polar factors of simple shear for symbolic γ.")
 
 # %% [markdown]
 # ## Part 3: image compression and Eckart–Young
@@ -271,8 +308,9 @@ print(f"Example 4.5: stretches {s[0]:.4f}, {s[1]:.4f} (φ, 1/φ); rotation {thet
 # A 256 x 256 synthetic image (no downloads): a linear gradient (rank 2), a disc,
 # a rectangle (rank 1), a diagonal band (Toeplitz, not low rank), and a
 # sinusoidal texture. We compress at ranks 1, 5, 20, 50 and check Theorem 3.7:
-# ‖A − A_k‖_F = sqrt(sum_{i>k} σ_i²) exactly, for every k. Then we add noise and
-# watch the singular values develop a floor (§3.13).
+# ‖A − A_k‖_F = sqrt(sum_{i>k} σ_i²) exactly, for every k. Then we add noise,
+# watch the singular values develop a floor (§3.13), and find the truncation
+# rank that best recovers the clean image (Exercise B8).
 
 
 # %%
@@ -331,7 +369,15 @@ fig.tight_layout(); fig.savefig(FIG / "eckart_young_curve.png", dpi=120); plt.cl
 s_pure = np.linalg.svd(0.05 * rng.standard_normal(img.shape), compute_uv=False)
 assert s_noisy[100] > 2 * s[100], "the noise floor lifts the tail"
 assert s[0] / s[100] > 50 * s_pure[0] / s_pure[100], "image spectrum decays ~280x by i=100; pure noise only ~2x (flat floor)"
+# Exercise B8: truncate the NOISY image at rank k; how close is it to the CLEAN one?
+Un, sn, Vtn = np.linalg.svd(noisy, full_matrices=False)
+den_err = np.array([np.linalg.norm(rank_k(Un, sn, Vtn, k) - img) for k in range(1, 81)])
+k_opt, tau_sqrtN = 1 + int(np.argmin(den_err)), 0.05 * np.sqrt(256)
+k_gd = int(np.sum(s > np.sqrt(3) * tau_sqrtN))                # clean σ_i above √3·τ√N (Gavish–Donoho)
+assert k_gd == 24 and abs(k_opt - k_gd) <= 1, (k_opt, k_gd)
+assert round(den_err.min(), 1) == 8.8 and round(np.linalg.norm(noisy - img), 1) == 12.8
 print(f"Part 3: Eckart–Young equality verified for k = 0..255; rank-20 relative error {errs[20]/np.linalg.norm(img):.4f}.")
+print(f"        denoising: best rank {k_opt} (clean σ_i > √3·τ√N: {k_gd}), error {den_err.min():.3f} vs {np.linalg.norm(noisy - img):.3f} untruncated.")
 
 # %% [markdown]
 # ## Part 4: PCA on a correlated 3-D Gaussian cloud, two ways
@@ -405,8 +451,8 @@ print("Part 4: PCA via eigh(S) == PCA via SVD; recovered sd =", np.sqrt(var_pca)
 # Theorem 3.9: ‖δx‖/‖x‖ ≤ κ_2 ‖δb‖/‖b‖, attained for b ∝ u_1, δb ∝ u_n. We build
 # 6 x 6 matrices with κ_2 from 1 to 1e12 and measure (i) the worst-case
 # amplification, (ii) the amplification of a random δb, (iii) the actual rounding
-# error of `np.linalg.solve`, which behaves like κ_2 · ε (the "lose log10 κ
-# digits" rule).
+# error of `np.linalg.solve`, which stays below a small multiple of κ_2 · ε (the
+# "lose at most about log10 κ digits" rule).
 
 # %%
 kappas = np.logspace(0, 12, 13)
@@ -431,7 +477,7 @@ for kappa in kappas:
 amp_worst, amp_rand, fwd_err = map(np.array, (amp_worst, amp_rand, fwd_err))
 assert np.allclose(amp_worst[:9], kappas[:9], rtol=1e-4), "worst case attains κ (while rounding is negligible)"
 assert np.all(amp_rand <= kappas * (1 + 1e-6)), "random perturbations never exceed the bound (3.10)"
-assert np.all(fwd_err <= 1e3 * kappas * EPS + 1e-15), "solve's error is a modest multiple of κ·ε"
+assert np.all(fwd_err <= 10 * n * kappas * EPS), "solve loses at most ~log10 κ digits (slack factor 10n)"
 fig, ax = plt.subplots(figsize=(6.5, 4.5))
 ax.loglog(kappas, amp_worst, "C3o-", label="worst case: b ∝ u_1, δb ∝ u_n")
 ax.loglog(kappas, amp_rand, "C0s-", label="random b, δb")
@@ -440,7 +486,7 @@ ax.loglog(kappas, fwd_err / EPS, "C2^-", label="rounding error of solve ÷ ε")
 ax.set_xlabel("κ_2(A)"); ax.set_ylabel("relative error amplification"); ax.set_title("digits lost ≈ log10 κ")
 ax.legend(fontsize=8); ax.grid(alpha=.3, which="both")
 fig.tight_layout(); fig.savefig(FIG / "condition_number.png", dpi=120); plt.close(fig)
-print("Part 5: worst-case amplification equals κ; random amplification ≤ κ; solve error ≈ κ·ε. Digits kept at κ=1e12:",
+print("Part 5: worst-case amplification equals κ; random amplification ≤ κ; solve error ≤ 10n·κ·ε. Digits kept at κ=1e12:",
       f"{-np.log10(fwd_err[-1]):.1f}")
 
 # %% [markdown]
@@ -550,8 +596,9 @@ print(f"Part 8: σ_1 = {sig[0]:.5f}, max over 20000 random unit x of ‖Ax‖ = 
 # 4. **(Exercise B3)** Extend `svd_via_eig` to m < n via A A^T, and plot the
 #    relative error of each σ_i against σ_i for a matrix with singular values
 #    1, 1e-2, ..., 1e-12.
-# 5. **(Exercise B8)** Add ‖A − A_k‖_2 = σ_{k+1} to the error plot, then find the
-#    rank k that minimizes ‖(noisy image)_k − (clean image)‖_F.
+# 5. **(Exercise B8)** Add ‖A − A_k‖_2 = σ_{k+1} to the error plot. Then plot
+#    `den_err` from Part 3 against k and explain why its minimum sits where
+#    the clean singular values cross √3·τ√N.
 
 # %%
 if __name__ == "__main__":

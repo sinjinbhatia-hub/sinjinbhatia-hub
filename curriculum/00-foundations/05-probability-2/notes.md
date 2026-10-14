@@ -6,7 +6,7 @@
 
 ## 0. Where this sits
 
-F4 gave you one random variable at a time: its distribution, its expectation, its MGF. Almost nothing you will do later involves one random variable. Regression (ST-3) is a statement about the joint distribution of $(X, Y)$. The Kalman filter (ST-8) is a statement about the conditional distribution of a Gaussian vector. Statistical mechanics (SM-4) is the maximum-entropy distribution over microstates. Every loss function in ML-3 is a cross-entropy. This module is where "several random variables at once" gets built, and the linear algebra you rebuilt in LA-1 through LA-8 is what makes it tractable: a covariance matrix is a PSD matrix, a Gaussian's level sets are the ellipsoids of a quadratic form, a Markov chain is a matrix acting on a vector, and conditional expectation is an orthogonal projection.
+F4 gave you one random variable at a time: its distribution, its expectation, its MGF. Almost nothing you will do later involves one random variable. Regression (ST-3) is a statement about the joint distribution of $(X, Y)$. The Kalman filter (ST-8) is a statement about the conditional distribution of a Gaussian vector. Statistical mechanics (SM-4) is the maximum-entropy distribution over microstates. The logistic and softmax losses of ML-3 are cross-entropies. This module is where "several random variables at once" gets built, and the linear algebra you rebuilt in LA-1 through LA-8 is what makes it tractable: a covariance matrix is a PSD matrix, a Gaussian's level sets are the ellipsoids of a quadratic form, a Markov chain is a matrix acting on a vector, and conditional expectation is an orthogonal projection.
 
 You need F4 fluently (LOTUS, MGFs, the named distributions, Bayes' rule) and LA-8 (spectral theorem, $\mathbf{a}^\top \Sigma \mathbf{a} \ge 0$, Cholesky from LA-10 helps). This module is the direct prerequisite of ST-1 (inference), SM-4 (canonical ensemble as max-entropy), ML-1 (the learning problem) and ML-6 (Gaussian mixtures, PCA).
 
@@ -331,7 +331,7 @@ an ellipsoid centered at $\boldsymbol\mu$ with axes along the eigenvectors $\mat
 $$M_{\mathbf{X}}(\mathbf{t}) = \mathbb{E}\big[e^{\mathbf{t}^\top\boldsymbol\mu + (A^\top\mathbf{t})^\top\mathbf{Z}}\big] = e^{\mathbf{t}^\top\boldsymbol\mu}M_{\mathbf{Z}}(A^\top\mathbf{t}) = \exp\!\left(\mathbf{t}^\top\boldsymbol\mu + \tfrac12\mathbf{t}^\top AA^\top\mathbf{t}\right) = \exp\!\left(\mathbf{t}^\top\boldsymbol\mu + \tfrac12\mathbf{t}^\top\Sigma\,\mathbf{t}\right). \tag{3.18}$$
 This holds for *any* $A$, square or not, invertible or not, and depends only on $(\boldsymbol\mu, \Sigma)$. Since the MGF determines the distribution (the multivariate version of F4 Theorem 3.23, the uniqueness theorem; we cite it as F4 did), Definition 3.20 defines a single distribution for each $(\boldsymbol\mu, \Sigma)$ even when $\Sigma$ is singular and no density exists. In particular (3.17) is the density whenever $\Sigma$ is positive definite, whatever the shape of the $A$ you started with: the same distribution arises from the square, invertible choice $A = L$ (Cholesky, below).
 
-**Theorem 3.22 (Linear transforms of MVN are MVN).** If $\mathbf{X} \sim \mathcal{N}(\boldsymbol\mu, \Sigma)$, $B$ is $m \times k$ and $\mathbf{c} \in \mathbb{R}^m$, then $B\mathbf{X} + \mathbf{c} \sim \mathcal{N}(B\boldsymbol\mu + \mathbf{c},\; B\Sigma B^\top)$.
+**Theorem 3.22 (Linear transforms of MVN are MVN).** If $\mathbf{X} \sim \mathcal{N}(\boldsymbol\mu, \Sigma)$, $B$ is $r \times k$ and $\mathbf{c} \in \mathbb{R}^r$, then $B\mathbf{X} + \mathbf{c} \sim \mathcal{N}(B\boldsymbol\mu + \mathbf{c},\; B\Sigma B^\top)$.
 
 *Proof.* $M_{B\mathbf{X}+\mathbf{c}}(\mathbf{s}) = \mathbb{E}[e^{\mathbf{s}^\top(B\mathbf{X} + \mathbf{c})}] = e^{\mathbf{s}^\top\mathbf{c}}M_{\mathbf{X}}(B^\top\mathbf{s}) = \exp\big(\mathbf{s}^\top(B\boldsymbol\mu + \mathbf{c}) + \tfrac12\mathbf{s}^\top B\Sigma B^\top\mathbf{s}\big)$ by (3.18), which is (3.18) for $\mathcal{N}(B\boldsymbol\mu + \mathbf{c}, B\Sigma B^\top)$. ∎ (Or directly: $B\mathbf{X} + \mathbf{c} = (B\boldsymbol\mu + \mathbf{c}) + (BA)\mathbf{Z}$ is of the form in Definition 3.20.)
 
@@ -347,13 +347,13 @@ This holds for *any* $A$, square or not, invertible or not, and depends only on 
 $$\mathbf{X}_1 \mid \mathbf{X}_2 = \mathbf{x}_2 \;\sim\; \mathcal{N}\!\Big(\boldsymbol\mu_1 + \Sigma_{12}\Sigma_{22}^{-1}(\mathbf{x}_2 - \boldsymbol\mu_2),\;\; \Sigma_{11} - \Sigma_{12}\Sigma_{22}^{-1}\Sigma_{21}\Big). \tag{3.19}$$
 The matrix $S := \Sigma_{11} - \Sigma_{12}\Sigma_{22}^{-1}\Sigma_{21}$ is the **Schur complement** of $\Sigma_{22}$ in $\Sigma$ (LA-10).
 
-▶ **Try it first.** You need $f(\mathbf{x}_1 \mid \mathbf{x}_2) = f(\mathbf{x}_1, \mathbf{x}_2)/f(\mathbf{x}_2)$, where the numerator is (3.17) and the denominator is the marginal $\mathcal{N}(\boldsymbol\mu_2, \Sigma_{22})$. Everything hinges on writing the big quadratic form $(\mathbf{x}-\boldsymbol\mu)^\top\Sigma^{-1}(\mathbf{x}-\boldsymbol\mu)$ as [something in $\mathbf{x}_1$ given $\mathbf{x}_2$] + [the marginal's quadratic form in $\mathbf{x}_2$]. That is "completing the square" in block form. Start by doing block elimination (LA-2) on $\Sigma$: clear the $\Sigma_{21}$ block.
+▶ **Try it first.** You need $f(\mathbf{x}_1 \mid \mathbf{x}_2) = f(\mathbf{x}_1, \mathbf{x}_2)/f(\mathbf{x}_2)$, where the numerator is (3.17) and the denominator is the marginal $\mathcal{N}(\boldsymbol\mu_2, \Sigma_{22})$. Everything hinges on writing the big quadratic form $(\mathbf{x}-\boldsymbol\mu)^\top\Sigma^{-1}(\mathbf{x}-\boldsymbol\mu)$ as [something in $\mathbf{x}_1$ given $\mathbf{x}_2$] + [the marginal's quadratic form in $\mathbf{x}_2$]. That is "completing the square" in block form. Start by doing block elimination on $\Sigma$ (LA-2 exercise C2) with $\Sigma_{22}$ as the pivot: clear the off-diagonal blocks.
 
 **Derivation.** Write $\mathbf{a} = \mathbf{x}_1 - \boldsymbol\mu_1$, $\mathbf{b} = \mathbf{x}_2 - \boldsymbol\mu_2$, and $C = \Sigma_{12}\Sigma_{22}^{-1}$ (a $p\times q$ matrix; note $C^\top = \Sigma_{22}^{-1}\Sigma_{21}$ since $\Sigma$ is symmetric).
 
 1. **Block LDU factorization of $\Sigma$.** Multiply out to verify:
 $$\Sigma = \begin{pmatrix} I & C \\ 0 & I\end{pmatrix}\begin{pmatrix} S & 0 \\ 0 & \Sigma_{22}\end{pmatrix}\begin{pmatrix} I & 0 \\ C^\top & I\end{pmatrix}.$$
-The last two factors give $\begin{pmatrix} S & 0 \\ \Sigma_{22}C^\top & \Sigma_{22}\end{pmatrix} = \begin{pmatrix} S & 0 \\ \Sigma_{21} & \Sigma_{22}\end{pmatrix}$ since $\Sigma_{22}\Sigma_{22}^{-1}\Sigma_{21} = \Sigma_{21}$. Then the first factor times that is $\begin{pmatrix} S + C\Sigma_{21} & C\Sigma_{22} \\ \Sigma_{21} & \Sigma_{22}\end{pmatrix} = \begin{pmatrix}\Sigma_{11} & \Sigma_{12} \\ \Sigma_{21} & \Sigma_{22}\end{pmatrix}$, because $S + \Sigma_{12}\Sigma_{22}^{-1}\Sigma_{21} = \Sigma_{11}$ and $\Sigma_{12}\Sigma_{22}^{-1}\Sigma_{22} = \Sigma_{12}$. ✓ (This is exactly block Gaussian elimination from LA-2: the Schur complement is what remains in the $(1,1)$ block after eliminating with the $(2,2)$ pivot.)
+The last two factors give $\begin{pmatrix} S & 0 \\ \Sigma_{22}C^\top & \Sigma_{22}\end{pmatrix} = \begin{pmatrix} S & 0 \\ \Sigma_{21} & \Sigma_{22}\end{pmatrix}$ since $\Sigma_{22}\Sigma_{22}^{-1}\Sigma_{21} = \Sigma_{21}$. Then the first factor times that is $\begin{pmatrix} S + C\Sigma_{21} & C\Sigma_{22} \\ \Sigma_{21} & \Sigma_{22}\end{pmatrix} = \begin{pmatrix}\Sigma_{11} & \Sigma_{12} \\ \Sigma_{21} & \Sigma_{22}\end{pmatrix}$, because $S + \Sigma_{12}\Sigma_{22}^{-1}\Sigma_{21} = \Sigma_{11}$ and $\Sigma_{12}\Sigma_{22}^{-1}\Sigma_{22} = \Sigma_{12}$. ✓ (This is the block elimination of LA-2 exercise C2 with the roles of the blocks swapped: the Schur complement is what remains in the $(1,1)$ block after eliminating with the $(2,2)$ pivot.)
 2. **Determinant.** The two triangular factors have determinant 1 (block triangular with identity diagonal blocks), so $\det\Sigma = \det S\cdot\det\Sigma_{22}$. Also $S$ is positive definite: for $\mathbf{u} \ne \mathbf{0}$ in $\mathbb{R}^p$, put $\mathbf{v} = (\mathbf{u}; -C^\top\mathbf{u}) \ne \mathbf{0}$; expanding, $\mathbf{v}^\top\Sigma\mathbf{v} = \mathbf{u}^\top\Sigma_{11}\mathbf{u} - 2\mathbf{u}^\top\Sigma_{12}\Sigma_{22}^{-1}\Sigma_{21}\mathbf{u} + \mathbf{u}^\top\Sigma_{12}\Sigma_{22}^{-1}\Sigma_{21}\mathbf{u} = \mathbf{u}^\top S\mathbf{u}$, and the left side is $> 0$ because $\Sigma$ is PD. So $S^{-1}$ exists and $\det S > 0$.
 3. **Inverse.** Inverting a product reverses the order (LA-2), and $\begin{pmatrix} I & C \\ 0 & I\end{pmatrix}^{-1} = \begin{pmatrix} I & -C \\ 0 & I\end{pmatrix}$ (check: the product is $\begin{pmatrix} I & -C + C \\ 0 & I\end{pmatrix} = I$). Hence
 $$\Sigma^{-1} = \begin{pmatrix} I & 0 \\ -C^\top & I\end{pmatrix}\begin{pmatrix} S^{-1} & 0 \\ 0 & \Sigma_{22}^{-1}\end{pmatrix}\begin{pmatrix} I & -C \\ 0 & I\end{pmatrix}.$$
@@ -449,6 +449,8 @@ Both are crude (for a Gaussian, $P(|X - \mu| \ge 2\sigma) \approx 0.046$ while C
 
 **Theorem 3.32 (Jensen).** If $g$ is convex and $\mathbb{E}[X]$ exists, then $\mathbb{E}[g(X)] \ge g(\mathbb{E}[X])$. If $g$ is concave the inequality reverses. For strictly convex $g$, equality holds iff $X$ is constant.
 
+▶ **Try it first.** Let $X$ take two values and write out $\mathbb{E}[g(X)]$; compare with the definition of convexity. For the general case, put a line under the graph of $g$ that touches it at $\mathbb{E}[X]$, and take expectations.
+
 *Two-point case.* If $X = x_1$ with probability $p$ and $x_2$ with probability $1 - p$, then $\mathbb{E}[g(X)] = p\,g(x_1) + (1-p)\,g(x_2) \ge g(p x_1 + (1-p)x_2) = g(\mathbb{E}[X])$. That inequality *is* the definition of convexity: the chord lies above the graph.
 
 *General case.* Let $\mu = \mathbb{E}[X]$. A convex function has a supporting line at every point: there is a constant $c$ with $g(x) \ge g(\mu) + c(x - \mu)$ for all $x$ (the tangent line if $g$ is differentiable; otherwise any slope between the one-sided derivatives). Take expectations of both sides: $\mathbb{E}[g(X)] \ge g(\mu) + c\,\mathbb{E}[X - \mu] = g(\mu)$. For strictly convex $g$ the supporting line touches only at $\mu$, so equality forces $X = \mu$ with probability 1. ∎
@@ -538,6 +540,8 @@ If $\boldsymbol\pi_0 = \boldsymbol\pi$ then $\boldsymbol\pi_t = \boldsymbol\pi$ 
 **Theorem 3.41 (Detailed balance ⇒ stationary).** If a distribution $\boldsymbol\pi$ satisfies
 $$\pi_iP_{ij} = \pi_jP_{ji} \quad\text{for all } i, j, \tag{3.27}$$
 then $\boldsymbol\pi$ is stationary. A chain with such a $\boldsymbol\pi$ is called **reversible**.
+
+▶ **Try it first.** Write the $j$-th entry of $\boldsymbol\pi P$ as a sum over $i$, swap each term using (3.27), and use the fact that the rows of $P$ sum to 1.
 
 *Derivation.* $(\boldsymbol\pi P)_j = \sum_i\pi_iP_{ij} = \sum_i\pi_jP_{ji} = \pi_j\sum_iP_{ji} = \pi_j$, using (3.27) and then that row $j$ of $P$ sums to 1. ∎
 
@@ -749,20 +753,18 @@ See [exercises.md](exercises.md). **A1–A5** are drills: a table that is uncorr
 
 ## 9. Check yourself
 
-1. Given a joint PMF table, how do you get $p_X$, $p_{Y|X}(\cdot\mid x)$, and test independence? Which single cell suffices to refute it?
-2. Why does $f(x,y) = 2$ on $0 < x < y < 1$ fail characterization (c) of Theorem 3.4?
-3. Write the 2D change-of-variables formula. Which Jacobian goes in, and why the absolute value?
-4. What is the distribution of the sum of $n$ iid $\mathrm{Exponential}(\lambda)$? Of the $k$-th smallest of $n$ iid Uniforms?
-5. Prove $|\rho| \le 1$ in three lines. Which inner product did you use?
-6. Give a pair that is uncorrelated but dependent. Why can't it be jointly Gaussian?
-7. Write the density of $\mathcal{N}(\boldsymbol\mu, \Sigma)$. What are the axes and semi-axes of its level sets?
-8. State (3.19) from memory. Which part does not depend on $\mathbf{x}_2$?
-9. State Adam's and Eve's laws. What is $\mathbb{E}[Y\mid X]$ the orthogonal projection of, onto what?
-10. Prove the weak law of large numbers in two lines. Where is independence used?
-11. State the CLT precisely. What step of the MGF proof is cited, not proved? Name a distribution for which the CLT fails.
-12. What is a stationary distribution, as an eigenvector statement? Prove detailed balance implies stationarity.
-13. Show $D(p\|q) \ge 0$ using Jensen. Why is cross-entropy minimization the same as maximum likelihood?
-14. Which density maximizes entropy at fixed variance? At fixed mean on $[0, \infty)$?
+1. Given a joint PMF table, how do you get $p_X$, $p_{Y|X}(\cdot\mid x)$, and test independence? Which single cell suffices to refute it? Why does $f(x,y) = 2$ on $0 < x < y < 1$ fail characterization (c) of Theorem 3.4?
+2. Write the 2D change-of-variables formula. Which Jacobian goes in, and why the absolute value?
+3. What is the distribution of the sum of $n$ iid $\mathrm{Exponential}(\lambda)$? Of the $k$-th smallest of $n$ iid Uniforms?
+4. Prove $|\rho| \le 1$ in three lines. Which inner product did you use? Give a pair that is uncorrelated but dependent; why can't it be jointly Gaussian?
+5. Write the density of $\mathcal{N}(\boldsymbol\mu, \Sigma)$. What are the axes and semi-axes of its level sets?
+6. State (3.19) from memory. Which part does not depend on $\mathbf{x}_2$?
+7. State Adam's and Eve's laws. What is $\mathbb{E}[Y\mid X]$ the orthogonal projection of, onto what?
+8. Prove the weak law of large numbers in two lines. Where is independence used?
+9. State the CLT precisely. What step of the MGF proof is cited, not proved? Name a distribution for which the CLT fails.
+10. What is a stationary distribution, as an eigenvector statement? Prove detailed balance implies stationarity.
+11. Show $D(p\|q) \ge 0$ using Jensen. Why is cross-entropy minimization the same as maximum likelihood?
+12. Which density maximizes entropy at fixed variance? At fixed mean on $[0, \infty)$?
 
 ## 10. Pair with
 

@@ -114,6 +114,8 @@ Explanation. The computed eigenvalue is $\hat\lambda_i = \sigma_i^2 + \delta$ wi
 
 *Conclusion.* $B = PA = U_kU_k^\top\sum_i\sigma_i\mathbf{u}_i\mathbf{v}_i^\top = \sum_{i \le k}\sigma_i\mathbf{u}_i\mathbf{v}_i^\top = A_k$, because $U_kU_k^\top\mathbf{u}_i = \mathbf{u}_i$ for $i \le k$ and $= \mathbf{0}$ for $i > k$. ∎ (In (a), $\sigma_1 = 2 > 1 = \sigma_2$ and the Frobenius minimizer was indeed unique, while the spectral norm never had uniqueness.)
 
+(d) $A = I_2$ has $\sigma_1 = \sigma_2 = 1$, so the Eckart–Young bound (3.9) for $k = 1$ is $\sigma_2^2 = 1$. Take any unit $\mathbf{u}$ and $B = \mathbf{u}\mathbf{u}^\top$, which has rank 1. Then $A - B = I - \mathbf{u}\mathbf{u}^\top$ is the orthogonal projector onto the line $\mathbf{u}^\perp$: symmetric, idempotent, of rank 1, so its only nonzero singular value is $1$ and $\|A - B\|_F^2 = \operatorname{tr}\bigl((I - \mathbf{u}\mathbf{u}^\top)^2\bigr) = \operatorname{tr}(I - \mathbf{u}\mathbf{u}^\top) = 2 - 1 = 1$. Every such $B$ attains the bound, and different lines give different $B$ (the matrix $\mathbf{u}\mathbf{u}^\top$ determines $\mathbf{u}$ up to sign), so there are infinitely many minimizers, one for each line through the origin. Each is an $A_1$ for some SVD of $I_2$ (A1: any orthonormal basis serves as $V$). What breaks in (c) is the step that forced $c_i = 0$ for $i > k$: it needed $\sigma_{k+1} < \sigma_k$. With $\sigma_1 = \sigma_2$, the weights $c_1 = (\mathbf{u}\cdot\mathbf{e}_1)^2$ and $c_2 = (\mathbf{u}\cdot\mathbf{e}_2)^2$ can be split in any way that sums to $1$ without changing $\sum_i\sigma_i^2c_i = 1$.
+
 **B5.** Write $A = U\Sigma V^\top$, $A^+ = V\Sigma^+U^\top$. Note $\Sigma\Sigma^+$ is the $m \times m$ diagonal matrix $D_m$ with $r$ ones then zeros, and $\Sigma^+\Sigma$ is the $n \times n$ analogue $D_n$; also $D_m\Sigma = \Sigma = \Sigma D_n$ and $D_n\Sigma^+ = \Sigma^+ = \Sigma^+D_m$ (the ones sit exactly where the nonzero $\sigma_i$ are).
 
 (a) $AA^+A = U\Sigma V^\top V\Sigma^+U^\top U\Sigma V^\top = U(\Sigma\Sigma^+\Sigma)V^\top = U(D_m\Sigma)V^\top = U\Sigma V^\top = A$. $A^+AA^+ = V(\Sigma^+\Sigma\Sigma^+)U^\top = V(D_n\Sigma^+)U^\top = A^+$. $AA^+ = UD_mU^\top$ and $(UD_mU^\top)^\top = UD_m^\top U^\top = UD_mU^\top$ since $D_m$ is diagonal. Likewise $A^+A = VD_nV^\top$ is symmetric. ∎
@@ -138,26 +140,38 @@ Explanation. The computed eigenvalue is $\hat\lambda_i = \sigma_i^2 + \delta$ wi
 
 (d) $cA$ has singular values $|c|\sigma_i$ (A6(b)), and the ratio $\sigma_1/\sigma_n$ is unchanged. $\det = 1$ with $\kappa_2 \ge 10^4$: $\operatorname{diag}(100, 0.01)$ ($\kappa_2 = 10^4$ exactly), or the shear $\begin{pmatrix}1 & 100\\0 & 1\end{pmatrix}$: $\sigma_1\sigma_2 = |\det| = 1$ and $\sigma_1^2 + \sigma_2^2 = \|F\|_F^2 = 10002$, so $\sigma_1 \approx 100.01$, $\sigma_2 \approx 0.0099990$, $\kappa_2 \approx 1.0002\times10^4$. $\det = 10^{-20}$ with $\kappa_2 = 1$: $10^{-10}I_2$.
 
-**B8.** (a) Add after the Frobenius loop:
+**B8.** (a) Two pieces, in two places. Put the computation in Part 3 right after the Frobenius loop (after the `assert np.allclose(errs, preds, ...)` line):
 ```python
 ks2 = np.arange(0, 256, 5)
 spec = np.array([np.linalg.norm(img - rank_k(U, s, Vt, k), 2) for k in ks2])
 assert np.allclose(spec, s[ks2]), "Theorem 3.8: ||A - A_k||_2 = σ_{k+1}"
-ax0.semilogy(ks2[1:], spec[1:], "C0.", label="‖A − A_k‖_2 = σ_{k+1}")
 ```
-(Each spectral norm costs an SVD, hence the stride of 5.) (b):
+Put the plotting line after the two `ax0.semilogy` calls of the error figure (the one saved as `eckart_young_curve.png`), before its `savefig`:
 ```python
-tau = 0.05
-noisy = img + tau * rng.standard_normal(img.shape)
+ax0.semilogy(ks2[1:], spec[1:], "C0.", label="‖A − A_k‖_2 = σ_{k+1}"); ax0.legend()
+```
+If you put the plotting line directly after the Frobenius loop, `ax0` still names the Example 4.1 axes, which were already saved and closed, and the curve silently never appears. (Each spectral norm costs an SVD, hence the stride of 5. Index check: `s[k]` is $\sigma_{k+1}$ because NumPy counts from 0.)
+
+(b) Part 3 already built `noisy` $= \tilde A$ and plotted both spectra. The rest:
+```python
 Un, sn, Vtn = np.linalg.svd(noisy, full_matrices=False)
 k_range = np.arange(1, 150)
 err_clean = np.array([np.linalg.norm(rank_k(Un, sn, Vtn, k) - img) for k in k_range])
 k_opt = k_range[np.argmin(err_clean)]
 print(k_opt, err_clean.min(), np.linalg.norm(noisy - img))
+fig, ax = plt.subplots(); ax.plot(k_range, err_clean); ax.set_xlabel("k"); ax.set_ylabel("‖Ã_k − A‖_F")
+fig.savefig(FIG / "denoising_curve.png"); plt.close(fig)
 ```
-With the seed in `project.py` the optimum lands at $k \approx 24$–$25$ with $\|\tilde A_k - A\|_F \approx 8.7$, against $\|\tilde A - A\|_F \approx 12.8$ for the untruncated noisy image ($= \tau\sqrt{N^2} = 0.05\cdot256$): truncation removed about a third of the noise energy's square root while keeping almost all of the signal.
+With the `noisy` of Part 3 the optimum is $k = 24$ with $\|\tilde A_{24} - A\|_F = 8.75$, against $\|\tilde A - A\|_F = 12.81$ for the untruncated noisy image (that is the Frobenius norm of the noise, $\approx\tau N = 0.05\cdot256 = 12.8$). Truncation cuts the error from $12.8$ to $8.8$, about $32\%$ lower in Frobenius norm. Other noise draws put the optimum at $24$–$26$ with errors $8.73$–$8.78$. Part 3 asserts the $24$ and the $8.8$.
 
-Why the optimum is finite. Split $\tilde A_k - A = (\tilde A_k - \tilde A) + (\tilde A - A) = -(\text{discarded part of }\tilde A) + E$ where $E$ is the noise. Roughly, $\|\tilde A_k - A\|_F^2 \approx (\text{discarded signal}) + (\text{kept noise}) = \sum_{i > k}\sigma_i^2 + k\cdot\tau^2N$, because the noise matrix spreads its total energy $\tau^2N^2$ evenly over $N$ singular directions (each noise singular value is of order $\tau\sqrt N$, the flat floor in the scree plot), so keeping $k$ directions keeps about $k/N$ of the noise energy, while the signal's energy is concentrated in the first few directions. The first term decreases with $k$ and the second grows linearly; the minimum is where the marginal signal $\sigma_{k+1}^2$ falls to the marginal noise $\tau^2N = 0.64$, i.e. $\sigma_{k+1} \approx 0.8$, which the clean spectrum reaches around $k \approx 40$. The measured optimum is a bit smaller because the noise also perturbs the *directions* $\tilde{\mathbf{u}}_i, \tilde{\mathbf{v}}_i$ of the weak components, so those components carry less usable signal than their $\sigma_i$ suggests. Truncation is a denoiser exactly when the signal is low rank and the noise is not (§3.13).
+Why the optimum is finite, and where it is. Write $\tilde A = A + E$ with $E$ the noise, and measure singular values in units of the noise level $\tau\sqrt N = 0.05\cdot16 = 0.8$. (The singular values of $E$ alone fill $[0, 2\tau\sqrt N] = [0, 1.6]$: the flat floor in the scree plot, §3.13.) Truncating at $k$ keeps the rank-one pieces $\tilde\sigma_i\tilde{\mathbf{u}}_i\tilde{\mathbf{v}}_i^\top$, $i \le k$, and discards the rest.
+
+- *Discarding* component $i$ costs its clean energy, $\sigma_i^2$.
+- *Keeping* it costs noise, in two ways. The kept piece carries the noise that lies along $\tilde{\mathbf{u}}_i$ and along $\tilde{\mathbf{v}}_i$, about $\tau^2N$ for each, so about $2\tau^2N$ even for a strong component. (That is the familiar count: a rank-$k$ fit to an $m \times n$ matrix keeps about $k(m + n)\tau^2$ of noise energy.) And for a weak component, the noisy singular vectors are tilted away from the clean ones, so the kept piece carries less signal than $\sigma_i$.
+
+Random-matrix theory, which this curriculum does not derive, makes this exact for a square matrix as $N \to \infty$. A clean component of size $x\,\tau\sqrt N$ with $x > 1$ shows up as a noisy singular value $(x + 1/x)\,\tau\sqrt N$. Its singular vectors are tilted by $\cos^2\angle(\tilde{\mathbf{u}}, \mathbf{u}) = \cos^2\angle(\tilde{\mathbf{v}}, \mathbf{v}) = (x^4 - 1)/(x^4 + x^2)$. Then $\|x\mathbf{u}\mathbf{v}^\top - y\tilde{\mathbf{u}}\tilde{\mathbf{v}}^\top\|_F^2 = x^2 + y^2 - 2xy\cos\angle(\tilde{\mathbf{u}},\mathbf{u})\cos\angle(\tilde{\mathbf{v}},\mathbf{v})$ with $y = x + 1/x$ simplifies to $2 + 3/x^2$. So keeping the component costs $(2 + 3/x^2)\,\tau^2N$, against $x^2\tau^2N$ for discarding it. Keeping wins exactly when $x^2 > 2 + 3/x^2$, i.e. $x^4 - 2x^2 - 3 = (x^2 - 3)(x^2 + 1) > 0$, i.e. $x > \sqrt3$.
+
+**The rule.** A component is worth keeping only if its *clean* singular value exceeds $\sqrt3\,\tau\sqrt N \approx 1.39$. Below that level the noisy singular vectors are too misaligned to carry net signal. The clean spectrum of this image has exactly $24$ singular values above $1.39$, which is the measured optimum. Summing the predicted costs ($\sum_{i > 24}\sigma_i^2$ discarded, $(2 + 3/x_i^2)\tau^2N$ for each kept $i$) gives a predicted error of $8.8$, as measured. In terms of the *noisy* singular values, $x = \sqrt3$ maps to $x + 1/x = 4/\sqrt3$, so the rule reads "keep $\tilde\sigma_i > (4/\sqrt3)\,\tau\sqrt N \approx 1.85$". That selects the same $24$ components here. This is the optimal hard threshold of M. Gavish and D. L. Donoho, "The optimal hard threshold for singular values is $4/\sqrt3$," *IEEE Transactions on Information Theory* 60 (2014). The discarded-signal term falls with $k$ and the kept-noise term grows with $k$, so the optimum is finite. Truncation is a denoiser exactly when the signal is low rank and the noise is not (§3.13).
 
 ## C. Challenge
 
@@ -179,11 +193,14 @@ B = rng.standard_normal((50, 2)); t0 = 0.7
 A = B @ rot(t0) + 0.01 * rng.standard_normal(B.shape)
 Q = procrustes(A, B)
 assert np.allclose(Q.T @ Q, np.eye(2)) and np.allclose(Q, rot(t0), atol=0.01)
-angles = np.linspace(-np.pi, np.pi, 7201)
+assert np.linalg.det(Q) > 0                          # a rotation here, so it has an angle
+angles = np.linspace(-np.pi, np.pi, 7201)            # grid spacing 2π/7200
 brute = np.array([np.linalg.norm(A - B @ rot(t)) for t in angles])
-assert abs(angles[brute.argmin()] - t0) < 0.002
+th = np.arctan2(Q[1, 0], Q[0, 0])                    # angle of the SVD answer
+assert abs(angles[brute.argmin()] - th) <= 2 * np.pi / 7200
 assert np.linalg.norm(A - B @ Q) <= brute.min() + 1e-12
 ```
+Compare the brute force with the SVD answer `th`, not with the true angle `t0`: the noise moves the least-squares optimum about $10^{-3}$ rad away from `t0`, so a test like `abs(angles[brute.argmin()] - t0) < 0.002` fails for some noise draws (seeds 6 and 31 of `default_rng`, for instance). Closeness to the truth is the separate, looser check `np.allclose(Q, rot(t0), atol=0.01)`.
 The brute force only searches rotations ($\det = +1$); the SVD answer may be a reflection when the data call for one, which is why the general statement in (a)–(b) is about orthogonal $Q$. (Forcing a rotation: flip the sign of the last column of $U_M$ if $\det(U_MV_M^\top) < 0$; this is the Kabsch algorithm used to align molecules and point clouds.)
 
 **C2.** (a) *Max–min.* Let $S$ be any $i$-dimensional subspace and $T_i = \operatorname{span}\{\mathbf{q}_i, \dots, \mathbf{q}_n\}$, of dimension $n - i + 1$. Since $\dim(S \cap T_i) \ge \dim S + \dim T_i - n = 1$ (LA-3), there is a unit $\mathbf{w} \in S \cap T_i$; writing $\mathbf{w} = \sum_{j \ge i}c_j\mathbf{q}_j$ with $\sum c_j^2 = 1$ gives $\mathbf{w}^\top M\mathbf{w} = \sum_{j \ge i}\lambda_jc_j^2 \le \lambda_i$. Hence $\min_{\mathbf{w} \in S}\mathbf{w}^\top M\mathbf{w} \le \lambda_i$ for every $S$, so the max over $S$ is $\le \lambda_i$. For $S = \operatorname{span}\{\mathbf{q}_1, \dots, \mathbf{q}_i\}$, every unit $\mathbf{w} = \sum_{j \le i}c_j\mathbf{q}_j$ has $\mathbf{w}^\top M\mathbf{w} = \sum_{j \le i}\lambda_jc_j^2 \ge \lambda_i$, with equality at $\mathbf{q}_i$; so the min over this $S$ is exactly $\lambda_i$, and the max–min equals $\lambda_i$. *Min–max.* Let $T$ be any subspace of dimension $n - i + 1$ and $S_i = \operatorname{span}\{\mathbf{q}_1, \dots, \mathbf{q}_i\}$; $\dim(T \cap S_i) \ge 1$, and a unit $\mathbf{w}$ in it has $\mathbf{w}^\top M\mathbf{w} \ge \lambda_i$, so $\max_{\mathbf{w} \in T} \ge \lambda_i$ for every $T$; for $T = T_i$ the max is exactly $\lambda_i$ (attained at $\mathbf{q}_i$). ∎
@@ -194,7 +211,7 @@ The brute force only searches rotations ($\det = +1$); the SVD answer may be a r
 
 (d) If $\operatorname{rank}B \le k$ then $\sigma_{k+1}(B) = 0$. Apply Weyl to $(A - B) + B = A$ with $j = k + 1$: $\sigma_{i+k}(A) \le \sigma_i(A - B) + \sigma_{k+1}(B) = \sigma_i(A - B)$. Then $\|A - B\|_F^2 = \sum_i\sigma_i(A - B)^2 \ge \sum_i\sigma_{i+k}(A)^2 = \sum_{l > k}\sigma_l(A)^2$, which is Theorem 3.7; and $\|A - B\|_2 = \sigma_1(A - B) \ge \sigma_{k+1}(A)$, which is Theorem 3.8. Equality at $B = A_k$ in both as before. ∎ This proof is shorter than the one in §3.7 once Weyl's inequality is available, and Weyl's inequality is the tool for everything about how singular values move under perturbation (LA-13).
 
-**C3.** (a) "$\le$": take $E = -\sigma_n\mathbf{u}_n\mathbf{v}_n^\top$. Then $\|E\|_2 = \sigma_n$ and $A + E = \sum_{i < n}\sigma_i\mathbf{u}_i\mathbf{v}_i^\top$ has rank $n - 1$: singular. "$\ge$": if $A + E$ is singular then $\operatorname{rank}(A + E) \le n - 1$, so by Theorem 3.8 with $k = n - 1$ and $B = A + E$, $\|A - B\|_2 = \|E\|_2 \ge \sigma_n$. Hence $\min\{\|E\|_2 : A + E \text{ singular}\} = \sigma_n(A)$, and dividing by $\|A\|_2 = \sigma_1$, the relative distance to the nearest singular matrix is $\sigma_n/\sigma_1 = 1/\kappa_2(A)$. ∎ A matrix with $\kappa_2 = 10^{12}$ is within relative distance $10^{-12}$ of a singular one; rounding its entries to 16 digits leaves it indistinguishable from one at 4 digits past that.
+**C3.** (a) "$\le$": take $E = -\sigma_n\mathbf{u}_n\mathbf{v}_n^\top$. Then $\|E\|_2 = \sigma_n$ and $A + E = \sum_{i < n}\sigma_i\mathbf{u}_i\mathbf{v}_i^\top$ has rank $n - 1$: singular. "$\ge$": if $A + E$ is singular then $\operatorname{rank}(A + E) \le n - 1$, so by Theorem 3.8 with $k = n - 1$ and $B = A + E$, $\|A - B\|_2 = \|E\|_2 \ge \sigma_n$. Hence $\min\{\|E\|_2 : A + E \text{ singular}\} = \sigma_n(A)$, and dividing by $\|A\|_2 = \sigma_1$, the relative distance to the nearest singular matrix is $\sigma_n/\sigma_1 = 1/\kappa_2(A)$. ∎ A matrix with $\kappa_2 = 10^{12}$ is within relative distance $10^{-12}$ of a singular one: a perturbation of relative size $10^{-12}$ makes it singular, and double-precision rounding (about $10^{-16}$) is only 4 orders of magnitude smaller than that.
 
 (b) Code:
 ```python
@@ -219,4 +236,4 @@ Output (this platform; your last digit may differ):
 | 13 | 17.67 | −1.7 | — |
 | 14 | 17.40 | −0.7 | — |
 
-The rule holds to within about a digit: correct digits $\approx 16.5 - \log_{10}\kappa_2$ down the whole table (the bound (3.10) is a worst case over $\delta\mathbf{b}$, and the actual rounding error is a little kinder). Once $\kappa_2 > 10^{16}$ ($n \ge 12$) the computed solution has no correct digits at all, with no exception raised and at most a `LinAlgWarning`; worse, the *computed* $\kappa_2$ stops growing ($17.67$, then $17.40$) because the computed $\sigma_n$ is itself just rounding noise of size $\varepsilon\sigma_1$, so you can no longer even measure how bad the problem is. A least-squares fit of $\log_{10}\kappa_2(H_n)$ against $n$ over $n = 2, \dots, 10$ gives a slope of $1.49$ decades per unit $n$, matching the classical asymptotic $\kappa_2(H_n) \sim (1 + \sqrt2)^{4n}/\sqrt n$, whose slope is $4\log_{10}(1 + \sqrt2) = 1.53$. Fitting a polynomial of degree $11$ to data by the monomial basis produces exactly this matrix as $A^\top A$ (B7(b)), which is why nobody does that.
+The rule holds to within about a digit: correct digits $\approx 16.5 - \log_{10}\kappa_2$ down the whole table (the bound (3.10) is a worst case over $\delta\mathbf{b}$, and the actual rounding error is a little kinder). Once $\kappa_2 > 10^{16}$ ($n \ge 12$) the computed solution has no correct digits at all, with no exception and no warning from `np.linalg.solve` (`scipy.linalg.solve` would at least emit a `LinAlgWarning` about an ill-conditioned matrix); worse, the *computed* $\kappa_2$ stops growing ($17.67$, then $17.40$) because the computed $\sigma_n$ is itself just rounding noise of size $\varepsilon\sigma_1$, so you can no longer even measure how bad the problem is. A least-squares fit of $\log_{10}\kappa_2(H_n)$ against $n$ over $n = 2, \dots, 10$ gives a slope of $1.49$ decades per unit $n$, matching the classical asymptotic $\kappa_2(H_n) \sim (1 + \sqrt2)^{4n}/\sqrt n$, whose slope is $4\log_{10}(1 + \sqrt2) = 1.53$. The continuous least-squares fit of a degree-11 polynomial on $[0, 1]$ in the monomial basis $1, x, \dots, x^{11}$ has Gram matrix exactly $H_{12}$, since $\int_0^1x^{i+j}\,dx = 1/(i + j + 1)$. With $N$ evenly spaced samples on $[0, 1]$, the $A^\top A$ of the discrete fit is approximately $N\cdot H_{12}$. That is why nobody fits high-degree polynomials in the monomial basis (B7(b)).

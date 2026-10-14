@@ -182,8 +182,8 @@ print("Part 2 checks passed: Gram–Schmidt reproduces P_0..P_5 and ||P_n||^2 = 
 #
 # For numerical stability pick the root with |θ| ≤ π/4: with φ = (a_pp − a_qq)/(2 a_pq) = cot 2θ,
 # t = tan θ solves t² + 2φt − 1 = 0, and the small root is t = sign(φ)/(|φ| + √(1 + φ²)).
-# Each rotation lowers the off-diagonal Frobenius norm by exactly 2 a_pq² (Exercise B7),
-# so always choosing the largest |a_pq| forces off(A) → 0. Accumulating Q ← Q G gives Q
+# Each rotation lowers off(A)², the SQUARED off-diagonal Frobenius norm, by exactly 2 a_pq²
+# (Exercise B7), so always choosing the largest |a_pq| forces off(A) → 0. Accumulating Q ← Q G gives Q
 # with A = Q Λ Qᵀ.
 #
 # **Build it yourself first:** write `jacobi_rotate(A, p, q)` before reading on.
@@ -205,13 +205,25 @@ def jacobi_rotate(A, p, q):
 
 
 def off_norm2(A):
-    """off(A)^2 = sum of squared off-diagonal entries."""
-    return np.sum(A**2) - np.sum(np.diag(A) ** 2)
+    """off(A)^2 = sum of squared off-diagonal entries, computed from the entries themselves.
+    (Computing ||A||_F^2 - sum(diag^2) instead cancels catastrophically once off(A)^2 falls
+    below about eps * ||A||_F^2, and the tail of the convergence plot becomes rounding noise.)"""
+    off = A - np.diag(np.diag(A))
+    return np.sum(off**2)
+
+
+def assert_off_drop(A_old, A_new, apq):
+    """Exercise B7(b): off(A')^2 = off(A)^2 - 2 a_pq^2 for one Jacobi rotation. Rounding in the
+    rotated rows/columns perturbs off^2 by about eps * ||A||_F * off(A), so the tolerance scales
+    with off(A) and stays meaningful all the way down the convergence tail."""
+    old, new = off_norm2(A_old), off_norm2(A_new)
+    tol = 1e-14 * np.sqrt(np.sum(A_old**2)) * np.sqrt(old)
+    assert abs(new - (old - 2 * apq**2)) <= tol, (new, old - 2 * apq**2, tol)
 
 
 def jacobi_eigh(A, tol=1e-12, max_sweeps=100):
     """Classical Jacobi: eigenvalues (descending) and orthonormal eigenvectors of symmetric A,
-    by repeatedly zeroing the largest off-diagonal entry. Also returns the off-norm history."""
+    by repeatedly zeroing the largest off-diagonal entry. Also returns the history of off(A)^2."""
     A = np.array(A, float); n = A.shape[0]
     Q = np.eye(n)
     history = [off_norm2(A)]
@@ -223,8 +235,7 @@ def jacobi_eigh(A, tol=1e-12, max_sweeps=100):
         apq = A[p, q]
         A_new, G = jacobi_rotate(A, p, q)
         assert abs(A_new[p, q]) < 1e-10 * max(1, np.abs(A).max())   # the entry really is zeroed
-        # Exercise B7(b),(d): off-norm drops by exactly 2 a_pq^2.
-        assert np.isclose(off_norm2(A_new), off_norm2(A) - 2 * apq**2, atol=1e-9 * max(1, np.sum(A**2)))
+        assert_off_drop(A, A_new, apq)       # Exercise B7(b): off(A)^2 drops by exactly 2 a_pq^2
         A, Q = A_new, Q @ G
         history.append(off_norm2(A))
     w = np.diag(A)
@@ -255,12 +266,14 @@ for n in (2, 4, 6, 8):
 
 M8 = rng.standard_normal((8, 8)); M8 = M8 + M8.T
 _, _, hist8 = jacobi_eigh(M8)
+assert np.all(hist8 > 0) and np.all(np.diff(hist8) < 0)   # strictly decreasing, no zeroed tail
 fig, ax = plt.subplots(figsize=(6, 4))
 ax.semilogy(hist8, ".-")
 ax.set_xlabel("rotation"); ax.set_ylabel("off(A)$^2$")
-ax.set_title("Classical Jacobi on a random symmetric 8×8: off-diagonal norm")
+ax.set_title("Classical Jacobi, random symmetric 8×8: off(A)$^2$ per rotation")
 ax.grid(alpha=.3); fig.tight_layout(); fig.savefig(FIG / "jacobi_convergence.png", dpi=120); plt.close(fig)
-print("Part 3 checks passed: Jacobi agrees with eigh; off-norm drops by 2 a_pq^2 per rotation.")
+print(f"Part 3 checks passed: Jacobi agrees with eigh; off(A)^2 drops by 2 a_pq^2 per rotation "
+      f"({len(hist8) - 1} rotations for the random 8x8, off(A)^2 from {hist8[0]:.3g} to {hist8[-1]:.3g}).")
 
 # %% [markdown]
 # ## Part 4: Spectral decomposition and functions of a matrix
@@ -297,6 +310,15 @@ assert np.allclose(matrix_function(A42, np.sqrt) @ matrix_function(A42, np.sqrt)
 assert np.allclose(matrix_function(A42, np.sqrt), I3 + J / 3)
 assert np.allclose(matrix_function(A42, np.exp), sla.expm(A42))
 assert np.allclose(matrix_function(A42, lambda t: t**5), np.linalg.matrix_power(A42, 5))
+# Remark after Theorem 3.13: f(A) does not depend on which orthonormal basis of the repeated
+# eigenspace (the λ = 1 plane) Q uses. Rotate the last two columns of Q inside that plane.
+w42, Q42 = eigh_desc(A42)
+c7, s7 = np.cos(0.7), np.sin(0.7)
+Q_alt = Q42.copy(); Q_alt[:, 1:] = Q42[:, 1:] @ np.array([[c7, -s7], [s7, c7]])
+assert np.allclose(A42 @ Q_alt, Q_alt @ np.diag(w42)) and not np.allclose(Q_alt, Q42)
+for fn in (np.sqrt, np.exp, lambda t: 1 / t):
+    assert np.allclose(Q_alt @ np.diag(fn(w42)) @ Q_alt.T, matrix_function(A42, fn))
+assert np.allclose(sla.sqrtm(A42), I3 + J / 3)     # SciPy's principal square root: the same (unique) PSD root
 print("Part 4 checks passed: A^{-1} = I - J/4, sqrt(A) = I + J/3, exp via (3.11) matches expm.")
 
 # %% [markdown]
@@ -463,6 +485,14 @@ assert n_pd > 10 and n_not > 10
 # Theorem 3.16: Gram matrices are PSD; PD iff independent columns.
 G_dep = rng.standard_normal((3, 5)); G_dep = G_dep.T @ G_dep      # 5x5 of rank 3: PSD, not PD
 assert np.all(np.linalg.eigvalsh(G_dep) > -1e-10) and not is_pd_eig(G_dep)
+# Complex Gram matrix (Theorem 3.16, step 2): G_ij = <v_i, v_j> is Hermitian, and for complex x,
+# x^† G x = ||Σ x_i v_i||^2, with the conjugate on the FIRST slot.
+Vc = rng.standard_normal((4, 3)) + 1j * rng.standard_normal((4, 3))
+Gc = np.array([[inner(Vc[:, i], Vc[:, j]) for j in range(3)] for i in range(3)])
+assert np.allclose(Gc, Gc.conj().T) and np.allclose(Gc, Vc.conj().T @ Vc)
+xc = rng.standard_normal(3) + 1j * rng.standard_normal(3)
+assert np.isclose(inner(xc, Gc @ xc), np.linalg.norm(Vc @ xc) ** 2)
+assert np.all(np.linalg.eigvalsh(Gc) > 0)                         # independent columns: Hermitian PD
 # Definiteness is about eigenvalues, not entries (§8).
 assert not is_pd_eig(np.array([[1, 2], [2, 1.]])) and np.all(np.linalg.eigvalsh(np.array([[1, -1], [-1, 1.]])) > -1e-12)
 print(f"Part 7 checks passed: eigenvalue, Cholesky, and pivot tests agree on {n_pd} SPD and {n_not} non-SPD matrices.")
@@ -544,15 +574,20 @@ for _ in range(20):
     Z = rng.standard_normal((4, 4)) + 1j * rng.standard_normal((4, 4))
     Uq, _ = np.linalg.qr(Z)
     assert np.allclose(np.abs(np.linalg.eigvals(Uq)), 1)
-    u, v = rng.standard_normal(4) + 0j, rng.standard_normal(4) + 0j
+    u = rng.standard_normal(4) + 1j * rng.standard_normal(4)       # complex, so the conjugated
+    v = rng.standard_normal(4) + 1j * rng.standard_normal(4)       # first slot is exercised
     assert np.isclose(inner(Uq @ u, Uq @ v), inner(u, v))
+    assert np.isclose(abs(np.linalg.det(Uq)), 1)                    # |det U| = 1
     # Theorem 3.21: U Λ U^† with any complex diagonal Λ is normal.
     Lam = np.diag(rng.standard_normal(4) + 1j * rng.standard_normal(4))
     Nn = Uq @ Lam @ Uq.conj().T
     assert np.allclose(Nn @ Nn.conj().T, Nn.conj().T @ Nn)
 # A diagonalizable but non-normal matrix: eigenvectors not orthogonal, cannot be U Λ U^†.
 Nd = np.array([[1, 1], [0, 2.]])
-assert not np.allclose(Nd @ Nd.T, Nd.T @ Nd)
+assert not np.allclose(Nd @ Nd.T, Nd.T @ Nd)                       # not normal
+e1, e11 = np.array([1, 0.]), np.array([1, 1.])
+assert np.allclose(Nd @ e1, 1 * e1) and np.allclose(Nd @ e11, 2 * e11)   # eigenvectors (1,0), (1,1)
+assert not np.isclose(inner(e1, e11), 0)                           # ... and they are not orthogonal
 # Exercise B6(c): exp(−iθ n·σ/2) = cos(θ/2) I − i sin(θ/2) n·σ.
 th = 1.234; n, H = n_dot_sigma(0.7, 2.1)
 assert np.allclose(sla.expm(-1j * th / 2 * H), np.cos(th / 2) * I2 - 1j * np.sin(th / 2) * H)
@@ -671,14 +706,18 @@ print("Exercise checks passed (A3, A4, C1, C2, C3).")
 #    matrix nearest to A: ||A − S||_F ≤ ||A − M||_F for random symmetric M. (Exercise B2.)
 # 2. **Hessian classification.** With SymPy, compute the Hessian of f(x, y) = x³ − 3xy² at a
 #    general point, find its eigenvalues, locate the critical points, and classify them using
-#    Theorem 3.19; then do h(x, y) = x³ − 3x + y². (Exercise B3.)
+#    Theorem 3.19; then do h(x, y) = x³ − 3x + y². (Exercise B3.) Finally check that
+#    g(x, y, z) = x² − y² + z⁴ has a singular but indefinite Hessian at 0, and is a saddle there.
 # 3. **AᵀA and AAᵀ share nonzero eigenvalues.** For a random 5×3 A, compare the eigenvalues of
 #    AᵀA (3×3) and AAᵀ (5×5). (Exercise B5; the SVD in LA-9 starts here.)
-# 4. (Extension) Implement *cyclic* Jacobi (sweep all (p, q) pairs in order instead of searching
-#    for the largest) and compare the number of rotations with the classical version.
-# 5. (Extension) Check Cauchy interlacing (Exercise C1) on random symmetric 6×6 matrices.
+# 4. **Cyclic Jacobi (Exercise B7(d)).** Write `cyclic_jacobi_eigh(A)`: sweep all pairs p < q in
+#    row order, rotating whenever |a_pq| ≥ tol, with no search for the largest entry. Put the B7(b)
+#    assertion inside the loop and compare the rotation count with classical Jacobi on M8.
+# 5. **Weyl pins the diagonal (Exercise B7(c)).** Run classical Jacobi rotations on a random
+#    symmetric 6×6 and, after each one, check that the sorted diagonal of A_k is within off(A_k)
+#    of the sorted eigenvalues, and that each diagonal entry moved by at most |a_pq|.
 #
-# Reference implementations of 1–3 follow so you can compare.
+# Reference implementations of 1–5 follow so you can compare.
 
 
 # %%
@@ -713,6 +752,12 @@ assert sorted(c[xs_] for c in crit_h) == [-1, 1] and all(c[ys_] == 0 for c in cr
 Hh = sp.hessian(h, (xs_, ys_))
 assert Hh.subs({xs_: 1, ys_: 0}) == sp.diag(6, 2)                  # PD: local minimum
 assert Hh.subs({xs_: -1, ys_: 0}) == sp.diag(-6, 2)                # indefinite: saddle
+# Theorem 3.19: a SINGULAR Hessian with eigenvalues of both signs still gives a saddle.
+zs_ = sp.symbols("z", real=True)
+g3 = xs_**2 - ys_**2 + zs_**4
+Hg = sp.hessian(g3, (xs_, ys_, zs_)).subs({xs_: 0, ys_: 0, zs_: 0})
+assert Hg == sp.diag(2, -2, 0) and Hg.det() == 0                    # singular, indefinite
+assert g3.subs({xs_: t, ys_: 0, zs_: 0}) == t**2 and g3.subs({xs_: 0, ys_: t, zs_: 0}) == -t**2   # up along x, down along y
 print("Your turn 2: f = x^3 - 3xy^2 has H = 0 at its only critical point (monkey saddle);",
       "h = x^3 - 3x + y^2 has a min at (1,0) and a saddle at (-1,0).")
 
@@ -725,6 +770,60 @@ assert np.allclose(w_big[3:], 0, atol=1e-10)                       # plus m − 
 assert np.all(w_small > 0)                                         # Theorem 3.16: PD for full column rank
 assert np.allclose(np.sqrt(w_small), np.linalg.svd(A53, compute_uv=False))   # LA-9: singular values
 print("Your turn 3: nonzero eigenvalues of A^T A and A A^T agree:", w_small.round(4))
+
+# 4. Cyclic Jacobi (B7(d)): no search, just sweep the pairs in order.
+def cyclic_jacobi_eigh(A, tol=1e-12, max_sweeps=50):
+    """Cyclic Jacobi: eigenvalues (descending) and eigenvectors of symmetric A, sweeping the pairs
+    p < q in row order and zeroing every |a_pq| >= tol. Also returns the rotation and sweep counts."""
+    A = np.array(A, float); n = A.shape[0]; Q = np.eye(n); rotations = 0
+    for sweep in range(1, max_sweeps + 1):
+        for p in range(n - 1):
+            for q in range(p + 1, n):
+                if abs(A[p, q]) < tol:
+                    continue
+                apq = A[p, q]
+                A_new, G = jacobi_rotate(A, p, q)
+                assert_off_drop(A, A_new, apq)      # B7(b) holds for ANY pair (p, q), not just the largest
+                A, Q = A_new, Q @ G; rotations += 1
+        if np.abs(A - np.diag(np.diag(A))).max() < tol:
+            break
+    w = np.diag(A); order = np.argsort(w)[::-1]
+    return w[order], Q[:, order], rotations, sweep
+
+
+w_cyc, Q_cyc, rot_cyc, sweeps_cyc = cyclic_jacobi_eigh(M8)
+w_cl, _, hist_cl = jacobi_eigh(M8)
+rot_cl = len(hist_cl) - 1
+assert np.allclose(w_cyc, w_cl, atol=1e-10) and np.allclose(Q_cyc @ np.diag(w_cyc) @ Q_cyc.T, M8)
+assert np.allclose(Q_cyc.T @ Q_cyc, np.eye(8))
+assert (rot_cl, rot_cyc, sweeps_cyc) == (91, 124, 5)       # cyclic needs more rotations, but no searches
+print(f"Your turn 4: on M8, classical Jacobi used {rot_cl} rotations; cyclic used {rot_cyc} "
+      f"in {sweeps_cyc} sweeps of 28 pairs.")
+
+# 5. Weyl's inequality pins the Jacobi diagonal to the eigenvalues (B7(c)).
+A6w = rng.standard_normal((6, 6)); A6w = A6w + A6w.T
+lam6 = eigh_desc(A6w)[0]
+Ak = A6w.copy()
+for _ in range(500):
+    offk = np.abs(Ak - np.diag(np.diag(Ak)))
+    p, q = np.unravel_index(np.argmax(offk), offk.shape)
+    if offk[p, q] < 1e-12:
+        break
+    apq = Ak[p, q]
+    Ak_new, _ = jacobi_rotate(Ak, p, q)
+    assert np.all(np.abs(np.diag(Ak_new) - np.diag(Ak)) <= abs(apq) * (1 + 1e-12))   # |a'_pp − a_pp| = |t a_pq| ≤ |a_pq|
+    Ak = Ak_new
+    d_sorted = np.sort(np.diag(Ak))[::-1]
+    assert np.all(np.abs(d_sorted - lam6) <= np.sqrt(off_norm2(Ak)) + 1e-12)   # Weyl with Y = diag(A_k)
+assert np.allclose(np.sort(np.diag(Ak))[::-1], lam6)
+# Weyl's inequality itself, on random symmetric perturbations.
+for _ in range(20):
+    X = rng.standard_normal((5, 5)); X = X + X.T
+    E = 0.1 * rng.standard_normal((5, 5)); E = E + E.T
+    eps_E = np.abs(np.linalg.eigvalsh(E)).max()
+    assert np.all(np.abs(eigh_desc(X + E)[0] - eigh_desc(X)[0]) <= eps_E + 1e-12)
+    assert eps_E <= np.linalg.norm(E, "fro")
+print("Your turn 5: sorted Jacobi diagonal stays within off(A_k) of the eigenvalues (Weyl).")
 
 # %%
 if __name__ == "__main__":

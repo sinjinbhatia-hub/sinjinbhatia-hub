@@ -415,8 +415,10 @@ for lam_i, q_i, c in zip(lam, Q.T, ["C1", "C3"]):
     v = np.sqrt(c95 * lam_i) * q_i
     ax.annotate("", xy=v, xytext=(0, 0), arrowprops=dict(arrowstyle="->", color=c, lw=2))
     ax.text(*(v * 1.1), f"sqrt(5.991 x {lam_i:g}) q", color=c, fontsize=8)
-ax.plot(centers, bin_means, "ks", ms=3, label="binned E[X1 | X2] (slope 0.5)")
+# horizontal axis is x1, vertical is x2: plot the points (E[X1 | X2 = c], c), which lie on x1 = 0.5 x2
+ax.plot(bin_means, centers, "ks", ms=3, label="binned E[X1 | X2]: the line x1 = 0.5 x2")
 ax.axhline(1.0, color="k", lw=.6, ls=":"); ax.text(-4.8, 1.1, "slice x2 = 1", fontsize=8)
+ax.plot(cm[0], 1.0, "r*", ms=12, label="E[X1 | X2 = 1] = 0.5, eq. (3.19)")
 ax.set_aspect("equal"); ax.set_xlim(-5, 5); ax.set_ylim(-5, 5); ax.grid(alpha=.3); ax.legend(fontsize=7, loc="lower right")
 ax.set_title("N(0, [[2,1],[1,2]]): axes = eigenvectors, semi-axes ∝ sqrt(λ)")
 fig.tight_layout(); fig.savefig(FIG / "mvn_contours.png", dpi=120); plt.close(fig)
@@ -600,7 +602,11 @@ for r_, (name, (samp, mean_, sd_)) in enumerate(samplers.items()):
         else:
             Sn = (Xn - n * mean_) / (sd_ * np.sqrt(n))
         ax = axes[r_, c_]
-        ax.hist(np.clip(Sn, -4, 4), bins=80, range=(-4, 4), density=True, alpha=.7)
+        if name.startswith("Bernoulli"):                  # lattice: one bin per integer value of the sum,
+            edges_b = (np.arange(-0.5, n + 1.5) - n * mean_) / (sd_ * np.sqrt(n))   # so bar heights compare with phi
+            ax.hist(Sn, bins=edges_b, density=True, alpha=.7)
+        else:
+            ax.hist(np.clip(Sn, -4, 4), bins=80, range=(-4, 4), density=True, alpha=.7)
         ax.plot(zz, stats.norm.pdf(zz), "k", lw=1.2)
         ks_n = stats.kstest(Sn, "norm").statistic
         ax.set_title(f"{name}, n = {n}, KS dist {ks_n:.3f}", fontsize=9); ax.set_xlim(-4, 4); ax.set_yticks([])

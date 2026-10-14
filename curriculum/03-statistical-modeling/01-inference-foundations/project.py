@@ -137,12 +137,13 @@ ax.set_title("Biased estimators win on MSE"); fig.tight_layout(); fig.savefig(FI
 # ## Part 3: Normal likelihood surface and the Fisher-information ellipse (Example 4.3)
 #
 # Data: eight measurements of a nominal 10-ohm resistor. In (mu, v = sigma^2) the per-sample
-# Fisher matrix is diag(1/v, 1/(2 v^2)), (3.14). The surface is drawn in (mu, sigma), where the
+# Fisher matrix is diag(1/v, 1/(2 v^2)), (3.12). The surface is drawn in (mu, sigma), where the
 # observed information at the MLE is diag(n/sigma^2, 2n/sigma^2).
 
 # %%
 xr = np.array([9.8, 10.4, 10.1, 9.6, 10.3, 10.0, 9.7, 10.1]); n = xr.size
 mu_hat, v_hat = xr.mean(), xr.var()
+assert np.isclose(xr.sum(), 80.0) and np.isclose(((xr - mu_hat)**2).sum(), 0.56)
 assert np.isclose(mu_hat, 10.0) and np.isclose(v_hat, 0.07) and np.isclose(xr.var(ddof=1), 0.08)
 In = np.diag([n / v_hat, n / (2 * v_hat**2)])
 In_inv = np.linalg.inv(In)
@@ -153,7 +154,7 @@ print(f"Example 4.3: mu_hat={mu_hat:.4f}, sigma2_hat={v_hat:.4f}, S^2={xr.var(dd
 
 
 def loglik_mv(mu, v, x=xr):
-    """Normal log-likelihood (3.10) in (mu, v = sigma^2)."""
+    """Normal log-likelihood (3.8) in (mu, v = sigma^2)."""
     return -0.5 * x.size * np.log(2 * np.pi * v) - ((x - mu)**2).sum() / (2 * v)
 
 
@@ -184,13 +185,13 @@ fig.savefig(FIG / "normal_likelihood_surface.png", dpi=110); plt.close(fig)
 # ## Part 4: Gamma(alpha, beta) by MoM and MLE (Example 4.5)
 #
 # Shape alpha, rate beta. MoM: alpha = xbar^2/s2, beta = xbar/s2 (s2 with divisor n). MLE: beta = alpha/xbar
-# and log(alpha) - digamma(alpha) = log(xbar) - mean(log x), equation (3.13).
+# and log(alpha) - digamma(alpha) = log(xbar) - mean(log x), equation (3.10).
 
 # %%
 xg = np.array([0.8, 1.9, 2.4, 0.5, 3.1, 1.2, 2.0, 1.6, 0.9, 2.6])
 xbar, s2 = xg.mean(), xg.var()
 a_mom, b_mom = xbar**2 / s2, xbar / s2
-assert np.isclose(xbar, 1.7) and np.isclose(s2, 0.654)
+assert np.isclose(xbar, 1.7) and np.isclose(s2, 0.654) and np.isclose(((xg - xbar)**2).sum(), 6.54)
 s_stat = np.log(xbar) - np.log(xg).mean()
 a_mle = optimize.brentq(lambda a: np.log(a) - special.digamma(a) - s_stat, 1e-3, 1e3)
 b_mle = a_mle / xbar
@@ -206,7 +207,7 @@ print(f"  MoM alpha={a_mom:.4f}, beta={b_mom:.4f};  MLE alpha={a_mle:.4f}, beta=
 
 
 def gamma_shape_mle(s, iters=30):
-    """Vectorized Newton solve of log a - digamma(a) = s, started at Minka's approximation."""
+    """Vectorized Newton solve of (3.10), log a - digamma(a) = s, started at Minka's approximation."""
     a = (3 - s + np.sqrt((s - 3)**2 + 24 * s)) / (12 * s)
     for _ in range(iters):
         a = np.maximum(a - (np.log(a) - special.digamma(a) - s) / (1 / a - special.polygamma(1, a)), 1e-8)
@@ -229,7 +230,7 @@ assert abs(n_g * a_mle_sim.var() / asym_mle - 1) < 0.25 and abs(n_g * a_mom_sim.
 # ## Part 5: Cramér-Rao ratios Var(MLE) / (1/(n I_1)) vs n (§3.7)
 #
 # Bernoulli and Poisson: exactly 1. Exponential rate: n^3/((n-1)^2 (n-2)) > 1, tending to 1.
-# Normal variance MLE: (n-1)/n < 1 -- allowed, because that MLE is biased (biased bound (3.20)).
+# Normal variance MLE: (n-1)/n < 1 -- allowed, because that MLE is biased (biased bound (3.15)).
 
 # %%
 ns5, R5 = np.array([5, 10, 20, 50, 100, 200]), 20_000
@@ -276,6 +277,9 @@ print("Part 6: max QQ gap (5%-95% quantiles) for n = 5, 20, 100, 500:", np.round
 n, p, T_obs = 50, 0.3, 15
 p_hat = T_obs / n; I1 = 1 / (p_hat * (1 - p_hat)); se_p = np.sqrt(p_hat * (1 - p_hat) / n)
 assert np.isclose(p_hat, 0.3) and np.isclose(I1, 4.7619, atol=1e-4) and np.isclose(se_p**2, 0.0042)
+curv = (-T_obs / p_hat**2, -(n - T_obs) / (1 - p_hat)**2)  # l''(p_hat) = -T/p^2 - (n-T)/(1-p)^2
+assert np.isclose(sum(curv), -n / (p_hat * (1 - p_hat)))
+print(f"Example 4.2: l''(p_hat) = {curv[0]:.2f} + {curv[1]:.2f} = {sum(curv):.1f} = -n/(p(1-p))")
 exact = stats.binom.cdf(10, n, p)
 approx = stats.norm.cdf((0.2 - p) / np.sqrt(p * (1 - p) / n))
 approx_cc = stats.norm.cdf((10.5 - n * p) / np.sqrt(n * p * (1 - p)))
@@ -330,7 +334,7 @@ print(f"B5: Var(1{{X1=0}})={v_ind:.5f}, Var((1-1/n)^T)={v_rb:.3e}, CRB={crb_g:.3
       f"MSE of MLE exp(-Xbar) (MC) = {np.mean((e_mle-g)**2):.3e}, bias = {e_mle.mean()-g:.2e}")
 
 # %% [markdown]
-# ## Part 9: Exponential-family identities A'(eta) = E[T], A''(eta) = Var[T] (§3.10)
+# ## Part 9: Exponential-family identities A'(eta) = E[T], A''(eta) = Var[T], (3.22)
 
 # %%
 def A_poisson(eta, K=200):
@@ -360,7 +364,7 @@ assert sp.simplify(sp.diff(Ag, e_).subs(e_, sp.log(1 - pp)) - 1 / pp) == 0
 assert sp.simplify(sp.diff(Ag, e_, 2).subs(e_, sp.log(1 - pp)) - (1 - pp) / pp**2) == 0
 
 # %% [markdown]
-# ## Part 10: Misspecification -- a Normal fitted to Exponential(1) data (§3.12)
+# ## Part 10: Misspecification -- a Normal fitted to Exponential(1) data (§3.12, (3.26))
 #
 # The Normal MLE (Xbar, mean squared deviation) converges to the KL projection
 # argmin D(q || N(mu, s^2)) = (E X, Var X) = (1, 1), and D at the projection is 0.5 log(2 pi e) - 1.
@@ -411,6 +415,7 @@ print(f"B3 (n=10): bias/lam={1/(n-1):.4f}, Var(MLE)/lam^2={n**2/((n-1)**2*(n-2))
 eta_hat = np.log(0.3 / 0.7); se_eta = 1 / np.sqrt(50 * 0.3 * 0.7)
 print(f"B4: eta_hat={eta_hat:.4f}, se={se_eta:.4f}")
 w = 50 / 52; roots = np.roots([8.08, -8.08, 1.0])  # B6: crossover of MSE(posterior mean) and MSE(p_hat)
+print(f"B6: sqrt(8.08^2 - 4*8.08) = {np.sqrt(8.08**2 - 32.32):.4f}")
 for r_ in roots:
     assert np.isclose((1 - w**2) * r_ * (1 - r_) / 50, (1 - w)**2 * (0.5 - r_)**2)
 p0 = 0.3; mse_pm = w**2 * p0 * (1 - p0) / 50 + (1 - w)**2 * (0.5 - p0)**2
@@ -428,6 +433,9 @@ pairs = rng.normal(rng.normal(0, 5, (20_000, 1)), 1.0, (20_000, 2))  # C1: Neyma
 ns_mle = ((pairs - pairs.mean(1, keepdims=True))**2).sum() / pairs.size
 assert abs(ns_mle - 0.5) < 0.02
 print(f"C1: Neyman-Scott MLE of sigma^2 with 20000 pairs = {ns_mle:.4f} (-> sigma^2/2 = 0.5)")
+trig2 = special.polygamma(1, 2.0)
+assert np.isclose(trig2, np.pi**2 / 6 - 1)
+print(f"C3 (alpha=2): psi'(2) = {trig2:.4f}; [I^-1]_aa = {asym_mle:.3f} (beta unknown) vs 1/I_aa = {1/trig2:.4f} (beta known)")
 
 # %% [markdown]
 # ## Your turn
