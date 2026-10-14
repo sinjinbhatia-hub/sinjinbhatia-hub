@@ -331,7 +331,7 @@ assert np.allclose(np.einsum("ij,ij->i", A, Lv), 0, atol=1e-9), "A ⟂ L"
 dE = np.abs(E - E[0]).max() / abs(E[0])
 dL = np.abs(Lv - Lv[0]).max()
 dA = np.abs(A - A[0]).max()
-assert dE < 1e-8 and dL < 1e-8 and dA < 1e-8, (dE, dL, dA)
+assert dE < 1e-9 and dL < 1e-9 and dA < 1e-9, (dE, dL, dA)          # notes: flat to about 1e-10
 print(f"Part 2  Kepler, 10 periods: max |ΔE|/|E| = {dE:.1e}, max |ΔL| = {dL:.1e}, max |ΔA| = {dA:.1e}")
 
 fig, axs = plt.subplots(3, 1, figsize=(8, 7), sharex=True)
@@ -383,6 +383,8 @@ Lmag = np.linalg.norm(L_p[0])
 shift_pred = 6 * np.pi * eps / Lmag**4
 rel_err = abs(shift_per_orbit - shift_pred) / shift_pred
 assert rel_err < 0.1, (shift_per_orbit, shift_pred)
+assert np.isclose(np.degrees(shift_pred), 3.84, atol=5e-4)                 # Example 4.6: first order 3.84°
+assert np.isclose(np.degrees(shift_per_orbit), 3.95, atol=5e-3)            # Example 4.6: measured 3.95°
 print(f"Part 3  ε = {eps}: pericenter advance per orbit = {np.degrees(shift_per_orbit):.3f}°, "
       f"first-order prediction 6πκεm²/L⁴ = {np.degrees(shift_pred):.3f}° (rel. err {rel_err:.1%})")
 
@@ -432,6 +434,7 @@ assert np.abs(h_t - h_t[0]).max() < 1e-9
 assert E_t.max() - E_t.min() > 2.0, "E should swing by E(0) - h ≈ 2.83"
 assert np.allclose(E_t - h_t, m_h * R_h**2 * w_h**2 * np.sin(th_t)**2)
 assert np.isclose(h_t[0], -6.7165, atol=5e-4) and np.isclose(E_t[0], -3.8842, atol=5e-4)
+assert np.isclose(E_t.min(), h_t[0], atol=1e-3) and np.isclose(E_t.max(), E_t[0], atol=1e-3)   # E swings between h and E(0)
 # motor power = dE/dt = 2 m R² ω² sinθ cosθ θ̇ (checked symbolically in 1d; here numerically)
 dEdt_num = np.gradient(E_t, sol_h.t)
 dEdt_formula = 2 * m_h * R_h**2 * w_h**2 * np.sin(th_t) * np.cos(th_t) * thd_t
@@ -466,7 +469,8 @@ periods = np.array(periods)
 ratio = periods**2 / alphas**3
 assert np.allclose(ratio, 4 * np.pi**2, rtol=1e-6), ratio
 print("Part 5  Kepler: a =", alphas, " T²/a³ =", np.round(ratio, 6), " (4π² =", round(4 * np.pi**2, 6), ")")
-print(f"        Mars check: (1.5237 AU)^{{3/2}} = {1.5237**1.5:.4f} yr  (observed 1.8808 yr)")
+assert round(1.5237**1.5, 4) == 1.8808 and round(686.98 / 365.25, 4) == 1.8808   # Example 4.4: Mars
+print(f"        Mars check: (1.5237 AU)^{{3/2}} = {1.5237**1.5:.4f} yr  (observed 686.98 d = {686.98 / 365.25:.4f} yr)")
 
 
 def period_quad(k, A, m=1.0):
@@ -538,7 +542,7 @@ Tq, Vq = 0.5 * vq_**2, xq_**4 / 4
 assert np.isclose(2 * time_average(Tq, tq), 4 * time_average(Vq, tq), rtol=1e-6)
 print(f"        quartic: 2⟨T⟩ = {2*time_average(Tq, tq):.6f}, 4⟨V⟩ = {4*time_average(Vq, tq):.6f}")
 tho = np.linspace(0, 2 * np.pi, 20001); xo = np.cos(tho); vo = -np.sin(tho)
-assert np.isclose(time_average(0.5 * vo**2, tho), time_average(0.5 * xo**2, tho))
+assert np.isclose(time_average(0.5 * vo**2, tho), 0.25) and np.isclose(time_average(0.5 * xo**2, tho), 0.25)   # Example 4.5(a)
 print(f"        harmonic: ⟨T⟩ = {time_average(0.5*vo**2, tho):.6f} = ⟨V⟩ = {time_average(0.5*xo**2, tho):.6f}")
 
 # Example 4.5(b): the Sun. 2⟨T⟩ = -⟨V⟩ with V = -(3/5) G M²/R (uniform sphere) and
@@ -769,6 +773,7 @@ c_fit = np.sum(eps_list * rel_err) / np.sum(eps_list**2)   # least-squares slope
 assert np.isclose(adv_meas[2], np.degrees(shift_per_orbit), rtol=1e-3)     # same as Part 3
 assert np.all(rel_err > 0) and np.all(np.diff(rel_err) > 0), rel_err      # error grows with ε
 assert np.allclose(rel_err, c_fit * eps_list, atol=0.004), (rel_err, c_fit * eps_list)   # ... linearly
+assert np.allclose(adv_meas, [0.967, 1.947, 3.950, 8.135], atol=5e-4) and np.isclose(c_fit, 14.7, atol=0.05)   # B8 table in solutions.md
 print("B8  ε            =", eps_list)
 print("    measured [°] =", np.round(adv_meas, 3))
 print("    1st order [°]=", np.round(adv_pred, 3))

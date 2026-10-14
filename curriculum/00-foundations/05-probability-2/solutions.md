@@ -17,7 +17,7 @@ $\mathbb{E}[Y^2\mid X = 1] = 0.25 + 2 + 2.25 = 4.5$, so $\mathrm{Var}(Y\mid X = 
 $\mathbb{E}[Y^2\mid X = 2] = 14/3$, so $\mathrm{Var}(Y\mid X = 2) = 14/3 - 4 = 2/3$.
 Eve's law (3.21): $\mathbb{E}[\mathrm{Var}(Y\mid X)] = 0.4(0.5) + 0.6(\tfrac23) = 0.6$ and $\mathrm{Var}(\mathbb{E}[Y\mid X]) = \mathrm{Var}(2) = 0$. The sum is $0.6$. Directly, $\mathrm{Var}(Y) = (0.3 + 1.6 + 2.7) - 4 = 0.6$. ✓
 
-The "between" term is zero. Knowing $X$ never changes your best guess of $Y$; it changes only how spread $Y$ is around that guess. This explains the zero covariance: $\mathrm{Cov}(X, Y) = \mathbb{E}[XY] - \mathbb{E}X\,\mathbb{E}Y$, and by Adam's law and taking out what is known, $\mathbb{E}[XY] = \mathbb{E}[X\,\mathbb{E}[Y\mid X]] = 2\,\mathbb{E}[X] = \mathbb{E}[X]\mathbb{E}[Y]$. The hierarchy is: independent ⇒ $\mathbb{E}[Y\mid X]$ constant ⇒ uncorrelated. This table shows that neither arrow reverses at the first step.
+The "between" term is zero. Knowing $X$ never changes your best guess of $Y$; it changes only how spread $Y$ is around that guess. This explains the zero covariance: $\mathrm{Cov}(X, Y) = \mathbb{E}[XY] - \mathbb{E}X\,\mathbb{E}Y$, and by Adam's law and taking out what is known, $\mathbb{E}[XY] = \mathbb{E}[X\,\mathbb{E}[Y\mid X]] = 2\,\mathbb{E}[X] = \mathbb{E}[X]\mathbb{E}[Y]$. The hierarchy is: independent ⇒ $\mathbb{E}[Y\mid X]$ constant ⇒ uncorrelated. Neither arrow reverses. This table breaks the first: $\mathbb{E}[Y\mid X]$ is constant, yet $X$ and $Y$ are dependent. The pair $(X, X^2)$ of §3.7 breaks the second: it is uncorrelated, but $\mathbb{E}[X^2\mid X] = X^2$ is not constant.
 
 **A2.** Use $\mathrm{Var}(\mathbf{a}^\top\mathbf{X}) = \mathbf{a}^\top\Sigma\mathbf{a}$ and $\mathrm{Cov}(\mathbf{a}^\top\mathbf{X}, \mathbf{b}^\top\mathbf{X}) = \mathbf{a}^\top\Sigma\mathbf{b}$ (bilinearity).
 - $\mathrm{Var}(X+Y) = 4 + 9 + 2(-3) = 7$.
@@ -219,7 +219,7 @@ because $\sum_iq_i = \sum_ip_i = 1$. So the maximum is $H = \ln m$.
 
 (b) Add the constraint $\sum_iip_i = 4.5$ with multiplier $\beta$. Stationarity gives $-\ln p_i - 1 - \alpha - \beta i = 0$, so $p_i = e^{-\beta i}/Z(\beta)$ with $Z(\beta) = \sum_{i=1}^6e^{-\beta i}$. The mean is
 $$m(\beta) = \sum_i ip_i = -\frac{d}{d\beta}\ln Z, \qquad m'(\beta) = -\frac{d^2}{d\beta^2}\ln Z = -\mathrm{Var}_\beta(i) < 0,$$
-so $m$ is strictly decreasing. Since $m(0) = 3.5 < 4.5$, there is exactly one root, and it has $\beta < 0$. A root-finder (the project uses `brentq`) gives $\beta = -0.3710$. Then $p = (0.0544, 0.0788, 0.1142, 0.1654, 0.2398, 0.3475)$, each entry $e^{0.371} = 1.449$ times the previous one, and $H(p) = 2.328$ bits. That is below $\log_26 = 2.585$: the mean constraint costs a quarter of a bit.
+so $m$ is strictly decreasing. As $\beta \to -\infty$ the weight piles onto face 6 and $m(\beta) \to 6$; as $\beta \to +\infty$ it piles onto face 1 and $m(\beta) \to 1$. A continuous, strictly decreasing function running from 6 down to 1 hits $4.5$ exactly once, and since $m(0) = 3.5 < 4.5$ that root has $\beta < 0$. A root-finder (the project uses `brentq`) gives $\beta = -0.3710$. Then $p = (0.0544, 0.0788, 0.1142, 0.1654, 0.2398, 0.3475)$, each entry $e^{0.371} = 1.449$ times the previous one, and $H(p) = 2.328$ bits. That is below $\log_26 = 2.585$: the mean constraint costs a quarter of a bit.
 
 (c) Let $q$ be any PMF on $\{1, \dots, 6\}$ with mean $4.5$. Since $\ln p_i = -\beta i - \ln Z$ is *linear* in $i$,
 $$0 \le D(q\|p) = -H(q) - \sum_iq_i\ln p_i = -H(q) + 4.5\beta + \ln Z.$$

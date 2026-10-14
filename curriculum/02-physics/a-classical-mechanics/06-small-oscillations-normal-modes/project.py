@@ -58,9 +58,10 @@ def normal_modes(K, M):
 
 
 def frequencies(w2, rel_tol=1e-9):
-    """omega_j = sqrt(omega_j^2) with zero modes thresholded (§3.5, §8). Returns (omega, is_zero)."""
-    w2 = np.asarray(w2, float)
-    zero = np.abs(w2) < rel_tol * max(np.abs(w2).max(), 1.0)
+    """omega_j = sqrt(omega_j^2) with zero modes thresholded (§3.5, §8): |omega_j^2| < rel_tol * max|omega^2|
+    counts as zero (an all-zero spectrum is all zero modes). Returns (omega, is_zero)."""
+    w2 = np.asarray(w2, float); scale = np.abs(w2).max()
+    zero = np.abs(w2) <= rel_tol * scale
     assert np.all(w2[~zero] > 0), "negative omega^2: unstable equilibrium (Theorem 3.5)"
     return np.sqrt(np.where(zero, 0.0, w2)), zero
 
@@ -210,13 +211,19 @@ for row, th0 in enumerate([0.05, 1.0]):
         ax.grid(alpha=.3)
 axes[0, 0].legend(fontsize=7, loc="upper right"); axes[1, 0].set_xlabel("t [s]"); axes[1, 1].set_xlabel("t [s]")
 fig.tight_layout(); fig.savefig(FIG / "beats.png", dpi=120); plt.close(fig)
-assert beat_err[0.05] < 0.025, beat_err          # notes: "agree to 2% of theta_0" (measured 0.0198)
+assert beat_err[0.05] < 0.0205, beat_err         # notes: "agree to 2% of theta_0" (measured 0.0198)
 assert beat_err[1.0] > 0.5, beat_err             # notes: "meaningless"
 sol = solve_ivp(pendulum_rhs, (0, 2 * T_beat), [0.3, 0, 0, 0], t_eval=t_b, method="DOP853", rtol=1e-10, atol=1e-12)
-err03 = np.abs(sol.y[0] - beats_linear(t_b, 0.3)[0]).max() / 0.3
+lin03 = beats_linear(t_b, 0.3)[0]
+err03 = np.abs(sol.y[0] - lin03).max() / 0.3
+win = int(round(len(t_b) * (2 * np.pi / om_bar) / (2 * T_beat)))   # one carrier period of samples
+env = lambda x: np.array([np.abs(x[i:i + win]).max() for i in range(0, len(x) - win, win)])
+env_err03 = np.abs(env(sol.y[0]) - env(lin03)).max() / 0.3
 shift03 = om41[0] * 0.3**2 / 16                 # §8: anharmonic frequency shift omega_0 theta_0^2 / 16
 assert 0.055 < shift03 / (om41[1] - om41[0]) < 0.065 and 0.6 < shift03 * 2 * T_beat < 0.8
-print(f"Part 3: max |exact - linear|/theta_0 = {beat_err[0.05]:.4f} at 0.05 rad, {err03:.3f} at 0.3 rad, {beat_err[1.0]:.3f} at 1.0 rad; "
+assert err03 > 0.5 and env_err03 < 0.15         # §8: at 0.3 rad the carriers are out of step, the envelopes still roughly agree
+print(f"Part 3: max |exact - linear|/theta_0 = {beat_err[0.05]:.4f} at 0.05 rad, {err03:.3f} at 0.3 rad "
+      f"(envelopes differ by {env_err03:.3f}), {beat_err[1.0]:.3f} at 1.0 rad; "
       f"at 0.3 rad the anharmonic shift is {100 * shift03 / (om41[1] - om41[0]):.1f}% of the splitting, {shift03 * 2 * T_beat:.2f} rad of drift over 2 T_beat")
 
 # %% [markdown]
@@ -244,6 +251,10 @@ norms_co2 = np.sqrt(np.einsum("ij,ij->j", shapes_co2, M_co2 @ shapes_co2))
 assert np.allclose(norms_co2**2, [44, 32, 117.33], atol=5e-3) and np.isclose(norms_co2[2], 10.832, atol=5e-4)
 assert np.allclose(sign_fix(A_co2), sign_fix(shapes_co2 / norms_co2))
 assert np.allclose(M_co2.diagonal() @ A_co2[:, 1:], 0)                               # vibrations do not move the centre of mass
+S_co2 = -np.eye(3)[::-1]                                                              # reflection through C: (x1,x2,x3) -> (-x3,-x2,-x1)
+assert np.allclose(S_co2.T @ K_co2 @ S_co2, K_co2) and np.allclose(S_co2.T @ M_co2 @ S_co2, M_co2)
+assert np.allclose(S_co2 @ shapes_co2, shapes_co2 * [-1, 1, -1])                       # zero mode odd, symmetric stretch even, antisymmetric stretch odd
+assert np.isclose(1e4 / 2349, 4.3, atol=0.05) and np.isclose(1e4 / 667, 15, atol=0.05)  # band positions in micrometres
 assert np.isclose(2349 / 1388, 1.69, atol=5e-3) and np.isclose(1.9149 / (2349 / 1388), 1.13, atol=5e-3)   # measured ratio 1.69; model 13% high
 print(f"CO2: omega^2 = {w2_co2.round(6)}, omega_a/omega_s = {om_co2[2] / om_co2[1]:.4f}, a_a^T M a_a = {norms_co2[2]**2:.2f}")
 
@@ -406,7 +417,7 @@ C3 = alpha * M3 + beta * K3
 zeta3 = (alpha + beta * w2_3) / (2 * om3)                          # (3.15): 2 zeta_j omega_j = alpha + beta omega_j^2
 assert np.allclose(A3.T @ C3 @ A3, np.diag(2 * zeta3 * om3))      # Rayleigh damping decouples (Theorem 3.6)
 omega_sweep = np.linspace(0.05, 2.5, 6000)
-fig, ax = plt.subplots(figsize=(7, 4))
+fig, ax = plt.subplots(figsize=(7, 4)); peaks_at = {}
 for F, color, name in [(np.array([1.0, 0, 0]), "C0", "force on mass 1"), (np.array([0, 1.0, 0]), "C1", "force on mass 2")]:
     Q_modal = receptance(w2_3, A3, zeta3, F, omega_sweep)
     Q_direct = np.array([np.linalg.solve(K3 - w**2 * M3 + 1j * w * C3, F) for w in omega_sweep])
@@ -415,6 +426,7 @@ for F, color, name in [(np.array([1.0, 0, 0]), "C0", "force on mass 1"), (np.arr
     peaks = np.where((amp[1:-1] > amp[:-2]) & (amp[1:-1] > amp[2:]))[0] + 1
     excited = np.where(np.abs(A3.T @ F) > 1e-12)[0]
     assert len(peaks) == len(excited) and np.allclose(omega_sweep[peaks], om3[excited], rtol=0.01)
+    peaks_at[name] = omega_sweep[peaks]
     ax.semilogy(omega_sweep, amp, color, lw=1, label=f"|q_1(omega)|, {name}: {len(peaks)} peaks")
     print(f"Part 7 ({name}): peaks at omega = {omega_sweep[peaks].round(3)}, modes {om3.round(3)}; "
           f"a_j^T F = {(A3.T @ F).round(4)}")
@@ -422,6 +434,7 @@ for w in om3: ax.axvline(w, color="0.6", ls="--", lw=0.8)
 ax.set_xlabel("drive frequency omega"); ax.set_ylabel("|q_1|"); ax.set_title("Receptance (3.16) vs direct solve; dashed = omega_j"); ax.legend(fontsize=8); ax.grid(alpha=.3)
 fig.tight_layout(); fig.savefig(FIG / "frequency_response.png", dpi=120); plt.close(fig)
 assert np.isclose(np.abs(A3[1, 1]), 0.0, atol=1e-12)              # mode 2 has a node at the middle mass
+assert np.allclose(peaks_at["force on mass 2"], [0.765, 1.847], atol=5e-4)   # B8(c): the two peaks quoted in solutions.md
 
 # %% [markdown]
 # ## Part 8: `fit_initial_conditions` by M-projection (3.13), zero mode included
@@ -530,12 +543,15 @@ assert np.allclose(0.5 * (Xid_t**2 + np.array([9.81, 11.81]) * Xi_t**2), E_modes
 assert np.allclose(q_b(T_transfer)[0, 0], 0, atol=1e-12)                 # pendulum 1 passes through 0 at T_transfer ...
 thd1 = (q_b(T_transfer + 1e-6) - q_b(T_transfer - 1e-6))[0, 0] / 2e-6      # ... with |theta1'| <= eps theta0 (theta0 = 1 here)
 E_pend1 = 0.5 * thd1**2 * M41[0, 0]; assert abs(thd1) <= eps + 1e-9 and E_pend1 / E_modes.sum() < 0.0025
+assert np.isclose(abs(thd1), 0.119, atol=5e-4) and np.isclose(E_pend1 / E_modes.sum(), 0.0013, atol=5e-5)   # values quoted in B4(c)
 print(f"B4: E_modes = {E_modes} theta0^2; at T_transfer theta1' = {thd1:.4f} theta0, pendulum-1 share of E = {E_pend1 / E_modes.sum():.5f}")
 # B5: N = 5, q0 = (1,2,3,2,1): sine coefficients c_j = (2/(N+1)) sum_k q0_k sin(jk pi/6).
 N = 5; kk = np.arange(1, N + 1); S5 = np.sin(np.outer(kk, kk) * np.pi / (N + 1))
 assert np.allclose(S5.T @ S5, (N + 1) / 2 * np.eye(N))
 c5 = (2 / (N + 1)) * S5.T @ np.array([1, 2, 3, 2, 1.0])
 assert np.allclose(c5, [2.48803, 0, -1 / 3, 0, 0.17863], atol=5e-6) and np.allclose(S5 @ c5, [1, 2, 3, 2, 1])
+om_b5 = 2 * np.sin(np.arange(1, 6) * np.pi / 12)                                     # omega_j / omega_0 for N = 5
+assert np.isclose(om_b5[2] / om_b5[0], 1 + SQ3) and np.isclose(om_b5[4] / om_b5[0], 2 + SQ3)   # B5(d): irrational ratios
 # B6: CO2 kicked at atom 1 with v = 1: v_cm = 4/11; modal velocities 16/sqrt44, 16/sqrt32, 16/10.832; x_1 coefficients 4/11, 1/2, 3/22.
 q_k, xi_k, xid_k = fit_initial_conditions([0, 0, 0.0], [1.0, 0, 0], (w2_co2, A_co2, M_co2))
 assert np.allclose(np.abs(xid_k), [16 / np.sqrt(44), 16 / np.sqrt(32), 16 / norms_co2[2]]) and np.allclose(np.abs(xid_k), [2.41209, 2.82843, 1.47710], atol=5e-6)
@@ -563,6 +579,7 @@ for th0 in (0.1, 1.0):
     b7[th0] = (np.abs(q_d(t_d) - sol.y[:2].T).max() / th0, np.ptp(E_t[:, 0]) / E_t[0, 0], xi_d)
 assert np.allclose(np.abs(b7[0.1][2]), [0.13066, 0.054120], atol=5e-6) and np.isclose(g * 0.1**2 / 2, 0.04905)
 assert 0.15 < b7[0.1][0] < 0.2 and b7[0.1][1] < 0.01 and b7[1.0][0] > 1 and b7[1.0][1] > 0.5
+assert np.allclose([b7[0.1][0], b7[1.0][0], b7[1.0][1]], [0.171, 1.434, 0.852], atol=5e-4) and np.isclose(b7[0.1][1], 0.0085, atol=5e-5)  # B7(b), (c)
 print(f"B7: max|exact - modal|/theta0 over 10 s = {b7[0.1][0]:.3f} (0.1 rad), {b7[1.0][0]:.3f} (1.0 rad); "
       f"relative swing of E_1 = {b7[0.1][1]:.4f}, {b7[1.0][1]:.3f}")
 # B8: K^{-1} = A Omega^{-2} A^T; static response to F = e1 is (3/4, 1/2, 1/4); mode 2 has a node at mass 2.
@@ -629,6 +646,7 @@ assert np.allclose([0.38268 * 0.54120, 0.92388 * 1.30656, 0.54120**2, 1.30656**2
 assert np.isclose(9.81 / 0.6, 16.35) and np.isclose(E_modes.sum(), 5.405)                                                   # A6, B4(b)
 assert 9 < 10 / (2 * np.pi / np.sqrt((2 + SQ2) * g)) < 9.5                                                # B7(e): ~nine fast periods in 10 s
 assert np.allclose(s, [2 - SQ3, 1, 2, 3, 2 + SQ3])                                                                           # C1(b)
+D_alt = np.diag((-1.0) ** np.arange(1, 6)); assert np.allclose(D_alt @ K1 @ D_alt, 4 * np.eye(5) - K1) and np.allclose(s + s[::-1], 4)  # C1(d)
 mult = np.unique(np.unique(np.round(lam_lat, 8), return_counts=True)[1], return_counts=True)
 assert dict(zip(mult[0].tolist(), mult[1].tolist())) == {1: 4, 2: 8, 5: 1}                                                   # C1(d) tally
 assert np.allclose(K_car, [[80000, -3000, -45000, -35000], [-3000, 133200, -49500, 52500],

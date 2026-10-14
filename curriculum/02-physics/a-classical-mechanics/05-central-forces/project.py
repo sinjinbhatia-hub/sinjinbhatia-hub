@@ -421,6 +421,7 @@ prec_meas = np.diff(phi_peri) - 2 * np.pi
 beta = np.sqrt(1 - mu * lam / ell0**2)
 prec_exact = 2 * np.pi * (1 / beta - 1)
 prec_first = np.pi * mu * lam / ell0**2
+s_prec, ye_prec = s, ye[keep]                         # kept for exercise B8 in Part 10
 assert np.max(np.abs(prec_meas - prec_exact)) < 1e-6, (prec_meas, prec_exact)
 assert abs(prec_first - prec_exact) / prec_exact < 0.03
 print(f"Part 5: 1/r^3 perturbation lam={lam}, ell^2={ell0**2:.3f}: precession/orbit measured {prec_meas.mean():.6f} rad, "
@@ -585,7 +586,7 @@ r_final = np.hypot(s2.y[0], s2.y[1])
 assert np.max(np.abs(r_final - r2)) / r2 < 1e-7, "final orbit is not circular at GEO"
 E_f, l_f = energy_and_ell(s2.y[0], s2.y[1], s2.y[2], s2.y[3], 1.0, GM_E)
 assert np.max(ecc_from_E_ell(E_f, l_f, 1.0, GM_E)) < 1e-6
-print(f"Part 8: Hohmann LEO({r1/1e3:.0f} km) -> GEO({r2/1e3:.0f} km): v_c1 = {v_c1:.1f} m/s, v_p(transfer) = {v_p_t:.1f} m/s, "
+print(f"Part 8: Hohmann LEO({r1/1e3:.0f} km) -> GEO({r2/1e3:.0f} km), a_t = {a_t/1e3:.1f} km: v_c1 = {v_c1:.1f} m/s, v_p(transfer) = {v_p_t:.1f} m/s, "
       f"dv1 = {dv1:.1f} m/s; v_a(transfer) = {v_a_t:.1f} m/s, v_c2 = {v_c2:.1f} m/s, dv2 = {dv2:.1f} m/s; "
       f"total {dv1+dv2:.1f} m/s; transfer time {t_transfer/3600:.3f} h")
 fig, ax = plt.subplots(figsize=(6, 6))
@@ -600,44 +601,63 @@ fig.tight_layout(); fig.savefig(FIG / "hohmann.png", dpi=120); plt.close(fig)
 # %% [markdown]
 # ## Part 9: The numbers in the worked examples
 #
-# Example 4.1 (Earth–Sun), Example 4.3 (an interstellar comet), Example 4.6
-# (alpha particles on gold), and the reference values for "Your turn" 3
-# (Halley's comet). Every printed value appears in the notes or solutions.
+# Example 4.1 (Earth–Sun), 4.3 (an interstellar visitor), 4.5 (a radial kick in
+# low Earth orbit), 4.6 (alpha particles on gold), and the reference values for
+# "Your turn" 3 (Halley's comet). Solar-system numbers use the measured products
+# $GM$ (known to about ten digits), not $G\times M$ ($G$ is known to about 2e-5).
 
 # %%
-G_SI = 6.67430e-11
-M_sun, m_earth = 1.9885e30, 5.9722e24
-AU = 1.495978707e11
-yr = 365.25 * 86400
+GM_sun, GM_earth = 1.32712440018e20, 3.986004418e14      # m^3/s^2
+AU, yr = 1.495978707e11, 365.25 * 86400
+G_SI, M_sun_kg = 6.67430e-11, 1.9885e30                   # only to show why G*M is the wrong input
 
-# Example 4.1: Earth–Sun
-mu_ES = M_sun * m_earth / (M_sun + m_earth)
-ratio = mu_ES / m_earth
-a_E, e_E = 1.000 * AU, 0.0167
-GMtot = G_SI * (M_sun + m_earth)
+# Example 4.1: Earth–Sun. mu/m_E = M/(M+m); k/mu = G(M+m).
+ratio = GM_sun / (GM_sun + GM_earth)
+a_E, e_E = AU, 0.0167
+GMtot = GM_sun + GM_earth
 v_mean = np.sqrt(GMtot / a_E)
-v_peri = v_mean * np.sqrt((1 + e_E) / (1 - e_E))
+v_peri = v_mean * np.sqrt((1 + e_E) / (1 - e_E))          # (3.17)
 v_apo = v_mean * np.sqrt((1 - e_E) / (1 + e_E))
-T_E = 2 * np.pi * np.sqrt(a_E**3 / GMtot)
-T_E_sun_only = 2 * np.pi * np.sqrt(a_E**3 / (G_SI * M_sun))
-assert abs(1 - ratio - m_earth / M_sun) < 1e-9
+T_E, T_sun_only = kepler_period(a_E, 1.0, GMtot), kepler_period(a_E, 1.0, GM_sun)
+T_GxM = kepler_period(a_E, 1.0, G_SI * M_sun_kg)
+wobble = a_E * GM_earth / GMtot                           # Sun's distance from the barycentre
 assert abs(v_peri / v_apo - (1 + e_E) / (1 - e_E)) < 1e-12
-print(f"Part 9, Ex 4.1 Earth-Sun: mu/m_E = {ratio:.8f} (1 - {1-ratio:.2e}); r_p = {a_E*(1-e_E)/1e9:.2f} Gm, r_a = {a_E*(1+e_E)/1e9:.2f} Gm")
-print(f"        sqrt(GM/a) = {v_mean/1e3:.3f} km/s, v_peri = {v_peri/1e3:.3f} km/s, v_apo = {v_apo/1e3:.3f} km/s, "
-      f"T = {T_E/86400:.3f} d (Sun-only mass: {T_E_sun_only/86400:.3f} d; difference {(T_E_sun_only-T_E):.1f} s)")
+assert abs(v_peri**2 / (GMtot * (2 / (a_E * (1 - e_E)) - 1 / a_E)) - 1) < 1e-12   # vis-viva (3.18) agrees
+print(f"Part 9, Ex 4.1 Earth-Sun: mu/m_E = {ratio:.9f} (1 - {1-ratio:.3e}); Sun-barycentre distance {wobble/1e3:.0f} km; "
+      f"r_p = {a_E*(1-e_E)/1e9:.2f} Gm, r_a = {a_E*(1+e_E)/1e9:.2f} Gm")
+print(f"        sqrt(G(M+m)/a) = {v_mean/1e3:.3f} km/s, factor sqrt((1+e)/(1-e)) = {np.sqrt((1+e_E)/(1-e_E)):.5f}, "
+      f"v_peri = {v_peri/1e3:.3f} km/s, v_apo = {v_apo/1e3:.3f} km/s, v_p/v_a = {v_peri/v_apo:.4f}")
+print(f"        T = {T_E/86400:.5f} d with M+m, {T_sun_only/86400:.5f} d with M alone (difference {T_sun_only-T_E:.1f} s); "
+      f"with G*M: {T_GxM/86400:.5f} d (off by {(T_sun_only-T_GxM)/86400:.4f} d = {(T_sun_only-T_GxM)/(T_sun_only-T_E):.0f}x the mass effect). "
+      f"Sidereal year: 365.25636 d")
 
-# Example 4.3: interstellar comet with v_inf = 26.4 km/s and perihelion q = 0.255 AU
+# Example 4.3: an interstellar visitor (numbers close to 1I/'Oumuamua): v_inf = 26.4 km/s, q = 0.255 AU
 v_inf_c, q_c = 26.4e3, 0.255 * AU
-GMs = G_SI * M_sun
-a_hyp = GMs / v_inf_c**2                       # |a| for a hyperbola: v_inf^2 = k/(mu |a|)
+a_hyp = GM_sun / v_inf_c**2                    # |a| = k/2E, so v_inf^2 = (k/mu)/|a|
 e_c = 1 + q_c / a_hyp                          # q = |a|(e - 1)
-theta_c = np.pi - 2 * np.arccos(1 / e_c)       # deflection, eq. (3.26) with sin(theta/2) = 1/e
-v_p_c = np.sqrt(GMs * (2 / q_c + 1 / a_hyp))   # vis-viva for E > 0
-b_c = a_hyp * np.sqrt(e_c**2 - 1)              # impact parameter: ell = mu v_inf b = mu v_p q
-assert abs(b_c - v_p_c * q_c / v_inf_c) < 1e-3
-assert abs(np.sin(theta_c / 2) - 1 / e_c) < 1e-12
-print(f"Part 9, Ex 4.3 comet: |a| = {a_hyp/AU:.3f} AU, e = {e_c:.3f}, b = {b_c/AU:.3f} AU, deflection = {np.degrees(theta_c):.1f} deg, "
-      f"v_peri = {v_p_c/1e3:.1f} km/s, E/m = {0.5*v_inf_c**2/1e6:.1f} MJ/kg")
+theta_c = 2 * np.arcsin(1 / e_c)               # (3.26): sin(theta/2) = 1/e
+v_p_c = np.sqrt(GM_sun * (2 / q_c + 1 / a_hyp))   # vis-viva (3.18) with a = -|a|
+b_c = a_hyp * np.sqrt(e_c**2 - 1)              # (3.26): cot(theta/2) = 2Eb/k = b/|a|
+assert abs(b_c / (v_p_c * q_c / v_inf_c) - 1) < 1e-12      # ell = mu v_inf b = mu v_p q
+assert abs(1 / np.tan(theta_c / 2) - b_c / a_hyp) < 1e-12
+print(f"Part 9, Ex 4.3 visitor: |a| = {a_hyp:.3e} m = {a_hyp/AU:.3f} AU, e = {e_c:.3f}, sin(theta/2) = {1/e_c:.3f}, b = {b_c/AU:.3f} AU, "
+      f"deflection = {np.degrees(theta_c):.1f} deg, v_peri = {v_p_c/1e3:.1f} km/s, E/mu = {0.5*v_inf_c**2/1e6:.1f} MJ/kg, "
+      f"v_inf b = v_p q = {v_inf_c*b_c:.3e} m^2/s")
+
+# Example 4.5: a 10 m/s radial kick to a circular orbit at r0 = 6771 km (n = -2, so omega_r = omega_phi)
+r0_k, dv_r = 6.771e6, 10.0
+v_c0 = np.sqrt(GM_E / r0_k)
+omega0 = v_c0 / r0_k                           # omega_phi = omega_r, (3.21) with n = -2
+amp_lin = dv_r / omega0                        # linearized radial oscillation amplitude
+e_k = dv_r / v_c0                              # exact, from (3.14)
+E_k = 0.5 * (v_c0**2 + dv_r**2) - GM_E / r0_k
+assert abs(ecc_from_E_ell(E_k, r0_k * v_c0, 1.0, GM_E) - e_k) < 1e-12
+rp_k, ra_k = r0_k / (1 + e_k), r0_k / (1 - e_k)   # c = ell^2/(mu k) = r0 because the kick leaves ell alone
+s_k = integrate_orbit((r0_k, 0), (dv_r, v_c0), acc_E, kepler_period(r0_k, 1.0, GM_E), n_out=4000)
+r_k = np.hypot(s_k.y[0], s_k.y[1])
+assert abs(r_k.max() - ra_k) < 1.0 and abs(r_k.min() - rp_k) < 1.0       # metres
+print(f"Part 9, Ex 4.5 radial kick: omega = {omega0:.4e} rad/s, period {2*np.pi/omega0/60:.1f} min; linear amplitude "
+      f"{amp_lin/1e3:.2f} km; exact e = {e_k:.4e}, r_a - r0 = {(ra_k-r0_k)/1e3:.3f} km, r0 - r_p = {(r0_k-rp_k)/1e3:.3f} km")
 
 # Example 4.6: alpha particles (Z=2) on gold (Z=79) at E = 5 MeV
 e2_4pi_eps0 = 1.439964548          # MeV fm
@@ -646,26 +666,189 @@ k_coul = Z1 * Z2 * e2_4pi_eps0     # MeV fm
 r_min_headon = k_coul / E_alpha    # fm
 k_over_4E = k_coul / (4 * E_alpha)
 dsdo_90 = k_over_4E**2 / np.sin(np.pi / 4)**4           # fm^2/sr at 90 degrees
-sigma_gt90 = np.pi * (k_coul / (2 * E_alpha))**2        # fm^2, all b < b(90 deg)
+sigma_gt90 = np.pi * (k_coul / (2 * E_alpha))**2        # fm^2: every b < b(90 deg) = k/2E, (3.28)
 rho_Au, A_Au, N_A = 19.32, 196.967, 6.02214076e23       # g/cm^3, g/mol
 n_Au = rho_Au / A_Au * N_A                              # atoms / cm^3
 t_foil = 0.4e-4                                         # 0.4 micrometre in cm
 frac_gt90 = n_Au * t_foil * sigma_gt90 * 1e-26          # 1 fm^2 = 1e-26 cm^2
 R_Au = 1.2 * A_Au ** (1 / 3)
 ratio_15 = (np.sin(np.radians(15 / 2)) / np.sin(np.radians(150 / 2)))**4   # dsigma(150)/dsigma(15)
-assert abs(sigma_gt90 - np.pi * (k_coul / (2 * E_alpha))**2) < 1e-9
-print(f"Part 9, Ex 4.6 Rutherford: k = {k_coul:.1f} MeV fm, head-on r_min = k/E = {r_min_headon:.1f} fm (gold nuclear radius ~ {R_Au:.1f} fm)")
-print(f"        k/4E = {k_over_4E:.2f} fm, (k/4E)^2 = {k_over_4E**2:.1f} fm^2/sr = {k_over_4E**2/100:.2f} b/sr; d sigma/d Omega(90 deg) = {dsdo_90:.0f} fm^2/sr = {dsdo_90/100:.2f} b/sr")
+ratio_5_150 = (np.sin(np.radians(75)) / np.sin(np.radians(2.5)))**4         # dsigma(5)/dsigma(150)
+E_cm_factor = A_Au / (A_Au + 4.0026)                    # E_cm/E_lab
+sigma_hard = np.pi * R_Au**2                            # a hard sphere of the nuclear radius, (3.25)
+theta_thomson = k_coul / (E_alpha * 1e5)                # Thomson atom: deflection ~ k/(E R_atom), R_atom ~ 1e5 fm
+layers = t_foil / n_Au ** (-1 / 3)                      # atomic layers in the foil
+theta_rms = np.sqrt(layers) * theta_thomson
+log10_P90 = -(np.pi / 2 / theta_rms)**2 / np.log(10)
+print(f"Part 9, Ex 4.6 Rutherford: k = {k_coul:.1f} MeV fm, head-on r_min = k/E = {r_min_headon:.1f} fm (gold nuclear radius ~ {R_Au:.1f} fm); E_cm/E_lab = {E_cm_factor:.4f}")
+print(f"        k/2E = {2*k_over_4E:.2f} fm, k/4E = {k_over_4E:.2f} fm, (k/4E)^2 = {k_over_4E**2:.1f} fm^2/sr = {k_over_4E**2/100:.2f} b/sr; d sigma/d Omega(90 deg) = {dsdo_90:.0f} fm^2/sr = {dsdo_90/100:.2f} b/sr")
 print(f"        sigma(theta > 90 deg) = pi (k/2E)^2 = {sigma_gt90:.0f} fm^2 = {sigma_gt90/100:.1f} b; gold n = {n_Au:.3e} /cm^3; "
-      f"fraction for a 0.4 um foil = {frac_gt90:.2e} (about 1 in {1/frac_gt90:,.0f}); ratio dsigma(150deg)/dsigma(15deg) = 1/{1/ratio_15:,.0f}")
+      f"fraction for a 0.4 um foil = {frac_gt90:.2e} (about 1 in {1/frac_gt90:,.0f})")
+print(f"        dsigma(150)/dsigma(15) = 1/{1/ratio_15:,.0f}; dsigma(5)/dsigma(150) = {ratio_5_150:,.0f}; hard sphere R = {R_Au:.1f} fm: sigma = {sigma_hard:.0f} fm^2")
+print(f"        Thomson atom: theta per atom ~ {theta_thomson:.2e} rad, {layers:.0f} layers, rms {theta_rms:.4f} rad = {np.degrees(theta_rms):.2f} deg, "
+      f"P(>90 deg) ~ 10^{log10_P90:.0f}")
 
 # Halley's comet (reference values for "Your turn" 3)
 a_H, e_H = 17.8 * AU, 0.967
 q_H = a_H * (1 - e_H)
-v_pH = np.sqrt(GMs * (2 / q_H - 1 / a_H))
-T_H = 2 * np.pi * np.sqrt(a_H**3 / GMs) / yr
+v_pH = np.sqrt(GM_sun * (2 / q_H - 1 / a_H))
+T_H = kepler_period(a_H, 1.0, GM_sun) / yr
 print(f"Part 9, Halley (Your turn 3): q = {q_H/AU:.3f} AU, Q = {a_H*(1+e_H)/AU:.1f} AU, v_peri = {v_pH/1e3:.1f} km/s, "
       f"v_apo = {v_pH*q_H/(a_H*(1+e_H))/1e3:.2f} km/s, T = {T_H:.1f} yr")
+
+# %% [markdown]
+# ## Part 10: Symbolic checks of §3, and reference values for the exercises
+#
+# SymPy re-derives the chain-rule steps of Binet's equation (3.10), the Kepler
+# solution (3.11), the energy–eccentricity relation (3.14), Kepler III (3.16),
+# the stability ratio (3.21), the hard-sphere and Rutherford cross-sections
+# (3.25), (3.27), and the LRL magnitude (3.29). Then every number quoted in
+# `solutions.md` is printed. Do the exercises before reading this cell.
+
+# %%
+import sympy as sp
+ph, mu_s, l_s, k_s, E_s, e_s, a_s, r_s, R_s, r0_s = sp.symbols("phi mu ell k E e a r R r0", positive=True)
+th, n_s = sp.symbols("theta n", real=True)
+u = sp.Function("u")(ph)
+dt_dphi = mu_s / (l_s * u**2)                                        # phi-dot = ell u^2 / mu
+rdot = sp.diff(1 / u, ph) / dt_dphi
+rddot = sp.diff(rdot, ph) / dt_dphi
+assert sp.simplify(rdot + l_s / mu_s * u.diff(ph)) == 0                     # Binet step 1
+assert sp.simplify(rddot + l_s**2 * u**2 / mu_s**2 * u.diff(ph, 2)) == 0    # Binet step 2
+uK = mu_s * k_s / l_s**2 * (1 + e_s * sp.cos(ph))
+assert sp.simplify(uK.diff(ph, 2) + uK - mu_s * k_s / l_s**2) == 0          # (3.11) solved
+up = uK.subs(ph, 0)
+assert sp.simplify(l_s**2 * up**2 / (2 * mu_s) - k_s * up - mu_s * k_s**2 * (e_s**2 - 1) / (2 * l_s**2)) == 0   # (3.14)
+T_area = 2 * mu_s * sp.pi * a_s * a_s * sp.sqrt(1 - e_s**2) / sp.sqrt(mu_s * k_s * a_s * (1 - e_s**2))
+assert sp.simplify(T_area - 2 * sp.pi * sp.sqrt(mu_s * a_s**3 / k_s)) == 0  # (3.16)
+l2 = mu_s * k_s * r0_s**(n_s + 3)                                           # circular orbit of F = -k r^n
+Veff = k_s * r_s**(n_s + 1) / (n_s + 1) + l2 / (2 * mu_s * r_s**2)
+assert sp.simplify(sp.diff(Veff, r_s).subs(r_s, r0_s)) == 0
+assert sp.simplify(sp.diff(Veff, r_s, 2).subs(r_s, r0_s) / mu_s / (l2 / (mu_s**2 * r0_s**4)) - (n_s + 3)) == 0   # (3.21)
+x = sp.symbols("x", positive=True)
+assert sp.series(2 * sp.pi * (1 / sp.sqrt(1 - x) - 1), x, 0, 2).removeO() == sp.pi * x                        # (3.22)
+b_ruth, b_hard = k_s / (2 * E_s) * sp.cot(th / 2), R_s * sp.cos(th / 2)
+ds_ruth = sp.lambdify((th, k_s, E_s), b_ruth / sp.sin(th) * sp.Abs(sp.diff(b_ruth, th)))
+ds_hard = sp.lambdify((th, R_s), b_hard / sp.sin(th) * sp.Abs(sp.diff(b_hard, th)))
+tt = np.linspace(0.1, 3.0, 30)
+assert np.allclose(ds_ruth(tt, 1.3, 0.7), (1.3 / 2.8)**2 / np.sin(tt / 2)**4, rtol=1e-12)                    # (3.27)
+assert np.allclose(ds_hard(tt, 1.7), 1.7**2 / 4, rtol=1e-12)                                                   # (3.25)
+rp_s = l_s**2 / (mu_s * k_s * (1 + e_s))
+assert sp.simplify(mu_s * (l_s / (mu_s * rp_s)) * l_s - mu_s * k_s - mu_s * k_s * e_s) == 0                    # (3.29)
+print("Part 10: SymPy confirms Binet's chain rule, (3.11), (3.14), (3.16), (3.21), (3.22), (3.25), (3.27), (3.29)")
+
+# A1: reduced masses
+mp_me, md_me, Ry = 1836.15267343, 3670.48296788, 13.605693
+red_H, red_D = mp_me / (1 + mp_me), md_me / (1 + md_me)
+m_E, m_M, d_EM = 5.9722e24, 7.342e22, 3.844e8
+print(f"A1: mu_H/m_e = {red_H:.8f}, mu_D/m_e = {red_D:.8f}; H ground state {-Ry*red_H:.4f} eV, positronium {-Ry/2:.4f} eV; "
+      f"H-alpha isotope shift {656.28*(1-red_H/red_D):.4f} nm")
+print(f"    Earth-Moon: mu/m_Moon = {m_E/(m_E+m_M):.5f}; barycentre {d_EM*m_M/(m_E+m_M)/1e3:.0f} km from Earth's centre")
+# A2: r = 2/(1 + 0.5 cos phi), mu = k = 1
+cA, eA = 2.0, 0.5
+aA = cA / (1 - eA**2); lA = np.sqrt(cA); EA = -1 / (2 * aA)
+assert abs(ecc_from_E_ell(EA, lA, 1.0, 1.0) - eA) < 1e-12
+print(f"A2: r_p = {cA/(1+eA):.4f}, r_a = {cA/(1-eA):.4f}, a = {aA:.4f}, b = {aA*np.sqrt(1-eA**2):.4f}, ell = {lA:.4f}, E = {EA:.4f}, "
+      f"T = {kepler_period(aA, 1, 1):.2f}, v_p = {lA/(cA/(1+eA)):.4f}, v_a = {lA/(cA/(1-eA)):.4f}")
+# A3: Mercury
+vm = np.sqrt(GM_sun / a_merc)
+print(f"A3: Mercury sqrt(GM/a) = {vm/1e3:.2f} km/s, v_p = {vm*np.sqrt((1+e_merc)/(1-e_merc))/1e3:.2f} km/s, v_a = {vm*np.sqrt((1-e_merc)/(1+e_merc))/1e3:.2f} km/s, "
+      f"ratio {(1+e_merc)/(1-e_merc):.4f}")
+# A4: Jupiter
+q_J, T_J = 1.26686534e17 / GM_sun, 4332.59
+print(f"A4: m_J/M = {q_J:.4e}; Sun-only formula overestimates Jupiter's period by {T_J*(np.sqrt(1+q_J)-1):.2f} d")
+# A5
+print(f"A5: sigma(theta > 1 deg)/sigma(theta > 90 deg) = cot^2(0.5 deg) = {1/np.tan(np.radians(0.5))**2:,.0f}")
+# B2: the circle r = 2R cos(phi) through the centre needs F = -8 ell^2 R^2/(mu r^5), and has E = 0
+uc = 1 / (2 * R_s * sp.cos(ph))
+assert sp.simplify(uc.diff(ph, 2) + uc - 8 * R_s**2 * uc**3) == 0
+assert sp.simplify(uc.diff(ph)**2 + uc**2 - 4 * R_s**2 * uc**4) == 0          # v^2 = (ell/mu)^2 (u'^2 + u^2)
+print("B2: SymPy: u'' + u = 8 R^2 u^3 and u'^2 + u^2 = 4 R^2 u^4 on r = 2R cos(phi)")
+# B3: Molniya
+rpM, raM = (6371 + 600) * 1e3, (6371 + 39700) * 1e3
+aM, eM = 0.5 * (rpM + raM), (raM - rpM) / (raM + rpM)
+vpM, vaM = np.sqrt(GM_E * (2 / rpM - 1 / aM)), np.sqrt(GM_E * (2 / raM - 1 / aM))
+assert abs(vpM * rpM - vaM * raM) / (vpM * rpM) < 1e-12
+print(f"B3: Molniya a = {aM/1e3:.0f} km, e = {eM:.4f}, T = {kepler_period(aM, 1, GM_E)/3600:.3f} h, v_p = {vpM/1e3:.3f} km/s, v_a = {vaM/1e3:.3f} km/s")
+# B4: Yukawa, units k = lambda = 1: stability condition d ln f/d ln r > -3
+f_y = sp.exp(-r_s) * (1 / r_s**2 + 1 / r_s)
+cond = sp.factor(sp.simplify(r_s * sp.diff(sp.log(f_y), r_s) + 3))
+root = [s_ for s_ in sp.solve(sp.numer(cond), r_s) if s_.is_positive][0]
+assert sp.simplify(root - (1 + sp.sqrt(5)) / 2) == 0
+print(f"B4: Yukawa: d ln f/d ln r + 3 = {cond}; stable iff r0/lambda < {float(root):.6f}")
+# B6: closest approach
+rmin = lambda th_deg, kk, EE: kk / (2 * EE) * (1 + 1 / np.sin(np.radians(th_deg) / 2))
+k_Al, d_Al = 2 * 13 * e2_4pi_eps0, 1.2 * (27 ** (1 / 3) + 4 ** (1 / 3))
+assert abs(rmin(180, k_coul, E_alpha) - r_min_headon) < 1e-12
+print(f"B6: gold, 5 MeV: r_min(60 deg) = {rmin(60, k_coul, E_alpha):.1f} fm, r_min(180 deg) = {rmin(180, k_coul, E_alpha):.1f} fm; "
+      f"Al: k = {k_Al:.2f} MeV fm, contact {d_Al:.2f} fm, threshold E = {k_Al/d_Al:.2f} MeV (at 5 MeV head-on r_min = {k_Al/E_alpha:.2f} fm)")
+# B7: Earth -> Mars Hohmann (circular, coplanar)
+r1M, r2M = AU, 1.524 * AU
+atM = 0.5 * (r1M + r2M)
+dv1M = np.sqrt(GM_sun * (2 / r1M - 1 / atM)) - np.sqrt(GM_sun / r1M)
+dv2M = np.sqrt(GM_sun / r2M) - np.sqrt(GM_sun * (2 / r2M - 1 / atM))
+t_tM = 0.5 * kepler_period(atM, 1, GM_sun)
+T_Mars = kepler_period(r2M, 1, GM_sun)
+lead = 180 - 360 * t_tM / T_Mars
+syn = 1 / (1 / kepler_period(r1M, 1, GM_sun) - 1 / T_Mars)
+print(f"B7: v_E = {np.sqrt(GM_sun/r1M)/1e3:.2f}, v_p = {np.sqrt(GM_sun*(2/r1M-1/atM))/1e3:.2f}, v_a = {np.sqrt(GM_sun*(2/r2M-1/atM))/1e3:.2f}, "
+      f"v_Mars = {np.sqrt(GM_sun/r2M)/1e3:.2f} km/s; T_Mars = {T_Mars/86400:.1f} d")
+print(f"B7: Earth->Mars: dv1 = {dv1M/1e3:.3f} km/s, dv2 = {dv2M/1e3:.3f} km/s, transfer {t_tM/86400:.1f} d, Mars leads by {lead:.1f} deg, "
+      f"windows every {syn/86400:.0f} d")
+# B8: LRL along the precessing orbit of Part 5 (mu = k = 1)
+xs, ys, vxs, vys = s_prec.y
+ls = xs * vys - ys * vxs
+Axs, Ays = ls * vys - xs / np.hypot(xs, ys), -ls * vxs - ys / np.hypot(xs, ys)
+xe, ye_, vxe, vye = ye_prec.T
+le = xe * vye - ye_ * vxe
+angA = np.unwrap(np.arctan2(-le * vxe - ye_ / np.hypot(xe, ye_), le * vye - xe / np.hypot(xe, ye_)))
+assert np.max(np.abs(np.diff(angA) - prec_exact)) < 1e-6
+assert np.max(np.abs(np.angle(np.exp(1j * (angA - np.arctan2(ye_, xe)))))) < 1e-6   # A points at each perihelion
+u_c = mu * k / (ell0**2 * beta**2)                     # centre of the u oscillation, Theorem 3.11
+e_pert = (1 / rp0) / u_c - 1
+A_ap = mu * k - ell0**2 * u_c * (1 - e_pert)           # |A| at aphelion, where A = (l^2/r - mu k) r_hat
+assert abs(A_ap - np.hypot(Axs, Ays).min()) < 1e-6
+print(f"B8: mu k/(l^2 beta^2) = {u_c:.5f}, e' = {e_pert:.5f}, r_a = {1/(u_c*(1-e_pert)):.5f}, |A|/(mu k) at aphelion = {A_ap:.4f}")
+print(f"B8: LRL at successive perihelia advances {np.mean(np.diff(angA)):.6f} rad/orbit (precession {prec_exact:.6f}); "
+      f"|A|/(mu k) ranges over [{np.hypot(Axs, Ays).min():.4f}, {np.hypot(Axs, Ays).max():.4f}] within an orbit")
+# C1: modified Binet equation w'' + w = 1 + delta w^2 (w = u h^2/GM), e = 0.2: advance per orbit vs 2 pi delta
+delta = 1e-3
+def peri(p, w): return w[1]
+peri.direction = -1
+sw = solve_ivp(lambda p, w: [w[1], 1 + delta * w[0]**2 - w[0]], (0, 12 * np.pi), [1.2, 0.0], events=peri,
+               rtol=1e-12, atol=1e-12, method="DOP853")
+adv = np.diff(sw.t_events[0]) - 2 * np.pi
+assert abs(adv.mean() / (2 * np.pi * delta) - 1) < 0.01
+print(f"C1: modified Binet, delta = {delta}: advance per orbit {adv.mean():.6f} rad vs first-order 2 pi delta = {2*np.pi*delta:.6f} "
+      f"(ratio {adv.mean()/(2*np.pi*delta):.5f}; near-circular second order 1 + 2.5 delta = {1+2.5*delta:.5f})")
+# C2: Kepler's equation, time averages, Molniya dwell time
+Mgrid = np.linspace(0, 2 * np.pi, 200001)[:-1]
+psi = Mgrid.copy()
+for _ in range(50):
+    psi -= (psi - eM * np.sin(psi) - Mgrid) / (1 - eM * np.cos(psi))
+rr_t = 1 - eM * np.cos(psi)                       # r/a, sampled uniformly in time
+assert abs(rr_t.mean() - (1 + eM**2 / 2)) < 1e-9 and abs((1 / rr_t).mean() - 1) < 1e-9
+print(f"C2: Molniya <r>/a = {rr_t.mean():.6f} = 1 + e^2/2; fraction of time with r > a: {np.mean(rr_t > 1):.4f} (1/2 + e/pi = {0.5+eM/np.pi:.4f})")
+# C3: repulsive alpha/r^2, alpha = 1, E = 1/2 (mu = 1): theta(b) = pi (1 - b/sqrt(b^2 + alpha/E))
+th_c3 = lambda bb: np.pi * (1 - bb / np.sqrt(bb**2 + 2.0))
+ds_c3 = lambda T: 2.0 * np.pi**2 * (np.pi - T) / (T**2 * (2 * np.pi - T)**2 * np.sin(T))
+bb = np.linspace(0.2, 5, 50); h_ = 1e-6
+num = bb / np.sin(th_c3(bb)) / np.abs((th_c3(bb + h_) - th_c3(bb - h_)) / (2 * h_))
+assert np.allclose(num, ds_c3(th_c3(bb)), rtol=1e-6)
+R0 = 200.0; vR = np.sqrt(1 - 2 / R0**2); bR = 1.0 / vR       # E = 1/2 and ell = b = 1 exactly at launch
+sc3 = solve_ivp(lambda t, Y: [Y[2], Y[3], 2 * Y[0] / np.hypot(Y[0], Y[1])**4, 2 * Y[1] / np.hypot(Y[0], Y[1])**4],
+                (0, 2 * R0 + 50), [-R0, bR, vR, 0], rtol=1e-11, atol=1e-12, method="DOP853")
+th_num = np.arctan2(sc3.y[3, -1], sc3.y[2, -1])
+assert abs(th_num - th_c3(1.0)) < 1e-3
+print(f"C3: b = 1: theta formula {np.degrees(th_c3(1.0)):.2f} deg, integrated {np.degrees(th_num):.2f} deg; dsigma/dOmega(90 deg) = {ds_c3(np.pi/2):.4f}")
+# C4: L4 is an equilibrium of the rotating-frame potential; Routh's stability bound
+m1c, m2c = 1.0, 9.546e-4; Mc = m1c + m2c; Om2 = Mc                        # G = d = 1
+r1c, r2c = np.array([-m2c / Mc, 0]), np.array([m1c / Mc, 0])
+L4 = 0.5 * (r1c + r2c) + np.array([0, np.sqrt(3) / 2])
+grad = m1c * (L4 - r1c) / np.linalg.norm(L4 - r1c)**3 + m2c * (L4 - r2c) / np.linalg.norm(L4 - r2c)**3 - Om2 * L4
+assert np.max(np.abs(grad)) < 1e-14
+print(f"C4: |grad Phi_eff| at L4 = {np.max(np.abs(grad)):.1e}; Routh bound m2/M < {(1-np.sqrt(23/27))/2:.5f}; Sun-Jupiter {m2c/Mc:.3e}, "
+      f"Earth-Moon {m_M/(m_E+m_M):.5f}")
 
 # %% [markdown]
 # ## Your turn

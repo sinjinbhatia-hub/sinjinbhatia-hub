@@ -457,7 +457,7 @@ See [exercises.md](exercises.md). A1–A5 are drills: center of mass, curl tests
 4. **Drag:** (3.9) versus numerics (Example 4.3); quadratic drag versus none.
 5. **Driven oscillator:** numerical steady state overlaid on (3.10); Example 4.4; the power FWHM.
 6. **Bead on the wire:** integrates (3.14), computes $N(t)$, asserts Example 4.5 and energy conservation.
-7. **Atwood, the Newtonian way:** solves the $3\times 3$ system for $(\ddot{y}_1, \ddot{y}_2, T)$ at every step; asserts (3.16).
+7. **Atwood, the Newtonian way:** solves the $3\times 3$ system for $(\ddot{y}_1, \ddot{y}_2, T)$ at every step; asserts (3.16). Then sets up the $6\times 6$ double-Atwood system of §3.10(c) and checks it against its closed form.
 8. **Shell and rocket:** Examples 4.1 and 4.6.
 9. **SymPy and the rest:** re-derives (3.14), (3.17), the C1 series, the C2 identities, and the curl tests; a last cell asserts the remaining numbers in `solutions.md`.
 

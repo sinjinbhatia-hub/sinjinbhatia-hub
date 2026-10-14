@@ -8,7 +8,8 @@
 # elliptic integral (4.1) vs the series (4.2); (4) projectiles with linear and
 # quadratic drag; (5) the driven damped oscillator's resonance curve (3.10);
 # (6) the bead on the parabolic wire, eq. (3.14), with the normal force;
-# (7) the Atwood machine solved the Newtonian way at every step; (8) the
+# (7) the Atwood machine solved the Newtonian way at every step, and the 6×6
+# double Atwood system; (8) the
 # exploding shell and the rocket; (9) SymPy checks of the derivations;
 # (10) the remaining numbers quoted in solutions.md.
 #
@@ -125,7 +126,7 @@ assert np.isclose(1 + eu[n10], 1.41, atol=0.01), "Euler looks almost fine at 10 
 assert 60 < per_sep < 62.5 and np.isclose(1 + eu[-1], 5.9, atol=0.05), "Euler pushes the bob over the top"
 assert np.abs(th_eu).max() > 100 * np.pi, "by period 100 the Euler 'pendulum' has made dozens of full turns"
 assert np.abs(rk).max() < 1e-6
-assert 5e-11 < np.abs(rk).max() < 1e-10, "§3.7 of the notes' project list: RK4 max error ≈ 7e-11 at h = T0/1000"
+assert 5e-11 < np.abs(rk).max() < 1e-10, "notes §7 item 1: RK4 max error ≈ 7e-11 at h = T0/1000"
 assert np.abs(sy).max() < 2e-2
 drift = abs(sy[-n10:].mean() - sy[:n10].mean())
 assert drift < 0.1 * np.abs(sy).max(), "symplectic energy error must not drift"
@@ -133,6 +134,10 @@ assert drift < 0.1 * np.abs(sy).max(), "symplectic energy error must not drift"
 rk_c, sy_c = results[(100, "RK4")], results[(100, "symplectic Euler")]
 print(f"h = T0/100: RK4 max |dE|/E0 = {np.abs(rk_c).max():.2e} (final {rk_c[-1]:+.2e}); symplectic max {np.abs(sy_c).max():.2e}")
 assert 1e-6 < np.abs(rk_c).max() < 1e-2, np.abs(rk_c).max()
+# Notes §7: "at h = T0/100 it drifts down to 7e-6": energy ends below E0, the error is a drift (the
+# final value is essentially the maximum), and its size rounds to 7e-6.
+assert rk_c[-1] < 0 and abs(rk_c[-1]) > 0.95 * np.abs(rk_c).max() and np.isclose(np.abs(rk_c).max(), 7e-6, rtol=0.1)
+assert abs(rk_c[len(rk_c) // 2]) < 0.6 * abs(rk_c[-1]), "RK4 error grows steadily (drift), not oscillates"
 assert np.abs(sy_c).max() < 0.2
 assert abs(sy_c[-n10 // 10:].mean() - sy_c[: n10 // 10].mean()) < 0.1 * np.abs(sy_c).max()
 # Hand RK4 agrees with solve_ivp over 10 periods.
@@ -388,6 +393,21 @@ for i in range(200):
 assert np.isclose(y[0], 0.5 * a1 * 2.0**2, rtol=1e-10) and np.isclose(y[0] + y[2], 0.0, atol=1e-12)
 print(f"Example 4.6 (Atwood): a = {a1:.4f} m/s², T = {T_at:.4f} N; y1(2 s) = {y[0]:.4f} m = ½ a t²")
 
+# The double Atwood machine of §3.10(c): m1 over a fixed pulley; on the other side a massless movable
+# pulley P carrying m2 and m3. Unknowns (a1, a2, a3, aP, T1, T2), y up. Three Newton equations, the
+# massless-pulley balance T1 = 2 T2, and two string constraints: a 6×6 linear system.
+def double_atwood(m1, m2, m3):
+    A = np.array([[m1, 0, 0, 0, -1, 0], [0, m2, 0, 0, 0, -1], [0, 0, m3, 0, 0, -1],
+                  [0, 0, 0, 0, 1, -2], [1, 0, 0, 1, 0, 0], [0, 1, 1, -2, 0, 0.0]])
+    b = np.array([-m1 * g, -m2 * g, -m3 * g, 0, 0, 0])
+    return np.linalg.matrix_rank(A), np.linalg.solve(A, b)
+rank6, (da1, da2, da3, daP, dT1, dT2) = double_atwood(3.0, 1.0, 2.0)
+assert rank6 == 6 and np.isclose(dT1, 2 * dT2) and np.isclose(da1 + daP, 0) and np.isclose(da2 + da3, 2 * daP)
+s_ = 3.0 * (1.0 + 2.0); p_ = 4 * 1.0 * 2.0                                    # closed form for comparison
+assert np.isclose(da1, g * (p_ - s_) / (p_ + s_)) and np.isclose(dT1, 2 * g * 3.0 * p_ / (p_ + s_))
+assert np.allclose(double_atwood(2.0, 1.0, 1.0)[1], [0, 0, 0, 0, 2 * g, g])   # m1 = m2 + m3, m2 = m3: balanced
+print(f"Double Atwood (6×6, rank {rank6}): a1 = {da1:.4f} m/s², T1 = {dT1:.4f} N = 2 T2")
+
 # %% [markdown]
 # ## Part 8: The exploding shell (Example 4.1) and the rocket (§3.9, Example 4.6, B6)
 
@@ -426,6 +446,8 @@ assert np.isclose(g * t_b, 588.6) and np.isclose(beta, 11.67, atol=5e-3) and np.
 assert np.isclose(u_r * mf_r / beta, 64285.7, atol=0.1) and np.isclose(0.5 * g * t_b**2, 17658, atol=0.5)       # B6
 assert np.isclose(u_r * mf_r / beta * np.log(m0_r / mf_r), 77398.3, atol=0.1)
 assert np.isclose(u_r * (m0_r - mf_r) / 300.0, 5833, atol=1) and u_r * (m0_r - mf_r) / 300.0 < m0_r * g   # 5-minute burn
+beta5 = (m0_r - mf_r) / 300.0; m_lift = u_r * beta5 / g; t_lift = (m0_r - m_lift) / beta5     # sits until u β = m g
+assert np.isclose(m_lift, 594.6, atol=0.05) and np.isclose(t_lift, 173.7, atol=0.05) and (m0_r - m_lift) > 0.5 * (m0_r - mf_r)
 print(f"Example 4.6 (rocket): Δv = {dv_closed:.1f} m/s in free space, {sg.y[0, -1]:.1f} m/s after a 60 s vertical burn; "
       f"burnout height {sg.y[1, -1]:.0f} m (B6); thrust {u_r*beta:.0f} N > weight {m0_r*g:.0f} N")
 print("Parts 7 and 8 passed.")

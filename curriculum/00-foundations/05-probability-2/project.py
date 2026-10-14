@@ -431,6 +431,25 @@ cov_pm = B_pm @ SigA4 @ B_pm.T                        # Theorem 3.22
 assert np.allclose(B_pm @ muA4, [3, -1]) and np.allclose(cov_pm, [[4, 0], [0, 12]])
 print(f"A4: X1 | X2 = 4 ~ N({cmA4[0]:.1f}, {cvA4[0,0]:.1f}); (X1+X2, X1-X2) ~ N(({3},{-1}), diag(4, 12)): independent by Theorem 3.23")
 
+# (3.19) on a partition where the blocks differ in size and scale (Example 4.4 and A4 have equal
+# diagonal blocks, so inverting the wrong block would go unnoticed there). Independent route: the
+# precision matrix Lam = Sigma^-1 gives X1 | X2 = x2 ~ N(mu1 - Lam11^-1 Lam12 (x2 - mu2), Lam11^-1)
+# (Bishop PRML 2.3.1), which is (3.20) read through the block inverse of step 3.
+mu3 = np.array([1.0, -2.0, 0.5])
+Sig3 = np.array([[4.0, 1.2, -0.8], [1.2, 2.0, 0.3], [-0.8, 0.3, 0.5]])
+x2_3 = np.array([-1.0, 1.0])
+cm3, cv3 = mvn_conditional(mu3, Sig3, [0], [1, 2], x2_3)
+Lam3 = np.linalg.inv(Sig3)
+cv3_prec = np.linalg.inv(Lam3[:1, :1])
+cm3_prec = mu3[:1] - cv3_prec @ Lam3[:1, 1:] @ (x2_3 - mu3[1:])
+assert np.allclose(cm3, cm3_prec) and np.allclose(cv3, cv3_prec)
+assert np.isclose(np.linalg.det(Sig3), np.linalg.det(cv3) * np.linalg.det(Sig3[1:, 1:]))    # det Sigma = det S det Sigma22
+assert np.all(np.linalg.eigvalsh(Sig3[:1, :1] - cv3) >= -1e-12)                             # conditioning shrinks: Sigma11 - S is PSD
+cm3b, cv3b = mvn_conditional(mu3, Sig3, [1, 2], [0], 3.0)                                    # the other direction, 2 | 1
+cv3b_prec = np.linalg.inv(Lam3[1:, 1:])
+assert np.allclose(cv3b, cv3b_prec) and np.allclose(cm3b, mu3[1:] - cv3b_prec @ Lam3[1:, :1] @ (np.array([3.0]) - mu3[:1]))
+print(f"(3.19) on a 1+2 partition of a 3x3 Sigma: mean {cm3[0]:.4f}, var {cv3[0, 0]:.4f}; matches the precision-matrix form")
+
 # %% [markdown]
 # ## Part 6: Conditional expectation (section 3.9; Example 4.5; exercises B2, B3)
 #
@@ -1079,8 +1098,10 @@ print(f"Notes: sqrt(0.15) = {np.sqrt(0.15):.4f}; ln 5 = {np.log(5):.4f}, ln 1.8 
 #    rho in {0, 0.3, 0.6, 0.9, 0.99} and plot against -1/2 ln(1 - rho^2). Then
 #    replace Y by X^2 with X ~ N(0,1): the correlation is zero, but estimate I(X; X^2)
 #    by binning both variables into 30 bins and computing the discrete mutual
-#    information of the histogram. It is far from zero. Covariance misses this;
-#    mutual information does not.
+#    information of the histogram. It is far from zero. (The exact I(X; X^2) is in
+#    fact infinite, since X^2 is a deterministic function of a continuous X, so
+#    the binned estimate keeps growing as you refine the bins.) Covariance misses
+#    this; mutual information does not.
 # 4. **Metropolis on a continuous target.** Change `metropolis_discrete` to a
 #    Gaussian random-walk proposal on R and sample from a target known only up to a
 #    constant, e.g. exp(-x^4/4 - x^2/2). Check that detailed balance still holds

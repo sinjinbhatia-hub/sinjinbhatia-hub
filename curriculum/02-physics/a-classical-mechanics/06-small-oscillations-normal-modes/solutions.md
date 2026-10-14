@@ -89,7 +89,7 @@ Check: $\alpha + \beta\omega_j^2 = \frac{2\zeta}{\omega_1 + \omega_2}(\omega_1\o
 
 (c) From (4.1), $\theta_1 = \theta_0\cos(\varepsilon t)\cos(\bar\omega t)$, which is $0$ at $\varepsilon t = \pi/2$. Differentiating, $\dot\theta_1 = -\theta_0[\varepsilon\sin(\varepsilon t)\cos(\bar\omega t) + \bar\omega\cos(\varepsilon t)\sin(\bar\omega t)]$. At $\varepsilon t = \pi/2$ this is $-\varepsilon\theta_0\cos(\bar\omega T_{\text{transfer}})$, so $|\dot\theta_1| \le \varepsilon\theta_0 = 0.152\theta_0$; the script finds $0.119\theta_0$. Pendulum 1's own energy $\frac12m\ell^2\dot\theta_1^2 + \frac12mg\ell\theta_1^2$ is then $0.13\%$ of $E$.
 
-Reconciliation: $E_1$ and $E_2$ are energies of *modes*, not of pendulums. At $T_{\text{transfer}}$ both modes are still present with their original energies. Their contributions cancel at pendulum 1 (in-phase plus out-of-phase shapes with opposite signs) and add at pendulum 2. Split by pendulum, the energy contains cross terms $\xi_1\xi_2$ that oscillate at $\omega_2 - \omega_1$, and the spring's energy belongs to neither pendulum. Energy flows between pendulums but never between modes.
+Reconciliation: $E_1$ and $E_2$ are energies of *modes*, not of pendulums. At $T_{\text{transfer}}$ both modes are still present with their original energies. Their contributions cancel at pendulum 1 (in-phase plus out-of-phase shapes with opposite signs) and add at pendulum 2. Split by pendulum, the energy contains cross terms $\xi_1\xi_2$ and $\dot\xi_1\dot\xi_2$ whose slowly varying part oscillates at $\omega_2 - \omega_1$, and the spring's energy belongs to neither pendulum. Energy flows between pendulums but never between modes.
 
 **B5.** (a) *From Theorem 3.2.* For the string, $M = mI$ and the shapes $\mathbf{s}^{(j)}_k = \sin\frac{jk\pi}{N+1}$ are eigenvectors of $K$ with distinct $\omega_j^2$ ((4.5); $\sin$ is increasing on $(0, \pi/2)$). Theorem 3.2 gives $\mathbf{s}^{(j)\top}M\mathbf{s}^{(j')} = m\,\mathbf{s}^{(j)}\cdot\mathbf{s}^{(j')} = 0$ for $j \ne j'$. No trigonometry was used.
 
@@ -107,7 +107,7 @@ Now $\sin a\sin b = \frac12[\cos(a - b) - \cos(a + b)]$, so $\sum_k\sin\frac{jk\
 
 Check: $\sum_jc_j\mathbf{s}^{(j)} = (1, 2, 3, 2, 1)$ (asserted).
 
-(d) Released from rest, $\dot\xi_j(0) = 0$, so by (3.13) $y_k(t) = \sum_{j \in\{1,3,5\}}c_j\sin\frac{jk\pi}{6}\cos\omega_jt$ with $\omega_j = 2\omega_0\sin\frac{j\pi}{12}$: $\omega_1 = 0.5176\omega_0$, $\omega_3 = 1.4142\omega_0$, $\omega_5 = 1.9319\omega_0$. The ratios are not integers, so the shape never exactly repeats.
+(d) Released from rest, $\dot\xi_j(0) = 0$, so by (3.13) $y_k(t) = \sum_{j \in\{1,3,5\}}c_j\sin\frac{jk\pi}{6}\cos\omega_jt$ with $\omega_j = 2\omega_0\sin\frac{j\pi}{12}$: $\omega_1 = 0.5176\omega_0$, $\omega_3 = 1.4142\omega_0$, $\omega_5 = 1.9319\omega_0$. The ratios are irrational: $\omega_3/\omega_1 = \sin\frac{\pi}{4}/\sin\frac{\pi}{12} = 1 + \sqrt3$ and $\omega_5/\omega_1 = \cot\frac{\pi}{12} = 2 + \sqrt3$. (Non-integer alone would not be enough; a rational ratio still gives a periodic motion.) So there is no common period, and the shape never exactly repeats.
 
 **B6.** The normalized modes are $\mathbf{a}_0 = (1, 1, 1)^\top/\sqrt{44}$ ($\omega = 0$), $\mathbf{a}_s = (1, 0, -1)^\top/\sqrt{32}$ ($\omega_s = 0.25$), and $\mathbf{a}_a = (1, -\frac83, 1)^\top/10.832$ ($\omega_a = 0.47871$), where $\sqrt{44}$, $\sqrt{32}$ and $10.832$ are $\sqrt{\mathbf{a}^\top M\mathbf{a}}$ for the unnormalized shapes.
 
@@ -187,7 +187,7 @@ The sum is $(0.75, 0.5, 0.25)$. ✓ Mode 1 dominates, carrying 57% of $q_1$: the
 - 8 doubly degenerate values;
 - 1 fivefold value.
 
-That is $13$ distinct frequencies, and $4 + 16 + 5 = 25$ modes. ✓ The fivefold one is not explained by the square's symmetry group $D_4$, whose irreducible representations have dimension at most 2. It comes from a hidden symmetry: flipping the sign on alternate beads ($u_k \to (-1)^ku_k$) maps $K_1$ to $4I - K_1$, so the chain spectrum is symmetric about 2, and the lattice spectrum about 4.
+That is $13$ distinct frequencies, and $4 + 16 + 5 = 25$ modes. ✓ The fivefold one is not explained by the square's symmetry group $D_4$, whose irreducible representations have dimension at most 2. It comes from a property of the chain, not of the square: flipping the sign on alternate beads ($u_k \to (-1)^ku_k$, the matrix $D = \operatorname{diag}((-1)^k)$) gives $DK_1D = 4I - K_1$, so $D$ maps the eigenvector for $s_j$ to one for $4 - s_j$. The chain spectrum is therefore symmetric about 2, $s_{6-j} = 4 - s_j$, and every pair $(j, 6 - j)$ lands on $\omega^2 = 4$. (The same $D\otimes D$ makes the whole lattice spectrum symmetric about 4.)
 
 (e) The lowest six eigenvalues are $0.5359\ (1,1)$, $1.2679$ twice $\{(1,2), (2,1)\}$, $2\ (2,2)$, and $2.2679$ twice $\{(1,3), (3,1)\}$. So two degenerate pairs appear among them. `eigh` returns some rotation of each pair; you typically see diagonal-looking patterns instead of the product shapes. A 1% heavier bead breaks the symmetry and splits each pair; the shapes then lock to the perturbation.
 

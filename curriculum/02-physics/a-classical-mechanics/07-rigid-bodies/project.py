@@ -177,6 +177,15 @@ def parallel_axis(I_cm, M, d):
     return I_cm + M * (d @ d * np.eye(3) - np.outer(d, d))
 
 
+# Thin rod of length ell along x: ell^2/12 about the center, ell^2/3 about an end (parallel axis with d = ell/2).
+ell_rod = 1.0
+rng_rod = np.random.default_rng(1)                      # separate stream, so the samples below are unchanged
+rod = np.zeros((N, 3)); rod[:, 0] = rng_rod.uniform(-ell_rod / 2, ell_rod / 2, N)
+I_rod = I_per_mass(rod)
+assert np.isclose(I_rod[0, 0], 0) and np.allclose([I_rod[1, 1], I_rod[2, 2]], ell_rod**2 / 12, rtol=0.015)
+I_rod_end = I_per_mass(rod + [ell_rod / 2, 0, 0])
+assert np.allclose([I_rod_end[1, 1], I_rod_end[2, 2]], ell_rod**2 / 3, rtol=0.015)
+
 a = 1.0
 cube = sample_cube(a, N)
 I_cube = I_per_mass(cube)
@@ -218,7 +227,7 @@ assert np.allclose(cm_cone, [0, 0, 0.75 * hc], atol=0.01)
 I_cone_cm = I_per_mass(cone - cm_cone)
 assert np.allclose(I_cone_apex, parallel_axis(I_cone_cm, 1.0, -cm_cone), atol=1e-12)       # exact on the sample
 assert np.allclose([I_cone_cm[0, 0], I_cone_cm[1, 1]], 0.15 * Rc**2 + (3 / 80) * hc**2, rtol=0.02)
-print(f"Part 2 checks passed: cube, plate, sphere, cone within 1.5% of closed forms (N = {N}); parallel/perpendicular-axis exact.")
+print(f"Part 2 checks passed: rod, cube, plate, sphere, cone within 1.5% of closed forms (N = {N}); parallel/perpendicular-axis exact.")
 
 # %% [markdown]
 # ## Part 3: I is a (0,2) tensor: I' = R I R^T; principal axes; the spinning plate (§3.4–3.5, Example 4.2)
@@ -476,8 +485,9 @@ assert np.isclose(ratio, 2.0019, atol=2e-4)
 theta_L = np.degrees(np.arctan(I_disk[0] * w_init[0] / (I_disk[2] * w_init[2])))
 assert np.isclose(theta_L, 2.5048, atol=1e-3)
 assert np.isclose(np.degrees(np.arccos(Lhat @ e3_space[:, 0])), theta_L, atol=1e-6)
+assert np.isclose(abs(Omega_s_meas) / w_init[2], 2.002, atol=5e-4)                   # measured ratio quoted in Example 4.3
 print(f"Example 4.3 (frisbee): Omega_b = {Omega_b_meas:.3f} rad/s (= w3 = {w_init[2]:.3f}); "
-      f"Omega_s / w3 = {ratio:.4f}; angle(e3, L) = {theta_L:.3f} deg; wobble/spin = 2 to 0.1%")
+      f"Omega_s / w3 measured {abs(Omega_s_meas) / w_init[2]:.4f} (theory {ratio:.4f}); angle(e3, L) = {theta_L:.3f} deg")
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.5))
 ax1.plot(sol_sym.t, Wb[0], label="$\\omega_1$"); ax1.plot(sol_sym.t, Wb[1], label="$\\omega_2$")
@@ -552,6 +562,10 @@ for _ in range(20):
     assert np.allclose(R.T @ w_space_fd, omega_body_from_rates(*ang, *rates), atol=1e-6)
     assert np.allclose(rate_matrix(ang[1], ang[2]) @ rates, omega_body_from_rates(*ang, *rates))
     assert np.isclose(np.linalg.det(rate_matrix(ang[1], ang[2])), -np.sin(ang[1]))
+
+# Conventions box: the z-y'-z'' convention R_z(phi) R_y(theta) R_z(psi) is ours with phi + 90 deg and psi - 90 deg.
+_Ry = lambda a: np.array([[np.cos(a), 0, np.sin(a)], [0, 1, 0], [-np.sin(a), 0, np.cos(a)]])
+assert np.allclose(R_z(0.4) @ _Ry(1.1) @ R_z(-0.7), euler_R(0.4 + np.pi / 2, 1.1, -0.7 - np.pi / 2))
 
 # Example 4.6: phi = 30 deg, theta = 60 deg, psi = 45 deg; rates (1, 0.5, 2) rad/s.
 ex_ang = np.radians([30.0, 60.0, 45.0])
@@ -628,6 +642,23 @@ assert sp.simplify(E_reduced - I1s * thd**2 / 2 - ppsi**2 / (2 * I3s) - V_eff_sy
 dV = sp.diff(V_eff_sym, th_f)
 assert sp.simplify(dV - sp.sin(th_f) * (ppsi * phd_of_p - I1s * phd_of_p**2 * sp.cos(th_f) - Ms * gs * ls)) == 0
 print("Part 7: SymPy confirms cyclic momenta, the theta equation, the V_eff reduction and the steady-precession condition.")
+
+# §5 (QM-5 bullet): with canonical (phi, theta, psi; p_phi, p_theta, p_psi), p = J^T L_body since dT/dq-dot = L . d(omega)/d(q-dot).
+# Space components obey {L_x, L_y} = +L_z (CM-8 (3.17)); body components obey {L_1, L_2} = -L_3, and with that
+# bracket H = sum L_k^2 / 2 I_k gives L-dot = L x omega, i.e. Euler's equations.
+q_c = sp.symbols("q_phi q_theta q_psi", real=True)
+p_c = sp.symbols("P_phi P_theta P_psi", real=True)
+J_body = sp.Matrix([[sp.sin(q_c[1]) * sp.sin(q_c[2]), sp.cos(q_c[2]), 0], [sp.sin(q_c[1]) * sp.cos(q_c[2]), -sp.sin(q_c[2]), 0], [sp.cos(q_c[1]), 0, 1]])
+J_space = sp.Matrix([[0, sp.cos(q_c[0]), sp.sin(q_c[1]) * sp.sin(q_c[0])], [0, sp.sin(q_c[0]), -sp.sin(q_c[1]) * sp.cos(q_c[0])], [1, 0, sp.cos(q_c[1])]])
+L_body_c = sp.simplify(J_body.T.inv() * sp.Matrix(p_c))
+L_space_c = sp.simplify(J_space.T.inv() * sp.Matrix(p_c))
+pbr = lambda F, G: sp.simplify(sum(sp.diff(F, q_c[i]) * sp.diff(G, p_c[i]) - sp.diff(F, p_c[i]) * sp.diff(G, q_c[i]) for i in range(3)))
+assert sp.simplify(pbr(L_space_c[0], L_space_c[1]) - L_space_c[2]) == 0
+assert sp.simplify(pbr(L_body_c[0], L_body_c[1]) + L_body_c[2]) == 0
+I1b, I2b, I3b = sp.symbols("I_1b I_2b I_3b", positive=True)
+H_rb = L_body_c[0]**2 / (2 * I1b) + L_body_c[1]**2 / (2 * I2b) + L_body_c[2]**2 / (2 * I3b)
+assert sp.simplify(pbr(L_body_c[0], H_rb) - (L_body_c[1] * L_body_c[2] / I3b - L_body_c[2] * L_body_c[1] / I2b)) == 0
+print("       Poisson brackets: space {L_x, L_y} = +L_z, body {L_1, L_2} = -L_3; H generates Euler's equations.")
 
 # Numerical right-hand side for the toy gyroscope of Example 4.5.
 M_g, R_g, l_g, g_g = 0.1, 0.03, 0.04, 9.81
@@ -711,12 +742,15 @@ h = 1e-5
 V2 = (V_eff(theta0 + h, p_phi_n, p_psi_n) - 2 * V_eff(theta0, p_phi_n, p_psi_n) + V_eff(theta0 - h, p_phi_n, p_psi_n)) / h**2
 assert np.isclose(np.sqrt(V2 / I1_g), w_nut_closed, rtol=1e-4)                   # closed form (3.32) = V_eff''/I_1
 assert np.isclose(w_nut_meas, w_nut_closed, rtol=5e-3), (w_nut_meas, w_nut_closed)
-assert np.isclose(w_nut_closed, 74.68, atol=0.02)
+assert np.isclose(w_nut_closed, 74.68, atol=0.01) and np.isclose(w_nut_meas, 74.69, atol=0.01)
+# phi-dot keeps one sign along the kicked motion: the axis path is wavy (no cusps, no loops), as §3.12 says.
+assert np.isclose(sol_nut.y[4].min(), 1.90, atol=0.005) and np.isclose(sol_nut.y[4].max(), 3.74, atol=0.005)
 # Turning points from the cubic agree with the simulated min/max theta.
 tp = turning_points(p_phi_n, p_psi_n, E_n)
 assert len(tp) == 2
 th_lo, th_hi = np.arccos(tp[1]), np.arccos(tp[0])
 assert np.isclose(sol_nut.y[0].min(), th_lo, atol=1e-4) and np.isclose(sol_nut.y[0].max(), th_hi, atol=1e-4)
+assert np.isclose(np.degrees(th_lo), 59.39, atol=0.005) and np.isclose(np.degrees(th_hi), 60.62, atol=0.005)
 print(f"  nutation: measured {w_nut_meas:.2f} rad/s, closed form sqrt(V_eff''/I_1) = {w_nut_closed:.2f} rad/s "
       f"(fast-top estimate {nut_fast_top:.2f}); theta swings between {np.degrees(th_lo):.2f} and {np.degrees(th_hi):.2f} deg")
 
@@ -728,17 +762,30 @@ def theta_max_from_rest(w3, th0=0.02):
     return np.arccos(tp.min())
 
 
-lo, hi = 50.0, 300.0
-assert theta_max_from_rest(lo) > 0.5 and theta_max_from_rest(hi) < 0.1
-for _ in range(40):
-    mid = 0.5 * (lo + hi)
-    if theta_max_from_rest(mid) > 0.3:
-        lo = mid
-    else:
-        hi = mid
-w3_sleep_num = 0.5 * (lo + hi)
+def sleep_bisect(th0, crit=0.3, lo=50.0, hi=300.0):
+    """Smallest w3 for which a top released at rest from th0 stays within crit radians (bisection on the turning points)."""
+    assert theta_max_from_rest(lo, th0) > 0.5 and theta_max_from_rest(hi, th0) < 0.1
+    for _ in range(40):
+        mid = 0.5 * (lo + hi)
+        if theta_max_from_rest(mid, th0) > crit:
+            lo = mid
+        else:
+            hi = mid
+    return 0.5 * (lo + hi)
+
+
+w3_sleep_num = sleep_bisect(0.02)
 assert np.isclose(w3_sleep_num, w3_sleep, rtol=0.01), (w3_sleep_num, w3_sleep)
-print(f"  sleeping threshold found numerically: {w3_sleep_num:.1f} rad/s (theory 2 sqrt(M g l I_1)/I_3 = {w3_sleep:.1f})")
+assert np.isclose(w3_sleep_num, 117.9, atol=0.05)
+# Why 1% low: released exactly upright, (3.30) factors as (1-u)^2 [beta(1+u) - a^2], so below threshold the top falls
+# only to cos(theta_max) = I_3^2 w3^2/(2 I_1 M g l) - 1, continuous from 0 at (3.33). The criterion theta_max > 0.3
+# then trips at w3 = w3_sleep cos(0.15) = 117.6; the finite release angle 0.02 moves it to 117.9.
+w3_crit_upright = w3_sleep * np.cos(0.15)
+assert np.isclose(w3_crit_upright, 117.60, atol=0.01)
+assert np.isclose(np.arccos((I3_g * w3_crit_upright)**2 / (2 * I1_g * Mgl) - 1), 0.3)
+assert np.isclose(sleep_bisect(1e-3), w3_crit_upright, atol=0.01)
+print(f"  sleeping threshold found numerically: {w3_sleep_num:.1f} rad/s (theory 2 sqrt(M g l I_1)/I_3 = {w3_sleep:.1f}; "
+      f"criterion theta_max > 0.3 rad from exactly upright trips at {w3_crit_upright:.1f})")
 # Two integrations straddling the threshold.
 sols_sleep = {}
 for w3_try in (0.8 * w3_sleep, 1.25 * w3_sleep):
@@ -758,6 +805,7 @@ mean_prec = (sol_cusp.y[1, -1] - sol_cusp.y[1, 0]) / 1.5
 print(f"  released from rest at 30 deg: theta dips to {np.degrees(sol_cusp.y[0].max()):.3f} deg, "
       f"mean precession {mean_prec:.3f} rad/s (slow-precession formula {Mgl / p_psi_g:.3f})")
 assert np.isclose(mean_prec, Mgl / p_psi_g, rtol=0.05)
+assert np.isclose(np.degrees(sol_cusp.y[0].max()), 32.26, atol=0.005) and np.isclose(mean_prec, 2.843, atol=1e-3)
 
 # Figures: V_eff with turning points; theta(t), phi(t); axis path on the unit sphere.
 fig, axs = plt.subplots(1, 3, figsize=(15, 4.5))
@@ -800,12 +848,12 @@ print("Part 7 checks passed.")
 # Quadrupole torque on an oblate body: tau = (3 G M / r^3) r-hat x (I r-hat). Averaged over
 # a circular orbit in the ecliptic and applied to L = I_3 w3 e3 it gives a retrograde
 # precession of e3 about the ecliptic pole at |Omega| = (3/2)(n^2 / w3) H cos(eps), with
-# n^2 = GM/r^3 and H = (I_3 - I_1)/I_3 = 1/305.45. Sun plus Moon give about 51 arcsec/yr,
-# a period of about 25,500 yr; the observed value is 50.3 arcsec/yr (25,772 yr).
+# n^2 = GM/r^3 and H = (I_3 - I_1)/I_3 = 1/305.45. Sun plus Moon give about 50.7 arcsec/yr,
+# a period of about 25,600 yr; the observed value is 50.3 arcsec/yr (25,772 yr).
 
 
 # %%
-GM_sun, r_sun = 1.32712e20, 1.495979e11
+GM_sun, r_sun = 1.32712e20, 1.496e11                                  # the data of Example 4.7
 GM_moon, r_moon = 4.9028e12, 3.844e8
 w3_earth = 7.2921e-5
 H_earth = 1 / 305.45
@@ -828,6 +876,16 @@ rhat = r_vec / np.linalg.norm(r_vec)
 tau_quad = 3 / np.linalg.norm(r_vec)**3 * np.cross(rhat, I_q @ rhat)
 assert np.allclose(tau_direct, tau_quad, rtol=0.02, atol=1e-9 * np.linalg.norm(tau_quad))
 
+# Step 4 of §3.13: average (3.34) over a circular orbit r-hat = (cos lam, sin lam, 0) for a symmetric body with
+# e3 = (0, sin eps, cos eps): <tau> = (3 GM / 2 r^3)(I_3 - I_1) sin(eps) cos(eps) x-hat  (GM = r = 1 here).
+I1q, I3q = 1.0, 1.3
+e3q = np.array([0.0, np.sin(eps_obliq), np.cos(eps_obliq)])
+I_tilt = I1q * np.eye(3) + (I3q - I1q) * np.outer(e3q, e3q)
+lams = np.linspace(0, 2 * np.pi, 720, endpoint=False)
+tau_avg = np.mean([3 * np.cross(rh, I_tilt @ rh) for rh in np.c_[np.cos(lams), np.sin(lams), np.zeros_like(lams)]], axis=0)
+assert np.allclose(tau_avg, [1.5 * (I3q - I1q) * np.sin(eps_obliq) * np.cos(eps_obliq), 0, 0], atol=1e-12)
+assert np.allclose(np.cross([0, 0, 1.0], e3q), [-np.sin(eps_obliq), 0, 0])                # z x e3 = -sin(eps) x-hat
+
 Omega_sun = 1.5 * (GM_sun / r_sun**3) / w3_earth * H_earth * np.cos(eps_obliq)
 Omega_moon = 1.5 * (GM_moon / r_moon**3) / w3_earth * H_earth * np.cos(eps_obliq)
 rate_sun = Omega_sun * year * arcsec
@@ -836,7 +894,8 @@ rate_total = rate_sun + rate_moon
 period_yr = 360 * 3600 / rate_total
 assert np.isclose(rate_sun, 15.94, atol=0.05)
 assert np.isclose(Omega_moon / Omega_sun, 2.18, atol=0.01)
-assert 45 < rate_total < 55 and 23_000 < period_yr < 29_000
+assert np.isclose(rate_moon, 34.71, atol=0.01)
+assert np.isclose(rate_total, 50.7, atol=0.05) and np.isclose(period_yr, 25_600, atol=50)
 print(f"Example 4.7: solar {rate_sun:.2f} arcsec/yr, lunar {rate_moon:.2f} arcsec/yr (ratio {Omega_moon / Omega_sun:.2f}), "
       f"total {rate_total:.1f} arcsec/yr, period {period_yr:.0f} yr (observed 50.3 arcsec/yr, 25,772 yr)")
 print("Part 8 checks passed.")
