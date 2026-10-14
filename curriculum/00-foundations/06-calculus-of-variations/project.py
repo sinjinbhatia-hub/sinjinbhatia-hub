@@ -81,6 +81,7 @@ res_line = minimize(polygon_length, y0, args=(x, A_, B_), jac=polygon_length_gra
 y_line_exact = A_ + (B_ - A_) * (x[1:-1] - a_) / (b_ - a_)
 dev_line = np.max(np.abs(res_line.x - y_line_exact))
 assert dev_line < 1e-3, dev_line
+assert dev_line < 1e-6, dev_line          # Example 4.1 quotes "to within 1e-6"
 assert np.isclose(res_line.fun, np.hypot(b_ - a_, B_ - A_), rtol=1e-10)
 assert history[-1] < 1e-3 * history[0], "E–L residual should collapse along the iterations"
 print(f"Part 1: arc-length minimizer -> line, max deviation {dev_line:.1e}; "
@@ -148,8 +149,14 @@ assert np.isclose(quad(lambda s: np.sqrt(2) / np.sqrt(2 * g * s), 0, 1)[0], T_li
 assert np.isclose(quad(lambda th: 2 * a_cyc * np.sin(th / 2) / (2 * np.sqrt(g * a_cyc) * np.sin(th / 2)), 0, th1)[0], T_cyc)
 end_slope = np.sin(th1) / (1 - np.cos(th1))
 assert np.isclose(end_slope, 1 / np.tan(th1 / 2)) and np.isclose(np.degrees(np.arctan(end_slope)), 20.9, atol=0.05)
+assert np.isclose(end_slope, 0.382, atol=5e-4) and np.isclose(100 * (1 - T_cyc / T_line), 8.7, atol=0.05)
+# Galileo's circular arc: the quarter circle through the same two points that starts vertically,
+# (x, y) = (1 − cos φ, sin φ), φ ∈ [0, π/2]; ds = dφ, so T = ∫ dφ / sqrt(2 g sin φ). Slower than the cycloid, faster than the line.
+T_qc = quad(lambda ph: 1 / np.sqrt(2 * g * np.sin(ph)), 0, np.pi / 2)[0]
+assert np.isclose(T_qc, 0.5920, atol=5e-5) and T_cyc < T_qc < T_line
 print(f"Part 2: θ1 = {th1:.4f} rad ({np.degrees(th1):.1f}°), a = {a_cyc:.5f} m, "
-      f"T_cyc = {T_cyc:.4f} s, T_line = {T_line:.4f} s, cycloid faster by {100 * (1 - T_cyc / T_line):.1f}%")
+      f"T_cyc = {T_cyc:.4f} s, T_line = {T_line:.4f} s, cycloid faster by {100 * (1 - T_cyc / T_line):.1f}%; "
+      f"Galileo's quarter circle T = {T_qc:.4f} s; arrival slope {end_slope:.3f}")
 
 # (b) Numerical brachistochrone with the exact polygon time.
 N = 100
@@ -522,12 +529,14 @@ for Lc, ysol in ((yp_**2 + yf**2, C1s * sp.exp(xs_) + C2s * sp.exp(-xs_)),
                  (yp_**2 - 2 * yf * sp.sin(xs_), sp.sin(xs_) + C1s * xs_ + C2s),
                  (xs_**2 * yp_**2 + yf**2, C1s * xs_**((-1 + sp.sqrt(5)) / 2) + C2s * xs_**((-1 - sp.sqrt(5)) / 2))):
     assert sp.simplify(EL_of(Lc).subs(yf, ysol).doit()) == 0, Lc
-# A2: Φ(ε) = 11/6 − ε/2 + ε²/3, so δJ = Φ'(0) = −1/2; formula (3.3) gives the same.
+assert np.allclose(np.sort(np.roots([1, 1, -1])), [-1.618, 0.618], atol=5e-4)   # A1(d): r² + r − 1 = 0
+# A2: Φ(ε) = 11/6 − ε/2 + ε²/3, so δJ = Φ'(0) = −1/2; formula (3.3) gives the same; Φ is minimal at ε = 3/4.
 eps_s = sp.symbols("epsilon")
 yA2, etaA2 = xs_**2, xs_ * (1 - xs_)
 PhiA2 = sp.integrate(sp.expand(sp.diff(yA2 + eps_s * etaA2, xs_)**2 + 2 * xs_ * (yA2 + eps_s * etaA2)), (xs_, 0, 1))
 assert sp.expand(PhiA2) == sp.Rational(11, 6) - eps_s / 2 + eps_s**2 / 3
 assert sp.integrate(2 * xs_ * etaA2 + 2 * sp.diff(yA2, xs_) * sp.diff(etaA2, xs_), (xs_, 0, 1)) == -sp.Rational(1, 2)
+assert sp.solve(sp.diff(PhiA2, eps_s), eps_s) == [sp.Rational(3, 4)]
 # A3(b), (d): Beltrami quantities y²(1 − y'²) and e^y/sqrt(1 + y'²).
 for Lc, Hc in ((yf**2 * (1 + yp_**2), yf**2 * (1 - yp_**2)), (sp.exp(yf) * sp.sqrt(1 + yp_**2), sp.exp(yf) / sp.sqrt(1 + yp_**2))):
     assert sp.simplify(Lc - yp_ * sp.diff(Lc, yp_) - Hc) == 0
@@ -608,6 +617,10 @@ def catenoid_area(c, d):
 
 
 d_ring = 0.5
+# min over c of c cosh(d/c) is attained at d/c = u* (u* tanh u* = 1, Part 9) and equals d cosh(u*)/u* = d / d_crit.
+min_ccosh = lambda d: d * np.cosh(u_star) / u_star
+assert np.isclose(min_ccosh(d_ring), d_ring / d_crit) and np.isclose(min_ccosh(d_ring), 0.7544, atol=5e-5)
+assert np.isclose(min_ccosh(0.8), 1.2071, atol=5e-5) and min_ccosh(d_ring) < 1 < min_ccosh(0.8)
 c_lo = brentq(lambda c: c * np.cosh(d_ring / c) - 1, 0.1, 0.5)     # thin neck
 c_hi = brentq(lambda c: c * np.cosh(d_ring / c) - 1, 0.5, 1.5)     # fat neck
 assert np.isclose(c_lo, 0.23509, atol=5e-6) and np.isclose(c_hi, 0.84834, atol=5e-6)

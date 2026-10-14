@@ -132,9 +132,11 @@ $$\kappa(f; x) = \lim_{\delta \to 0}\ \sup_{\|\delta x\| \le \delta}\ \frac{\|f(
 
 the worst-case ratio of relative output change to relative input change, for infinitesimal changes. If $f$ is differentiable with Jacobian $J$ (LA-14), then $\kappa = \|J\|\,\|x\|/\|f(x)\|$.
 
-**Proposition 3.4 (Matrix–vector product).** For $f(x) = Ax$ with fixed $A$, $\kappa \le \|A\|\,\|x\|/\|Ax\|$, with equality for $A$ square and invertible if and only if... no: with the bound $\kappa \le \|A\|\|A^{-1}\|$ when $A$ is invertible.
+**Proposition 3.4 (Matrix–vector product).** For $f(x) = Ax$ with fixed $A$ and $Ax \ne 0$,
 
-*Proof.* The Jacobian of $x \mapsto Ax$ is $A$, so by the remark after (3.6), $\kappa = \|A\|\|x\|/\|Ax\|$ exactly; the inequality in the statement is this with "$\le$" because some authors define $\kappa$ with the supremum taken differently. If $A$ is invertible then $\|x\| = \|A^{-1}Ax\| \le \|A^{-1}\|\|Ax\|$, so $\kappa \le \|A\|\|A^{-1}\|$. ∎
+$$\kappa(f; x) = \frac{\|A\|\,\|x\|}{\|Ax\|}, \qquad\text{and if $A$ is invertible,}\qquad \kappa(f; x) \le \|A\|\,\|A^{-1}\|.$$
+
+*Proof.* The map is linear, so $f(x + \delta x) - f(x) = A\,\delta x$ exactly, and the ratio in (3.6) is $\dfrac{\|A\,\delta x\|/\|Ax\|}{\|\delta x\|/\|x\|} = \dfrac{\|A\,\delta x\|}{\|\delta x\|}\cdot\dfrac{\|x\|}{\|Ax\|}$. The supremum of the first factor over $\delta x$ is the definition of the operator norm $\|A\|$ (LA-9 Theorem 3.5), which gives the equality. If $A$ is invertible then $\|x\| = \|A^{-1}Ax\| \le \|A^{-1}\|\,\|Ax\|$, so $\|x\|/\|Ax\| \le \|A^{-1}\|$ and the bound follows. The bound is attained when $x$ is a right singular vector for $\sigma_n$: then $\|Ax\| = \sigma_n\|x\|$ and $\kappa = \sigma_1/\sigma_n$. ∎
 
 That product $\|A\|\|A^{-1}\|$ is about to become the most important number in the module.
 
@@ -264,3 +266,282 @@ For $A$ of size $m\times n$ with $m > n$ and full column rank, the least-squares
 3. By Theorem 3.7, $\kappa_2(A^\top A) = \sigma_1^2/\sigma_n^2 = \kappa_2(A)^2$. ∎
 
 ■ **What just happened.** Forming $A^\top A$ squares the condition number *before* any algorithm runs. By (3.9), a backward stable solve of the normal equations gives forward error $\kappa(A)^2\varepsilon$. QR instead solves $R\hat x = Q^\top b$: $Q$ is orthogonal so $\kappa(R) = \kappa(A)$ (same singular values), and Householder QR followed by back substitution is backward stable for least squares (T&B Theorem 19.3), so the error is of order $\kappa(A)\varepsilon$ when the residual is small. With $\kappa(A) = 10^8$ the normal equations are at $\kappa^2\varepsilon = 1$: no correct digits. The project: error $6\times 10^{-3}$ for the normal equations, $7.5\times 10^{-10}$ for Householder QR, same problem. (A caveat for §8: when the residual $\|b - A\hat x\|$ is *large*, the least-squares problem itself has a $\kappa(A)^2$ term in its conditioning, T&B Theorem 18.1, and no algorithm beats it. QR is the right method; it is not a miracle.)
+
+### 3.7 Eigenvalues: never the characteristic polynomial, so iterate well
+
+LA-7 taught you to find eigenvalues as roots of $p_A(\lambda) = \det(A - \lambda I)$. Every textbook before 1960 computed them that way. Here is why nobody does now.
+
+**The roots of a polynomial are an ill-conditioned function of its coefficients.** Let $p(x) = \sum_{j=0}^{n} a_j x^j$ have a simple root $r$ (so $p(r) = 0$, $p'(r) \ne 0$) and perturb one coefficient, $a_j \to a_j + \delta a_j$.
+
+▶ **Try it first.** The perturbed root $r + \delta r$ satisfies $\sum_j a_j (r+\delta r)^j + \delta a_j\,r^j = 0$ to first order. Expand and solve for $\delta r$.
+
+**Derivation.**
+
+1. To first order in small quantities, $p(r + \delta r) = p(r) + p'(r)\,\delta r = p'(r)\,\delta r$, since $p(r) = 0$.
+2. The perturbed polynomial at the perturbed root is $p(r + \delta r) + \delta a_j\,(r + \delta r)^j = 0$. To first order, $p'(r)\,\delta r + \delta a_j\,r^j = 0$.
+3. Hence
+$$\delta r \approx -\frac{r^j}{p'(r)}\,\delta a_j, \qquad \frac{|\delta r|/|r|}{|\delta a_j|/|a_j|} \approx \frac{|a_j|\,|r|^{j-1}}{|p'(r)|}. \tag{3.15}$$
+The right-hand quantity is the relative condition number of the root $r$ with respect to the coefficient $a_j$, in the sense of (3.6). ∎
+
+■ **What just happened.** The sensitivity is $|r|^j$ divided by $|p'(r)| = \prod_{i \ne r}|r - r_i|$. For roots that are large and close to their neighbours, the numerator is huge and the denominator modest. For **Wilkinson's polynomial** $w(x) = \prod_{k=1}^{20}(x - k)$, the coefficient of $x^{19}$ is $a_{19} = -210$, and at the root $r = 16$ we have $p'(16) = 15!\cdot 4! \approx 3.1\times 10^{13}$ while $16^{19} \approx 7.6\times 10^{22}$. So $|r^{19}/p'(r)| \approx 2.4\times 10^{9}$ and the relative condition number (3.15) is about $3.2\times 10^{10}$: a relative change of $10^{-10}$ in one coefficient moves the root by a relative amount of order $1$. The perturbation Wilkinson used, $\delta a_{19} = -2^{-23} \approx -1.2\times 10^{-7}$, is so far outside the linear regime that (3.15) predicts a move of $287$, which is meaningless; what actually happens is that the roots $10$ through $19$ collide in pairs and leave the real axis, the pair near $16.73$ acquiring imaginary parts $\pm 2.81$. The root $r = 1$, by contrast, has condition number $1.7\times 10^{-15}$ and does not move. The project computes all twenty perturbed roots to 30 digits and plots them. Worse: the coefficients of $w$ run up to $20! \approx 2.4\times 10^{18} > 2^{53}$, so they cannot even be *stored* exactly in double precision, and `np.roots` on the unperturbed coefficients already returns roots off by $0.085$. Forming $p_A$ throws away the matrix and keeps twenty numbers that do not determine its eigenvalues to any useful accuracy. (For a symmetric matrix the eigenvalues themselves are perfectly conditioned, $|\delta\lambda_i| \le \|\delta A\|$ by Weyl's inequality, LA-8 Exercise C1; it is the *polynomial* that is the problem, not the eigenvalues.)
+
+**So every eigenvalue algorithm is iterative.** Abel (1824) and Ruffini proved there is no formula in radicals for the roots of a general polynomial of degree $5$ or more. Since the eigenvalues of any $n\times n$ matrix are the roots of its characteristic polynomial, and every monic polynomial is the characteristic polynomial of its companion matrix, a finite exact algorithm for eigenvalues would be a finite exact algorithm for polynomial roots, which does not exist. This is the opposite of the situation for $Ax = b$ or $A = QR$, which finite algorithms solve exactly in exact arithmetic. Eigenvalue algorithms must converge; the only questions are "to what" and "how fast."
+
+**Theorem 3.13 (Power iteration; LA-7 §3.6).** Let $A$ be diagonalizable with eigenvalues $|\lambda_1| > |\lambda_2| \ge \cdots \ge |\lambda_n|$ and eigenvectors $x_1, \dots, x_n$. If $v_0 = \sum c_i x_i$ with $c_1 \ne 0$, then $v_k = A^k v_0/\|A^k v_0\|$ satisfies $\|v_k - (\pm x_1/\|x_1\|)\| = O(|\lambda_2/\lambda_1|^k)$. If $A$ is also symmetric, the Rayleigh quotient $\mu_k = v_k^\top A v_k$ satisfies $|\mu_k - \lambda_1| = O(|\lambda_2/\lambda_1|^{2k})$.
+
+*Derivation.* $A^k v_0 = \sum_i c_i\lambda_i^k x_i = c_1\lambda_1^k\big(x_1 + \sum_{i\ge 2}(c_i/c_1)(\lambda_i/\lambda_1)^k x_i\big)$, and every term in the sum is $O(|\lambda_2/\lambda_1|^k)$. For the Rayleigh quotient, write $v_k = (x_1 + \varepsilon w)/\|x_1 + \varepsilon w\|$ with $w \perp x_1$ a unit vector (possible when $A$ is symmetric, since the eigenvectors are orthogonal) and $\varepsilon = O(|\lambda_2/\lambda_1|^k)$. Then $v_k^\top A v_k = (\lambda_1 + \varepsilon^2 w^\top A w)/(1 + \varepsilon^2)$, which differs from $\lambda_1$ by $O(\varepsilon^2)$: the first-order term vanishes because $x_1^\top A w = \lambda_1 x_1^\top w = 0$. ∎
+
+The Rayleigh quotient is *quadratically* accurate in the eigenvector error, for the same reason a function is flat at a critical point: the eigenvectors are the critical points of $v \mapsto v^\top A v/v^\top v$ (LA-8 Theorem 3.17). Keep this; it is half of the cubic convergence below.
+
+**Inverse iteration with a shift.** Power iteration finds only $\lambda_1$ and is slow when $|\lambda_2/\lambda_1|$ is near $1$. Both problems have one fix.
+
+▶ **Try it first.** If $Ax = \lambda x$, what does $(A - \mu I)^{-1}$ do to $x$?
+
+**Derivation.** From $Ax = \lambda x$, $(A - \mu I)x = (\lambda - \mu)x$, so for $\mu$ not an eigenvalue,
+$$(A - \mu I)^{-1}x = \frac{1}{\lambda - \mu}\,x. \tag{3.16}$$
+The eigenvectors are unchanged and the eigenvalues become $1/(\lambda_i - \mu)$. Power iteration on $(A - \mu I)^{-1}$ therefore converges to the eigenvector whose eigenvalue is *closest to $\mu$*, at the rate $|\lambda_{\text{closest}} - \mu|/|\lambda_{\text{next}} - \mu|$ per step, which is tiny when $\mu$ is a good estimate. Each step is a linear solve with $A - \mu I$; factor it once ($\tfrac23 n^3$) and each step costs $2n^2$. ∎
+
+■ **What just happened.** With eigenvalues $1, 2, 3$ and the shift $\mu = 2.9$, the transformed eigenvalues are $-0.53, -1.11, 10$: the ratio drops from $2/3$ (power iteration) to $0.11$, and reaching $10^{-10}$ takes $11$ steps instead of $57$. Note the apparent paradox: $A - \mu I$ is nearly singular when $\mu$ is nearly an eigenvalue, so the solve is ill-conditioned (Theorem 3.5), and yet the method works. The error of the solve is large but lies almost entirely along the eigenvector you want, so after normalizing it does no harm (Trefethen & Bau lecture 27, Exercise 27.5). Ill-conditioning that is aligned with what you are computing is harmless; this is a useful thing to know.
+
+**Algorithm 3.2 (Rayleigh quotient iteration).** Start with a unit vector $v_0$. For $k = 0, 1, 2, \dots$: $\mu_k = v_k^\top A v_k$; solve $(A - \mu_k I)w = v_k$; $v_{k+1} = w/\|w\|$.
+
+**Theorem 3.14 (Cubic convergence of RQI for symmetric $A$; T&B Theorem 27.3, sketched).** If $v_k$ converges to an eigenvector $x_J$ of a symmetric $A$ with simple eigenvalue $\lambda_J$, then eventually $\|v_{k+1} - (\pm x_J)\| = O(\|v_k - (\pm x_J)\|^3)$ and $|\mu_{k+1} - \lambda_J| = O(|\mu_k - \lambda_J|^3)$.
+
+*Sketch (this is the whole idea; the constants are in T&B).* Let the eigenvector error at step $k$ be $\varepsilon$. By Theorem 3.13 the Rayleigh quotient shift is accurate to $\varepsilon^2$: $|\mu_k - \lambda_J| = O(\varepsilon^2)$. One step of inverse iteration with that shift multiplies the eigenvector error by $|\lambda_J - \mu_k|/|\lambda_{\text{next}} - \mu_k| = O(\varepsilon^2)$. So the new error is $O(\varepsilon\cdot\varepsilon^2) = O(\varepsilon^3)$. ∎
+
+Cubic means the number of correct digits roughly triples each step. The project's run on a $6\times 6$ matrix gives eigenvalue errors $1.7\times 10^{-1}$, $2.3\times 10^{-3}$, $4.9\times 10^{-9}$, $8.9\times 10^{-16}$: $0, 2, 8, 15$ digits. Three steps from a rough guess to machine precision. The catch is the same as for inverse iteration: each step is a fresh factorization, since the shift changes, so RQI is for polishing one eigenpair, not for finding all $n$. For that we need §3.8.
+
+### 3.8 The QR algorithm
+
+The algorithm that `np.linalg.eig` and `eigh` run was found by John Francis (1961) and Vera Kublanovskaya (1961) independently. In its purest form it is one line:
+
+$$A_0 = A; \qquad A_k = Q_k R_k \ \text{(QR factorization)}, \qquad A_{k+1} = R_k Q_k. \tag{3.17}$$
+
+Factor, multiply back in the opposite order, repeat. Two theorems explain why this innocent-looking iteration computes eigenvalues.
+
+**Theorem 3.15 (Every iterate is orthogonally similar to $A$).** With $Q^{(k)} = Q_1 Q_2\cdots Q_k$,
+$$A_{k+1} = Q_k^\top A_k Q_k = (Q^{(k)})^\top A\, Q^{(k)}.$$
+In particular every $A_k$ has the same eigenvalues as $A$, and if $A$ is symmetric so is every $A_k$.
+
+▶ **Try it first.** From $A_k = Q_k R_k$, solve for $R_k$ and substitute into $A_{k+1} = R_k Q_k$.
+
+**Derivation.**
+
+1. $Q_k$ is orthogonal, so $R_k = Q_k^\top A_k$.
+2. $A_{k+1} = R_k Q_k = Q_k^\top A_k Q_k$.
+3. Induct: $A_{k+1} = Q_k^\top Q_{k-1}^\top \cdots Q_1^\top A\, Q_1\cdots Q_k = (Q^{(k)})^\top A Q^{(k)}$.
+4. Orthogonal similarity preserves eigenvalues (LA-7 Theorem 3.18) and symmetry: $(Q^\top A Q)^\top = Q^\top A^\top Q$. ∎
+
+**Theorem 3.16 (The QR algorithm is simultaneous power iteration).** With $R^{(k)} = R_k R_{k-1}\cdots R_1$ (upper triangular, as a product of upper triangular matrices),
+$$A^k = Q^{(k)} R^{(k)}.$$
+That is: $Q^{(k)}$ is the orthogonal factor in the QR factorization of $A^k$.
+
+▶ **Try it first.** Check $k = 1$ (trivial) and $k = 2$: write $A^2 = A\cdot A = Q_1 R_1 Q_1 R_1$ and use $R_1 Q_1 = A_1 = Q_2 R_2$.
+
+**Derivation (induction on $k$).**
+
+1. $k = 1$: $A = Q_1 R_1$ by definition.
+2. Assume $A^{k-1} = Q^{(k-1)}R^{(k-1)}$. Then $A^k = A\,A^{k-1} = A\,Q^{(k-1)} R^{(k-1)}$.
+3. By Theorem 3.15, $A\,Q^{(k-1)} = Q^{(k-1)} A_{k}$ (move $(Q^{(k-1)})^\top$ to the other side of $A_k = (Q^{(k-1)})^\top A Q^{(k-1)}$). And $A_k = Q_k R_k$. So $A\,Q^{(k-1)} = Q^{(k-1)} Q_k R_k = Q^{(k)} R_k$.
+4. Substitute: $A^k = Q^{(k)} R_k R^{(k-1)} = Q^{(k)} R^{(k)}$. ∎
+
+■ **What just happened.** Read the first column of $A^k = Q^{(k)}R^{(k)}$: $A^k e_1 = r^{(k)}_{11}\, q^{(k)}_1$. So the first column of $Q^{(k)}$ is the normalized $A^k e_1$: **power iteration**, converging to the dominant eigenvector at rate $|\lambda_2/\lambda_1|$. Read the first $j$ columns: $A^k[e_1, \dots, e_j] = Q^{(k)}_{:,1:j}\, R^{(k)}_{1:j,1:j}$, so the first $j$ columns of $Q^{(k)}$ are an orthonormal basis for $A^k\operatorname{span}\{e_1,\dots,e_j\}$. That is power iteration on $j$ vectors at once, re-orthonormalized at every step so they do not all collapse onto $x_1$: **simultaneous iteration**, and the $j$-dimensional space converges to the span of the top $j$ eigenvectors at rate $|\lambda_{j+1}/\lambda_j|$ (T&B Theorem 28.4 and the argument of Theorem 3.13 applied blockwise). Now use Theorem 3.15: $A_{k+1} = (Q^{(k)})^\top A Q^{(k)}$ is $A$ written in the basis $Q^{(k)}$. When the first $j$ columns of $Q^{(k)}$ span an invariant subspace of $A$, the block of $A_{k+1}$ below the first $j$ columns is zero. So $A_k$ converges to upper triangular form, the **Schur form** of LA-10 Theorem 3.8, with the eigenvalues on the diagonal in decreasing order of modulus, the $(j+1, j)$ entry decaying like $|\lambda_{j+1}/\lambda_j|^k$. For symmetric $A$, triangular and symmetric means diagonal, and $Q^{(k)}$ converges to the eigenvector matrix. Example 4.4 does two steps by hand on a $2\times 2$ and watches the off-diagonal shrink by $\lambda_2/\lambda_1 = 3 - 2\sqrt2 \approx 0.172$ per step; the project runs a $6\times 6$ with eigenvalues $1, \dots, 6$ and confirms that the five subdiagonal entries decay at rates $5/6, 4/5, 3/4, 2/3, 1/2$, each at its own speed.
+
+(What the argument assumes: $|\lambda_1| > |\lambda_2| > \cdots > |\lambda_n|$ and a genericity condition on the leading principal minors of the eigenvector matrix. Equal-modulus pairs, including complex conjugate pairs of a real matrix, do not separate: the real QR algorithm converges to the *real* Schur form of LA-10 Theorem 3.11, with $2\times 2$ blocks for complex pairs. We stay with symmetric matrices for the practical algorithm.)
+
+**Making it practical.** As written, (3.17) is hopeless: each step is a full QR at $\tfrac43 n^3$ flops, and convergence at rate $|\lambda_{j+1}/\lambda_j|$ is slow when eigenvalues are close. Three ideas fix this, and together they are the algorithm in LAPACK.
+
+**(a) Reduce to Hessenberg (tridiagonal) form first.** An upper Hessenberg matrix has $h_{ij} = 0$ for $i > j+1$: upper triangular plus one subdiagonal. Any $A$ can be brought to Hessenberg form by $n-2$ Householder reflections applied from *both* sides, $H = Q^\top A Q$: at step $k$ choose the reflector that zeros column $k$ below row $k+1$ (not below row $k$: a reflector that acts on rows $k+1\ldots n$ leaves row $k$ alone, so when you also apply it from the right, which mixes columns $k+1\ldots n$, the zeros already created in column $k$ survive). If you tried to zero column $k$ below row $k$, the right-multiplication would mix columns $k\ldots n$ and destroy them; you cannot reach triangular form this way, which is just as well, since triangular form *is* the Schur form and would mean a finite eigenvalue algorithm. For symmetric $A$ the Hessenberg form is symmetric, hence **tridiagonal**. Cost: $\tfrac{10}{3}n^3$ in general, $\tfrac43 n^3$ for the symmetric case (T&B lecture 26).
+
+**Theorem 3.17 (A QR step preserves Hessenberg form).** If $A_k$ is upper Hessenberg and invertible, so is $A_{k+1} = R_k Q_k$.
+
+*Proof.* $Q_k = A_k R_k^{-1}$. The inverse of an upper triangular matrix is upper triangular (LA-2), and (Hessenberg)$\times$(upper triangular) is Hessenberg: entry $(i,j)$ of the product is $\sum_l h_{il}u_{lj}$, and $h_{il} \ne 0$ needs $l \ge i-1$ while $u_{lj} \ne 0$ needs $l \le j$, so the entry vanishes when $i - 1 > j$. So $Q_k$ is Hessenberg, and $R_k Q_k$ = (upper triangular)$\times$(Hessenberg) is Hessenberg by the same count. ∎
+
+Why this matters: the QR factorization of a Hessenberg matrix needs only $n-1$ **Givens rotations**, one per subdiagonal entry. A Givens rotation in the $(k, k+1)$ plane is
+
+$$G_k = \begin{pmatrix} c & s \\ -s & c\end{pmatrix} \text{ in rows/columns } k, k+1, \qquad c = \frac{a}{\sqrt{a^2 + b^2}},\ s = \frac{b}{\sqrt{a^2+b^2}} \ \text{ zeros } b \text{ below } a. \tag{3.18}$$
+
+Each rotation touches two rows, so one QR step on a Hessenberg matrix costs $O(n^2)$ instead of $O(n^3)$, and on a tridiagonal matrix $O(n)$. The project's `qr_step_tridiagonal` is exactly this: $n-1$ rotations from the left to get $R$, then the same rotations from the right to form $RQ$.
+
+**(b) Shift.** Replace (3.17) by $A_k - \mu_k I = Q_k R_k$, $A_{k+1} = R_k Q_k + \mu_k I$. Then $A_{k+1} = Q_k^\top(A_k - \mu_k I)Q_k + \mu_k I = Q_k^\top A_k Q_k$: still an orthogonal similarity, same eigenvalues. By Theorem 3.16 applied to $A - \mu I$, the *last* column of $Q^{(k)}$ is now inverse iteration with shift $\mu$ (the last column of $Q$ in $B = QR$ is orthogonal to the first $n-1$ columns of $B$, which makes it proportional to $B^{-\top}e_n$; T&B lecture 29 does the bookkeeping). Choosing $\mu_k = (A_k)_{nn}$, the Rayleigh quotient of $e_n$, makes the last row and column of $A_k$ undergo Rayleigh quotient iteration, cubically convergent by Theorem 3.14. The $(n, n-1)$ entry is cubed every step.
+
+The Rayleigh shift can fail: for $A = \begin{pmatrix}0 & 1\\1 & 0\end{pmatrix}$, $\mu = a_{22} = 0$ is exactly midway between the eigenvalues $\pm 1$ and the iteration never moves. The repair is the **Wilkinson shift**: take $\mu$ to be the eigenvalue of the trailing $2\times 2$ block $\begin{pmatrix} a & b\\ b & c\end{pmatrix}$ closer to $c$, computed as
+
+$$\mu = c - \frac{\operatorname{sign}(\delta)\, b^2}{|\delta| + \sqrt{\delta^2 + b^2}}, \qquad \delta = \frac{a - c}{2}, \tag{3.19}$$
+
+with $\operatorname{sign}(0) = 1$. (Check: the eigenvalues of the block are $\frac{a+c}{2} \pm \sqrt{\delta^2 + b^2}$; the one closer to $c$ is $c + \delta - \operatorname{sign}(\delta)\sqrt{\delta^2+b^2}$, and multiplying numerator and denominator by $|\delta| + \sqrt{\delta^2+b^2}$ gives (3.19). This is the stable quadratic formula (3.5) again: the subtraction $|\delta| - \sqrt{\delta^2 + b^2}$ would cancel catastrophically when $b \ll |\delta|$, which is exactly when the algorithm is converging.) For symmetric tridiagonal matrices, QR with the Wilkinson shift always converges, at least linearly and in practice cubically (Wilkinson 1968; T&B lecture 29). For $A = \begin{pmatrix}3&1\\1&1\end{pmatrix}$ of Example 4.4 the Wilkinson shift is $2 - \sqrt2 = 0.5858$, the exact smaller eigenvalue: one shifted step would finish what the unshifted iteration takes a dozen steps to do.
+
+**(c) Deflate.** When a subdiagonal entry $t_{j+1,j}$ becomes negligible, $|t_{j+1,j}| \le \varepsilon(|t_{jj}| + |t_{j+1,j+1}|)$, set it to zero. The matrix is now block diagonal and the two blocks have separate eigenvalue problems; recurse on each. Since the shifted iteration drives the *last* subdiagonal entry to zero cubically, the usual pattern is: a few steps, deflate one eigenvalue off the bottom, repeat on the $(n-1)\times(n-1)$ block. Empirically about two QR steps per eigenvalue; the project's `qr_algorithm_symmetric` takes $20$, $105$ and $304$ steps for $n = 10, 50, 150$ ($2.0$, $2.1$, $2.0$ per eigenvalue) and matches `eigvalsh` to $6\times 10^{-15}$ relative.
+
+**Total cost (symmetric).** Tridiagonalization $\tfrac43 n^3$, then $O(n)$ per QR step times $O(n)$ steps: the eigenvalues cost $\tfrac43 n^3 + O(n^2)$, essentially the price of the reduction. Accumulating the eigenvectors (applying every rotation to $Q$) raises this to about $\tfrac{9}{2}n^3$ or so; LAPACK's `dsyev` (which `eigh` calls) is this algorithm with a divide-and-conquer or relatively-robust-representation variant for the tridiagonal phase. For nonsymmetric $A$ the same structure holds with the Francis double shift (two complex conjugate shifts combined into one real step, so complex arithmetic is never needed) and the real Schur form as the target: roughly $10n^3$ flops for eigenvalues, $25n^3$ with the Schur vectors (Golub & Van Loan §7.5). All of it is backward stable: the computed Schur form is the exact Schur form of $A + \delta A$ with $\|\delta A\| = O(\varepsilon\|A\|)$, so by Weyl's inequality the computed eigenvalues of a symmetric matrix have *absolute* error $O(\varepsilon\|A\|)$; small eigenvalues of a matrix with large ones carry large *relative* error, which is a property of the problem, not the algorithm.
+
+**The SVD: Golub–Kahan.** The temptation is to compute the SVD as the eigendecomposition of $A^\top A$. Theorem 3.12 says this squares the condition number: singular values below $\sqrt{\varepsilon}\,\sigma_1 \approx 10^{-8}\sigma_1$ are lost entirely (LA-9's project shows it). Golub and Kahan (1965) found the way around: reduce $A$ to upper **bidiagonal** form $A = U B V^\top$ by Householder reflections alternating from the left (zero column $k$ below the diagonal) and the right (zero row $k$ to the right of the superdiagonal), at $4mn^2 - \tfrac43 n^3$ flops; $B$ has the same singular values as $A$ (unitary equivalence, LA-10 §3.1). Then observe that $B^\top B$ is tridiagonal, so the symmetric QR algorithm on $B^\top B$ would be cheap, and arrange the rotations so that they act on $B$ itself without ever forming $B^\top B$ (the "implicit" shifted QR step of Golub and Reinsch 1970; Demmel and Kahan 1990 refined it to compute even the tiny singular values to high relative accuracy). That is `np.linalg.svd`. The project implements the bidiagonalization and checks that $B$'s singular values match $A$'s to machine precision; the implicit QR sweep is Trefethen & Bau lecture 31 and Golub & Van Loan §8.6.
+
+### 3.9 Large sparse systems: the model problem and stationary iterations
+
+**The running example.** Poisson's equation $-\nabla^2 u = f$ on the unit square with $u = 0$ on the boundary is the electrostatic potential of a charge density (EM-3), the steady temperature of a heated plate, and the deflection of a membrane. Put $N$ interior grid points per side with spacing $h = 1/(N+1)$, write $u_{ij} \approx u(ih, jh)$, and replace each second derivative by its centered difference $(u_{i-1,j} - 2u_{ij} + u_{i+1,j})/h^2$. The result is the **five-point stencil**
+
+$$\frac{4u_{ij} - u_{i-1,j} - u_{i+1,j} - u_{i,j-1} - u_{i,j+1}}{h^2} = f_{ij}, \tag{3.20}$$
+
+one equation per interior point: $n = N^2$ equations in $N^2$ unknowns. Ordering the unknowns row by row and using the Kronecker product of LA-12,
+
+$$A = \frac{1}{h^2}\left(I_N\otimes L_N + L_N\otimes I_N\right), \qquad L_N = \begin{pmatrix} 2 & -1 & & \\ -1 & 2 & -1 & \\ & \ddots & \ddots & \ddots \\ & & -1 & 2\end{pmatrix}, \tag{3.21}$$
+
+an $N^2\times N^2$ matrix with at most five nonzeros per row. For $N = 200$ that is $40{,}000$ unknowns, $200{,}000$ nonzeros, and $1.6\times 10^9$ entries in the dense matrix you must never form (12.8 GB).
+
+**Theorem 3.18 (Spectrum of the model problem).** The eigenvalues of $A$ in (3.21) are
+
+$$\lambda_{jk} = \frac{4}{h^2}\left(\sin^2\frac{j\pi h}{2} + \sin^2\frac{k\pi h}{2}\right), \qquad j, k = 1, \dots, N, \tag{3.22}$$
+
+so $A$ is SPD with $\lambda_{\min} \approx 2\pi^2$, $\lambda_{\max} \approx 8/h^2$, and $\kappa(A) = \cot^2(\pi h/2) \approx \dfrac{4}{\pi^2 h^2} \approx 0.4\,N^2$.
+
+▶ **Try it first.** Guess that the eigenvectors of $L_N$ are the discrete sines $v^{(j)}_i = \sin(ij\pi h)$, and apply $L_N$ to one. You will need $\sin(a - b) + \sin(a+b) = 2\sin a\cos b$.
+
+**Derivation.**
+
+1. Row $i$ of $L_N v^{(j)}$ is $-\sin((i-1)j\pi h) + 2\sin(ij\pi h) - \sin((i+1)j\pi h) = 2\sin(ij\pi h) - 2\sin(ij\pi h)\cos(j\pi h) = 2(1 - \cos j\pi h)\sin(ij\pi h)$. (At $i = 1$ and $i = N$ the missing neighbour is $\sin 0 = 0$ and $\sin((N+1)j\pi h) = \sin(j\pi) = 0$, so the formula holds there too; this is why the boundary condition $u = 0$ and the spacing $h = 1/(N+1)$ fit together.)
+2. So $L_N v^{(j)} = \mu_j v^{(j)}$ with $\mu_j = 2 - 2\cos(j\pi h) = 4\sin^2(j\pi h/2)$, $j = 1, \dots, N$: $N$ distinct eigenvalues, hence all of them.
+3. For the Kronecker sum, $(I\otimes L + L\otimes I)(v^{(j)}\otimes v^{(k)}) = v^{(j)}\otimes L v^{(k)} + L v^{(j)}\otimes v^{(k)} = (\mu_k + \mu_j)(v^{(j)}\otimes v^{(k)})$, using $(B\otimes C)(x\otimes y) = Bx\otimes Cy$ (LA-12). Divide by $h^2$ to get (3.22).
+4. $\lambda_{\min} = \lambda_{11} = (8/h^2)\sin^2(\pi h/2) \to 2\pi^2$ as $h\to 0$ (since $\sin x \approx x$); $\lambda_{\max} = \lambda_{NN} = (8/h^2)\cos^2(\pi h/2)$ (since $\sin(N\pi h/2) = \cos(\pi h/2)$); their ratio is $\cot^2(\pi h/2) \approx 4/(\pi^2h^2)$. ∎
+
+■ **What just happened.** The condition number grows like $N^2$: refining the grid to get a better answer makes the linear system harder, and the digits-lost rule of §3.3 says a $1000\times 1000$ grid ($\kappa \approx 4\times 10^5$) still leaves ten digits, which is plenty. The project checks (3.22) against `eigvalsh` for $N = 8$. The same calculation gives the vibration frequencies of a square drum (CM-6) and the eigenstates of a particle in a 2D box (QM-2); the matrix $L_N$ is the discrete Laplacian whose eigenvectors are the discrete sine transform (F2). The $\sin^2$ structure, small eigenvalues for smooth modes and large ones for oscillatory modes, is what makes multigrid methods work, and what makes Jacobi slow.
+
+**Sparse storage.** Only the nonzeros are stored. Compressed sparse row (CSR) format keeps three arrays: the nonzero values row by row, their column indices, and a pointer to where each row starts; $A x$ costs $2\,\mathrm{nnz}(A)$ flops, here $10n$. For $N = 200$, one matrix–vector product is $4\times 10^5$ flops against $\tfrac23 n^3 = 4\times 10^{13}$ for dense elimination: a factor of $10^8$. So every method below is built from matrix–vector products only.
+
+**Stationary iterations from a splitting.** Write $A = M - N$ with $M$ easy to invert (diagonal, triangular). Then $Ax = b$ becomes $Mx = Nx + b$, and the fixed-point iteration is
+
+$$x_{k+1} = M^{-1}(N x_k + b) = x_k + M^{-1} r_k, \qquad r_k = b - Ax_k. \tag{3.23}$$
+
+(The second form: $M^{-1}(Nx_k + b) = M^{-1}((M - A)x_k + b) = x_k + M^{-1}(b - Ax_k)$. It says: correct $x_k$ by an approximate solve of the residual equation $A\,e = r_k$ with $M$ in place of $A$.) **Jacobi** takes $M = D$, the diagonal of $A$; **Gauss–Seidel** takes $M = D + L_{\text{low}}$, the lower triangle including the diagonal, so that each updated component is used immediately for the next one. Both cost about one matrix–vector product per step.
+
+**Theorem 3.19 (Convergence of stationary iterations).** Let $B = M^{-1}N = I - M^{-1}A$ be the iteration matrix. The iteration (3.23) converges to $x = A^{-1}b$ for every starting vector $x_0$ if and only if the spectral radius $\rho(B) = \max_i|\lambda_i(B)| < 1$.
+
+▶ **Try it first.** Subtract $x = M^{-1}(Nx + b)$ (true for the exact solution) from (3.23) to get a recurrence for the error $e_k = x_k - x$. Then ask when $B^k \to 0$.
+
+**Derivation.**
+
+1. $e_{k+1} = x_{k+1} - x = M^{-1}N(x_k - x) = B e_k$, so $e_k = B^k e_0$. Convergence for every $e_0$ is the statement $B^k \to 0$.
+2. ($\Leftarrow$) Suppose $\rho(B) < 1$. Take the Jordan form $B = XJX^{-1}$ (LA-11 Theorem 3.10); then $B^k = XJ^kX^{-1}$ and it suffices that $J^k \to 0$ block by block. For a Jordan block $J_s(\lambda) = \lambda I + N_s$ with $N_s^s = 0$, LA-11 Theorem 3.17 gives $J_s(\lambda)^k = \sum_{i=0}^{s-1}\binom{k}{i}\lambda^{k-i}N_s^i$. Each term is bounded by $k^i|\lambda|^{k-i}$, and $k^i|\lambda|^k \to 0$ for $|\lambda| < 1$ because the exponential beats the polynomial. So every block, hence $J^k$, hence $B^k$, tends to zero.
+3. ($\Rightarrow$) Suppose $|\lambda| \ge 1$ for some eigenvalue with eigenvector $v$ (possibly complex). If $B^k e_0 \to 0$ for every real $e_0$ then, by linearity, also for every complex $e_0 = u + iw$. But $B^k v = \lambda^k v$ has $\|B^kv\| = |\lambda|^k\|v\| \ge \|v\|$, which does not tend to zero. Contradiction. ∎
+
+■ **What just happened.** The asymptotic error reduction per step is $\rho(B)$: the number of iterations to gain one decimal digit is $1/(-\log_{10}\rho)$. Note that $\|B\| < 1$ in some norm is sufficient but $\rho(B) < 1$ is the exact condition; a matrix can have $\|B\|_2 > 1$ and still $B^k \to 0$ (any Jordan block with $|\lambda| < 1$ and a large off-diagonal), in which case the error first grows and then decays.
+
+**Jacobi on the model problem.** Here $D = (4/h^2)I$, so $B_J = I - D^{-1}A = I - (h^2/4)A$ has the *same eigenvectors* as $A$ with eigenvalues $1 - (h^2/4)\lambda_{jk} = 1 - \sin^2\frac{j\pi h}{2} - \sin^2\frac{k\pi h}{2} = \frac{\cos j\pi h + \cos k\pi h}{2}$. The largest in modulus is at $j = k = 1$ (and $j = k = N$, with the opposite sign):
+
+$$\rho(B_J) = \cos\pi h \approx 1 - \frac{\pi^2h^2}{2}. \tag{3.24}$$
+
+For Gauss–Seidel on this matrix, $\rho(B_{GS}) = \rho(B_J)^2 = \cos^2\pi h$ (David Young's 1950 thesis, for matrices with "property A," which the five-point stencil has; proof in Demmel, *Applied Numerical Linear Algebra* §6.5.3). Gauss–Seidel is exactly twice as fast as Jacobi, and both need $O(1/h^2) = O(N^2)$ iterations to gain a fixed number of digits, since $-\ln\cos\pi h \approx \pi^2h^2/2$. Each iteration is $O(N^2)$ work, so the total is $O(N^4)$: no better than banded elimination. For $N = 20$ ($\kappa = 178$, $\rho_J = 0.98883$) the project needs $1416$ Jacobi and $703$ Gauss–Seidel iterations to reduce the residual by $10^{-8}$, with the observed late-stage rates $0.98883$ and $0.97779$ matching $\cos\pi h$ and $\cos^2\pi h$ to five digits. Conjugate gradients, next, does it in $63$.
+
+The slowness has a picture. The eigenvalue of $B_J$ for the mode $(j, k)$ is $(\cos j\pi h + \cos k\pi h)/2$: near $1$ for the smoothest modes ($j, k$ small) and near $-1$ for the most oscillatory ones. Jacobi barely touches either. Weighted Jacobi ($M = D/\omega$, $\omega = 2/3$) kills the oscillatory half of the spectrum in a few sweeps and leaves the smooth half, which looks oscillatory on a coarser grid. That observation is multigrid, the only method that solves the model problem in $O(n)$ work; it is beyond this module (Briggs, Henson & McCormick, *A Multigrid Tutorial*).
+
+### 3.10 Conjugate gradients, derived
+
+Budget three hours for this section and do not skip the derivation steps; ML-2 reuses this argument for gradient descent on quadratics, and every Krylov method in §3.11 is a variation on it. Throughout, $A$ is $n\times n$ SPD, and $\|v\|_A = \sqrt{v^\top A v}$ is the **$A$-norm** (a genuine norm because $A$ is positive definite, LA-8 §3.8), with the associated **$A$-inner product** $\langle u, v\rangle_A = u^\top A v$.
+
+**(i) Solving $Ax = b$ is minimizing a quadratic.**
+
+**Theorem 3.20.** For SPD $A$, the function $\varphi(x) = \tfrac12 x^\top A x - b^\top x$ has a unique minimizer, namely $x_* = A^{-1}b$, and for every $x$,
+$$\varphi(x) - \varphi(x_*) = \tfrac12\|x - x_*\|_A^2. \tag{3.25}$$
+
+▶ **Try it first.** Compute the gradient of $\varphi$ (LA-14 if you want the formal rule; or expand in components). Then expand $\tfrac12(x - x_*)^\top A(x - x_*)$.
+
+**Derivation.**
+
+1. $\nabla\varphi(x) = Ax - b = -r(x)$: the negative residual. ($\partial/\partial x_i$ of $\tfrac12\sum_{jk}a_{jk}x_jx_k$ is $\tfrac12\sum_k a_{ik}x_k + \tfrac12\sum_j a_{ji}x_j = (Ax)_i$ by symmetry.) Critical points satisfy $Ax = b$; there is exactly one, $x_*$.
+2. $\tfrac12(x - x_*)^\top A(x - x_*) = \tfrac12x^\top Ax - x^\top Ax_* + \tfrac12x_*^\top Ax_* = \tfrac12x^\top Ax - x^\top b + \tfrac12x_*^\top b$, using $Ax_* = b$. And $\varphi(x_*) = \tfrac12x_*^\top b - x_*^\top b = -\tfrac12x_*^\top b$. So the right side equals $\varphi(x) - \varphi(x_*)$, which is (3.25).
+3. Since $\|x - x_*\|_A^2 > 0$ for $x \ne x_*$, the critical point is the strict global minimizer. ∎
+
+■ **What just happened.** The level sets of $\varphi$ are ellipsoids centered at $x_*$ with axes along the eigenvectors of $A$ and semi-axis lengths proportional to $1/\sqrt{\lambda_i}$ (LA-8 Theorem 3.14): long in the direction of small eigenvalues, short along large ones, with aspect ratio $\sqrt\kappa$. Solving the system means finding the bottom of a long thin valley.
+
+**(ii) Steepest descent zigzags.** The obvious method moves downhill: $x_{k+1} = x_k + \alpha_k r_k$ along the negative gradient $r_k = b - Ax_k$, with $\alpha_k$ chosen to minimize $\varphi$ along the line.
+
+▶ **Try it first.** Minimize $\varphi(x_k + \alpha r_k)$ over $\alpha$; then compute $r_{k+1}^\top r_k$.
+
+**Derivation.**
+
+1. $\frac{d}{d\alpha}\varphi(x_k + \alpha r_k) = \nabla\varphi(x_k + \alpha r_k)^\top r_k = (A(x_k + \alpha r_k) - b)^\top r_k = -r_k^\top r_k + \alpha\, r_k^\top A r_k$. Setting it to zero: $\alpha_k = \dfrac{r_k^\top r_k}{r_k^\top A r_k}$.
+2. The new residual is $r_{k+1} = b - A(x_k + \alpha_k r_k) = r_k - \alpha_k A r_k$, and $r_{k+1}^\top r_k = r_k^\top r_k - \alpha_k r_k^\top A r_k = 0$ by the choice of $\alpha_k$. ∎
+
+Consecutive search directions are *orthogonal*: the path turns $90°$ at every step, zigzagging down the valley. In the eigenbasis the error component along the $i$th axis is multiplied by $(1 - \alpha_k\lambda_i)$ at each step, and no single $\alpha$ can be good for both $\lambda_{\min}$ and $\lambda_{\max}$. The resulting bound (Kantorovich; Luenberger, *Linear and Nonlinear Programming* §8.6) is $\|e_{k}\|_A \le \left(\frac{\kappa - 1}{\kappa + 1}\right)^k\|e_0\|_A$: about $\kappa/2$ steps per factor of $e$, i.e. $O(\kappa)$ iterations, no better than Jacobi on the model problem. Exercise B7 runs two steps by hand on the $2\times 2$ system of Example 4.5: steepest descent reaches $(1/12, 7/12)$ while the answer is $(1/11, 7/11)$, and it never terminates; CG, which starts with the *same* first step, is exact at step two.
+
+**(iii) Conjugate directions finish in $n$ steps.** The repair is to choose directions that do not undo each other's work: directions $p_0, \dots, p_{n-1}$ that are **$A$-conjugate**, $p_i^\top A p_j = 0$ for $i \ne j$ (orthogonal in the $A$-inner product).
+
+**Theorem 3.21 (Conjugate directions).** Let $p_0, \dots, p_{n-1}$ be nonzero and $A$-conjugate. Then they are linearly independent, and the iteration $x_{k+1} = x_k + \alpha_k p_k$ with the exact line-search step
+$$\alpha_k = \frac{p_k^\top r_k}{p_k^\top A p_k} \tag{3.26}$$
+reaches $x_n = x_*$ exactly, for any $x_0$.
+
+▶ **Try it first.** Expand the initial error $e_0 = x_* - x_0$ in the basis $\{p_i\}$ and use conjugacy to read off the coefficients. Then show those coefficients are the $\alpha_k$.
+
+**Derivation.**
+
+1. Independence: if $\sum_i c_ip_i = 0$, multiply by $p_j^\top A$: $c_j\,p_j^\top Ap_j = 0$, and $p_j^\top Ap_j > 0$, so $c_j = 0$.
+2. Since $\{p_i\}$ is a basis, $e_0 = x_* - x_0 = \sum_{i=0}^{n-1}c_ip_i$. Multiply by $p_k^\top A$: $p_k^\top Ae_0 = c_k\,p_k^\top Ap_k$, so $c_k = \dfrac{p_k^\top Ae_0}{p_k^\top Ap_k} = \dfrac{p_k^\top r_0}{p_k^\top Ap_k}$, using $Ae_0 = b - Ax_0 = r_0$.
+3. The iteration gives $x_k = x_0 + \sum_{i<k}\alpha_ip_i$, so $r_k = r_0 - \sum_{i<k}\alpha_iAp_i$ and $p_k^\top r_k = p_k^\top r_0 - \sum_{i<k}\alpha_i\,p_k^\top Ap_i = p_k^\top r_0$ by conjugacy. Therefore $\alpha_k$ in (3.26) equals $c_k$.
+4. Hence $x_n = x_0 + \sum_{k<n}c_kp_k = x_0 + e_0 = x_*$.
+5. (That (3.26) is the exact line search: as in (ii), $\frac{d}{d\alpha}\varphi(x_k + \alpha p_k) = -p_k^\top r_k + \alpha\,p_k^\top Ap_k$.) ∎
+
+■ **What just happened.** In the $A$-inner product the directions are orthogonal, and the method is nothing but "expand the error in an orthogonal basis, one coefficient per step." Each step kills one component of the error for good, because later steps are $A$-orthogonal to it. The question is where to get $A$-conjugate directions cheaply. Any basis can be $A$-orthogonalized by Gram–Schmidt (LA-5 §3.8 with $\langle\cdot,\cdot\rangle_A$), but that costs $O(n^2)$ per direction plus all previous directions in storage. The miracle of CG is that for one particular choice, Gram–Schmidt collapses to a two-term recurrence.
+
+**(iv) Gram–Schmidt on the residuals collapses.** Take $p_0 = r_0$ and, at step $k$, build $p_k$ by $A$-orthogonalizing the current residual $r_k$ against $p_0, \dots, p_{k-1}$:
+$$p_k = r_k - \sum_{j<k}\frac{p_j^\top Ar_k}{p_j^\top Ap_j}\,p_j. \tag{3.27}$$
+
+**Theorem 3.22 (The CG orthogonality relations).** With $p_0 = r_0$, (3.26), (3.27) and $x_{k+1} = x_k + \alpha_kp_k$, for as long as $r_k \ne 0$:
+(a) $\operatorname{span}\{p_0,\dots,p_k\} = \operatorname{span}\{r_0,\dots,r_k\} = \operatorname{span}\{r_0, Ar_0, \dots, A^kr_0\} =: \mathcal{K}_{k+1}$ (the **Krylov subspace**);
+(b) $r_k \perp \mathcal{K}_k$, i.e. $r_k^\top p_j = 0$ and $r_k^\top r_j = 0$ for all $j < k$;
+(c) in (3.27) every term with $j < k-1$ vanishes, so
+$$p_k = r_k + \beta_{k-1}p_{k-1}, \qquad \beta_{k-1} = \frac{r_k^\top r_k}{r_{k-1}^\top r_{k-1}}; \tag{3.28}$$
+(d) $\alpha_k = \dfrac{r_k^\top r_k}{p_k^\top Ap_k}$.
+
+▶ **Try it first.** Prove (b) from the fact that $\alpha_k$ is an exact line search (so $r_{k+1} \perp p_k$) plus conjugacy. Everything else follows from (b).
+
+**Derivation (induction on $k$; all three statements in (a) hold trivially for $k = 0$).**
+
+1. *(a), the spans.* By (3.27), $p_k \in \operatorname{span}\{r_k, p_0,\dots,p_{k-1}\}$ and conversely $r_k \in \operatorname{span}\{p_0,\dots,p_k\}$, so the first two spans agree. For the third: $r_{k} = r_{k-1} - \alpha_{k-1}Ap_{k-1}$, and $Ap_{k-1} \in A\mathcal{K}_{k} \subseteq \mathcal{K}_{k+1}$, so by induction $r_k \in \mathcal{K}_{k+1}$ and $\operatorname{span}\{r_0..r_k\} \subseteq \mathcal{K}_{k+1}$. The dimensions match (the $p_j$ are independent by Theorem 3.21, as long as $r_k \ne 0$ makes $p_k \ne 0$: if $p_k = 0$ then $r_k \in \operatorname{span}\{p_0..p_{k-1}\}$, contradicting (b) below unless $r_k = 0$), so the spans are equal.
+2. *(b), residuals are orthogonal to the past.* We show $r_{k+1} \perp p_j$ for all $j \le k$. For $j = k$: $r_{k+1}^\top p_k = r_k^\top p_k - \alpha_k\,p_k^\top Ap_k = 0$ by (3.26). For $j < k$: $r_{k+1}^\top p_j = r_k^\top p_j - \alpha_k\,p_k^\top Ap_j = 0 - 0$, by the induction hypothesis and conjugacy. Since the $p_j$ span $\mathcal{K}_{k+1}$ by (a), $r_{k+1} \perp \mathcal{K}_{k+1}$; in particular $r_{k+1} \perp r_j$ for $j \le k$. **The residuals are mutually orthogonal.**
+3. *(c), the collapse.* The coefficient of $p_j$ in (3.27) has numerator $p_j^\top Ar_k = r_k^\top(Ap_j)$. From $r_{j+1} = r_j - \alpha_jAp_j$, $Ap_j = (r_j - r_{j+1})/\alpha_j \in \operatorname{span}\{r_j, r_{j+1}\}$. For $j < k-1$ both $r_j$ and $r_{j+1}$ are orthogonal to $r_k$ by (b), so the numerator is zero. Only $j = k-1$ survives, with numerator $r_k^\top(r_{k-1} - r_k)/\alpha_{k-1} = -r_k^\top r_k/\alpha_{k-1}$ and denominator $p_{k-1}^\top Ap_{k-1} = r_{k-1}^\top r_{k-1}/\alpha_{k-1}$ (by (d) at step $k-1$). The ratio, with the minus sign from (3.27), is $\beta_{k-1} = r_k^\top r_k/r_{k-1}^\top r_{k-1}$.
+4. *(d).* From (3.28), $p_k^\top r_k = r_k^\top r_k + \beta_{k-1}p_{k-1}^\top r_k = r_k^\top r_k$ by (b). Substitute into (3.26). ∎
+
+■ **What just happened.** This is the center of the module. Gram–Schmidt against all previous directions should cost $O(nk)$ at step $k$ and require storing everything. Because the search directions are built from residuals, and residuals are orthogonal (step 2), and $Ap_j$ lives in the span of two consecutive residuals (step 3), all but one term vanish *exactly*. The algorithm needs one matrix–vector product, two inner products, three vector updates, and four vectors of storage per step, regardless of $k$. Hestenes and Stiefel found this in 1952; the fact that it is "Gram–Schmidt in disguise" is why it was misfiled as a direct method for twenty years.
+
+**(v) The algorithm.**
+
+**Algorithm 3.3 (Conjugate gradients; Hestenes–Stiefel 1952).** Given SPD $A$, $b$, and $x_0$ (often $0$): $r_0 = b - Ax_0$, $p_0 = r_0$. For $k = 0, 1, 2, \dots$ until $\|r_k\| \le \tau\|b\|$:
+
+```
+α_k = (r_kᵀ r_k) / (p_kᵀ A p_k)
+x_{k+1} = x_k + α_k p_k
+r_{k+1} = r_k − α_k A p_k
+β_k = (r_{k+1}ᵀ r_{k+1}) / (r_kᵀ r_k)
+p_{k+1} = r_{k+1} + β_k p_k
+```
+
+Cost per step: one product $Ap_k$ ($2\,\mathrm{nnz}$ flops), two inner products and three axpys ($10n$ flops). Example 4.5 runs it by hand on a $2\times 2$ and terminates at step $2$ with $r_2 = 0$, as Theorem 3.21 requires. In floating point the orthogonality of step 2 degrades and exact termination at step $n$ is lost; that does not matter, because the method is used with $k \ll n$, and the next two theorems say why that works.
+
+**(vi) CG is optimal in the $A$-norm.**
+
+**Theorem 3.23 (Optimality).** The CG iterate $x_k$ minimizes $\|x - x_*\|_A$ over all $x \in x_0 + \mathcal{K}_k$. Equivalently, by (3.25), it minimizes $\varphi$ over that affine space.
+
+▶ **Try it first.** $e_k = x_* - x_k$ satisfies $Ae_k = r_k \perp \mathcal{K}_k$. Translate that into a statement about the $A$-inner product, then use Pythagoras.
+
+**Derivation.**
+
+1. For any $y \in x_0 + \mathcal{K}_k$, write $y = x_k + d$ with $d \in \mathcal{K}_k$ (since $x_k \in x_0 + \mathcal{K}_k$ by Theorem 3.22(a)).
+2. $\langle e_k, d\rangle_A = e_k^\top Ad = (Ae_k)^\top d = r_k^\top d = 0$ by Theorem 3.22(b). So $e_k \perp_A \mathcal{K}_k$.
+3. $\|x_* - y\|_A^2 = \|e_k - d\|_A^2 = \|e_k\|_A^2 - 2\langle e_k, d\rangle_A + \|d\|_A^2 = \|e_k\|_A^2 + \|d\|_A^2 \ge \|e_k\|_A^2$, with equality only for $d = 0$. ∎
+
+The polynomial reading, which is how convergence is analyzed: every $x \in x_0 + \mathcal{K}_k$ has $x - x_0 = q(A)r_0$ for some polynomial $q$ of degree $< k$, hence $e = e_0 - q(A)Ae_0 = p(A)e_0$ with $p(t) = 1 - tq(t)$, a polynomial of degree $\le k$ with $p(0) = 1$. Expanding $e_0 = \sum c_ix_i$ in the orthonormal eigenbasis, $\|p(A)e_0\|_A^2 = \sum_i\lambda_ic_i^2p(\lambda_i)^2 \le \max_i p(\lambda_i)^2\,\|e_0\|_A^2$. Theorem 3.23 then gives
+
+$$\frac{\|e_k\|_A}{\|e_0\|_A} \le \min_{\deg p \le k,\ p(0) = 1}\ \max_{\lambda\in\sigma(A)}|p(\lambda)|. \tag{3.29}$$
+
+Two consequences. If $A$ has only $m$ distinct eigenvalues, the polynomial $\prod_{i=1}^m(1 - t/\lambda_i)$ vanishes on all of them, so CG terminates in $m$ steps. And if the eigenvalues are clustered, a low-degree polynomial can be small on all the clusters: CG responds to the *distribution* of the spectrum, not only to $\kappa$. (The project's jump-coefficient example has $\kappa$ barely changed by preconditioning yet converges ten times faster, because the preconditioned spectrum is clustered.)
+
+**(vii) The $\sqrt\kappa$ bound.**
+
+**Theorem 3.24 (CG convergence; Chebyshev bound).** With $\kappa = \lambda_{\max}/\lambda_{\min}$,
+$$\frac{\|e_k\|_A}{\|e_0\|_A} \le 2\left(\frac{\sqrt\kappa - 1}{\sqrt\kappa + 1}\right)^k. \tag{3.30}$$
+
+*Sketch (Exercise C2 fills in the Chebyshev facts).* In (3.29) we may replace $\sigma(A)$ by the whole interval $[\lambda_{\min}, \lambda_{\max}]$, which can only increase the maximum. The polynomial of degree $k$ with $p(0) = 1$ that is smallest on an interval not containing $0$ is a scaled and shifted Chebyshev polynomial: with $T_k(\cos\theta) = \cos k\theta$ (so $|T_k| \le 1$ on $[-1, 1]$) and $\ell(\lambda) = \dfrac{\lambda_{\max} + \lambda_{\min} - 2\lambda}{\lambda_{\max} - \lambda_{\min}}$, which maps $[\lambda_{\min}, \lambda_{\max}]$ onto $[-1, 1]$ and $0$ to $\gamma = \dfrac{\kappa + 1}{\kappa - 1} > 1$, take $p(\lambda) = T_k(\ell(\lambda))/T_k(\gamma)$. Then $\max_{[\lambda_{\min},\lambda_{\max}]}|p| = 1/|T_k(\gamma)|$. Outside $[-1,1]$, $T_k(\gamma) = \tfrac12\big[(\gamma + \sqrt{\gamma^2 - 1})^k + (\gamma - \sqrt{\gamma^2-1})^k\big] \ge \tfrac12(\gamma + \sqrt{\gamma^2-1})^k$, and the algebra $\gamma^2 - 1 = \dfrac{4\kappa}{(\kappa-1)^2}$ gives $\gamma + \sqrt{\gamma^2 - 1} = \dfrac{\kappa + 1 + 2\sqrt\kappa}{\kappa - 1} = \dfrac{(\sqrt\kappa+1)^2}{(\sqrt\kappa - 1)(\sqrt\kappa+1)} = \dfrac{\sqrt\kappa + 1}{\sqrt\kappa - 1}$. Hence $1/T_k(\gamma) \le 2\left(\frac{\sqrt\kappa-1}{\sqrt\kappa+1}\right)^k$. ∎
+
+■ **What just happened.** Since $\frac{\sqrt\kappa - 1}{\sqrt\kappa+1} \approx 1 - 2/\sqrt\kappa$, the error drops by a factor $e$ roughly every $\sqrt\kappa/2$ steps: **$O(\sqrt\kappa)$ iterations** against $O(\kappa)$ for steepest descent and Jacobi. For the model problem $\sqrt\kappa \approx 0.64N$, so CG needs $O(N)$ iterations of $O(N^2)$ work each: $O(N^3) = O(n^{3/2})$ total, against $O(N^4)$ for Gauss–Seidel or banded elimination and $O(N^6)$ for dense elimination. The project confirms the scaling: from $N = 20$ to $N = 200$ the iteration count to reach $\|r\|/\|b\| < 10^{-8}$ is $4.7\sqrt\kappa \pm 1.5\%$, i.e. $600$ iterations for $40{,}000$ unknowns, and the bound (3.30) on the $A$-norm error holds at every step (it is loose by a factor of about $400$ at $k = 50$ on the $N = 40$ grid, because the actual spectrum is not the whole interval). Note what is bounded: the $A$-norm of the *error*, which you cannot compute without $x_*$; the residual you *can* compute is not monotone in CG and can jump around, which confuses people the first time (§8).
+
+**Why it was forgotten for twenty years.** In exact arithmetic CG terminates in $n$ steps, so it was judged as a direct method and compared with elimination: for dense $A$ its $n$ steps cost $2n^3$ flops, three times LU, and in floating point the "exact at step $n$" property fails because the residuals lose orthogonality. Reid (1971) pointed out that for sparse, well-conditioned or preconditioned $A$ one should stop after $k \ll n$ steps and judge it by (3.30). Everything in this section was in Hestenes and Stiefel's paper; the use was not.

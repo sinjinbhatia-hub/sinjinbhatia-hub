@@ -8,7 +8,7 @@
 
 F2 gave you Fourier series: a function on an interval of length $T$ is an orthogonal projection onto the basis $e^{2\pi i n x/T}$, with coefficients $c_n = \frac1T\int_{-T/2}^{T/2} f(x)e^{-2\pi i n x/T}dx$. That needs a period. This module removes the period ($T\to\infty$), which turns the sum into an integral and the coefficient list into a function $\hat f(\xi)$. It then adds four things you cannot do without: the delta function (made rigorous), convolution and why it becomes multiplication, the discrete transform that computers actually run (and why it is fast), and the sampling theorem that says when a list of numbers is as good as a continuous signal.
 
-You need from before: complex exponentials and roots of unity (F1), inner products and orthogonal projection (LA-5, LA-8), Fourier series and the coefficient formula (F2), ODEs with constant coefficients, and integration by parts. Afterwards: QM-2 builds the momentum-space wavefunction and the Heisenberg principle directly on §3.8–3.9; EM-7 uses the transform for dispersion and the far-field diffraction pattern; ST-8's periodogram is $|F[k]|^2/N$ from §3.12; ML-8's convolution layer is the circulant matrix of §3.13; QC-5's quantum Fourier transform is the unitary matrix $F/\sqrt N$ of Theorem 3.18 with $N = 2^n$.
+You need from before: complex exponentials and roots of unity (F1), inner products and orthogonal projection (LA-5, LA-8), Fourier series and the coefficient formula (F2), ODEs with constant coefficients, and integration by parts. Afterwards: QM-2 builds the momentum-space wavefunction and the Heisenberg principle directly on §3.8–3.9; EM-7 uses the transform for dispersion and the far-field diffraction pattern; ST-8's periodogram is $|F[k]|^2/N$ from §3.12; ML-8's convolution layer is the circulant matrix of §3.13; QC-5's quantum Fourier transform is the unitary matrix $F/\sqrt N$ of Theorem 3.19 with $N = 2^n$.
 
 ## 1. The problem that forced this idea
 
@@ -300,7 +300,7 @@ $$
 
 The integrability hypotheses are needed for the derivation as written. **Plancherel's theorem** extends (3.15) to all of $L^2$ (all $f$ with $\int|f|^2<\infty$) by a density argument, and shows $\mathcal F$ is a bijection of $L^2$ onto itself. We use the extension without proof; Stein & Shakarchi ch. 5 §1.7 has it.
 
-■ **What just happened.** In LA-8 language: $\mathcal F$ is a **unitary operator** on $L^2(\mathbb{R})$. It preserves lengths and angles. Energy computed in time equals energy computed in frequency. The DFT version, Theorem 3.18, is a literal unitary matrix.
+■ **What just happened.** In LA-8 language: $\mathcal F$ is a **unitary operator** on $L^2(\mathbb{R})$. It preserves lengths and angles. Energy computed in time equals energy computed in frequency. The DFT version, Theorem 3.19, is a literal unitary matrix.
 
 ### 3.8 The transform as an operator: $\mathcal F^4 = I$ and the Hermite eigenfunctions
 
@@ -645,7 +645,7 @@ $$
 $$
 \int_0^1(1-x)\cos(2\pi\xi x)dx = \left[(1-x)\frac{\sin2\pi\xi x}{2\pi\xi}\right]_0^1 + \int_0^1\frac{\sin2\pi\xi x}{2\pi\xi}dx = 0 + \left[-\frac{\cos2\pi\xi x}{4\pi^2\xi^2}\right]_0^1 = \frac{1-\cos2\pi\xi}{4\pi^2\xi^2}.
 $$
-Doubling and using $1-\cos2\theta = 2\sin^2\theta$: $\hat\Lambda(\xi) = \frac{2\sin^2\pi\xi}{4\pi^2\xi^2}\cdot2\cdot\frac12 = \frac{\sin^2\pi\xi}{\pi^2\xi^2} = \operatorname{sinc}^2\xi$. ✓ This matches $\Pi*\Pi = \Lambda$ and (3.13). Numerically at $\xi = 0.3$: $(1-\cos0.6\pi)/(2\pi^2\cdot0.09) = 0.73684 = \operatorname{sinc}^2(0.3)$. The project checks $\widehat{\Pi*\Pi} = \operatorname{sinc}^2$ on a grid.
+Doubling: $\hat\Lambda(\xi) = \frac{1-\cos2\pi\xi}{2\pi^2\xi^2}$, and with $1-\cos2\theta = 2\sin^2\theta$ this is $\frac{2\sin^2\pi\xi}{2\pi^2\xi^2} = \frac{\sin^2\pi\xi}{\pi^2\xi^2} = \operatorname{sinc}^2\xi$. ✓ This matches $\Pi*\Pi = \Lambda$ and (3.13). Numerically at $\xi = 0.3$: $(1-\cos0.6\pi)/(2\pi^2\cdot0.09) = 0.73684 = \operatorname{sinc}^2(0.3)$. The project checks $\widehat{\Pi*\Pi} = \operatorname{sinc}^2$ on a grid.
 
 ### Example 4.2: A Gaussian of width $\sigma$, by the ODE method
 
@@ -753,7 +753,7 @@ See [exercises.md](exercises.md). **A1–A6** are drills: transforms from the ru
 `project.py` builds everything in this module and checks every number in §4:
 
 1. **DFT and FFT from scratch.** `dft_matrix(N)`, `dft(x)` by matrix multiplication, `fft_recursive(x)` implementing (3.31). All three agree with `np.fft.fft` to $10^{-10}$. $\mathbf F/\sqrt N$ is verified unitary; $\mathbf F^2 = NP$ and the eigenvalues in $\{\pm1,\pm i\}$ are checked. Examples 4.5 and 4.6 are asserted digit by digit.
-2. **Timing.** $O(N^2)$ versus $O(N\log N)$ for $N$ up to $2^{14}$, plotted log-log with reference slopes. The pure-Python recursive FFT beats the matrix method well before $N = 10^3$.
+2. **Timing.** $O(N^2)$ versus $O(N\log N)$ for $N$ up to $2^{14}$, plotted log-log with reference slopes. At small $N$ the NumPy-vectorized matrix method wins (the recursion pays Python call overhead at every level); the recursive FFT overtakes it around $N = 2^9$–$2^{10}$ and is tens of times faster by $N = 2^{14}$, with the compiled `np.fft.fft` another few hundred times ahead of that. The script prints the crossover $N$.
 3. **Circulants.** A random circulant's eigenvalues equal the DFT of its first column; $C = \mathbf F^{-1}\Lambda\mathbf F$ is checked; `circular_convolution` via FFT agrees with the direct $O(N^2)$ sum; zero-padded circular convolution agrees with `np.convolve`.
 4. **Continuous transforms numerically.** Rect, Gaussians, one- and two-sided exponentials, triangle: samples on a fine grid, transformed with the FFT via (3.29) and the start-point phase correction, overlaid on the analytic formulas (3.3), (3.4), (3.5), (3.11). The three Example 4.2 values are read by direct quadrature at $\xi = 0, 0.1, 0.25$ (the second is not a DFT grid point; see §8). The $2$ ms pulse of Examples 4.1 and 4.3 is sampled at $10\,\mu$s and its FFT gives $\hat g(0) = 0.002$, nulls at $500$ and $1000$ Hz, and at $100$ Hz the magnitude $1.871\times10^{-3}$ and phase $-108°$. The convolution theorem is checked: $\Pi*\Pi$ computed by `np.convolve` transforms to $\operatorname{sinc}^2$.
 5. **Uncertainty.** $\sigma_x\sigma_\xi$ computed for the Gaussian ($=1/(4\pi)$ to $10^{-6}$), for $e^{-|x|}$ ($=\sqrt2/(4\pi)$), and for the rect on two frequency ranges (larger, and growing like $L/\pi^2$).

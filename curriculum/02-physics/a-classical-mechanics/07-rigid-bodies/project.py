@@ -475,7 +475,7 @@ ratio = Omega_s_theory / w_init[2]
 assert np.isclose(ratio, np.sqrt(np.tan(tilt)**2 + 4), rtol=1e-6)
 assert np.isclose(ratio, 2.0019, atol=2e-4)
 theta_L = np.degrees(np.arctan(I_disk[0] * w_init[0] / (I_disk[2] * w_init[2])))
-assert np.isclose(theta_L, 2.502, atol=2e-3)
+assert np.isclose(theta_L, 2.5048, atol=1e-3)
 assert np.isclose(np.degrees(np.arccos(Lhat @ e3_space[:, 0])), theta_L, atol=1e-6)
 print(f"Example 4.3 (frisbee): Omega_b = {Omega_b_meas:.3f} rad/s (= w3 = {w_init[2]:.3f}); "
       f"Omega_s / w3 = {ratio:.4f}; angle(e3, L) = {theta_L:.3f} deg; wobble/spin = 2 to 0.1%")
@@ -712,7 +712,7 @@ h = 1e-5
 V2 = (V_eff(theta0 + h, p_phi_n, p_psi_n) - 2 * V_eff(theta0, p_phi_n, p_psi_n) + V_eff(theta0 - h, p_phi_n, p_psi_n)) / h**2
 assert np.isclose(np.sqrt(V2 / I1_g), w_nut_closed, rtol=1e-4)                   # closed form (3.28) = V_eff''/I_1
 assert np.isclose(w_nut_meas, w_nut_closed, rtol=5e-3), (w_nut_meas, w_nut_closed)
-assert np.isclose(w_nut_closed, 74.76, atol=0.02)
+assert np.isclose(w_nut_closed, 74.68, atol=0.02)
 # Turning points from the cubic agree with the simulated min/max theta.
 tp = turning_points(p_phi_n, p_psi_n, E_n)
 assert len(tp) == 2

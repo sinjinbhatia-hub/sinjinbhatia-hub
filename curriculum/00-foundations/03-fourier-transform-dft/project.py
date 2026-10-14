@@ -150,7 +150,14 @@ for N in Ns:
         y3 = np.fft.fft(x)
     t_np.append((time.perf_counter() - t) / 20)
     assert np.max(np.abs(y1 - y3)) < 1e-8 and np.max(np.abs(y2 - y3)) < 1e-8
-assert t_mat[-1] > 3 * t_fft[-1], "the O(N^2) method should be clearly slower at N = 2^14"
+assert t_mat[-1] > 3 * t_fft[-1], "the O(N^2) method should be much slower at N = 2^14"
+# Crossover (§7 item 2): the vectorized matrix method wins at small N because the recursion pays
+# Python call overhead at every level; the FFT overtakes it around N = 2^9-2^10.
+N_cross = next(N for N, tm, tf in zip(Ns, t_mat, t_fft) if tf < tm)
+assert N_cross <= 2**11 and t_mat[Ns.index(2**12)] > 2 * t_fft[Ns.index(2**12)], (N_cross, t_mat, t_fft)
+# Operation counts quoted in §1 and §3.14 from (3.32).
+assert 2**10 // 2 * 10 == 5120 and 2**20 == 1_048_576 and 200 < 2**20 / 5120 < 210          # N = 2^10: "a factor of 200"
+assert 2**40 / (2**20 * 20) == 52428.8                                                     # §1: N log2 N vs N^2 at 2^20, "50,000"
 
 fig, ax = plt.subplots(figsize=(6, 4.5))
 ax.loglog(Ns, t_mat, "o-", label="matrix DFT, O(N^2)")
@@ -162,7 +169,8 @@ ax.loglog(Ns, t_fft[-1] * (Nn * np.log2(Nn)) / (Nn[-1] * np.log2(Nn[-1])), "k--"
 ax.set_xlabel("N"); ax.set_ylabel("seconds"); ax.set_title("DFT cost: N^2 vs N log N")
 ax.grid(alpha=.3, which="both"); ax.legend(fontsize=8)
 fig.tight_layout(); fig.savefig(FIG / "fft_timing.png", dpi=120); plt.close(fig)
-print(f"Part 2: N=2^14: matrix {t_mat[-1]:.3f} s, recursive FFT {t_fft[-1]:.4f} s, np.fft {t_np[-1]*1e3:.3f} ms.")
+print(f"Part 2: N=2^14: matrix {t_mat[-1]:.3f} s, recursive FFT {t_fft[-1]:.4f} s, np.fft {t_np[-1]*1e3:.3f} ms; "
+      f"recursive FFT first beats the matrix method at N = {N_cross}.")
 
 # %% [markdown]
 # ## Part 3: Circular convolution, circulant matrices, C = F^{-1} Lambda F
@@ -675,9 +683,19 @@ fig.tight_layout(); fig.savefig(FIG / "convolution_2d.png", dpi=120); plt.close(
 print("Your turn (2D): ifft2(fft2(img) fft2(ker)) == direct circular convolution; the blur's spectrum is 1 at DC and < 1e-3 at Nyquist.")
 
 # %% [markdown]
-# ## Numbers quoted in solutions.md that are not checked above (A1, A3, A5d, B4b, B5b)
+# ## Numbers quoted in the notes and solutions that are not checked above
+# (Examples 4.2, 4.3, 4.8; §3.9; solutions A1, A3, A5d, B1c, B4b, B5b, B6b, C3)
 
 # %%
+assert np.isclose(1 / (2 * np.pi), 0.159, atol=5e-4)                                                    # Example 4.2: sigma_xi = 0.159 Hz for sigma = 1 s
+assert np.isclose(sinc(0.2), 0.93549, atol=5e-6)                                                        # Example 4.3
+assert np.isclose(np.sqrt(2) - 1, 0.41, atol=5e-3)                                                      # §3.9 / B2(d): exponential is 41% above the minimum
+assert np.isclose(np.exp(-9 * np.pi / 2), 7e-7, atol=5e-8)                                              # Example 4.8: third term 0.0000007
+assert np.isclose(np.degrees(np.arctan(0.6 / 5)), 6.843, atol=5e-4)                                     # B6(b)
+xi_sl = np.linspace(1.0, 2.0, 200001); sl_sinc = np.abs(sinc(xi_sl)).max()                              # B1(c): first sidelobe of sinc
+assert np.isclose(sl_sinc, 0.2172, atol=5e-5) and np.isclose(20 * np.log10(sl_sinc), -13.26, atol=0.01)  # "about 22%", -13 dB
+first_zero = lambda A: int(np.argmax(np.diff(A) > 0))                                                   # fine-grid index where the main lobe stops descending
+assert abs(first_zero(R_) - pad_) <= 1 and abs(first_zero(W_) - 2 * pad_) <= 1                          # C3: main lobe 1 bin (rect) vs 2 bins (Hann)
 assert np.isclose(1 / np.sqrt(10), 0.3162, atol=5e-5)                                                   # A1
 assert np.isclose(2 / np.sqrt(2 * np.pi), 0.7979, atol=5e-5)                                            # A3(c)
 assert fold(13, 12) == 1 and 13 - 12 * np.round(13 / 12) == 1                                           # A5(d): +1 rev/s, forward
@@ -685,7 +703,7 @@ assert 2**19 * 20 == 10_485_760 and 2**40 == 1_099_511_627_776 and 2**40 / (2**1
 assert np.isclose(2 * np.exp(-np.pi / 2), 0.415759, atol=5e-7) and np.isclose(2 * np.exp(-2 * np.pi), 0.003735, atol=5e-7)   # B5(b)
 assert np.isclose(np.exp(-np.pi / 2), 0.2078796, atol=5e-8) and np.isclose(np.exp(-2 * np.pi), 0.0018674, atol=5e-8)        # Example 4.8
 assert np.isclose(np.sqrt(2) * (1 + 2 * np.exp(-2 * np.pi)), 1.419495, atol=5e-7)
-print("Solutions numbers (A1, A3, A5d, B4b, B5b) verified.")
+print("Remaining quoted numbers (Examples 4.2/4.3/4.8, §3.9, A1, A3, A5d, B1c, B4b, B5b, B6b, C3 lobe widths) verified.")
 
 # %%
 if __name__ == "__main__":

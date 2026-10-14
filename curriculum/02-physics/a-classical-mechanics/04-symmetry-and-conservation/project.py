@@ -48,11 +48,15 @@ plt.rcParams.update({"axes.grid": True, "grid.alpha": 0.25, "lines.linewidth": 1
 t = sp.Symbol("t")
 
 
+_ACCEL = set()   # every acceleration symbol ever created, so a δL can be screened for them
+
+
 def coords(names):
     """Symbols (q, v, a) for generalized coordinates, velocities, accelerations."""
     q = [sp.Symbol(n) for n in names]
     v = [sp.Symbol(n + "dot") for n in names]
     a = [sp.Symbol(n + "ddot") for n in names]
+    _ACCEL.update(a)
     return q, v, a
 
 
@@ -68,7 +72,10 @@ def delta_L(L, q, v, K, a=None):
     δL = sum_i (∂L/∂q_i K_i + ∂L/∂v_i K̇_i).  K may depend on (q, t); if it also
     depends on v (velocity-dependent generator, §3.4 and C1) pass the acceleration
     symbols a so that K̇ can be formed."""
+    K = [sp.sympify(Ki) for Ki in K]
     if a is None:
+        if any(Ki.has(*v) for Ki in K):
+            raise ValueError("K depends on the velocities: pass the acceleration symbols a so that K̇ can be formed")
         a = [sp.Integer(0)] * len(q)
     Kdot = [total_dt(Ki, q, v, a) for Ki in K]
     return sp.simplify(sum(sp.diff(L, qi) * Ki + sp.diff(L, vi) * Kdi
@@ -90,7 +97,13 @@ def total_derivative_potential(dL, q, v):
     Write δL = sum_i a_i(q, t) v_i + b(q, t). dF/dt = δL means ∂F/∂q_i = a_i and
     ∂F/∂t = b: (a, b) must be a gradient field on (q, t)-space. Poincaré's lemma
     (star-shaped domain) gives F(q, t) = ∫_0^1 [sum_i a_i(sq, st) q_i + b(sq, st) t] ds.
-    The result is verified; ValueError if δL is not a total derivative."""
+    The result is verified; ValueError if δL is not a total derivative, or if it
+    contains accelerations (velocity-dependent generator: any F would depend on
+    velocities, outside this construction; see C1)."""
+    dL = sp.sympify(dL)
+    if dL.free_symbols & _ACCEL:
+        raise ValueError("δL contains accelerations (velocity-dependent generator); no F(q, t) exists. "
+                         "Theorem 3.4 may still hold with an F that depends on velocities: check by hand (C1)")
     coef = [sp.diff(dL, vi) for vi in v]
     if any(c.has(vj) for c in coef for vj in v):
         raise ValueError("δL is not linear in the velocities; no F(q, t) exists")
@@ -178,6 +191,18 @@ assert sp.simplify(F_boost - (m1 * x1 + m2 * x2)) == 0
 assert sp.simplify(G_boost - (t * (m1 * v1 + m2 * v2) - (m1 * x1 + m2 * x2))) == 0
 assert on_shell_dt(G_boost, L_2body, [x1, x2], [v1, v2], [a1, a2]) == 0
 print("1b  boost (quasi-symmetry): F =", F_boost, "   Q =", G_boost)
+
+# Example 4.2 numbers: m1 = 1, m2 = 3, r1(0) = 0, r2(0) = (4, 0, 0), v1(0) = (2, 1, 0), v2(0) = (0, -1, 0).
+m1n, m2n = 1.0, 3.0
+r1_0, r2_0 = np.array([0.0, 0.0, 0.0]), np.array([4.0, 0.0, 0.0])
+v1_0, v2_0 = np.array([2.0, 1.0, 0.0]), np.array([0.0, -1.0, 0.0])
+P_num = m1n * v1_0 + m2n * v2_0
+R_0 = (m1n * r1_0 + m2n * r2_0) / (m1n + m2n)
+G_num = P_num * 0.0 - (m1n + m2n) * R_0                 # G = P t − M R, evaluated at t = 0
+R_2 = (P_num * 2.0 - G_num) / (m1n + m2n)               # R(t) = (P t − G)/M, whatever V is
+assert np.allclose(P_num, [2, -2, 0]) and np.allclose(R_0, [3, 0, 0]) and np.allclose(G_num, [-12, 0, 0])
+assert np.allclose(R_2, [4, -1, 0])
+print("1b  Example 4.2 numbers: P =", P_num, " R(0) =", R_0, " G =", G_num, " R(2) =", R_2)
 
 # %% [markdown]
 # ### 1c. Rotation about an axis for a 3D particle in a central potential (Example 4.1)
@@ -520,7 +545,8 @@ print(f"        harmonic: ⟨T⟩ = {time_average(0.5*vo**2, tho):.6f} = ⟨V⟩
 # T = (3/2) N k_B T_mean, N = M / (μ m_p), μ ≈ 0.6 for ionized solar composition.
 G_N, M_sun, R_sun, m_p, k_B, mu = 6.674e-11, 1.989e30, 6.957e8, 1.6726e-27, 1.3807e-23, 0.6
 T_sun = G_N * M_sun * mu * m_p / (5 * k_B * R_sun)
-assert 2.5e6 < T_sun < 3.0e6
+assert np.isclose(G_N * M_sun / R_sun, 1.908e11, rtol=1e-3)          # GM/R in Example 4.5(b)
+assert np.isclose(T_sun, 2.77e6, rtol=1e-2) and 2.5e6 < T_sun < 3.0e6
 print(f"        Sun (virial, uniform sphere): k_B T = G M μ m_p / (5R)  →  T ≈ {T_sun:.2e} K")
 
 # running averages figure: 2<T> and -<V> converge to each other over a Kepler period
@@ -737,20 +763,20 @@ for ep in eps_list:
 adv_meas = np.degrees(adv_meas)
 adv_pred = np.degrees(6 * np.pi * eps_list / Lmag**4)
 rel_err = (adv_meas - adv_pred) / adv_pred
-c_fit = np.polyfit(eps_list, rel_err, 1)[0]
+c_fit = np.sum(eps_list * rel_err) / np.sum(eps_list**2)   # least-squares slope of a line through the origin
 assert np.isclose(adv_meas[2], np.degrees(shift_per_orbit), rtol=1e-3)     # same as Part 3
 assert np.all(rel_err > 0) and np.all(np.diff(rel_err) > 0), rel_err      # error grows with ε
 assert np.allclose(rel_err, c_fit * eps_list, atol=0.004), (rel_err, c_fit * eps_list)   # ... linearly
 print("B8  ε            =", eps_list)
 print("    measured [°] =", np.round(adv_meas, 3))
 print("    1st order [°]=", np.round(adv_pred, 3))
-print("    rel. error   =", np.round(rel_err, 4), f"  ≈ {c_fit:.0f}·ε")
+print("    rel. error   =", np.round(rel_err, 4), f"  ≈ {c_fit:.1f}·ε  (least-squares line through the origin)")
 fig, (axl, axr) = plt.subplots(1, 2, figsize=(10, 4))
 axl.plot(eps_list, adv_meas, "o", color=C[0], label="measured")
 axl.plot(eps_list, adv_pred, "-", color=C[1], label="6πκεm²/L⁴")
 axl.set_xlabel("ε"); axl.set_ylabel("advance per orbit [°]"); axl.legend(fontsize=9)
 axr.plot(eps_list, 100 * rel_err, "o", color=C[0], label="measured")
-axr.plot(eps_list, 100 * c_fit * eps_list, "--", color=C[2], label=f"{c_fit:.0f}·ε")
+axr.plot(eps_list, 100 * c_fit * eps_list, "--", color=C[2], label=f"{c_fit:.1f}·ε")
 axr.set_xlabel("ε"); axr.set_ylabel("relative error of first order [%]"); axr.legend(fontsize=9)
 fig.suptitle("B8: first-order perturbation theory fails linearly in ε")
 fig.tight_layout(); fig.savefig(FIG / "precession_vs_eps.png", dpi=120); plt.close(fig)
@@ -768,6 +794,17 @@ Lx_part = sp.Rational(1, 2) * m * ovx**2 - sp.Rational(1, 2) * m * w**2 * ox**2
 Ly_part = sp.Rational(1, 2) * m * ovy**2 - sp.Rational(1, 2) * m * w**2 * oy**2
 assert sp.simplify(dL_Q1 - total_dt(Lx_part - Ly_part, [ox, oy], [ovx, ovy], [oax, oay])) == 0
 assert sp.simplify(sp.diff(L_iso, ovx) * ovx - sp.diff(L_iso, ovy) * ovy - (Lx_part - Ly_part) - Q1) == 0
+for dL_vel in (dL_Q2, dL_Q1):           # F depends on velocities here, so the F(q, t) constructor must refuse
+    try:
+        total_derivative_potential(dL_vel, [ox, oy], [ovx, ovy])
+        raise AssertionError("a velocity-dependent δL must be refused")
+    except ValueError:
+        pass
+try:                                    # and delta_L itself refuses a velocity-dependent K without accelerations
+    delta_L(L_iso, [ox, oy], [ovx, ovy], K=[ovy, ovx])
+    raise AssertionError
+except ValueError:
+    pass
 # complex amplitudes: m a_x conj(a_y) = Q2 + i ω L_z
 a_x, a_y_conj = ovx + sp.I * w * ox, ovy - sp.I * w * oy          # symbols are real, so conj(a_y) = ẏ − iωy
 assert sp.simplify(sp.expand(m * a_x * a_y_conj) - (Q2 + sp.I * w * Lz_w)) == 0
@@ -868,6 +905,7 @@ xd, vd = sol_d.y
 Qd = np.exp(gam_n * sol_d.t) * (0.5 * vd**2 + 0.5 * xd**2 + 0.5 * gam_n * xd * vd)
 hd = np.exp(gam_n * sol_d.t) * (0.5 * vd**2 + 0.5 * xd**2)
 assert np.abs(Qd - 0.5).max() < 1e-8 and hd.max() - hd.min() > 0.05
+assert np.isclose(hd.min(), 0.5 / 1.1, atol=2e-4) and np.isclose(hd.max(), 0.5 / 0.9, atol=2e-4)   # h ∈ [Qω₀/(ω₀+γ/2), Qω₀/(ω₀−γ/2)]
 x20_pred = np.exp(-gam_n * 10) * (np.cos(Om_n * 20) + gam_n / (2 * Om_n) * np.sin(Om_n * 20))
 assert np.isclose(xd[-1], x20_pred, atol=1e-9)
 print(f"C4  damped oscillator (m = k = 1, γ = 0.2, x₀ = 1, ẋ₀ = 0): Q = {Qd[0]:.6f} at t = 0, {Qd[-1]:.6f} at t = 20 "
