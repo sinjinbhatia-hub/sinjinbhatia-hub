@@ -104,7 +104,48 @@ Instructions:
 Return the structured result with counts of fixed and skipped findings and a short \`notes\` field (under 150 words).`
 }
 
-const results = await pipeline(
+const REVIEWFIX_SCHEMA = {
+  type: 'object',
+  properties: {
+    script_passes: { type: 'boolean' },
+    issues_found: { type: 'number' },
+    high: { type: 'number' },
+    medium: { type: 'number' },
+    fixed: { type: 'number' },
+    not_fixed: { type: 'string' },
+    summary: { type: 'string' },
+  },
+  required: ['script_passes', 'issues_found', 'fixed', 'summary'],
+}
+
+function reviewFixPrompt(m) {
+  return `You are an independent, adversarial reviewer for one module of a self-study curriculum. You did not write it. First find every error; then fix what you found. Assume there are mistakes and hunt for them.
+
+Module folder: ${ROOT}/${m.dir}/ (notes.md, exercises.md, solutions.md, project.py). Brief: ${ROOT}/research/briefs/${m.brief} (if present). Style rules: ${ROOT}/STYLE.md. Template: ${ROOT}/TEMPLATE.md.
+
+PHASE 1 — REVIEW (do not edit yet). Make a written list (in a scratch file under /tmp/claude-0, not in the module folder) of every problem:
+A. MATH. Read notes.md §3–§4 and solutions.md line by line. For every derivation check each step follows; check signs, factors of 2 and pi, transposes vs inverses, conjugates, index ranges, and that hypotheses are actually used. For every numerical value in worked examples and solutions, recompute it yourself with python3 (numpy/sympy/scipy) in a scratch script under /tmp/claude-0 and compare.
+B. CONSISTENCY. exercises.md and solutions.md numbering match; every exercise has a complete solution (no "similarly", "left to the reader", or "it can be shown" for anything central); the conventions box matches what the notes do; cross-references to other modules name objects that exist (check the referenced module's notes if it exists under ${ROOT}).
+C. CODE. Run \`cd ${ROOT}/${m.dir} && MPLBACKEND=Agg timeout 300 python3 project.py\`; it must exit 0. Asserts must test what the notes claim, not something weaker. Imports only numpy/scipy/matplotlib/sympy (plus anything the brief explicitly allows).
+D. TEMPLATE. Sections 0–10 with the template headings; conventions box; Try-it-first / What-just-happened around key derivations; at least three worked examples; A/B/C exercises; §8 specific; §10 matches the brief.
+E. HISTORY. Flag any historical attribution or date you cannot confirm from your own knowledge.
+
+PHASE 2 — FIX. Fix every mathematical error, wrong number, failing or weakened assert, missing required section, incomplete solution, convention inconsistency, and dubious attribution (soften or remove it rather than guess). Before changing anything, re-derive or recompute to confirm the problem is real; if it isn't, leave it. Keep the four files consistent: when a number or claim changes, change it everywhere and make project.py assert the corrected value. Fix low-severity pedagogy issues only when the fix is local and clearly better. Do not rewrite sections that are correct. Re-run the script until it exits 0. Never write outside the module folder (scratch work goes under /tmp/claude-0).
+
+Return the structured result: counts of issues found (and how many high/medium), how many you fixed, a one-line list of anything you could not fix in \`not_fixed\`, and a summary under 150 words. Do not paste file contents.`
+}
+
+const COMBINED = !!(args && args.combined)
+const results = COMBINED ? await pipeline(
+  modules,
+  m => (m.mode === 'verify')
+    ? Promise.resolve({ status: 'complete', script_passes: true, skipped_write: true })
+    : agent(writePrompt(m), { label: `write:${m.code}`, phase: 'Write', schema: WRITE_SCHEMA }),
+  (w, m) => {
+    if (!w) { log(`${m.code}: writer died; skipping review`); return null }
+    return agent(reviewFixPrompt(m), { label: `review+fix:${m.code}`, phase: 'Verify', schema: REVIEWFIX_SCHEMA }).then(rf => ({ w, rf }))
+  },
+) : await pipeline(
   modules,
   m => (m.mode === 'verify')
     ? Promise.resolve({ status: 'complete', script_passes: true, skipped_write: true })
@@ -124,6 +165,14 @@ const results = await pipeline(
 const summary = modules.map((m, i) => {
   const r = results[i]
   if (!r) return { code: m.code, status: 'FAILED (writer or pipeline died)' }
+  if (COMBINED) {
+    return {
+      code: m.code,
+      write: r.w ? (r.w.skipped_write ? 'pre-existing' : `${r.w.status}, script ${r.w.script_passes ? 'passes' : 'FAILS'}`) : 'n/a',
+      review: r.rf ? `${r.rf.issues_found} issues (${r.rf.high ?? '?'} high, ${r.rf.medium ?? '?'} medium), ${r.rf.fixed} fixed; script ${r.rf.script_passes ? 'passes' : 'FAILS'}${r.rf.not_fixed ? '; not fixed: ' + r.rf.not_fixed : ''}` : 'REVIEW DIED',
+      deviations: r.w && r.w.deviations ? r.w.deviations : '',
+    }
+  }
   return {
     code: m.code,
     write: r.w ? (r.w.skipped_write ? 'pre-existing' : `${r.w.status}, script ${r.w.script_passes ? 'passes' : 'FAILS'}`) : 'n/a',
