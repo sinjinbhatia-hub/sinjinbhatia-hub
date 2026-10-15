@@ -16,7 +16,7 @@ This module needs nothing. LA-3, LA-7, and F4 need it, and so does every "show t
 
 **Problem one: the student who computes perfectly and fails the first proof.** Here is what happens. A student who has aced three semesters of calculus meets the problem "Show that if $f$ and $g$ are injective, then $g \circ f$ is injective." They write $g(f(x)) = g(f(y))$, stare at it, and either write nothing or write a paragraph of true facts that never connects to the question. The student is not weak. They have never been told that a proof is a specific kind of object with specific moves, that "injective" is a definition that *unpacks into a sentence you can use*, and that "show that for all $x$" means "begin by writing *Let $x$ be arbitrary*." Those are three facts. They take an afternoon to learn and nobody teaches them.
 
-The idea of proof is old. Euclid's *Elements* (around 300 BCE) is the template: a handful of definitions and postulates, then propositions, each justified only by definitions, postulates, and earlier propositions. For two thousand years that was what "proof" meant and nobody needed to formalize it further. What forced the modern precision was calculus. Cauchy's *Cours d'analyse* (1821) set out to make the subject rigorous and still contains a famous error: it asserts that a convergent sum of continuous functions is continuous. Abel exhibited a Fourier-series counterexample in 1826. The mistake is a *quantifier-order* mistake: whether a tolerance $\delta$ is allowed to depend on the point $x$ or must work for all $x$ at once. The repair, the notion of *uniform* convergence, was found independently by Seidel and Stokes in 1847, and the $\varepsilon$–$\delta$ definitions in the form we use today come from Weierstrass's Berlin lectures of the 1860s. The lesson is that the order of "for every" and "there exists" is not pedantry; it is the entire content of some theorems, and getting it wrong fooled Cauchy.
+The idea of proof is old. Euclid's *Elements* (around 300 BCE) is the template: a handful of definitions and postulates, then propositions, each justified only by definitions, postulates, and earlier propositions. For two thousand years that was what "proof" meant and nobody needed to formalize it further. What forced the modern precision was calculus. Cauchy's *Cours d'analyse* (1821) set out to make the subject rigorous and still contains a famous error: it asserts that a convergent sum of continuous functions is continuous. Abel exhibited a Fourier-series counterexample in 1826. The mistake is a *quantifier-order* mistake: for a given tolerance, whether the number of terms $N$ needed to make the remainder of the series small is allowed to depend on the point $x$ or must work for all $x$ at once. The repair, the notion of *uniform* convergence, was found independently by Seidel and Stokes in 1847, and the $\varepsilon$–$\delta$ definitions in the form we use today come from Weierstrass's Berlin lectures of the 1860s. The lesson is that the order of "for every" and "there exists" is not pedantry; it is the entire content of some theorems, and getting it wrong fooled Cauchy.
 
 **Problem two: a formula that gives the right answer through nonsense.** In 1545 Cardano's *Ars Magna* published the solution of the cubic $x^3 = px + q$ (del Ferro's and Tartaglia's method). Applied to $x^3 = 15x + 4$ the formula produces
 
@@ -166,7 +166,7 @@ $f$ is **continuous on $\mathbb{R}$**: $\forall a\ \forall \varepsilon\ \exists 
 
 $f$ is **uniformly continuous on $\mathbb{R}$**: $\forall \varepsilon\ \exists \delta\ \forall a\ \forall x\ (\dots)$. The $\delta$ comes *before* $a$: one $\delta$ must work everywhere.
 
-By Theorem 3.6, uniform continuity implies continuity. The converse fails: $f(x) = x^2$ is continuous on $\mathbb{R}$ but not uniformly (exercise C1, where you win the game explicitly). Cauchy's 1821 error was exactly this: he used a $\delta$ chosen before $x$ when his hypothesis only supplied one chosen after.
+By Theorem 3.6, uniform continuity implies continuity. The converse fails: $f(x) = x^2$ is continuous on $\mathbb{R}$ but not uniformly (exercise C1, where you win the game explicitly). Cauchy's 1821 error had the same shape, with the number of terms $N$ of his series in the role of $\delta$: pointwise convergence supplied, for each $x$, an $N$ chosen *after* $x$; his argument used one $N$ chosen *before* $x$.
 
 **Negating quantified statements mechanically.** Push $\neg$ inward, one symbol at a time, with these rules:
 
@@ -200,7 +200,7 @@ Each technique below comes with a skeleton, one annotated example, and one bad p
 *Claim.* For real $x$, if $x^2$ is irrational then $x$ is irrational.
 *Proof.* We prove the contrapositive: if $x$ is rational then $x^2$ is rational. [Announce the technique.] Let $x$ be rational, so $x = p/q$ with $p, q$ integers, $q \ne 0$. [Definition.] Then $x^2 = p^2/q^2$ with $p^2, q^2$ integers and $q^2 \ne 0$. [Algebra.] So $x^2$ is rational. [Definition.] ∎
 
-*Bad proof.* "Suppose $x$ is irrational. Then $x$ is not $p/q$, so $x^2$ is not $p^2/q^2$…" — This is the *inverse* $\neg P \Rightarrow \neg Q$, not equivalent to the claim (and the step is false anyway: $\sqrt2$ is irrational, $(\sqrt2)^2 = 2$). *Fix:* negate the conclusion, not the hypothesis. Write the contrapositive out explicitly before you start.
+*Bad proof.* "Suppose $x$ is irrational. Then $x$ is not $p/q$, so $x^2$ is not $p^2/q^2$…" — This proves $Q \Rightarrow P$, the *converse* (equivalent to the inverse, Definition 3.5), which is not equivalent to the claim (and the step is false anyway: $\sqrt2$ is irrational, $(\sqrt2)^2 = 2$). *Fix:* the contrapositive negates *both* halves and swaps them: assume $x$ is rational, conclude $x^2$ is rational. Write it out explicitly before you start.
 
 **(c) Proof by contradiction.** To prove $P$: assume $\neg P$, derive something impossible. Use when $\neg P$ gives you something concrete to compute with.
 
@@ -237,7 +237,7 @@ where the second equality *is* the inductive hypothesis. The right side is the f
 
 *Bad proof.* Ordinary induction: "Assume $m$ is a product of primes. Then $m + 1$…" — Nothing about the factorization of $m$ tells you anything about $m+1$ (consider $m = 8$, $m + 1 = 9$). The factors of $m+1$ are *smaller* numbers, not $m$. *Fix:* assume the claim for everything below $m+1$.
 
-**(g) Existence proofs.** To prove $\exists x\, P(x)$: either exhibit $x$ and verify $P(x)$ (**constructive**), or show that no $x$ is impossible (**non-constructive**).
+**(g) Existence proofs.** To prove $\exists x\, P(x)$: either exhibit $x$ and verify $P(x)$ (**constructive**), or show that it is impossible for no such $x$ to exist (**non-constructive**).
 
 *Constructive.* There exist integers $x, y$ with $3x + 5y = 1$: take $x = 2$, $y = -1$; check $6 - 5 = 1$. ∎
 
@@ -272,7 +272,7 @@ $g = g \circ \mathrm{id}_B = g \circ (f \circ h) = (g \circ f) \circ h = \mathrm
 
 **A definition is a checklist.** Unpack it into numbered conditions before trying to use it. Here is the one you will meet first in LA-3.
 
-> *Definition (LA-3 preview).* A subset $W$ of a vector space $V$ is a **subspace** if (i) $\mathbf 0 \in W$; (ii) $\mathbf u, \mathbf w \in W \Rightarrow \mathbf u + \mathbf w \in W$; (iii) $\mathbf u \in W,\ c \in \mathbb{R} \Rightarrow c\mathbf u \in W$.
+> *Subspace test (LA-3 preview; there it is Theorem 3.4, the two-closure test).* A subset $W$ of a vector space $V$ is a **subspace** if and only if (i) $\mathbf 0 \in W$; (ii) $\mathbf u, \mathbf w \in W \Rightarrow \mathbf u + \mathbf w \in W$; (iii) $\mathbf u \in W,\ c \in \mathbb{R} \Rightarrow c\mathbf u \in W$.
 
 To prove $W = \{(x, y) \in \mathbb{R}^2 : x + 2y = 0\}$ is a subspace, you do three things, one per item: (i) $0 + 2\cdot 0 = 0$ ✓. (ii) Let $(x_1, y_1), (x_2, y_2) \in W$, so $x_1 + 2y_1 = 0$ and $x_2 + 2y_2 = 0$; then $(x_1 + x_2) + 2(y_1 + y_2) = 0 + 0 = 0$ ✓. (iii) $cx_1 + 2cy_1 = c(x_1 + 2y_1) = 0$ ✓. To show $W' = \{(x, y) : x + 2y = 1\}$ is *not* a subspace, you fail one item: $(0,0) \notin W'$ since $0 \ne 1$. One failure is enough; three checks are required for success.
 
@@ -353,7 +353,7 @@ $$
 
 ▶ **Try it first.** Multiply out $(a + bi)(a - bi)$. Then compute $\overline{zw}$ and $\bar z \bar w$ from (3.10) and compare.
 
-**Derivation.** $z\bar z = (a + bi)(a - bi) = a^2 - (bi)^2 = a^2 + b^2 = |z|^2$. Sum: immediate from the definition. Product: by (3.10), $\overline{zw} = (ac - bd) - (ad + bc)i$, while $\bar z\bar w = (a - bi)(c - di) = (ac - bd) + (-ad - bc)i$, the same. Double conjugate: flip the sign of $b$ twice. Real iff conjugate-fixed: $a - bi = a + bi \Leftrightarrow b = 0$. ∎
+**Derivation.** $z\bar z = (a + bi)(a - bi) = a^2 - (bi)^2 = a^2 + b^2 = |z|^2$. Sum: with $w = c + di$, $\overline{z + w} = (a + c) - (b + d)i = (a - bi) + (c - di) = \bar z + \bar w$. Product: by (3.10), $\overline{zw} = (ac - bd) - (ad + bc)i$, while $\bar z\bar w = (a - bi)(c - di) = (ac - bd) + (-ad - bc)i$, the same. Double conjugate: flip the sign of $b$ twice. Real iff conjugate-fixed: $a - bi = a + bi \Leftrightarrow b = 0$. ∎
 
 Two immediate consequences. **Division:** for $z \ne 0$,
 $$\frac{1}{z} = \frac{\bar z}{|z|^2}, \qquad \text{so} \qquad \frac{w}{z} = \frac{w\bar z}{|z|^2}, \tag{3.12}$$
@@ -366,7 +366,7 @@ because $z \cdot \bar z/|z|^2 = |z|^2/|z|^2 = 1$. (Multiply top and bottom by th
 **Theorem 3.13 (Euler's formula).** For every real $\theta$,
 $$e^{i\theta} = \cos\theta + i\sin\theta. \tag{3.13}$$
 
-Here $e^w$ for complex $w$ is *defined* by the power series $e^w = \sum_{n=0}^{\infty} w^n/n!$, the same series as for real $w$. We take two analysis facts for granted: this series converges absolutely for every complex $w$ (compare with $\sum |w|^n/n!$), and an absolutely convergent series may be regrouped freely. Both are proved in any real analysis text (Abbott, *Understanding Analysis*, ch. 2). Everything else we derive.
+Here $e^w$ for complex $w$ is *defined* by the power series $e^w = \sum_{n=0}^{\infty} w^n/n!$, the same series as for real $w$. We take three analysis facts for granted: this series converges absolutely for every complex $w$ (compare with $\sum |w|^n/n!$); an absolutely convergent series may be regrouped freely; and a power series may be differentiated term by term inside its region of absolute convergence (Derivation 2 uses this). All three are proved in any real analysis text (Abbott, *Understanding Analysis*, ch. 2 and §6.5). Everything else we derive.
 
 ▶ **Try it first.** Compute $i^0, i^1, i^2, i^3, i^4, i^5$. Then write out the first six terms of $\sum (i\theta)^n/n!$ and sort them into those with and without an $i$.
 
@@ -405,7 +405,7 @@ Moreover $M(z)M(w) = M(zw)$ and $\det M(z) = a^2 + b^2 = |z|^2$.
 
 **Derivation.** Linearity: $z(w_1 + w_2) = zw_1 + zw_2$ and $z(cw) = c(zw)$ for real $c$, by distributivity. First column: $z\cdot 1 = a + bi \leftrightarrow (a, b)^\top$. Second column: $z \cdot i = ai + bi^2 = -b + ai \leftrightarrow (-b, a)^\top$. That is (3.14); the polar form follows from $a = r\cos\theta$, $b = r\sin\theta$. $M(z)M(w) = M(zw)$ because both are the matrix of $u \mapsto z(wu) = (zw)u$ (LA-1 §3.3: composition is matrix multiplication). The determinant is $a\cdot a - (-b)\cdot b$. ∎
 
-■ **What just happened.** Complex numbers *are* the $2 \times 2$ real matrices of the form (3.14), and multiplication of complex numbers is multiplication of these matrices. The matrix with $r = 1$ is the rotation matrix $R_\theta$ you met in LA-1 Example 4.3 (there with $\theta = 90°$, which is $M(i)$). In LA-7 you will prove that any real $2 \times 2$ matrix with complex eigenvalues $a \pm bi$ is, in a suitable basis, exactly $M(a + bi)$: complex eigenvalues of a real matrix mean rotation-and-scaling, which is why they produce oscillation in ODE systems.
+■ **What just happened.** Complex numbers *are* the $2 \times 2$ real matrices of the form (3.14), and multiplication of complex numbers is multiplication of these matrices. The matrix with $r = 1$ is the rotation matrix $R_\theta$ you met in LA-1 Example 4.3 (there with $\theta = 90°$, which is $M(i)$). In LA-7 (§3.11) you will prove that any real $2 \times 2$ matrix with complex eigenvalues $a \pm bi$ is, in a suitable basis, exactly $M(a + bi)$: complex eigenvalues of a real matrix mean rotation-and-scaling, which is why they produce oscillation in ODE systems.
 
 **Theorem 3.16 (de Moivre).** For every integer $n$, $(\cos\theta + i\sin\theta)^n = \cos n\theta + i\sin n\theta$.
 
@@ -591,9 +591,9 @@ Project Part 7 integrates the ODE numerically with `scipy.integrate.solve_ivp` a
 - **LA-4.** Injective, surjective, bijective (Definition 3.3) become kernel, image, isomorphism. Theorem 3.4 is the statement that a linear map is invertible iff it is bijective; Rank–Nullity is what replaces counting when the sets are infinite.
 - **LA-7.** Complex eigenvalues of a real matrix come in conjugate pairs (Theorem 3.24) and act as rotation-scalings $M(a + bi)$ (Theorem 3.15); the FTA (Theorem 3.23) is why every matrix has an eigenvalue over $\mathbb{C}$; $e^{\lambda t}$ as eigenfunction of $d/dt$ (3.19) becomes $e^{At}$.
 - **LA-8.** The triangle inequality proof (Theorem 3.22) with $\sum_k z_k\bar w_k$ in place of $z\bar w$ is the triangle inequality for the complex inner product. $|e^{i\theta}| = 1$ is the $1 \times 1$ unitary.
-- **F2, F3.** Fourier series are expansions in $e^{inx}$ (Theorem 3.19 is why one family suffices); the DFT matrix has entries $\omega^{jk}$ and Theorem 3.18 (with exercise B7(d)) is its orthogonality.
-- **F4.** Probability's limit theorems are $\forall\varepsilon\,\exists N\,\forall n \ge N$ statements; "almost surely" versus "in probability" is a quantifier-order distinction, exactly §3.4's continuous versus uniformly continuous.
-- **CM-6.** Normal-mode analysis is phasors with matrices: the ansatz $\mathbf x = \operatorname{Re}[\mathbf v e^{i\omega t}]$ turns the ODE system into an eigenproblem.
+- **F2, F3.** Fourier series are expansions in $e^{inx}$ (Theorem 3.19 is why one family suffices); the DFT matrix has entries $\omega^{jk}$ (F3 takes $\omega = e^{-2\pi i/N}$, the conjugate of our $\omega$; B7(d) holds for either) and Theorem 3.18 (with exercise B7(d)) is its orthogonality, F3 Theorem 3.19.
+- **F5.** Convergence in probability (F5 Definition 3.33) puts the string $\forall\varepsilon\,\exists N\,\forall n \ge N$ *outside* a probability; almost-sure convergence, the strong law of large numbers mentioned after F5 Theorem 3.34, puts it *inside*. Where a quantifier sits is the whole difference, in the spirit of §3.4's continuous versus uniformly continuous.
+- **CM-6.** Normal-mode analysis is phasors with matrices: the ansatz $\mathbf q = \operatorname{Re}[\mathbf a\, e^{i\omega t}]$ (CM-6 §3.2, which writes the real form $\mathbf a\cos(\omega t - \delta)$) turns the ODE system into an eigenproblem.
 - **EM-7, QM-2.** Plane waves $e^{i(kx - \omega t)}$ and stationary states $e^{-iEt/\hbar}$ use the physics sign convention (§3.8 warning box).
 - **QC-1.** Global versus relative phase is the modulus-preservation remark after Theorem 3.21.
 - **ST-7.** An AR process is stationary iff the roots of its characteristic polynomial lie outside the unit circle: Theorem 3.23 and the complex plane, used for data.

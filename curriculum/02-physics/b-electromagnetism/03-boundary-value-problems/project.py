@@ -169,9 +169,9 @@ def E_pts(qs, pos, pts):
 def plane_numbers(q, d):
     """Example 4.1 quantities for q at height d above a grounded plane: (3.3)-(3.5)."""
     sig = lambda s: -q * d / (2 * np.pi * (s**2 + d**2) ** 1.5)
-    Qind = integrate.quad(lambda s: sig(s) * 2 * np.pi * s, 0, np.inf)[0]
-    Fsurf = integrate.quad(lambda s: sig(s) ** 2 / (2 * EPS0) * 2 * np.pi * s, 0, np.inf)[0]
-    Wwork = -integrate.quad(lambda z: K * q**2 / (4 * z**2), d, np.inf)[0]
+    Qind = integrate.quad(lambda u: sig(d * u) * 2 * np.pi * u * d**2, 0, np.inf)[0]            # s = d u
+    Fsurf = integrate.quad(lambda u: sig(d * u) ** 2 / (2 * EPS0) * 2 * np.pi * u * d**2, 0, np.inf)[0]
+    Wwork = -integrate.quad(lambda u: K * q**2 / (4 * d * (1 + u) ** 2), 0, np.inf)[0]        # z = d (1 + u)
     return sig, Qind, Fsurf, Wwork
 
 
@@ -181,9 +181,10 @@ qs_pl, pos_pl = np.array([q, -q]), np.array([[0, 0, d], [0, 0, -d]])
 sv = np.linspace(0, 5 * d, 21); hz = 1e-6
 Vz = [V_pts(qs_pl, pos_pl, np.c_[sv, 0 * sv, 0 * sv + j * hz]) for j in range(3)]
 sig_fd = -EPS0 * (-3 * Vz[0] + 4 * Vz[1] - Vz[2]) / (2 * hz)           # sigma = -eps0 dV/dz at the plane
-assert np.allclose(sig_fd, sig_pl(sv), rtol=1e-6) and np.abs(Vz[0]).max() < 1e-9
+assert np.allclose(sig_fd, sig_pl(sv), rtol=1e-6, atol=0) and np.abs(Vz[0]).max() < 1e-9
 Eplane = E_pts(qs_pl, pos_pl, np.array([[0, 0, 0.0]]))[0]
-assert np.isclose(Qind, -q, rtol=1e-9) and np.isclose(Fsurf, K * q**2 / (4 * d**2)) and np.isclose(Wwork, -K * q**2 / (4 * d))
+assert np.isclose(Qind, -q, rtol=1e-9, atol=0) and np.isclose(Fsurf, K * q**2 / (4 * d**2), rtol=1e-9, atol=0)
+assert np.isclose(Wwork, -K * q**2 / (4 * d), rtol=1e-9, atol=0)
 print(f"Ex 4.1: E at plane below q = {Eplane[2]:.4e} V/m; sigma(0) = {sig_pl(0)*1e6:.3f}, sigma(d) = {sig_pl(d)*1e6:.3f} uC/m^2; "
       f"Q_ind = {Qind/nC:.6f} nC; Q(<d) = {-q*(1-1/np.sqrt(2))/nC:.3f} nC; half inside s = {np.sqrt(3)*d*100:.2f} cm")
 print(f"        F = {K*q**2/(4*d**2):.4e} N (surface-pressure integral {Fsurf:.4e}); W = {Wwork:.4e} J (work integral), "
@@ -199,13 +200,13 @@ u = rng.standard_normal((1000, 3)); u /= np.linalg.norm(u, axis=1)[:, None]
 qs_sp, pos_sp = np.array([q, qp]), np.array([[0, 0, a], [0, 0, b]])
 assert np.abs(V_pts(qs_sp, pos_sp, R * u)).max() < 1e-12 * K * q / R
 F_sph = K * q * qp / (a - b) ** 2
-assert np.isclose(F_sph, -K * q**2 * R * a / (a**2 - R**2) ** 2)        # (3.7)
+assert np.isclose(F_sph, -K * q**2 * R * a / (a**2 - R**2) ** 2, rtol=1e-12, atol=0)        # (3.7)
 sig_sph = lambda th_: -q * (a**2 - R**2) / (4 * np.pi * R * (R**2 + a**2 - 2 * a * R * np.cos(th_)) ** 1.5)
 thv = np.linspace(0, np.pi, 7); hr = 1e-7
 Vr = [V_pts(qs_sp, pos_sp, (R + j * hr) * np.c_[np.sin(thv), 0 * thv, np.cos(thv)]) for j in range(3)]
-assert np.allclose(-EPS0 * (-3 * Vr[0] + 4 * Vr[1] - Vr[2]) / (2 * hr), sig_sph(thv), rtol=1e-5)
+assert np.allclose(-EPS0 * (-3 * Vr[0] + 4 * Vr[1] - Vr[2]) / (2 * hr), sig_sph(thv), rtol=1e-5, atol=0)
 Qsph = integrate.quad(lambda th_: sig_sph(th_) * 2 * np.pi * R**2 * np.sin(th_), 0, np.pi)[0]
-assert np.isclose(Qsph, qp, rtol=1e-9)
+assert np.isclose(Qsph, qp, rtol=1e-9, atol=0)
 F_neut = K * q * (qp / (a - b) ** 2 + (-qp) / a**2)                    # B2(c): add +qR/a at the centre
 print(f"Ex 4.2: q' = {qp/nC:.2f} nC at b = {b*100:.1f} cm; max|V| on sphere = {np.abs(V_pts(qs_sp, pos_sp, R*u)).max():.1e} V; "
       f"F = {F_sph:.4e} N (plane formula, same gap: {-K*q**2/(4*(a-R)**2):.4e} N)")
@@ -275,7 +276,12 @@ def solve_slot(V0y, h=1 / 40, Lx=4.0):
     return sor(V, fixed, one, one, one, one, 2 / (1 + np.sqrt(1 - rhoJ**2)))
 
 
-Cn = np.array([2 * integrate.quad(lambda y: np.sin(n * np.pi * y), 0, 1)[0] for n in range(1, 400)])   # (3.9), V0 = 1
+def sine_coeffs(V0y, nmax, a=1.0):
+    """(3.9): C_n = (2/a) int_0^a V0(y) sin(n pi y / a) dy, n = 1..nmax (QAWO oscillatory quadrature)."""
+    return np.array([2 / a * integrate.quad(V0y, 0, a, weight="sin", wvar=n * np.pi / a)[0] for n in range(1, nmax + 1)])
+
+
+Cn = sine_coeffs(lambda y: 1.0, 399)                                     # V0 = 1
 assert np.allclose(Cn[:3], [4 / np.pi, 0, 4 / (3 * np.pi)], atol=1e-12)
 closed = lambda xv, yv: 2 / np.pi * np.arctan(np.sin(np.pi * yv) / np.sinh(np.pi * xv))
 partial = [slot_series(0.5, 0.5, Cn[:N])[0] for N in (1, 3, 5)]
@@ -308,10 +314,11 @@ assert np.isclose(np.cumsum(terms)[-1], 0.25, atol=1e-6)
 # r^2 times (3.11) in rho = ln r is  e^-rho d_rho(e^rho d_rho V) + (1/sin) d_theta(sin d_theta V) = 0.
 # Multiplied by e^rho sin(theta) it is a symmetric 5-point stencil; theta sits at
 # cell centres, so the pole faces carry sin = 0 and need no special treatment.
-# V = 0 on the sphere (r = R = 1), V = -E0 r cos(theta) at r = 50 R; E0 = 1.
+# V = 0 on the sphere (r = R = 1), V = -E0 r cos(theta) at r = 50 R; E0 = 1. The
+# discretization error is about 1e-3 relative to the local |V|, so it is measured that way.
 
 # %%
-Nr, Nt, rmax = 131, 60, 50.0
+Nr, Nt, rmax = 161, 72, 50.0
 rho = np.linspace(0, np.log(rmax), Nr); hrho = rho[1] - rho[0]
 tht = (np.arange(Nt) + 0.5) * np.pi / Nt; dth = np.pi / Nt
 TH, RHO = np.meshgrid(tht, rho, indexing="ij")
@@ -321,16 +328,17 @@ cN = np.exp(RHO) * np.sin(np.minimum(TH + dth / 2, np.pi)) / dth**2
 cS = np.exp(RHO) * np.sin(np.maximum(TH - dth / 2, 0)) / dth**2
 Vs = np.zeros((Nt, Nr)); Vs[:, -1] = -rmax * np.cos(tht)
 fixed = np.zeros_like(Vs, bool); fixed[:, [0, -1]] = True
-Vs, its = sor(Vs, fixed, cE, cW, cN, cS, omega=1.93, tol=1e-10)
+Vs, its = sor(Vs, fixed, cE, cW, cN, cS, omega=1.95, tol=1e-10)
 rr = np.exp(RHO)
 Vex = -(rr - 1 / rr**2) * np.cos(TH)                                     # (4.2) with E0 = R = 1
-err_V = np.abs(Vs - Vex).max()
+err_V = np.abs(Vs - Vex)[rr <= 3].max()                                # absolute error for R <= r <= 3R
+rel_V = (np.abs(Vs - Vex) / np.maximum(np.abs(Vex), 1)).max()           # error relative to max(|V|, E0 R), whole grid
 sig_num = -(4 * Vs[:, 1] - Vs[:, 2]) / (2 * hrho)                      # sigma/eps0 = -dV/dr at r = R (V = 0 there)
 err_sig = np.abs(sig_num - 3 * np.cos(tht)).max() / 3
 p_num = (np.cos(tht) * sig_num * 2 * np.pi * np.sin(tht) * dth).sum() / (4 * np.pi)   # p/(4 pi eps0 R^3 E0)
 Q_num = (sig_num * 2 * np.pi * np.sin(tht) * dth).sum()
-assert err_V < 5e-3 and err_sig < 2e-3 and abs(p_num - 1) < 2e-3 and abs(Q_num) < 1e-10
-print(f"Ex 4.4 relaxation ({its} sweeps, {Nt}x{Nr} grid): max |V - (4.2)| = {err_V:.1e} E0 R; "
+assert err_V < 5e-3 and rel_V < 2e-3 and err_sig < 2e-3 and abs(p_num - 1) < 2e-3 and abs(Q_num) < 1e-10
+print(f"Ex 4.4 relaxation ({its} sweeps, {Nt}x{Nr} grid): max |V - (4.2)| = {err_V:.1e} E0 R for r <= 3R (relative {rel_V:.1e} everywhere); "
       f"max sigma error {err_sig:.1e} of 3 eps0 E0; p = {p_num:.4f} x 4 pi eps0 R^3 E0; Q = {Q_num:.1e}")
 Rb, Eb = 0.01, 1e5
 print(f"        R = 1 cm, E0 = 1e5 V/m: sigma_max = {3*EPS0*Eb*1e6:.3f} uC/m^2; pole field {3*Eb:.1e} V/m; "
@@ -391,11 +399,11 @@ for j, rv in enumerate(rs):
         errs[L, j] = np.sqrt(np.mean((V_multipole(Qc_, pc_, Qij_c, rv * dirs, L) - Vexact) ** 2))
 calpha = (dirs @ pos_c.T) / np.linalg.norm(pos_c, axis=1)               # Legendre form of the l = 2 term
 V2leg = K * (qs_c * (pos_c**2).sum(1) * eval_legendre(2, calpha)).sum(1) / 10.0**3
-assert np.allclose(V2leg, V_multipole(0, 0 * pc_, Qij_c, 10 * dirs, 2))
+assert np.allclose(V2leg, V_multipole(0, 0 * pc_, Qij_c, 10 * dirs, 2), rtol=1e-10, atol=0)
 slopes = [np.polyfit(np.log(rs[rs >= 10]), np.log(errs[L, rs >= 10]), 1)[0] for L in range(3)]
 assert all(abs(s_ - e_) < 0.05 for s_, e_ in zip(slopes, (-2, -3, -4)))
-shift = np.array([0.3, -0.2, 0.5]); assert np.allclose(moments(qs_c, pos_c - shift)[1], pc_ - Qc_ * shift)   # (3.32)
-assert np.allclose(moments(qs_c, pos_c - pc_ / Qc_)[1], 0)
+shift = np.array([0.3, -0.2, 0.5]); assert np.allclose(moments(qs_c, pos_c - shift)[1], pc_ - Qc_ * shift, rtol=1e-12, atol=0)   # (3.32)
+assert np.abs(moments(qs_c, pos_c - pc_ / Qc_)[1]).max() < 1e-12 * np.linalg.norm(pc_)      # origin at the centre of charge
 print(f"Multipoles: Q = {Qc_/nC:.0f} nC, |p| = {np.linalg.norm(pc_)/nC:.3f} nC m, tr Q_ij = {np.trace(Qij_c):.1e}; "
       f"error slopes after l = 0, 1, 2: " + ", ".join(f"{s_:.3f}" for s_ in slopes))
 fig, ax = plt.subplots(figsize=(6, 4.5))
@@ -466,7 +474,7 @@ fig.tight_layout(); fig.savefig(FIG / "spherical_harmonics.png", dpi=110); plt.c
 # %% [markdown]
 # ## Part 7: Dipoles in external fields (§3.10, A6, B7, C3)
 # A physical dipole +-q at r0 +- d/2 in the field of a point charge Q at the origin.
-# Force, torque, energy approach (3.33)-(3.35) with errors O(d^2).
+# Energy, torque and force approach (3.33)-(3.35) with errors O(d^2); (3.36) is dipole-dipole.
 
 # %%
 Qs, r0 = 1 * nC, np.array([0.03, 0.01, 0.05]); phat = np.array([1.0, 2.0, -0.5]) / np.linalg.norm([1, 2, -0.5])
@@ -494,7 +502,7 @@ q1s, q2s = np.array([-1, 1]) * np.linalg.norm(p1) / dd, np.array([-1, 1]) * np.l
 U_pairs = sum(K * q1s[i] * q2s[j] / np.linalg.norm(c2[j] - c1[i]) for i in range(2) for j in range(2))
 rh12 = rv12 / np.linalg.norm(rv12)
 U_form = K / np.linalg.norm(rv12) ** 3 * (p1 @ p2 - 3 * (p1 @ rh12) * (p2 @ rh12))
-assert np.isclose(U_pairs, U_form, rtol=1e-6)
+assert np.isclose(U_pairs, U_form, rtol=1e-6, atol=0)
 kB, eV, pw = 1.380649e-23, 1.602176634e-19, 1.85 * 3.33564e-30
 Uw = -2 * K * pw**2 / 0.3e-9**3
 print(f"Water p = {pw:.3e} C m; head-to-tail at 0.3 nm: U = {Uw:.3e} J = {Uw/eV:.3f} eV = {Uw/(kB*300):.2f} kT(300 K)")
@@ -561,7 +569,7 @@ bOH, angH = 0.0957e-9, np.radians(104.5)
 delta = pw / (2 * bOH * np.cos(angH / 2))
 pos_w = np.array([[0, 0, 0], [bOH * np.sin(angH / 2), 0, bOH * np.cos(angH / 2)], [-bOH * np.sin(angH / 2), 0, bOH * np.cos(angH / 2)]])
 qs_w = np.array([-2 * delta, delta, delta])
-assert np.allclose(moments(qs_w, pos_w)[1], [0, 0, pw])
+assert np.allclose(moments(qs_w, pos_w)[1] / pw, [0, 0, 1], atol=1e-12)
 rw = np.array([0.5, 1, 2, 4]) * 1e-9; rel = []
 for dvec in (np.array([0, 0, 1.0]), np.array([1, 0, 1.0]) / np.sqrt(2)):
     ptsw = rw[:, None] * dvec
@@ -571,7 +579,7 @@ slope_w = np.polyfit(np.log(rw), np.log(rel[0]), 1)[0]
 assert abs(slope_w + 1) < 0.1
 print(f"Your turn 3: delta = {delta/1.602176634e-19:.3f} e; dipole-approx relative error on axis at 0.5, 1, 2, 4 nm: "
       + ", ".join(f"{e:.3f}" for e in rel[0]) + f" (slope {slope_w:.2f}); at 45 deg: " + ", ".join(f"{e:.3f}" for e in rel[1]))
-Cp = np.array([2 * integrate.quad(lambda y: 4 * y * (1 - y) * np.sin(n * np.pi * y), 0, 1)[0] for n in range(1, 60)])
+Cp = sine_coeffs(lambda y: 4 * y * (1 - y), 59)
 nn = np.arange(1, 60)
 assert np.allclose(Cp, np.where(nn % 2, 32 / (nn * np.pi) ** 3, 0), atol=1e-12)
 Vfd8, its8 = solve_slot(lambda y: 4 * y * (1 - y))

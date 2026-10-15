@@ -119,7 +119,7 @@ Check: $(\sqrt2 + \sqrt2\,i)^2 = 2(1 + i)^2 = 2 \cdot 2i = 4i$, and $(4i)^2 = -1
 
 **B8.** (a) Let $x(t) = Xe^{i\omega t}$ with $X \in \mathbb{C}$ constant. By (3.19) with $\lambda = i\omega$: $\dot x = i\omega Xe^{i\omega t}$ and $\ddot x = (i\omega)^2Xe^{i\omega t} = -\omega^2Xe^{i\omega t}$. Substitute into $m\ddot x + c\dot x + kx = F_0e^{i\omega t}$:
 $$\big(-m\omega^2 + ic\omega + k\big)Xe^{i\omega t} = F_0e^{i\omega t}.$$
-Since $e^{i\omega t} \ne 0$, divide it out: $(k - m\omega^2 + ic\omega)X = F_0$, so $X = \dfrac{F_0}{k - m\omega^2 + ic\omega}$. (The denominator is nonzero whenever $c > 0$, because its imaginary part $c\omega \ne 0$.)
+Since $e^{i\omega t} \ne 0$, divide it out: $(k - m\omega^2 + ic\omega)X = F_0$, so $X = \dfrac{F_0}{k - m\omega^2 + ic\omega}$. (The denominator is nonzero whenever $c > 0$ and $\omega > 0$, because its imaginary part $c\omega$ is then nonzero.)
 
 Real parts: write $L[x] = m\ddot x + c\dot x + kx$. Because $m, c, k$ are real and differentiation acts separately on real and imaginary parts, $\operatorname{Re}L[x] = L[\operatorname{Re}x]$ (Theorem 3.21). Taking real parts of $L[Xe^{i\omega t}] = F_0e^{i\omega t}$ gives $L[\operatorname{Re}(Xe^{i\omega t})] = \operatorname{Re}(F_0e^{i\omega t}) = F_0\cos\omega t$. So $x_p = \operatorname{Re}[Xe^{i\omega t}]$ solves the real equation. ∎
 
@@ -145,7 +145,7 @@ We win this game. Take $\varepsilon = 1$. Let $\delta > 0$ be arbitrary (the opp
 $$x^2 - a^2 = (x - a)(x + a) = \frac{\delta}{2}\Big(\frac{2}{\delta} + \frac{\delta}{2}\Big) = 1 + \frac{\delta^2}{4} \ge 1 = \varepsilon.$$
 So for every $\delta$ there is a pair within $\delta$ whose squares differ by at least $1$: $x^2$ is not uniformly continuous on $\mathbb{R}$. ∎
 
-Cauchy's error: his hypothesis gave a $\delta$ for each point ($\forall a\,\forall\varepsilon\,\exists\delta$), and his argument used one $\delta$ for all points ($\forall\varepsilon\,\exists\delta\,\forall a$). Part (b) versus part (c) is exactly that gap for one function.
+Cauchy's error had the same shape, with the number of terms $N$ of his series in place of $\delta$: pointwise convergence gave him, for each point $x$ and tolerance $\varepsilon$, an $N$ ($\forall x\,\forall\varepsilon\,\exists N$), and his argument used one $N$ for all points at once ($\forall\varepsilon\,\exists N\,\forall x$). Part (b) versus part (c) is that gap, for continuity instead of convergence, on one function.
 
 **C2.** (a) *Strong induction on $n$.* Base cases: $12 = 4 \cdot 3 + 5 \cdot 0$, $13 = 4 \cdot 2 + 5 \cdot 1$, $14 = 4 \cdot 1 + 5 \cdot 2$, $15 = 4 \cdot 0 + 5 \cdot 3$. Inductive step: let $n \ge 16$ and assume every integer $m$ with $12 \le m < n$ is of the form $4a + 5b$ with $a, b \ge 0$. Since $n - 4 \ge 12$ and $n - 4 < n$, the hypothesis gives $n - 4 = 4a + 5b$, so $n = 4(a + 1) + 5b$ with $a + 1, b \ge 0$. ∎ Four base cases are needed because the step reaches back four.
 
