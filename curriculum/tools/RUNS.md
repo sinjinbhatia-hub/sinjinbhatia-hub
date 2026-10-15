@@ -31,3 +31,12 @@ Script: `curriculum/tools/build_modules_workflow.js`. Resume a run with
 | wf_6a49dba9-e21 | (resumed, extended) review CM-5; review F2, F3, F6 |
 | wf_c814a063-62a | combined: write EM-1..EM-4 |
 | wf_84c5b629-4b6 | combined: write ST-1..ST-4 |
+
+## Fourth round (2026-10-15, resumed after pause; combined review+fix mode)
+
+| Run ID | Modules |
+|---|---|
+| wf_ef976c8b-db7 | verify: F1, F2, F3, F6 |
+| wf_707c8802-f23 | verify: LA-5..LA-9 |
+| wf_9d716a9f-8af | verify: LA-10, LA-11, LA-12, LA-14, CM-5 |
+| wf_41adb0c0-23e | combined: write EM-3..EM-6 |
