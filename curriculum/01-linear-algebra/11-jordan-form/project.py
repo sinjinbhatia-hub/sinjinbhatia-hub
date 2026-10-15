@@ -4,7 +4,7 @@
 # This script builds the machinery of LA-11 in exact arithmetic (SymPy) and
 # then tests it against floating-point reference implementations (SciPy).
 # Parts: (1) kernel dimensions and the block-counting formula (3.4),
-# (2) the chain construction of Theorem 3.4, built by hand,
+# (2) the chain construction of Theorem 3.6, built by hand,
 # (3) the ODE y'' - 2y' + y = 0 and where t e^t comes from (Example 4.1),
 # (4) the 3x3 and 4x4 worked examples (4.2, 4.3), (5) Cayley–Hamilton
 # (Example 4.4, random matrices, and the Schur mechanism of the proof),
@@ -45,7 +45,7 @@ def to_np(A):
 # ## Part 1: Kernel dimensions and the block-counting formula
 #
 # For an eigenvalue lam, write d_k = dim ker (A - lam I)^k (exact rank, so
-# exact dimension). Theorem 3.9: the number of Jordan blocks for lam of size
+# exact dimension). Theorem 3.11: the number of Jordan blocks for lam of size
 # >= k is d_k - d_{k-1}, eq. (3.4). This is the "easy part" of the module and
 # the one to learn cold.
 
@@ -53,7 +53,7 @@ def to_np(A):
 # %%
 def kernel_dims(A, lam):
     """d_k = dim ker (A - lam I)^k for k = 0, 1, ..., until the sequence stops
-    growing (Lemma 3.2: once equal, equal forever). Exact arithmetic."""
+    growing (Lemma 3.3(b): once equal, equal forever). Exact arithmetic."""
     n = A.rows
     N = A - lam * sp.eye(n)
     dims = [0]
@@ -119,7 +119,7 @@ assert kernel_dims(Jmix, 2) == [0, 3, 5, 6]        # Exercise A3's numbers
 print("Part 1: block-counting formula (3.4) recovers the sizes of every test matrix.")
 
 # %% [markdown]
-# ## Part 2: The chain construction (Theorem 3.4), built by hand
+# ## Part 2: The chain construction (Theorem 3.6), built by hand
 #
 # **Build it yourself first.** For a nilpotent N, work from the top level
 # m (where ker N^m is everything) down to 1. At level k you already hold the
@@ -137,7 +137,7 @@ print("Part 1: block-counting formula (3.4) recovers the sizes of every test mat
 def nilpotent_chains(N, dim=None):
     """Jordan chains of the nilpotent operator N (on ker N^m, of dimension dim).
     Returns a list of chains, each [v, N v, N^2 v, ..., N^{s-1} v] (top first),
-    with N^s v = 0. Proof/algorithm: Theorem 3.4 and §3.6 of the notes."""
+    with N^s v = 0. Proof/algorithm: Theorem 3.6 and §3.6 of the notes."""
     n = N.rows
     dim = n if dim is None else dim
     kers = [sp.zeros(n, 0)]           # kers[k] = basis matrix of ker N^k
@@ -172,7 +172,7 @@ def nilpotent_chains(N, dim=None):
 
 def jordan_basis(A):
     """P and J with P^-1 A P = J, assembled from chains in each generalized
-    eigenspace (Theorem 3.8). Also returns the (eigenvalue, size) block list."""
+    eigenspace (Theorem 3.10). Also returns the (eigenvalue, size) block list."""
     n = A.rows
     cols, blocks = [], []
     eig = sorted(A.eigenvals().items(), key=lambda kv: (float(sp.re(kv[0])), float(sp.im(kv[0]))))
@@ -324,7 +324,7 @@ fig.tight_layout(); fig.savefig(FIG / "kernel_dimensions.png", dpi=120); plt.clo
 # Example 4.4: A = [[2,1,0],[1,1,0],[0,1,1]], p_A = x^3 - 4x^2 + 4x - 1,
 # A^-1 = A^2 - 4A + 4I, A^5 = 33A^2 - 44A + 12I = [[89,55,0],[55,34,0],[33,22,1]].
 # Then p_A(A) = 0 numerically for random matrices, and the mechanism of the
-# Schur proof (Theorem 3.15): (T - l_1 I)...(T - l_k I) kills span(e_1..e_k).
+# Schur proof (Theorem 3.16): (T - l_1 I)...(T - l_k I) kills span(e_1..e_k).
 
 
 # %%
@@ -378,8 +378,8 @@ print("Part 5: p_A(A) = 0 on random matrices; the successive products in the Sch
 # %% [markdown]
 # ## Part 6: The minimal polynomial, two ways
 #
-# Way 1 (Theorem 3.14): m_A = prod (x - lam)^{largest block for lam}.
-# Way 2 (Definition 3.12): smallest d with I, A, ..., A^d linearly dependent;
+# Way 1 (Theorem 3.15): m_A = prod (x - lam)^{largest block for lam}.
+# Way 2 (Definition 3.13): smallest d with I, A, ..., A^d linearly dependent;
 # the (monic) dependence is m_A. They must agree. Example 4.5:
 # J_2(1) + J_1(1) + J_1(3) has p = (x-1)^3 (x-3) and m = (x-1)^2 (x-3).
 
@@ -428,7 +428,7 @@ assert poly_of_matrix(m45, A45) == sp.zeros(4, 4)
 assert poly_of_matrix((x - 1) * (x - 3), A45) != sp.zeros(4, 4)      # one factor too few
 assert jordan_structure(A45) == {1: [2, 1], 3: [1]}
 assert kernel_dims(A45, 1) == [0, 2, 3] and kernel_dims(A45, 3) == [0, 1]
-# m_A divides p_A (Theorem 3.13 + Cayley–Hamilton):
+# m_A divides p_A (Theorem 3.14(b) + Cayley–Hamilton):
 assert sp.rem(sp.Poly(A45.charpoly(x).as_expr(), x), sp.Poly(m45, x)).is_zero
 # Numerically, in floating point, m(A) and p(A) are zero to rounding:
 A45f = to_np(A45)
@@ -453,7 +453,7 @@ assert kernel_dims(J7a, 0) == [0, 3, 5, 7] and kernel_dims(J7b, 0) == [0, 3, 6, 
 assert jordan_structure(J7a) != jordan_structure(J7b)
 print("Part 6: two 7x7 matrices with equal p, m and rank but d_2 = 5 vs 6: not similar.")
 
-# Symmetric matrices never have blocks (Proposition 3.11): the ring of three masses.
+# Symmetric matrices never have blocks (Proposition 3.12): the ring of three masses.
 K_ring = M([[2, -1, -1], [-1, 2, -1], [-1, -1, 2]])
 assert K_ring.eigenvals() == {0: 1, 3: 2}
 assert jordan_structure(K_ring) == {0: [1], 3: [1, 1]}
@@ -462,7 +462,7 @@ assert kernel_dims(K_ring, 3) == [0, 2]                 # ker (K - 3I)^2 = ker (
 # %% [markdown]
 # ## Part 7: Functions of matrices via the Jordan form
 #
-# Theorem 3.16, eq. (3.7): f(J_s(lam)) = sum_{k<s} f^{(k)}(lam)/k! N^k. Then
+# Theorem 3.17, eq. (3.7): f(J_s(lam)) = sum_{k<s} f^{(k)}(lam)/k! N^k. Then
 # f(A) = P f(J) P^-1 (3.10). We build exp(tA) this way with sympy's own
 # jordan_form and compare with scipy.linalg.expm, then solve the critically
 # damped oscillator x'' + 2w x' + w^2 x = 0 both ways.
@@ -585,7 +585,7 @@ print(f"Part 8: angle ~ 2 sqrt(eps), cond(V) = 1/sqrt(eps) exactly; cond(V) for 
 # %% [markdown]
 # ## Part 9: Exercise spot-checks
 #
-# The numbers quoted in solutions.md for A1, B2, B3(d), B5, B6(c) and C4(c).
+# The numbers quoted in solutions.md for A1, B2, B3(d), B5, B6(c), B7 and C4(c).
 
 # %%
 A_a1 = M([[1, 1], [-1, 3]])
@@ -600,7 +600,7 @@ assert P_b2.inv() * A_b2 * P_b2 == sp.diag(sp.jordan_cell(1, 2), sp.jordan_cell(
 
 N_b3 = M([[0, 0, 1, 2], [0, 0, 3, 4], [0, 0, 0, 0], [0, 0, 0, 0]])
 P_b3 = M([[1, 0, 2, 0], [3, 0, 4, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
-assert kernel_dims(N_b3, 0) == [0, 2, 4]
+assert kernel_dims(N_b3, 0) == [0, 2, 4] and P_b3.det() == 2
 assert P_b3.inv() * N_b3 * P_b3 == sp.diag(sp.jordan_cell(0, 2), sp.jordan_cell(0, 2))
 
 C_b5 = M([[0, 1, 0], [0, 0, 1], [1, -3, 3]])
@@ -621,7 +621,16 @@ assert A_b6 * sp.Matrix.vstack(sp.zeros(3, 1), one) == sp.Matrix.vstack(one, sp.
 
 # C4(c): e^{tA} is the degree-1 polynomial e^t((1 - t) I + t A) for Example 4.1's matrix.
 assert sp.simplify(E_formula - sp.exp(t) * ((1 - t) * sp.eye(2) + t * A_ode)) == sp.zeros(2, 2)
-print("Part 9: exercise numbers (A1, B2, B3d, B5, B6c, C4c) verified.")
+
+# B7: deg m_A < deg p_A exactly when some eigenvalue has more than one block (Theorem 3.15).
+for Amat in (A45, Jmix, K_ring, Adiag, A4, Ntest, J7a, J7b, N_uv, N_b3, A_b2, A_b6):
+    assert sp.degree(minimal_polynomial_by_dependence(Amat), x) < Amat.rows, Amat
+for Amat in (A_ode, A_a1, A3, A5, C_b5):
+    assert sp.degree(minimal_polynomial_by_dependence(Amat), x) == Amat.rows, Amat
+assert minimal_polynomial_by_dependence(N_uv) == x ** 2 and minimal_polynomial_by_dependence(N_b3) == x ** 2
+assert minimal_polynomial_by_dependence(A_b2) == sp.expand((x - 1) ** 2)
+assert minimal_polynomial_by_dependence(A_b6) == sp.expand(x ** 2 * (x ** 2 + 3))
+print("Part 9: exercise numbers (A1, B2, B3d, B5, B6c, B7, C4c) verified.")
 
 # %% [markdown]
 # ## Your turn

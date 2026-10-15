@@ -190,8 +190,8 @@ print("Part 1 passed.")
 # ## Part 2: Partial sums and the Gibbs phenomenon
 #
 # Theorem 3.15: for the square wave the first peak of S_{2M-1} is at pi/(2M) and
-# tends to (2/pi) Si(pi) = 1.17898; the overshoot is Si(pi)/pi - 1/2 = 0.0895 of
-# the jump, for every N. For the sawtooth the peak sits where f itself is
+# tends to (2/pi) Si(pi) = 1.17898; the overshoot tends to Si(pi)/pi - 1/2 = 0.0895
+# of the jump, and is slightly larger than that at every finite N. For the sawtooth the peak sits where f itself is
 # pi - t, so measure S_N f(x) - f(x); the limit is 2 Si(pi) - pi = 0.5623 =
 # 0.0895 * 2pi.
 

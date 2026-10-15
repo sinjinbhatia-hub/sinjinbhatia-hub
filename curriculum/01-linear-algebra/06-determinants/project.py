@@ -562,7 +562,7 @@ area_weighted = rect_area * np.mean(rs)              # ∫∫ r dr dθ ≈ (rect
 area_naive = rect_area                               # ∫∫ 1 dr dθ
 exact = 3 * np.pi / 4
 assert abs(area_weighted - exact) / exact < 0.005, (area_weighted, exact)
-assert abs(area_naive - exact) / exact > 0.3
+assert np.isclose(exact / area_naive, 1.5)           # off by exactly the factor 3/2 = mean of r on [1, 2]
 # Independent check: rejection sampling in the plane.
 pts = rng.uniform([0, 0], [2, 2], (N, 2))
 rad = np.hypot(pts[:, 0], pts[:, 1])
@@ -616,7 +616,7 @@ Ar = rng.standard_normal((5, 5))
 print(f"random 5x5: det = {np.linalg.det(Ar):+.3f}, det(2A) = {np.linalg.det(2 * Ar):+.3f} = 32 * det(A), cond = {np.linalg.cond(Ar):.1f}")
 
 # %% [markdown]
-# ## Part 11: Numbers from the exercises (A1, A3, A4, B3(c), C1(a), C2(c))
+# ## Part 11: Numbers from the exercises (A1, A3, A4, B1(c), B3(c), C1(a), C2(c))
 
 # %%
 assert np.isclose(det_elimination([[2, 1, 0], [4, 3, 1], [-2, 0, 5]])[0], 8)                        # A1
@@ -625,12 +625,14 @@ assert sum(sign(p) == 1 for p in itertools.permutations(range(4))) == 12        
 assert np.allclose(cramer([[3, 1], [4, 2]], [5, 8]), [1, 2])                                        # A4
 assert np.allclose(adjugate([[3, 1], [4, 2]]), [[2, -1], [-4, 3]])                                   # A4
 assert np.isclose(-2 * np.linalg.det(np.array([[3, 0], [0, 2]], float)), -12)                       # B3(c)
+M_b1c = np.block([[np.zeros((2, 2)), np.eye(2)], [np.eye(2), np.zeros((2, 2))]])                     # B1(c)
+assert np.isclose(np.linalg.det(M_b1c), 1) and sign((2, 3, 0, 1)) == 1                              # det = +1, not -1
 t, lam = sp.symbols("t lamda")
 Bs = sp.Matrix(3, 3, sp.symbols("b11 b12 b13 b21 b22 b23 b31 b32 b33"))
 assert sp.expand(sp.diff((sp.eye(3) + t * Bs).det(), t).subs(t, 0) - Bs.trace()) == 0              # C1(a)
 p2 = (sp.Matrix([[2, 1], [1, 2]]) - lam * sp.eye(2)).det()
 assert sp.expand(p2 - (lam ** 2 - 4 * lam + 3)) == 0 and sorted(sp.solve(p2, lam)) == [1, 3]        # C2(c)
-print("Part 11: exercise numbers A1, A3, A4, B3(c), C1(a), C2(c) verified.")
+print("Part 11: exercise numbers A1, A3, A4, B1(c), B3(c), C1(a), C2(c) verified.")
 
 # %% [markdown]
 # ## Your turn
@@ -660,7 +662,12 @@ H_exact_inv = np.array(sp.Matrix(4, 4, lambda i, j: sp.Rational(1, i + j + 1)).i
 err_adj = np.abs(adjugate(H) / det_elimination(H)[0] - H_exact_inv).max()
 err_inv = np.abs(np.linalg.inv(H) - H_exact_inv).max()
 kappa = np.linalg.cond(H)
+# B8's claim: both errors are ~6e-10 in the worst entry, i.e. a relative error ~1e-13 that sits
+# inside the kappa * eps bound conditioning allows, and the two methods agree to within a few
+# percent: the adjugate formula buys no accuracy.
 assert err_adj < 1e-8 and err_inv < 1e-8            # both fine for a 4x4; neither is exact
+assert max(err_adj, err_inv) / np.abs(H_exact_inv).max() < kappa * np.finfo(float).eps
+assert 0.5 < err_adj / err_inv < 2.0, (err_adj, err_inv)
 print(f"Hilbert 4x4: cond = {kappa:.3g}; max |error| adjugate/det = {err_adj:.2e}, np.linalg.inv = {err_inv:.2e};"
       f" largest exact entry = {np.abs(H_exact_inv).max():.0f}")
 

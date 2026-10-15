@@ -339,7 +339,9 @@ for nh in ns:
 i10 = list(ns).index(10)
 print(f"Hilbert 10×10, cond = {np.linalg.cond(sla.hilbert(10)):.2e}:  ‖QᵀQ − I‖  classical GS = {loss_c[i10]:.2e}, "
       f"modified GS = {loss_m[i10]:.2e}, Householder = {loss_h[i10]:.2e}")
-assert loss_c[i10] > 1.0 and loss_m[i10] < 1e-3 and loss_h[i10] < 1e-13
+# §3.8 / §7 state κ(H_10) ≈ 1.6e13 and losses ≈ 3.0 (classical), 1.8e-4 (modified), 1e-15 (Householder).
+assert 1.5e13 < kappas[i10] < 1.7e13
+assert 2.0 < loss_c[i10] < 4.0 and 1e-4 < loss_m[i10] < 3e-4 and loss_h[i10] < 5e-15
 for kap, lc, lm in zip(kappas, loss_c, loss_m):     # the §3.8 bounds, size by size
     assert lm <= 10 * kap * u_rnd                     # modified: κε (Björck)
     if kap ** 2 * u_rnd < 1:
@@ -427,6 +429,10 @@ err_lstsq = rel(np.linalg.lstsq(A_bad, b_bad, rcond=None)[0])
 print(f"Ill-conditioned fit, κ(A) = {np.linalg.cond(A_bad):.1e}, κ(AᵀA) = {np.linalg.cond(A_bad.T @ A_bad):.1e}: "
       f"relative error  normal eqns {err_normal:.1e} | MGS then Qᵀb {err_naive:.1e} | MGS on [A|b] {err_aug:.1e} | "
       f"Householder {err_hh:.1e} | lstsq {err_lstsq:.1e}")
+# §3.10 / §7 state κ(A) ≈ 6e7 and relative errors ≈ 4e-5 (normal), 2e-5 (naive MGS), 3e-11 (MGS on [A|b]), 7e-10 (Householder).
+assert 3e7 < np.linalg.cond(A_bad) < 1e8
+assert 1e-5 < err_normal < 2e-4 and 1e-5 < err_naive < 2e-4      # eleven to twelve of sixteen digits lost
+assert err_aug < 3e-10 and err_hh < 5e-9                           # five to seven digits lost
 assert err_normal > 1e3 * err_aug and err_normal > 1e3 * err_hh
 assert err_naive > 1e3 * err_aug      # Qᵀb formed separately throws the accuracy away again (§8) ...
 assert err_naive > 0.1 * err_normal   # ... to within a factor of ten of the normal equations (§3.10)

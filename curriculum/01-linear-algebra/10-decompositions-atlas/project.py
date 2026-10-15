@@ -186,6 +186,8 @@ assert np.allclose(Z_sp @ T_sp @ Z_sp.T, A42)
 assert np.isclose(T_sp[1, 0], 0) and np.allclose(sorted(np.diag(T_sp)), [-2, 3])
 departure = np.sqrt(np.sum(A42 ** 2) - np.sum(np.diag(T_sp) ** 2))        # Corollary 3.8a
 assert np.isclose(abs(T_sp[0, 1]), 1) and np.isclose(departure, 1)
+# SciPy returns the hand Q and T up to the sign of q2 (which flips t12): compare entrywise magnitudes.
+assert np.allclose(np.abs(T_sp), np.abs(T_hand)) and np.allclose(np.abs(Z_sp), np.abs(Q_hand)), (T_sp, Z_sp)
 assert not np.allclose(A42 @ A42.T, A42.T @ A42)                            # not normal
 print("Example 4.2: hand T =", T_hand.round(12).tolist(), " SciPy T =", T_sp.round(12).tolist(), " |t12| =", round(abs(T_sp[0, 1]), 12))
 
@@ -627,12 +629,16 @@ kA, kAtA = np.linalg.cond(A_cal), np.linalg.cond(A_cal.T @ A_cal)
 assert np.isclose(kAtA, kA ** 2, rtol=1e-3)
 assert 1e7 < kA < 2e7 and 1e14 < kAtA < 2e14
 print(f"calibration matrix: kappa(A) = {kA:.3e}, kappa(A^T A) = {kAtA:.3e} = kappa(A)^2 -> normal equations lose ~{np.log10(kAtA):.0f} digits")
+# Exact data (no measurement noise), so the only error is rounding: QR loses ~log10(kappa) = 7 digits,
+# the normal equations ~log10(kappa^2) = 14 (B2(c)). With noise above ~1e-9 the data error swamps both.
 c_true = np.array([1.0, -0.2, 0.01])
-y = A_cal @ c_true + 1e-6 * rng.standard_normal(x.size)
+y = A_cal @ c_true
 Qc, Rc = sla.qr(A_cal, mode="economic")
 c_qr = sla.solve_triangular(Rc, Qc.T @ y)
 c_ne = np.linalg.solve(A_cal.T @ A_cal, A_cal.T @ y)
-print(f"   coefficient error: QR {np.linalg.norm(c_qr - c_true):.2e}, normal equations {np.linalg.norm(c_ne - c_true):.2e}")
+err_qr, err_ne = np.linalg.norm(c_qr - c_true), np.linalg.norm(c_ne - c_true)
+assert err_qr < 1e-8 and err_ne > 1e-6 and err_ne > 1e3 * err_qr, (err_qr, err_ne)
+print(f"   coefficient error on exact data: QR {err_qr:.2e}, normal equations {err_ne:.2e} (ratio {err_ne / err_qr:.1e})")
 
 
 # B8: the fixed-free chain K_n has pivots (k+1)/k and last pivot 1/n, det 1; the free-free chain fails at the last step.

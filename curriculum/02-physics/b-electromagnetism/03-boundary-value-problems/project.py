@@ -85,6 +85,9 @@ for l in range(7):
         assert sp.integrate(P[l] * P[m], (x, -1, 1)) == (sp.Rational(2, 2 * l + 1) if l == m else 0)
 gen = sp.series(1 / sp.sqrt(1 - 2 * x * t + t**2), t, 0, LMAX + 1).removeO()
 assert all(sp.expand(gen.coeff(t, l) - P[l]) == 0 for l in range(LMAX + 1))       # (3.19), (3.28)
+G_ = 1 / sp.sqrt(1 - 2 * x * t + t**2)
+assert sp.simplify((1 - 2 * x * t + t**2) * sp.diff(G_, t) - (x - t) * G_) == 0                     # C2(a)
+assert sp.simplify(sp.diff((1 - x**2) * sp.diff(G_, x), x) + t * sp.diff(t * G_, t, 2)) == 0        # C2(b)
 nser = sp.series(sp.log((1 + t) / (1 - t)) / t, t, 0, 12).removeO()               # Theorem 3.5, step 4
 assert all(nser.coeff(t, 2 * l) == sp.Rational(2, 2 * l + 1) for l in range(6))
 odd1 = frobenius_series(1, 0, 14)                                                    # B4(b): l = 1, even series
@@ -434,7 +437,7 @@ Q6, p6, Qij6 = moments(qs6, pos6)
 assert np.allclose(Qij6, np.diag([6, -6, 0])) and Q6 == 0 and np.allclose(p6, 0)
 pt6 = np.array([[10.0, 0, 0]])
 ex6, q6v = V_pts(qs6, pos6, pt6)[0] / K, V_multipole(0, p6, Qij6, pt6, 2)[0] / K
-print(f"B6: Q_ij = diag{tuple(np.diag(Qij6))} qa^2; at r = 10a in-plane, phi = 0: exact {ex6:.7f}, quadrupole {q6v:.7f} kq/a, "
+print(f"B6: Q_ij = diag{tuple(int(v) for v in np.diag(Qij6))} qa^2; at r = 10a in-plane, phi = 0: exact {ex6:.7f}, quadrupole {q6v:.7f} kq/a, "
       f"ratio {ex6/q6v:.5f}")
 
 # %% [markdown]
@@ -557,7 +560,7 @@ assert np.isclose(Qbot, -(Lp - z0p) / Lp, atol=1e-4) and np.isclose(Qtop, -z0p /
 print(f"Your turn 1 / C1: z0 = 0.3 L: Q_bottom = {Qbot:.5f} q, Q_top = {Qtop:.5f} q (predicted -0.7, -0.3)")
 ar, nring = 1.0, 4000
 ring = np.c_[np.cos(2 * np.pi * np.arange(nring) / nring), np.sin(2 * np.pi * np.arange(nring) / nring), np.zeros(nring)]
-P2n0 = lambda n: (-1) ** n * np.prod(np.arange(1, 2 * n, 2)) / np.prod(np.arange(2, 2 * n + 1, 2)) if n else 1.0
+P2n0 = lambda n: np.prod([-(2 * j - 1) / (2 * j) for j in range(1, n + 1)])   # P_2n(0) = (-1)^n (2n)! / (4^n n!^2), in floats
 for rr_, tt_ in ((1.5, np.pi / 3), (0.5, np.pi / 6)):
     num = V_pts(np.full(nring, 1.0 / nring), ring, rr_ * np.array([[np.sin(tt_), 0, np.cos(tt_)]]))[0] / K
     ratio_ = min(rr_, 1 / rr_)

@@ -51,7 +51,7 @@ Conventions as in the notes: $A$ is $m\times n$ with columns $\mathbf{a}_j$; $\h
 **B8.** (Code: weighted least squares.) Readings with different reliabilities should not count equally. Given weights $w_i > 0$, the weighted problem is to minimize $\sum_i w_i\big((A\mathbf{x})_i - b_i\big)^2$.
 (a) Show this equals $\|W^{1/2}(A\mathbf{x} - \mathbf{b})\|^2$ with $W = \operatorname{diag}(w_i)$, hence is an ordinary least-squares problem for the scaled matrix $W^{1/2}A$ and vector $W^{1/2}\mathbf{b}$. Write down its normal equations.
 (b) Explain why, for integer weights, this is the same as duplicating row $i$ of the data $w_i$ times.
-(c) Implement `least_squares_weighted(A, b, w)` in `project.py` by scaling rows and calling `least_squares_qr`. (A reference implementation sits in the last cell of `project.py`; write yours before you read it, then compare.) Assert that all weights equal to 1 reproduces the unweighted answer for Example 4.2, and that a weight of $10^6$ on the third point forces the fitted line through $(2, 2)$. Then fit Example 4.5 with weights $w = (1, 1, 1, 1, 1, 10)$ and report how the coefficients and the residuals move.
+(c) Implement `least_squares_weighted(A, b, w)` in `project.py` by scaling rows and calling `least_squares_qr`. (A reference implementation sits in the final "Your turn" code cell of `project.py`; write yours before you read it, then compare.) Assert that all weights equal to 1 reproduces the unweighted answer for Example 4.2, and that a weight of $10^6$ on the third point forces the fitted line through $(2, 2)$. Then fit Example 4.5 with weights $w = (1, 1, 1, 1, 1, 10)$ and report how the coefficients and the residuals move.
 
 ## C. Challenge (do at least one)
 

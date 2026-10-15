@@ -22,7 +22,7 @@ LA-7's recipe: find eigenvalues, find eigenvectors, write $\mathbf{x}(t) = \sum_
 
 This is not a rare accident you can ignore. It happens in every critically damped oscillator (CM-6), in companion matrices of ODEs and recurrences with repeated roots (ST-7), in transition matrices with chains of transient states (F5), in momentum methods tuned to their fastest setting (ML-2), and in every matrix close enough to one of those that floating point can't tell the difference (§3.11).
 
-The question "what is the simplest matrix similar to a given $A$, when diagonal is impossible?" was answered by Camille Jordan in his 1870 *Traité des substitutions et des équations algébriques*. Jordan was studying linear substitutions over finite fields for group theory, not ODEs, and the canonical form appears there as a tool. Weierstrass had obtained an equivalent result for complex matrices two years earlier, in his theory of elementary divisors; the name stuck to Jordan. Twelve years before either, Arthur Cayley's 1858 *Memoir on the Theory of Matrices* stated that every matrix satisfies its own characteristic equation, verified it for $2\times 2$ and $3\times 3$, and wrote that he had "not thought it necessary to undertake the labour of a formal proof of the theorem in the general case." Hamilton had the $3\times 3$ case in 1853 from quaternions. Frobenius gave the first general proof in 1878 and in the same paper introduced the minimal polynomial. Sylvester named nilpotent matrices in 1884.
+The question "what is the simplest matrix similar to a given $A$, when diagonal is impossible?" was answered by Camille Jordan in his 1870 *Traité des substitutions et des équations algébriques*. Jordan was studying linear substitutions over finite fields for group theory, not ODEs, and the canonical form appears there as a tool. Weierstrass had obtained an equivalent result for complex matrices two years earlier, in his theory of elementary divisors; the name stuck to Jordan. Twelve years before either, Arthur Cayley's 1858 *Memoir on the Theory of Matrices* stated that every matrix satisfies its own characteristic equation, verified it for $2\times 2$ and $3\times 3$, and wrote that he had "not thought it necessary to undertake the labour of a formal proof of the theorem in the general case." Hamilton had a special case in 1853, in the language of quaternions. Frobenius gave the first general proof in 1878 and in the same paper introduced the minimal polynomial. The word *nilpotent* is older than the matrix theory: Benjamin Peirce coined it, together with *idempotent*, in his 1870 *Linear Associative Algebra*.
 
 The answer, in one sentence: **after a change of basis, every matrix is diagonal plus a shift, and the shift is what makes $t\,e^{\lambda t}$ appear.** The rest of this module makes each word precise, proves it, shows you how to compute with it, and tells you when you must not.
 
@@ -62,7 +62,7 @@ The top of the chain is on its own: $y_2 = c_2 e^{\lambda t}$. That solution is 
 
 Here is what you should be able to guess before §3. Take any $A$ on $\mathbb{C}^n$.
 
-1. For each eigenvalue $\lambda$, instead of just $\ker(A - \lambda I)$ (the eigenvectors), take the bigger space $G_\lambda$ of vectors killed by *some* power of $A - \lambda I$. These are the generalized eigenvectors.
+1. For each eigenvalue $\lambda$, instead of only $\ker(A - \lambda I)$ (the eigenvectors), take the bigger space $G_\lambda$ of vectors killed by *some* power of $A - \lambda I$. These are the generalized eigenvectors.
 2. On $G_\lambda$, the operator $A - \lambda I$ is nilpotent, so it is a collection of chains.
 3. The $G_\lambda$'s for different $\lambda$ fill the whole space with no overlap: $\mathbb{C}^n = G_{\lambda_1}\oplus\cdots\oplus G_{\lambda_m}$. (For a diagonalizable $A$ this is the eigenvector decomposition of LA-7; now it is true for every $A$.)
 4. Put all the chains side by side as a basis. In that basis, $A$ is a block-diagonal matrix of Jordan blocks: **diagonal plus chains.**
@@ -179,6 +179,8 @@ where the $\lambda_j$ are eigenvalues of $A$ (repetitions allowed) and $s_1 + \c
 1. *Existence.* By Theorem 3.9, $V = \bigoplus_\lambda G_\lambda$ with each $G_\lambda$ invariant. On $G_\lambda$ the operator $N_\lambda = (A-\lambda I)|_{G_\lambda}$ is nilpotent. Theorem 3.6 gives a basis of $G_\lambda$ made of chains for $N_\lambda$. In that basis $N_\lambda$ is $N_{s_1}\oplus\cdots$, so $A|_{G_\lambda} = \lambda I + N_\lambda$ is $J_{s_1}(\lambda)\oplus\cdots$. Concatenating the bases of all the $G_\lambda$ gives a basis of $V$ (direct sum) in which $A$ is block diagonal with these blocks. The change-of-basis matrix $P$ has these basis vectors as columns (LA-4), and $AP = PJ$ reads column by column as $A\mathbf{v}_1 = \lambda\mathbf{v}_1$, $A\mathbf{v}_j = \lambda\mathbf{v}_j + \mathbf{v}_{j-1}$: the chain relations.
 2. *Uniqueness* is Theorem 3.11 below: the block sizes are computable from the numbers $\dim\ker(A-\lambda I)^k$, which depend only on $A$. ∎
 
+■ **What just happened.** Theorem 3.9 cut $V$ into one invariant piece per eigenvalue; Theorem 3.6 cut each piece into chains. Stacking the chains, bottom first, is the Jordan basis, and $AP = PJ$ is the chain relations written as one matrix equation.
+
 Note what is unique and what is not. The *block structure* is unique. The *basis* $P$ is wildly non-unique (Example 4.3 finds a different $P$ from the one the matrix was built with). The diagonalizable case is $J$ diagonal, i.e. all $s_j = 1$, i.e. $P$ a basis of eigenvectors: LA-7's $A = PDP^{-1}$.
 
 ### 3.6 Reading the block sizes off kernel dimensions
@@ -220,12 +222,16 @@ Why it matters: CM-6's normal modes (symmetric $K$ and $M$) and QM's Hermitian H
 (b) If $q(A) = 0$ for a polynomial $q$, then $m_A$ divides $q$.
 (c) The roots of $m_A$ are exactly the eigenvalues of $A$.
 
+▶ **Try it first.** For existence, count: how many of $I, A, A^2, \dots$ can be independent in the $n^2$-dimensional space of $n\times n$ matrices? For (b), divide $q$ by $m_A$ with remainder and ask what the remainder does to $A$.
+
 **Derivation.**
 1. *(a) Existence.* The $n^2 + 1$ matrices $I, A, A^2, \dots, A^{n^2}$ live in the $n^2$-dimensional space of $n\times n$ matrices, so they are linearly dependent (LA-3): $\sum_{k=0}^{n^2} c_k A^k = 0$ with not all $c_k = 0$. That is a nonzero polynomial annihilating $A$. Among all nonzero annihilating polynomials pick one of least degree and divide by its leading coefficient.
 2. *Uniqueness.* If $m$ and $\tilde m$ are both monic annihilators of least degree $d$, then $m - \tilde m$ annihilates $A$ and has degree $< d$, so it is the zero polynomial.
 3. *(b)* Divide: $q = s\,m_A + r$ with $\deg r < \deg m_A$ (polynomial long division). Then $r(A) = q(A) - s(A)m_A(A) = 0$. By minimality of $\deg m_A$, $r = 0$.
 4. *(c), eigenvalues are roots.* If $A\mathbf{v} = \lambda\mathbf{v}$ with $\mathbf{v}\ne\mathbf{0}$, then $A^k\mathbf{v} = \lambda^k\mathbf{v}$ and so $\mathbf{0} = m_A(A)\mathbf{v} = m_A(\lambda)\mathbf{v}$, forcing $m_A(\lambda) = 0$.
 5. *(c), roots are eigenvalues.* If $m_A(\mu) = 0$, factor $m_A(x) = (x - \mu)q(x)$. Since $\deg q < \deg m_A$, $q(A)\ne0$; pick $\mathbf{w}$ with $\mathbf{u} = q(A)\mathbf{w} \ne \mathbf{0}$. Then $(A-\mu I)\mathbf{u} = m_A(A)\mathbf{w} = \mathbf{0}$: $\mathbf{u}$ is an eigenvector with eigenvalue $\mu$. ∎
+
+■ **What just happened.** The minimal polynomial exists by a dimension count, divides every annihilating polynomial by long division, and has exactly the eigenvalues as roots: an eigenvector forces its eigenvalue to be a root, and a root $\mu$ produces an eigenvector, namely $q(A)\mathbf{w}$ with $q = m_A/(x-\mu)$.
 
 **Theorem 3.15 (Minimal polynomial from the Jordan form).** Let $s_{\max}(\lambda)$ be the size of the largest Jordan block for $\lambda$. Then
 $$m_A(x) = \prod_{\lambda}(x-\lambda)^{s_{\max}(\lambda)}. \tag{3.5}$$
@@ -391,9 +397,9 @@ $d_k$ counts the vectors in the $k$ columns nearest the zero: $2, 3, 4$.
 ### Example 4.4: Cayley–Hamilton at work
 
 $$A = \begin{pmatrix}2&1&0\\1&1&0\\0&1&1\end{pmatrix}.$$
-For a $3\times3$ matrix, $p_A(x) = x^3 - (\operatorname{tr}A)x^2 + (\text{sum of principal }2\times2\text{ minors})\,x - \det A$ (LA-6). $\operatorname{tr}A = 4$. Principal minors: $\begin{vmatrix}2&1\\1&1\end{vmatrix} = 1$, $\begin{vmatrix}2&0\\0&1\end{vmatrix} = 2$, $\begin{vmatrix}1&0\\1&1\end{vmatrix} = 1$, sum $4$. $\det A = 2\cdot1 - 1\cdot1 + 0 = 1$. So
+For a $3\times3$ matrix, $p_A(x) = x^3 - (\operatorname{tr}A)x^2 + (\text{sum of principal }2\times2\text{ minors})\,x - \det A$: the $x^2$ and constant coefficients are LA-6 Exercise C2, and the coefficient of $x$ comes from the same Leibniz expansion (collect the terms with exactly one factor of $x$). $\operatorname{tr}A = 4$. Principal minors: $\begin{vmatrix}2&1\\1&1\end{vmatrix} = 1$, $\begin{vmatrix}2&0\\0&1\end{vmatrix} = 2$, $\begin{vmatrix}1&0\\1&1\end{vmatrix} = 1$, sum $4$. $\det A = 2\cdot1 - 1\cdot1 + 0 = 1$. So
 $$p_A(x) = x^3 - 4x^2 + 4x - 1 = (x-1)(x^2 - 3x + 1),$$
-three distinct eigenvalues ($1$ and $\tfrac{3\pm\sqrt5}{2}$), so $A$ is diagonalizable. Cayley–Hamilton doesn't care either way.
+three distinct eigenvalues ($1$ and $\tfrac{3\pm\sqrt5}{2}$), so $A$ is diagonalizable. Cayley–Hamilton doesn't care either way. (Direct check of $p_A$: $A$ is block lower triangular, so expanding $\det(xI - A)$ along its third column gives $(x-1)\begin{vmatrix}x-2&-1\\-1&x-1\end{vmatrix} = (x-1)\big[(x-2)(x-1) - 1\big] = (x-1)(x^2-3x+1)$. ✓)
 
 *Inverse.* $A^3 - 4A^2 + 4A - I = 0 \Rightarrow A(A^2 - 4A + 4I) = I \Rightarrow A^{-1} = A^2 - 4A + 4I$. Compute $A^2$ row by row (row $i$ of $A^2$ is row $i$ of $A$ times $A$): row $1 = 2(2,1,0) + 1(1,1,0) = (5,3,0)$; row $2 = (2,1,0)+(1,1,0) = (3,2,0)$; row $3 = (1,1,0) + (0,1,1) = (1,2,1)$. So
 $$A^{-1} = \begin{pmatrix}5&3&0\\3&2&0\\1&2&1\end{pmatrix} - \begin{pmatrix}8&4&0\\4&4&0\\0&4&4\end{pmatrix} + \begin{pmatrix}4&0&0\\0&4&0\\0&0&4\end{pmatrix} = \begin{pmatrix}1&-1&0\\-1&2&0\\1&-2&1\end{pmatrix}.$$
@@ -419,7 +425,7 @@ The project conjugates this $A$ by a dense integer matrix so the blocks are invi
 
 ### Example 4.6 (mechanics): the critically damped oscillator
 
-The damped oscillator of CM-6 is $\ddot x + 2\zeta\omega\dot x + \omega^2x = 0$. Critical damping is $\zeta = 1$:
+The damped oscillator of CM-6 §3.7 (one modal coordinate of a Rayleigh-damped system, eq. (3.15) there, with damping ratio $\zeta$) is $\ddot x + 2\zeta\omega\dot x + \omega^2x = 0$. Critical damping is $\zeta = 1$:
 $$\ddot x + 2\omega\dot x + \omega^2x = 0, \qquad \mathbf{z} = \begin{pmatrix}x\\ \dot x\end{pmatrix},\quad A = \begin{pmatrix}0&1\\-\omega^2&-2\omega\end{pmatrix}, \quad p_A(\lambda) = \lambda^2 + 2\omega\lambda + \omega^2 = (\lambda+\omega)^2.$$
 For $\zeta<1$ the eigenvalues are a complex pair, for $\zeta>1$ two distinct negative reals; at $\zeta = 1$ they merge. $A + \omega I = \begin{pmatrix}\omega&1\\-\omega^2&-\omega\end{pmatrix}$ has rank $1$ (row $2$ is $-\omega$ times row $1$), so one eigenvector, $(1, -\omega)^\top$, and the Jordan form is $J_2(-\omega)$.
 
@@ -438,13 +444,13 @@ Contrast with CM-6's *undamped* normal modes: there the matrices are symmetric, 
 - **LA-7** promised $e^{At}$ for every $A$ and delivered it only for diagonalizable $A$. Theorems 3.10 and 3.17 finish the job: solutions of $\mathbf{x}' = A\mathbf{x}$ are exactly combinations of $t^ke^{\lambda t}$ with $k < s_{\max}(\lambda)$. The "multiply by $t$ for a repeated root" rule of your ODE course is (3.8).
 - **LA-8** proved the spectral theorem: symmetric and normal matrices diagonalize. Proposition 3.12 is the two-line reason there are no Jordan blocks there, and it isolates what is special: $\ker S^2 = \ker S$ for normal $S$.
 - **LA-10** gave you Schur's form. Here it carried two proofs (Theorems 3.9(c) and 3.16), and it is what you compute instead of the Jordan form.
-- **LA-13** returns to §3.11 with tools: backward error, the $\varepsilon^{1/s}$ sensitivity of eigenvalues of defective matrices, the QR algorithm for the Schur form, and the Schur–Parlett method for $f(A)$.
+- **LA-13** returns to §3.11 with tools: backward error and backward stability (LA-13 §3.3), and the QR algorithm, which computes the Schur form of LA-10 and is what every library eigenvalue routine runs. The $\varepsilon^{1/s}$ sensitivity of a defective eigenvalue and the Schur–Parlett algorithm for $f(A)$ are not in LA-13; Higham's book (§10 below) has both.
 - **LA-12** (indirectly): the Kronecker sum $A\otimes I + I\otimes B$ inherits its eigenvalues $\lambda_i + \mu_j$ from $A$ and $B$; whether it inherits Jordan blocks is a question answered by the kernel-dimension formula (3.4), and the change-of-basis bookkeeping $P^{-1}AP$ is the same with more indices.
 - **CM-6**: Example 4.6. Also: the generalized eigenproblem $K\mathbf{v} = \omega^2M\mathbf{v}$ with symmetric $K$ and positive definite $M$ is diagonalizable even with repeated frequencies (it is similar to the symmetric $M^{-1/2}KM^{-1/2}$, then Proposition 3.12), so normal modes never need generalized eigenvectors.
-- **QM-8** (degenerate perturbation theory): the eigenvectors of a matrix are not a continuous function of its entries at a repeated eigenvalue. For a Hermitian $H_0$ with a degenerate eigenvalue, the perturbation $\varepsilon V$ picks a basis inside the degenerate eigenspace, and which basis depends on the *direction* $V$, not the size $\varepsilon$; that is why QM-8 tells you to diagonalize $V$ within the degenerate subspace first. §3.11's $A_\varepsilon$ is the non-Hermitian caricature, where the eigenvectors don't just rotate but collapse onto one line.
+- **QM-8** (degenerate perturbation theory): the eigenvectors of a matrix are not a continuous function of its entries at a repeated eigenvalue. For a Hermitian $H_0$ with a degenerate eigenvalue, the perturbation $\varepsilon V$ picks a basis inside the degenerate eigenspace, and which basis depends on the *direction* $V$, not the size $\varepsilon$; that is why QM-8 tells you to diagonalize $V$ within the degenerate subspace first. §3.11's $A_\varepsilon$ is the non-Hermitian caricature, where the eigenvectors don't merely rotate but collapse onto one line.
 - **ML-2**: heavy-ball momentum at its optimal parameter has, in each eigen-direction of the Hessian, a $2\times2$ iteration matrix with a repeated eigenvalue and a single eigenvector: a Jordan block, the discrete-time analogue of critical damping. Theorem 3.17 with $f(x) = x^k$ says the error then decays like $k\rho^{k-1}$, not $\rho^k$.
 - **ST-7**: companion matrices of AR processes are nonderogatory (Exercise B5(d)), so a repeated root of the characteristic equation always produces $t^k\rho^t$ terms; a double unit root is where $I(2)$ processes get their polynomial trends. **F5**: transition matrices with chains of transient states can be defective, and then $P^k$ has $k\rho^{k-1}$ terms.
-- **QC-7, QM-4**: $e^{-iHt}$ for Hermitian $H$ is computed by diagonalization (Proposition 3.12 says that is safe) or by Padé/Krylov methods (LA-13); for non-Hermitian generators (open systems, QC-7's Lindblad operators) the Jordan form can be nontrivial and the Schur-based methods of §3.11 are what is used.
+- **QC-7, QM-4**: $e^{-iHt}$ for Hermitian $H$ is computed by diagonalization (Proposition 3.12 says that is safe) or by Padé/Krylov methods (LA-13); for non-Hermitian generators (open quantum systems, QC-7) the Jordan form can be nontrivial and the Schur-based methods of §3.11 are what is used.
 
 ## 6. Exercises
 
@@ -461,7 +467,7 @@ See [exercises.md](exercises.md). A1–A6 are drills: a $2\times2$ chain and its
 5. **Cayley–Hamilton**: Example 4.4 exactly, random matrices numerically, and the mechanism of the proof ($M_k$ kills $V_k$ on a Schur form).
 6. **Minimal polynomial** two ways (from blocks, and as the first linear dependence among powers); Example 4.5 conjugated into a dense matrix; the $7\times7$ pair with equal $p$, $m$, rank and different Jordan forms; the three-mass ring.
 7. **Functions of matrices**: `f_jordan_block` implements (3.7), `expm_jordan` uses SymPy's Jordan form and is compared with `expm` on four matrices; the critically damped oscillator (Example 4.6) solved three ways and plotted.
-8. **The discontinuity**: angle between eigenvectors and $\operatorname{cond}(V)$ for $A_\varepsilon$ on log scales, against the exact $2\arctan\sqrt\varepsilon$ and $1/\sqrt\varepsilon$; SymPy's exact Jordan form switching at $\varepsilon = 10^{-16}$; NumPy returning a condition number of $10^{16}$ for the eigenvectors of an exact $J_2(1)$.
+8. **The discontinuity**: angle between eigenvectors and $\operatorname{cond}(V)$ for $A_\varepsilon$ on log scales, against the exact $2\arctan\sqrt\varepsilon$ and $1/\sqrt\varepsilon$; SymPy's exact Jordan form switching at $\varepsilon = 10^{-16}$; NumPy returning a condition number of about $10^{16}$ for the eigenvectors of an exact $J_2(1)$.
 
 **Build it yourself:** before reading Part 2, write `nilpotent_chains` from the description in §3.6. The hard part is the test "independent modulo $\ker N^{k-1}$ and modulo what you already hold at level $k$"; a rank check on a stacked matrix does it. Before reading Part 6, write `minimal_polynomial_by_dependence` (Exercise B7). Then do the "Your turn" items at the end: the three-mass ring, a nilpotent $3\times3$ of index 2, $\cos(A)$ for a $2\times2$ block, and deliberately feeding a float matrix to the exact code to watch §3.11 happen.
 
@@ -492,8 +498,8 @@ See [exercises.md](exercises.md). A1–A6 are drills: a $2\times2$ chain and its
 
 ## 10. Pair with
 
-- **Axler, *Linear Algebra Done Right*, ch. 8** (4th ed., open access). The same route as these notes, basis-free and careful: generalized eigenvectors and nilpotent operators (8A), the generalized eigenspace decomposition (8B), the minimal polynomial and a determinant-free Cayley–Hamilton (8C), Jordan form (8D). Better than these notes at stating everything at the level of operators, and the place to see $V = \ker T^n\oplus\operatorname{im}T^n$ (Exercise B1) used as the engine of the decomposition instead of Schur.
+- **Axler, *Linear Algebra Done Right*, ch. 8, with §5B** (4th ed., open access). The same route as these notes, basis-free and careful: generalized eigenvectors and nilpotent operators (8A), the generalized eigenspace decomposition and a determinant-free Cayley–Hamilton (8B), Jordan form (8C); the minimal polynomial is introduced earlier, in 5B. Better than these notes at stating everything at the level of operators, and the place to see $V = \ker T^n\oplus\operatorname{im}T^n$ (Exercise B1) used as the engine of the decomposition instead of Schur.
 - **Horn & Johnson, *Matrix Analysis*, ch. 3.** The matrix theorist's version: Jordan form with uniqueness done carefully through the kernel-dimension sequence ("Weyr characteristic"), the real Jordan form (§3.4), and a thorough account of the minimal polynomial (§3.3). Better than these notes on uniqueness and on what you can say about $A$ from $p_A$ and $m_A$ alone.
-- **Strang, *Introduction to Linear Algebra*, §6.2 and the short appendix on the Jordan form.** Computational and honest about the algorithm; Strang's staircase proof sketch is a good second pass after Theorem 3.6, and his remark that the Jordan form "is not a computational tool" is §3.11 in one sentence.
+- **Strang, *Introduction to Linear Algebra*, the Jordan form section** (an appendix in the 4th edition; its place moves between editions). Computational and honest about the algorithm; Strang's proof sketch is a good second pass after Theorem 3.6, and his insistence that the Jordan form is for theory rather than computation is §3.11 in one sentence.
 - **Golub & Wilkinson, "Ill-conditioned eigensystems and the computation of the Jordan canonical form," *SIAM Review* 18 (1976).** The paper behind §3.11. Read the introduction to see the problem stated by the people who tried hardest to solve it.
 - **Higham, *Functions of Matrices* (SIAM, 2008), ch. 1 and 9.** The definitions of $f(A)$ (Jordan, polynomial interpolation, Cauchy integral; all equivalent) and the Schur–Parlett algorithm. The reference for what `scipy.linalg.funm` and `expm` actually do.
