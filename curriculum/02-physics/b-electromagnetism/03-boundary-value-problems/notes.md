@@ -190,7 +190,7 @@ $$V(r, \theta) = \sum_{\ell=0}^\infty\left(A_\ell\,r^\ell + \frac{B_\ell}{r^{\el
 
 Three formulas, two stated and one derived in part, and then the theorem that makes (3.15) usable.
 
-**Rodrigues' formula** (stated; proof in Arfken & Weber §12.1 or Exercise C2 route):
+**Rodrigues' formula** (stated; proof in Arfken & Weber §12.1):
 $$P_\ell(x) = \frac{1}{2^\ell\,\ell!}\frac{d^\ell}{dx^\ell}\left(x^2 - 1\right)^\ell. \tag{3.17}$$
 *Verify for $\ell = 2$.* $(x^2 - 1)^2 = x^4 - 2x^2 + 1$; second derivative $12x^2 - 4$; divide by $2^2\cdot2! = 8$: $\tfrac12(3x^2 - 1) = P_2$. ✓ (Project Part 0 checks (3.17) against the recursion for $\ell\le10$.)
 

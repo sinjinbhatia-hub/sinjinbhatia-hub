@@ -347,6 +347,17 @@ for name, dims in [("random 2x2", (2, 2)), ("random 3x4", (3, 4))]:
 for _ in range(5):
     u = rng.standard_normal(3) + 1j * rng.standard_normal(3); w = rng.standard_normal(4) + 1j * rng.standard_normal(4)
     assert is_product(np.kron(u, w), (3, 4))
+# Simple tensors form an (n + m - 1)-dimensional surface, not a subspace (§3.11): the Jacobian of
+# (v, w) -> v kron w is [I_n kron w | v kron I_m], of rank n + m - 1, with kernel spanned by (v, -w)
+# because (c v) kron w = v kron (c w). Two qubits: 3 < 4; a 3x4 system: 6 < 12.
+for n_, m_ in [(2, 2), (3, 4)]:
+    v_ = rng.standard_normal(n_); w_ = rng.standard_normal(m_)
+    J = np.hstack([np.kron(np.eye(n_), w_[:, None]), np.kron(v_[:, None], np.eye(m_))])
+    assert J.shape == (n_ * m_, n_ + m_) and np.linalg.matrix_rank(J) == n_ + m_ - 1
+    assert np.allclose(J @ np.concatenate([v_, -w_]), 0)
+    h = 1e-6; dv = rng.standard_normal(n_); dw = rng.standard_normal(m_)      # J really is the derivative
+    assert np.allclose((np.kron(v_ + h * dv, w_ + h * dw) - np.kron(v_ - h * dv, w_ - h * dw)) / (2 * h),
+                       J @ np.concatenate([dv, dw]), atol=1e-6)
 
 fig, ax = plt.subplots(figsize=(7, 3.6))
 cases = [("|+>|0>", schmidt_decomposition(psi_prod, (2, 2))[0]), ("Bell", schmidt_decomposition(bells["Phi+"], (2, 2))[0]),
@@ -639,7 +650,7 @@ print("              U (v.sigma) U^dag = (R v).sigma; theta = 2 pi gives U = -I,
 # 4. **Partial trace.** For a random two-qubit psi, compute the reduced density
 #    matrix rho_0 = C C^dagger of qubit 0 and verify its eigenvalues are the
 #    squared Schmidt coefficients and that -tr(rho_0 log rho_0) equals
-#    `entanglement_entropy`. (This is how QC-7 defines the entropy.)
+#    `entanglement_entropy`. (QM-7 and QC-7 call this the von Neumann entropy of the reduced state.)
 
 # %%
 if __name__ == "__main__":

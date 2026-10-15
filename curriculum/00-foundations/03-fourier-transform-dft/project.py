@@ -28,6 +28,7 @@ import sympy as sp
 FIG = Path(__file__).resolve().parent / "figures"
 FIG.mkdir(exist_ok=True)
 rng = np.random.default_rng(0)
+trapezoid = getattr(np, "trapezoid", None) or np.trapz   # np.trapz was renamed np.trapezoid in NumPy 2.0
 T0 = time.perf_counter()
 
 # %% [markdown]
@@ -401,9 +402,9 @@ print("  Hermite functions h_0..h_5: F h_n = (-i)^n h_n, A h_n = 2 pi (2n+1) h_n
 
 # %%
 def spreads(fx, x, Fh, xi):
-    fx = fx / np.sqrt(np.trapezoid(np.abs(fx) ** 2, x))
-    Fh = Fh / np.sqrt(np.trapezoid(np.abs(Fh) ** 2, xi))
-    return np.sqrt(np.trapezoid(x**2 * np.abs(fx) ** 2, x)), np.sqrt(np.trapezoid(xi**2 * np.abs(Fh) ** 2, xi))
+    fx = fx / np.sqrt(trapezoid(np.abs(fx) ** 2, x))
+    Fh = Fh / np.sqrt(trapezoid(np.abs(Fh) ** 2, xi))
+    return np.sqrt(trapezoid(x**2 * np.abs(fx) ** 2, x)), np.sqrt(trapezoid(xi**2 * np.abs(Fh) ** 2, xi))
 
 
 xg = np.linspace(-12, 12, 60001); xig = xg.copy()
@@ -482,9 +483,12 @@ Xc = np.fft.fft(xc); fr = np.fft.fftfreq(len(xc), d=0.05)
 Xc[fr < 0] = 0; Xc[fr > 0] *= 2
 env = np.abs(np.fft.ifft(Xc))
 i_env = np.argmax(env[(tc > 50) & (tc < T_c - 50)]) + np.sum(tc <= 50)
-assert abs(w_inst(tc[i_env]) - w_peak) < 0.1, w_inst(tc[i_env])
-assert abs(env[i_env] - H_max) / H_max < 0.1
-print(f"  chirp: envelope peaks at w(t) = {w_inst(tc[i_env]):.3f} with amplitude {env[i_env]:.3f} (|H|max = {H_max:.3f})")
+lag_c = w_inst(tc[i_env]) - w_peak                    # §7 item 6: the peak arrives late (memory 2m/c = 10 s; the chirp moves 0.05 rad/s in that time)
+low_c = (H_max - env[i_env]) / H_max                  # ... and low: the oscillator never quite reaches steady state
+assert 0.05 <= lag_c <= 0.09, lag_c                   # "about 0.07 rad/s late"
+assert 0.03 <= low_c <= 0.08, low_c                   # "about 5% low"
+print(f"  chirp: envelope peaks at w(t) = {w_inst(tc[i_env]):.3f} with amplitude {env[i_env]:.3f} (|H|max = {H_max:.3f}): "
+      f"{lag_c:.3f} rad/s late, {100*low_c:.1f}% low")
 
 fig, axes = plt.subplots(2, 2, figsize=(12, 8))
 axes[0, 0].plot(t, h_num, label="solve_ivp"); axes[0, 0].plot(t, h_formula, "k--", lw=1, label="(3.25)")
@@ -548,7 +552,7 @@ for fs_, ok in ((10.0, True), (4.0, False)):
 fig.tight_layout(); fig.savefig(FIG / "sampling.png", dpi=120); plt.close(fig)
 # C1(a): orthogonality of the shifted sincs, <s_n, s_m> = Delta delta_nm.
 D = 0.5; xs = np.linspace(-400, 400, 1600001)
-assert abs(np.trapezoid(np.sinc(xs / D) * np.sinc(xs / D - 1), xs)) < 1e-3 and abs(np.trapezoid(np.sinc(xs / D) ** 2, xs) - D) < 1e-3
+assert abs(trapezoid(np.sinc(xs / D) * np.sinc(xs / D - 1), xs)) < 1e-3 and abs(trapezoid(np.sinc(xs / D) ** 2, xs) - D) < 1e-3
 
 # %% [markdown]
 # ## Part 8: Poisson summation (3.20) and the comb (3.33)

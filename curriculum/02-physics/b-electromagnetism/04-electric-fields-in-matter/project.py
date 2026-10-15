@@ -614,10 +614,13 @@ a_c, b_c, c_c, e1, e2 = 1e-3, 2e-3, 4e-3, 2.3, 4.0
 C_coax = 2 * np.pi * EPS0 / (np.log(b_c / a_c) / e1 + np.log(c_c / b_c) / e2)       # F/m
 assert np.isclose(C_coax, 1.172e-10, rtol=2e-3)
 lam = 1e-9                                                                          # C/m on the inner conductor
-sig_b_b_in = (e1 - 1) / e1 * lam / (2 * np.pi * b_c) * (-1) + (e2 - 1) / e2 * lam / (2 * np.pi * b_c)   # outer face of layer 1 + inner face of layer 2
-Qb_per_len = -(e1 - 1) / e1 * lam + sig_b_b_in * 2 * np.pi * b_c + (e2 - 1) / e2 * lam                # at a, at b, at c
-assert np.isclose(Qb_per_len, 0, atol=1e-20)
-print(f"Your turn 1: C' = {C_coax * 1e12:.1f} pF/m; sigma_b(b) = {sig_b_b_in:.3e} C/m^2 for lambda = 1 nC/m; total bound charge per length = 0")
+P1_b = (1 - 1 / e1) * lam / (2 * np.pi * b_c); P2_b = (1 - 1 / e2) * lam / (2 * np.pi * b_c)   # P = (1 - 1/eps_r) D in each layer
+sig_b_b = P1_b - P2_b                      # outer face of layer 1 (n = +s) plus inner face of layer 2 (n = -s): (3.10) twice
+assert np.isclose(sig_b_b, (1 / e2 - 1 / e1) * lam / (2 * np.pi * b_c))            # = eps0 (E2 - E1) at b: Gauss, no free charge there
+Qb_per_len = -(1 - 1 / e1) * lam + sig_b_b * 2 * np.pi * b_c + (1 - 1 / e2) * lam  # at a (n = -s), at b, at c (n = +s)
+assert abs(Qb_per_len) < 1e-15 * lam
+print(f"Your turn 1: C' = {C_coax * 1e12:.1f} pF/m; sigma_b(b) = {sig_b_b:.4e} C/m^2 for lambda = 1 nC/m (negative: eps_2 > eps_1); "
+      f"total bound charge per length = {Qb_per_len:.1e}")
 # 2: water, computed in Part 7 (eps_r(CM) = 1.76 vs n^2 = 1.78 vs static 80.1).
 # 3: piezoelectric quartz plate.
 d11, stress, area, thick, er_q = 2.3e-12, 1e6, 1e-4, 1e-3, 4.5

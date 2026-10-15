@@ -374,7 +374,7 @@ Un, sn, Vtn = np.linalg.svd(noisy, full_matrices=False)
 den_err = np.array([np.linalg.norm(rank_k(Un, sn, Vtn, k) - img) for k in range(1, 81)])
 k_opt, tau_sqrtN = 1 + int(np.argmin(den_err)), 0.05 * np.sqrt(256)
 k_gd = int(np.sum(s > np.sqrt(3) * tau_sqrtN))                # clean σ_i above √3·τ√N (Gavish–Donoho)
-assert k_gd == 24 and abs(k_opt - k_gd) <= 1, (k_opt, k_gd)
+assert k_gd == 24 and k_opt == 24, (k_opt, k_gd)             # notes §7 / Exercise B8: the optimum is k = 24
 assert round(den_err.min(), 1) == 8.8 and round(np.linalg.norm(noisy - img), 1) == 12.8
 print(f"Part 3: Eckart–Young equality verified for k = 0..255; rank-20 relative error {errs[20]/np.linalg.norm(img):.4f}.")
 print(f"        denoising: best rank {k_opt} (clean σ_i > √3·τ√N: {k_gd}), error {den_err.min():.3f} vs {np.linalg.norm(noisy - img):.3f} untruncated.")

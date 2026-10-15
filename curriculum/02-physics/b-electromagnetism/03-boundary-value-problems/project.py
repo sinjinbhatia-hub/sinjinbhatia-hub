@@ -438,8 +438,10 @@ Q6, p6, Qij6 = moments(qs6, pos6)
 assert np.allclose(Qij6, np.diag([6, -6, 0])) and Q6 == 0 and np.allclose(p6, 0)
 pt6 = np.array([[10.0, 0, 0]])
 ex6, q6v = V_pts(qs6, pos6, pt6)[0] / K, V_multipole(0, p6, Qij6, pt6, 2)[0] / K
+l4_6 = (qs6 * np.linalg.norm(pos6, axis=1) ** 4 * eval_legendre(4, pos6[:, 0] / np.linalg.norm(pos6, axis=1))).sum() / 10.0**5   # l = 4 term of (3.28)
+assert np.isclose(l4_6, 1.25e-5) and abs(q6v + l4_6 - ex6) < 4e-7                     # odd l vanish by inversion symmetry
 print(f"B6: Q_ij = diag{tuple(int(v) for v in np.diag(Qij6))} qa^2; at r = 10a in-plane, phi = 0: exact {ex6:.7f}, quadrupole {q6v:.7f} kq/a, "
-      f"ratio {ex6/q6v:.5f}")
+      f"ratio {ex6/q6v:.5f}; l = 4 term {l4_6:.3e}, quadrupole + l = 4 = {q6v + l4_6:.7f}")
 
 # %% [markdown]
 # ## Part 6: Spherical harmonics (§3.8): Griffiths' table vs SciPy, orthonormality, plots

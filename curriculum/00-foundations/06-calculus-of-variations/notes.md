@@ -98,9 +98,9 @@ Where these come from: arc length is $\int ds$ with $ds = \sqrt{dx^2 + dy^2} = \
 
 ### 3.2 Admissible functions, variations, and the first variation
 
-**Definition 3.2.** The **admissible functions** for the fixed-endpoint problem are the $y \in C^2[a, b]$ with $y(a) = A$ and $y(b) = B$. An **admissible variation** (or test function) is any $\eta \in C^1[a, b]$ with $\eta(a) = \eta(b) = 0$. For admissible $y$ and $\eta$ and real $\varepsilon$, the function $y + \varepsilon\eta$ is again admissible: it has the right endpoints because $\eta$ vanishes there.
+**Definition 3.2.** The **admissible functions** for the fixed-endpoint problem are the $y \in C^2[a, b]$ with $y(a) = A$ and $y(b) = B$. An **admissible variation** (or test function) is any $\eta \in C^1[a, b]$ with $\eta(a) = \eta(b) = 0$. For admissible $y$ and $\eta$ and real $\varepsilon$, the function $y + \varepsilon\eta$ is a $C^1$ curve with the right endpoints, because $\eta$ vanishes there. (It need not be $C^2$, since $\eta$ is only $C^1$; that is why the competitors in the next definition are taken in $C^1$, where $J$ is defined. The $C^2$ assumption on $y$ itself is used only in Theorem 3.5, and Exercise B3 removes it.)
 
-**Definition 3.3.** $J$ has a **(weak) local minimum** at $y$ if $J[\tilde y] \ge J[y]$ for every admissible $\tilde y$ with $\max|\tilde y - y| + \max|\tilde y' - y'|$ small enough. $J$ is **stationary** at $y$ if
+**Definition 3.3.** $J$ has a **(weak) local minimum** at $y$ if $J[\tilde y] \ge J[y]$ for every $\tilde y \in C^1[a, b]$ with $\tilde y(a) = A$, $\tilde y(b) = B$ and $\max|\tilde y - y| + \max|\tilde y' - y'|$ small enough. $J$ is **stationary** at $y$ if
 $$
 \delta J := \frac{d}{d\varepsilon} J[y + \varepsilon\eta]\Big|_{\varepsilon = 0} = 0 \quad\text{for every admissible } \eta. \tag{3.2}
 $$

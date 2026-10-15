@@ -84,6 +84,7 @@ assert dev_line < 1e-3, dev_line
 assert dev_line < 1e-6, dev_line          # Example 4.1 quotes "to within 1e-6"
 assert np.isclose(res_line.fun, np.hypot(b_ - a_, B_ - A_), rtol=1e-10)
 assert history[-1] < 1e-3 * history[0], "E–L residual should collapse along the iterations"
+assert history[0] > 500 and history[-1] < 1e-5, (history[0], history[-1])   # §7: "from about 800 to 4e-6"
 print(f"Part 1: arc-length minimizer -> line, max deviation {dev_line:.1e}; "
       f"E–L residual {history[0]:.2f} -> {history[-1]:.1e} in {len(history) - 1} iterations")
 
@@ -243,7 +244,7 @@ def central_slope(x_nodes, y_nodes):
 th = np.linspace(0.3, th1, 400)
 H_cyc = beltrami_H(a_cyc * (1 - np.cos(th)), np.sin(th) / (1 - np.cos(th)))       # exact slope cot(θ/2)
 H_exact = 1 / np.sqrt(2 * g * 2 * a_cyc)
-assert np.ptp(H_cyc) / H_cyc.mean() < 1e-12 and np.isclose(H_cyc.mean(), H_exact, rtol=1e-12)
+assert np.ptp(H_cyc) / H_cyc.mean() < 1e-14 and np.isclose(H_cyc.mean(), H_exact, rtol=1e-12)   # §7: "constant to 1e-15"
 y_num = with_ends(res_br.x, 0.0, y1)                                               # the L-BFGS-B polygon of Part 2
 H_num = beltrami_H(y_num[1:-1], central_slope(xb, y_num))[10:]                     # skip the first nodes near the vertical start
 assert np.ptp(H_num) / H_num.mean() < 6e-4 and abs(H_num.mean() - H_exact) / H_exact < 6e-4   # §7: spread 5e-4
