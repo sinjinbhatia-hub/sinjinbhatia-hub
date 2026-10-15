@@ -40,3 +40,11 @@ Script: `curriculum/tools/build_modules_workflow.js`. Resume a run with
 | wf_707c8802-f23 | verify: LA-5..LA-9 |
 | wf_9d716a9f-8af | verify: LA-10, LA-11, LA-12, LA-14, CM-5 |
 | wf_41adb0c0-23e | combined: write EM-3..EM-6 |
+
+## Fifth round (2026-10-15 02:25 UTC, after limit reset; reviewers now write tools/reviews/<code>.md)
+
+| Run ID | Modules |
+|---|---|
+| wf_8522f993-2ee | verify: F3, F6, LA-7, LA-8 |
+| wf_29450baf-c1b | verify: LA-9, LA-12, LA-14, CM-5 |
+| wf_796f948f-f96 | combined: write EM-3..EM-6 |
