@@ -64,7 +64,7 @@ scr = sp.sqrt((X - xp)**2 + (Y - yp)**2 + (Z - zp)**2)
 for v, comp in zip((xp, yp, zp), (X - xp, Y - yp, Z - zp)):
     assert sp.simplify(sp.diff(1 / scr, v) - comp / scr**3) == 0
 
-# Two radial polarizations in a sphere of radius R: rho_b, sigma_b, and the zero total (Exercise B3, B1).
+# Two radial polarizations in a sphere of radius R: rho_b, sigma_b, and the zero total (Exercises B1 and B3).
 rr = sp.sqrt(x**2 + y**2 + z**2)
 for P_r, name in [(k * rr, "k r"), (k * rr**2, "k r^2")]:
     P_vec = [P_r * x / rr, P_r * y / rr, P_r * z / rr]
@@ -112,12 +112,12 @@ print(f"Grid bound charge of a bounded blob: Q_b = {Qb:.2e} vs int|rho_b| = {Qab
 # %% [markdown]
 # ## Part 2: The uniformly polarized sphere, and what "the field inside" means
 #
-# Example 4.1 / (3.13): sigma_b = P cos(theta) produces E = -P/(3 eps0) inside and a pure
+# Example 4.1 / (3.12): sigma_b = P cos(theta) produces E = -P/(3 eps0) inside and a pure
 # dipole p = (4/3) pi R^3 P outside. Route 1 sums Coulomb fields of surface patches.
 # Route 2 superposes two uniformly charged balls offset by d with rho d = P (section 3.6).
 # Route 3 is a cubic lattice of point dipoles: the microscopic field at a lattice site
 # is zero (depolarizing field -P/3eps0 plus Lorentz local field +P/3eps0), while the
-# field outside is the dipole field. Then the averaging lemma (3.12) of section 3.7.
+# field outside is the dipole field. Then the averaging lemma (3.13) of section 3.7.
 # Units in this part: eps0 = 1, so -P/(3 eps0) = -1/3 for P = 1.
 
 
@@ -203,7 +203,7 @@ assert err_far < 0.02, err_far
 print(f"Lattice of {len(sites)} dipoles: |E| at interior lattice sites <= {micro:.3f} (macroscopic value would be 0.333); "
       f"exterior field is the dipole of the total moment to {err_far:.1e}.")
 
-# Averaging lemma (3.12): the average over a ball of radius R_s of a point charge's field is
+# Averaging lemma (3.13): the average over a ball of radius R_s of a point charge's field is
 # -q r'/(4 pi R_s^3) for r' inside, and the field at the centre for r' outside. Computed as
 # -(1/Vol) closed_int V n_hat da, which has no singularity, by Gauss-Legendre on the sphere.
 mu, w = leggauss(80); phi = (np.arange(160) + 0.5) * 2 * np.pi / 160
@@ -214,7 +214,7 @@ for rp, expect in [(np.array([0.2, -0.1, 0.5]), -np.array([0.2, -0.1, 0.5]) / (4
     Vsurf = 1 / (4 * np.pi * np.linalg.norm(nhat - rp, axis=1))        # q = 1, R_s = 1
     E_avg = -(Vsurf[:, None] * nhat * W.reshape(-1, 1)).sum(axis=0) / (4 * np.pi / 3)
     assert np.allclose(E_avg, expect, atol=1e-8), (E_avg, expect)
-print("Averaging lemma (3.12) verified for a charge inside and a charge outside the sphere.")
+print("Averaging lemma (3.13) verified for a charge inside and a charge outside the sphere.")
 
 # Figure: macroscopic vs microscopic field along a line through the sphere.
 zz = np.linspace(-3, 3, 241)
@@ -343,6 +343,14 @@ W_E0 = field_energy(V_ser, np.ones_like(ex), np.ones_like(ey))       # (eps0/2) 
 assert np.isclose(field_energy(V_ser, ex, ey) - W_E0, field_energy(V_ser, ex - 1, ey - 1))   # difference is 1/2 int P.E (3.23)
 print(f"Series half-fill: C/C0 = {C_ser / C0:.4f} (theory {2 * er / (er + 1):.4f}); E_slab/E_gap = {Ey_face[0, 0] / Ey_face[-1, 0]:.4f}; "
       f"W = {field_energy(V_ser, ex, ey):.4f}, (eps0/2) int E^2 = {W_E0:.4f}, difference 1/2 int P.E = {field_energy(V_ser, ex, ey) - W_E0:.4f}")
+# Exercise B6: the analytic split. Per unit area, W = D^2 d (er + 1)/(4 eps0 er) and 1/2 int P.E = D^2 d (er - 1)/(4 eps0 er^2),
+# so the "spring" fraction is (er - 1)/(er (er + 1)) = 0.15 for er = 4. The grid's 0.1246/0.8 = 0.156 differs only because the
+# single interface face carries the harmonic-mean eps and the mean E, which is exact for D.E but not for E^2.
+D_ser_u = 2 * er / (er + 1)                                                          # units eps0 V0/d
+W_an = D_ser_u**2 * (er + 1) / (4 * er); W_PE_an = D_ser_u**2 * (er - 1) / (4 * er**2)
+assert np.isclose(W_an, field_energy(V_ser, ex, ey)) and np.isclose(W_PE_an / W_an, (er - 1) / (er * (er + 1))) and np.isclose(W_PE_an / W_an, 0.15)
+assert np.isclose(W_an - W_PE_an, 0.5 * (0.5 * (D_ser_u / er)**2 + 0.5 * D_ser_u**2))    # (eps0/2) int E^2 exactly: 0.68
+print(f"B6: W = {W_an:.4f}, (eps0/2) int E^2 = {W_an - W_PE_an:.4f}, 1/2 int P.E = {W_PE_an:.4f}, fraction {W_PE_an / W_an:.4f}")
 
 # (b) parallel: slab filling the left half of the width, full gap. V = V0 (1 - y/d) exactly.
 ex2, ey2 = harmonic_faces(np.where(XX < w_cap / 2, er, 1.0))
@@ -384,13 +392,18 @@ results = {}
 for eps_in, eps_out in [(4.0, 1.0), (2.0, 1.0), (8.0, 1.0), (80.0, 1.0), (1.0, 4.0)]:
     E_c, V_cyl, xs_c, ex_c = cylinder_in_field(eps_in, eps_out)
     E_th = 2 * eps_out / (eps_in + eps_out)
-    assert abs(E_c - E_th) < 0.015, (eps_in, eps_out, E_c, E_th)
+    # The circle is staircased by the square grid, so the error is first order in h: about 1-2% at h = R/15.
+    assert abs(E_c - E_th) < 0.02, (eps_in, eps_out, E_c, E_th)
     results[(eps_in, eps_out)] = (E_c, E_th)
     print(f"cylinder eps_in = {eps_in:>4}, eps_out = {eps_out}: E_in/E0 = {E_c:.4f}  (theory {E_th:.4f}, error {E_c - E_th:+.4f})")
     if (eps_in, eps_out) == (4.0, 1.0):
         V4, xs4 = V_cyl, xs_c
 # For eps_r -> infinity the cylinder becomes a conductor: E_in -> 0 (EM-3's conducting cylinder in a uniform field).
 assert results[(80.0, 1.0)][0] < results[(8.0, 1.0)][0] < results[(4.0, 1.0)][0] < results[(2.0, 1.0)][0]
+# Convergence check on the worst case (the cavity, eps_in = 1 in eps_out = 4): the error shrinks when h does.
+E_cav_fine = cylinder_in_field(1.0, 4.0, n=321)[0]
+assert abs(E_cav_fine - 1.6) < abs(results[(1.0, 4.0)][0] - 1.6)
+print(f"cavity error {results[(1.0, 4.0)][0] - 1.6:+.4f} at n = 241 -> {E_cav_fine - 1.6:+.4f} at n = 321 (first order in h)")
 
 fig, ax = plt.subplots(figsize=(5.5, 5))
 XX, YY = np.meshgrid(xs4, xs4)
@@ -473,7 +486,7 @@ print(f"Example 4.3: C0 = {C0n * 1e12:.2f} pF, series {1.6 * C0n * 1e12:.2f} pF,
 # %%
 def slab_capacitor(x_ins, er=4.0, h=0.05):
     """Finite plates y = +-1/2 for 0 < x < 8 at V = +-1/2, slab eps_r filling |y| < 1/2 for x < x_ins. Returns (C, W)/eps0 per depth."""
-    xs = np.arange(-5, 13 + h / 2, h); ys = np.arange(-5, 5 + h / 2, h)
+    xs = np.round(np.arange(-5, 13 + h / 2, h), 10); ys = np.round(np.arange(-5, 5 + h / 2, h), 10)   # exact +-0.5 rows
     nx, ny = len(xs), len(ys)
     ex, ey = face_eps(lambda X, Y: np.where((np.abs(Y) < 0.5) & (X < x_ins), er, 1.0), xs, ys)
     fixed = np.zeros((ny, nx), bool); fixed[0, :] = fixed[-1, :] = fixed[:, 0] = fixed[:, -1] = True
@@ -511,10 +524,10 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
 ax1.plot(x_list, C_x, "o", label="C(x) from plate charge")
 ax1.plot(x_list, slope * x_list + icpt, "k--", lw=.8, label=f"fit slope {slope:.3f} (theory 3)")
 ax1.set_xlabel("insertion x / d"); ax1.set_ylabel("$C/\\varepsilon_0$ per unit width"); ax1.legend()
-ax2.plot(x_list, W_x, "o-", label="fixed $V$: $W = \\tfrac12 CV^2$ rises")
+ax2.plot(x_list, W_x, "o-", label="fixed $V$: $W = \\frac{1}{2} CV^2$ rises")
 ax2.plot(x_list, W_Q, "s-", label="fixed $Q$: $W = Q^2/2C$ falls")
 ax2.set_xlabel("insertion x / d"); ax2.set_ylabel("$W/\\varepsilon_0V^2$"); ax2.legend()
-ax2.set_title("Same force $\\tfrac12V^2\\,dC/dx$ either way")
+ax2.set_title("Same force $\\frac{1}{2}V^2\\,dC/dx$ either way")
 fig.tight_layout(); fig.savefig(FIG / "slab_force.png", dpi=120); plt.close(fig)
 
 # %% [markdown]

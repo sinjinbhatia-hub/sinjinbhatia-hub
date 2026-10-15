@@ -16,9 +16,9 @@ Conventions as in the notes: SI units, $k = 1/4\pi\varepsilon_0$, $V(\infty) = 0
 
 **A4.** (Expanding boundary data.) Use orthogonality (3.16) to expand $\cos^2\theta$ in Legendre polynomials: find $A_0, \dots, A_3$ in $\cos^2\theta = \sum_\ell A_\ell P_\ell(\cos\theta)$. Then write the potential outside a sphere of radius $R$ whose surface is held at $V(R, \theta) = V_0\cos^2\theta$, and identify the monopole and quadrupole moments it implies.
 
-**A5.** (Moments depend on the origin.) Charges $3q$ at $(0, 0, a)$ and $-q$ at $(0, 0, -a)$. Find the monopole moment $Q$ and the dipole moment $\mathbf p$ about the origin, then $\mathbf p$ about the point $(0, 0, a)$, using (3.32). Find the origin for which $\mathbf p = 0$ (the "centre of charge"). Write the leading two terms of $V$ on the positive $z$ axis for $z \gg a$ with the origin at $(0,0,0)$.
+**A5.** (Moments depend on the origin.) Charges $3q$ at $(0, 0, a)$ and $-q$ at $(0, 0, -a)$. Find the monopole moment $Q$ and the dipole moment $\mathbf p$ about the origin, then $\mathbf p$ about the point $(0, 0, a)$, using (3.31). Find the origin for which $\mathbf p = 0$ (the "centre of charge"). Write the leading two terms of $V$ on the positive $z$ axis for $z \gg a$ with the origin at $(0,0,0)$.
 
-**A6.** (Water in a field.) A water molecule has $p = 1.85$ D $= 6.17\times10^{-30}$ C m. Put it in $E = 10^6$ V/m (a strong laboratory field). Find the maximum torque (3.34), the energy difference between the aligned and anti-aligned orientations (3.33), and compare that difference with $k_BT$ at $300$ K. The thermal average of $\cos\theta$ for a dipole in a field is the Langevin function $\langle\cos\theta\rangle = \coth x - 1/x \approx x/3$ with $x = pE/k_BT$; evaluate it. How aligned is water in a strong field?
+**A6.** (Water in a field.) A water molecule has $p = 1.85$ D $= 6.17\times10^{-30}$ C m. Put it in $E = 10^6$ V/m (a strong laboratory field). Find the maximum torque (3.33), the energy difference between the aligned and anti-aligned orientations (3.32), and compare that difference with $k_BT$ at $300$ K. The thermal average of $\cos\theta$ for a dipole in a field is the Langevin function $\langle\cos\theta\rangle = \coth x - 1/x \approx x/3$ with $x = pE/k_BT$; evaluate it. How aligned is water in a strong field?
 
 ## B. Core (do all)
 
@@ -47,11 +47,11 @@ Conventions as in the notes: SI units, $k = 1/4\pi\varepsilon_0$, $V(\infty) = 0
 (c) Numbers: $R = 1$ cm, $E_0 = 10^5$ V/m, $Q = 0.1$ nC. Find the threshold charge, $\theta_0$, and the (radial) field just outside the north and south poles.
 
 **B6.** (A square quadrupole.) Charges $+q$ at $(\pm a, 0, 0)$ and $-q$ at $(0, \pm a, 0)$.
-(a) Show $Q = 0$ and $\mathbf p = 0$, and compute the quadrupole tensor (3.31). Check that it is traceless.
+(a) Show $Q = 0$ and $\mathbf p = 0$, and compute the quadrupole tensor (3.30). Check that it is traceless.
 (b) Write $V$ to quadrupole order and evaluate it at $(10a, 0, 0)$ in units of $kq/a$. Compute the exact potential there from the four charges and the ratio of the two. Why is the quadrupole term off by about $0.4\%$ and not by $10\%$?
 
 **B7.** (Dipole in the field of a point charge.) A point charge $Q$ sits at the origin; an ideal dipole $\mathbf p$ sits at $\mathbf r$.
-(a) From (3.35) derive $\mathbf F = kQ\left[\mathbf p - 3(\mathbf p\cdot\hat{\mathbf r})\hat{\mathbf r}\right]/r^3$, and write the torque and energy from (3.34), (3.33).
+(a) From (3.34) derive $\mathbf F = kQ\left[\mathbf p - 3(\mathbf p\cdot\hat{\mathbf r})\hat{\mathbf r}\right]/r^3$, and write the torque and energy from (3.33), (3.32).
 (b) Project Part 7 builds a physical dipole $\pm q$ at $\mathbf r \pm \mathbf d/2$ with $qd = p$ fixed and halves $d$ three times. Explain why the relative errors of force, torque, and energy all fall by a factor $4$ per halving and not $2$: which term of the Taylor expansion of $\mathbf E$ about $\mathbf r$ is the first to survive?
 (c) Why is the force on a dipole *not* $\nabla(\mathbf p\cdot\mathbf E)$ in general, and when are the two equal?
 
@@ -70,9 +70,9 @@ Conventions as in the notes: SI units, $k = 1/4\pi\varepsilon_0$, $V(\infty) = 0
 **C2.** (The generating function proves everything.) Let $G(x, t) = (1 - 2xt + t^2)^{-1/2} = \sum_{\ell\ge0}c_\ell(x)t^\ell$ for $|t| < 1$.
 (a) Show $(1 - 2xt + t^2)\,\partial G/\partial t = (x - t)\,G$. Match powers of $t$ to get $(\ell + 1)c_{\ell+1} = (2\ell+1)x\,c_\ell - \ell\,c_{\ell-1}$, Bonnet's recursion (3.18). With $c_0 = 1$, $c_1 = x$, conclude $c_\ell = P_\ell$.
 (b) Show $\dfrac{\partial}{\partial x}\left[(1 - x^2)\dfrac{\partial G}{\partial x}\right] + t\,\dfrac{\partial^2}{\partial t^2}\big(tG\big) = 0$ and deduce that every $c_\ell$ satisfies Legendre's equation (3.13).
-(c) Use (a) and (b) to justify the multipole expansion (3.28) of $1/\mathscr r$ for $r > r'$, and say what happens for $r < r'$.
+(c) Use (a) and (b) to justify the expansion (3.27) of $1/\mathscr r$ for $r > r'$, and say what happens for $r < r'$.
 
-**C3.** (Keesom: the thermally averaged dipole–dipole force.) Two water molecules ($p = 6.17\times10^{-30}$ C m) are a fixed distance $r$ apart and free to rotate at temperature $T$. Let $U_0 = kp^2/r^3$ and write (3.36) as $U = U_0\,g$ with $g = \hat{\mathbf p}_1\cdot\hat{\mathbf p}_2 - 3(\hat{\mathbf p}_1\cdot\hat{\mathbf r})(\hat{\mathbf p}_2\cdot\hat{\mathbf r})$.
+**C3.** (Keesom: the thermally averaged dipole–dipole force.) Two water molecules ($p = 6.17\times10^{-30}$ C m) are a fixed distance $r$ apart and free to rotate at temperature $T$. Let $U_0 = kp^2/r^3$ and write (3.35) as $U = U_0\,g$ with $g = \hat{\mathbf p}_1\cdot\hat{\mathbf p}_2 - 3(\hat{\mathbf p}_1\cdot\hat{\mathbf r})(\hat{\mathbf p}_2\cdot\hat{\mathbf r})$.
 (a) Show the unweighted average of $U$ over all orientations of both dipoles is zero.
 (b) Boltzmann-weight the orientations and expand $e^{-U/k_BT}\approx 1 - U/k_BT$ to show $\langle U\rangle \approx -\langle U^2\rangle/k_BT = -\tfrac23 U_0^2/k_BT$. (You need $\langle g^2\rangle = \tfrac23$; compute it.)
 (c) Evaluate $U_0$ and $\langle U\rangle$ at $r = 0.5, 1, 2$ nm and $T = 300$ K, and compare with the exact weighted average from project Part 7. Why does the approximation fail at $0.5$ nm?

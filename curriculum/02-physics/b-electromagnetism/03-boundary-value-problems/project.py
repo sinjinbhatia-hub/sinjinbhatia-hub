@@ -43,7 +43,7 @@ nC = 1e-9
 # ## Part 0: Legendre polynomials and the closed-form solutions, symbolically (§3.5–3.7, §4)
 # Bonnet (3.18), Rodrigues (3.17), the Frobenius recursion (3.14), Legendre's
 # equation (3.13), orthogonality (Theorem 3.5), the generating function (3.19)
-# and the series behind the normalization. Then Examples 4.4, 4.5, (3.26), A1, A4.
+# and the series behind the normalization. Then Examples 4.4, 4.5, (3.25), A1, A4.
 
 # %%
 x, t = sp.symbols("x t")
@@ -105,7 +105,7 @@ Vin, Vout = s0_ / (3 * ep) * r * sp.cos(th), s0_ * R_**3 / (3 * ep) * sp.cos(th)
 assert sp.simplify(lap_sph(Vin)) == 0 and sp.simplify(lap_sph(Vout)) == 0
 assert sp.simplify((Vin - Vout).subs(r, R_)) == 0
 assert sp.simplify((sp.diff(Vout, r) - sp.diff(Vin, r)).subs(r, R_) + s0_ * sp.cos(th) / ep) == 0   # EM-2 (3.12)
-Vcyl = -E0_ * (s_ - a_**2 / s_) * sp.cos(ph)                                        # (3.26)
+Vcyl = -E0_ * (s_ - a_**2 / s_) * sp.cos(ph)                                        # (3.25)
 assert sp.simplify(sp.diff(s_ * sp.diff(Vcyl, s_), s_) / s_ + sp.diff(Vcyl, ph, 2) / s_**2) == 0
 assert sp.simplify(-ep * sp.diff(Vcyl, s_).subs(s_, a_) - 2 * ep * E0_ * sp.cos(ph)) == 0
 X0, Y0, Z0, Rs, u_, v_ = sp.symbols("x_0 y_0 z_0 R_s u v", real=True)               # A1: sphere averages
@@ -115,7 +115,7 @@ assert sp.simplify(avg(lambda X, Y, Z: X**2 + Y**2 - 2 * Z**2) - (X0**2 + Y0**2 
 assert sp.simplify(avg(lambda X, Y, Z: X**2 + Y**2 + Z**2) - (X0**2 + Y0**2 + Z0**2 + Rs**2)) == 0
 A_l = [sp.Rational(2 * l + 1, 2) * sp.integrate(x**2 * P[l], (x, -1, 1)) for l in range(4)]   # A4: cos^2 = P0/3 + 2P2/3
 assert A_l == [sp.Rational(1, 3), 0, sp.Rational(2, 3), 0]
-print("Symbolic checks passed: (4.2)-(4.5), (3.26), A1 sphere averages, A4 coefficients", A_l)
+print("Symbolic checks passed: (4.2)-(4.5), (3.25), A1 sphere averages, A4 coefficients", A_l)
 
 # %% [markdown]
 # ## Part 1: Why l must be an integer (§3.5, Frobenius derivation steps 3-5)
@@ -219,8 +219,9 @@ print(f"B2(c): neutral sphere F = {F_neut:.4e} N; far limit -2kq^2R^3/a^5 = {-2*
 for aa in (1.001 * R, 1.01 * R, 10 * R):
     Fg = -K * q**2 * R * aa / (aa**2 - R**2) ** 2
     Fn = K * q * (-q * R / aa / (aa - R**2 / aa) ** 2 + q * R / aa / aa**2)
-    print(f"B2(d): a = {aa/R:.3f} R: grounded F/(kq^2/4(a-R)^2) = {Fg/(-K*q**2/(4*(aa-R)**2)):.4f}; "
-          f"neutral F/(-2kq^2R^3/a^5) = {Fn/(-2*K*q**2*R**3/aa**5):.4f}")
+    print(f"B2(d): a = {aa/R:.3f} R: grounded F = {Fg:.4e} N, F/(-kq^2/4(a-R)^2) = {Fg/(-K*q**2/(4*(aa-R)**2)):.4f}; "
+          f"neutral F = {Fn:.4e} N, F/(-2kq^2R^3/a^5) = {Fn/(-2*K*q**2*R**3/aa**5):.4f}")
+    assert np.isclose(Fn, -K * q**2 * R**3 * (2 * aa**2 - R**2) / (aa**3 * (aa**2 - R**2) ** 2), rtol=1e-12)   # B2(c) closed form
 
 fig, axs = plt.subplots(1, 3, figsize=(15, 4.6))
 gx, gz = np.meshgrid(np.linspace(-3 * d, 3 * d, 120), np.linspace(1e-5, 4 * d, 90))
@@ -369,13 +370,13 @@ print(f"B5: threshold |Q| = {12*np.pi*EPS0*Rq**2*Eq_/nC:.4f} nC; Q = 0.1 nC: sig
 
 # %%
 def moments(qs, pos):
-    """Monopole Q, dipole p (3.30), traceless quadrupole Q_ij (3.31) about the origin."""
+    """Monopole Q, dipole p (3.29), traceless quadrupole Q_ij (3.30) about the origin."""
     r2 = (pos**2).sum(1)
     return qs.sum(), qs @ pos, 3 * np.einsum("n,ni,nj->ij", qs, pos, pos) - np.eye(3) * (qs @ r2)
 
 
 def V_multipole(Q, p, Qij, pts, lmax):
-    """Truncated expansion (3.29) through order lmax <= 2, in tensor form."""
+    """Truncated expansion (3.28) through order lmax <= 2, in tensor form."""
     r = np.linalg.norm(pts, axis=1); rh = pts / r[:, None]
     V = K * Q / r
     if lmax >= 1:
@@ -405,7 +406,7 @@ V2leg = K * (qs_c * (pos_c**2).sum(1) * eval_legendre(2, calpha)).sum(1) / 10.0*
 assert np.allclose(V2leg, V_multipole(0, 0 * pc_, Qij_c, 10 * dirs, 2), rtol=1e-10, atol=0)
 slopes = [np.polyfit(np.log(rs[rs >= 10]), np.log(errs[L, rs >= 10]), 1)[0] for L in range(3)]
 assert all(abs(s_ - e_) < 0.05 for s_, e_ in zip(slopes, (-2, -3, -4)))
-shift = np.array([0.3, -0.2, 0.5]); assert np.allclose(moments(qs_c, pos_c - shift)[1], pc_ - Qc_ * shift, rtol=1e-12, atol=0)   # (3.32)
+shift = np.array([0.3, -0.2, 0.5]); assert np.allclose(moments(qs_c, pos_c - shift)[1], pc_ - Qc_ * shift, rtol=1e-12, atol=0)   # (3.31)
 assert np.abs(moments(qs_c, pos_c - pc_ / Qc_)[1]).max() < 1e-12 * np.linalg.norm(pc_)      # origin at the centre of charge
 print(f"Multipoles: Q = {Qc_/nC:.0f} nC, |p| = {np.linalg.norm(pc_)/nC:.3f} nC m, tr Q_ij = {np.trace(Qij_c):.1e}; "
       f"error slopes after l = 0, 1, 2: " + ", ".join(f"{s_:.3f}" for s_ in slopes))
@@ -417,7 +418,7 @@ fig.tight_layout(); fig.savefig(FIG / "multipole_errors.png", dpi=120); plt.clos
 
 
 def V_axis_series(qs, zs, r, cth, lmax):
-    """(3.29) for charges on the z-axis: k sum_l sum_i q_i z_i^l P_l(cos theta) / r^(l+1)."""
+    """(3.28) for charges on the z-axis: k sum_l sum_i q_i z_i^l P_l(cos theta) / r^(l+1)."""
     return sum(K * (qs * zs**l).sum() * eval_legendre(l, cth) / r ** (l + 1) for l in range(lmax + 1))
 
 
@@ -477,7 +478,7 @@ fig.tight_layout(); fig.savefig(FIG / "spherical_harmonics.png", dpi=110); plt.c
 # %% [markdown]
 # ## Part 7: Dipoles in external fields (§3.10, A6, B7, C3)
 # A physical dipole +-q at r0 +- d/2 in the field of a point charge Q at the origin.
-# Energy, torque and force approach (3.33)-(3.35) with errors O(d^2); (3.36) is dipole-dipole.
+# Energy, torque and force approach (3.32)-(3.34) with errors O(d^2); (3.35) is dipole-dipole.
 
 # %%
 Qs, r0 = 1 * nC, np.array([0.03, 0.01, 0.05]); phat = np.array([1.0, 2.0, -0.5]) / np.linalg.norm([1, 2, -0.5])
@@ -498,7 +499,7 @@ for dd in (2e-3, 1e-3, 5e-4):
         assert np.all((prev / errs3 > 3.5) & (prev / errs3 < 4.5))   # halving d quarters every error
     prev = errs3
     print(f"Dipole d = {dd*1e3:.1f} mm: relative errors of force, torque, energy = " + ", ".join(f"{e:.2e}" for e in errs3))
-p1, p2 = 1e-12 * np.array([0.3, 0.5, 0.8]), 1e-12 * np.array([-0.6, 0.2, 0.4])      # dipole-dipole (3.36)
+p1, p2 = 1e-12 * np.array([0.3, 0.5, 0.8]), 1e-12 * np.array([-0.6, 0.2, 0.4])      # dipole-dipole (3.35)
 rv12, dd = np.array([0.02, -0.03, 0.05]), 1e-5
 c1 = np.array([-p1, p1]) / np.linalg.norm(p1) * dd / 2; c2 = rv12 + np.array([-p2, p2]) / np.linalg.norm(p2) * dd / 2
 q1s, q2s = np.array([-1, 1]) * np.linalg.norm(p1) / dd, np.array([-1, 1]) * np.linalg.norm(p2) / dd
@@ -514,7 +515,7 @@ print(f"A6: torque max {pw*1e6:.3e} N m; 2pE = {2*pw*1e6:.3e} J; kT = {kB*300:.3
       f"<cos> = coth(x) - 1/x = {1/np.tanh(xA6) - 1/xA6:.3e} (x/3 = {xA6/3:.3e})")
 xn, wn = roots_legendre(48); phn = np.arange(64) * 2 * np.pi / 64      # C3: orientational averages
 X1, X2, PH = np.meshgrid(xn, xn, phn, indexing="ij"); W3 = np.einsum("i,j,k->ijk", wn, wn, np.full(64, 1 / 64)) / 4
-geom = np.sqrt(1 - X1**2) * np.sqrt(1 - X2**2) * np.cos(PH) - 2 * X1 * X2   # (3.36) with r-hat = z
+geom = np.sqrt(1 - X1**2) * np.sqrt(1 - X2**2) * np.cos(PH) - 2 * X1 * X2   # (3.35) with r-hat = z
 assert np.isclose((W3 * geom**2).sum(), 2 / 3)
 for rk in (0.5e-9, 1e-9, 2e-9):
     U0 = K * pw**2 / rk**3; Ug = U0 * geom; bw = np.exp(-Ug / (kB * 300))
@@ -573,15 +574,22 @@ delta = pw / (2 * bOH * np.cos(angH / 2))
 pos_w = np.array([[0, 0, 0], [bOH * np.sin(angH / 2), 0, bOH * np.cos(angH / 2)], [-bOH * np.sin(angH / 2), 0, bOH * np.cos(angH / 2)]])
 qs_w = np.array([-2 * delta, delta, delta])
 assert np.allclose(moments(qs_w, pos_w)[1] / pw, [0, 0, 1], atol=1e-12)
-rw = np.array([0.5, 1, 2, 4]) * 1e-9; rel = []
-for dvec in (np.array([0, 0, 1.0]), np.array([1, 0, 1.0]) / np.sqrt(2)):
-    ptsw = rw[:, None] * dvec
-    Vd = K * (ptsw @ moments(qs_w, pos_w)[1]) / rw**3
-    rel.append(np.abs(Vd / V_pts(qs_w, pos_w, ptsw) - 1))
-slope_w = np.polyfit(np.log(rw), np.log(rel[0]), 1)[0]
-assert abs(slope_w + 1) < 0.1
-print(f"Your turn 3: delta = {delta/1.602176634e-19:.3f} e; dipole-approx relative error on axis at 0.5, 1, 2, 4 nm: "
-      + ", ".join(f"{e:.3f}" for e in rel[0]) + f" (slope {slope_w:.2f}); at 45 deg: " + ", ".join(f"{e:.3f}" for e in rel[1]))
+Qw, pw_vec, Qij_w = moments(qs_w, pos_w)
+rw = np.array([0.5, 1, 2, 4, 8, 16, 32]) * 1e-9
+ptsw = rw[:, None] * np.array([0, 0, 1.0])                                # on the dipole axis
+Vex_w = V_pts(qs_w, pos_w, ptsw)
+err_dip = K * (ptsw @ pw_vec) / rw**3 / Vex_w - 1                          # signed relative error of (3.29)
+err_quad = V_multipole(0.0, pw_vec, Qij_w, ptsw, 2) / Vex_w - 1            # with the quadrupole term (3.30)
+coef_pred = -Qij_w[2, 2] / (2 * pw)                                        # leading error: -Q_zz / (2 p r), from (3.30)
+assert abs(err_dip[-1] * rw[-1] / coef_pred - 1) < 0.05                    # r * err -> -Q_zz/(2p) (within 2% at 32 nm)
+ratios_q = err_quad[2:-1] / err_quad[3:]
+assert np.all((ratios_q > 3.9) & (ratios_q < 4.2))                        # dipole + quadrupole error falls like r^-2
+print(f"Your turn 3: delta = {delta/1.602176634e-19:.3f} e; Q_zz = {Qij_w[2, 2]:.3e} C m^2, -Q_zz/(2p) = {coef_pred*1e9:.5f} nm")
+print("        r (nm):                 " + "  ".join(f"{v*1e9:9.1f}" for v in rw))
+print("        dipole rel. error:      " + "  ".join(f"{v:9.5f}" for v in err_dip))
+print("        r x dipole error (nm):  " + "  ".join(f"{v*1e9:9.5f}" for v in err_dip * rw))
+print("        dipole+quadrupole err.: " + "  ".join(f"{v:9.2e}" for v in err_quad))
+print("        (the octupole cancels the quadrupole near 0.7 nm, so the 1/r law only shows for r >= 2 nm)")
 Cp = sine_coeffs(lambda y: 4 * y * (1 - y), 59)
 nn = np.arange(1, 60)
 assert np.allclose(Cp, np.where(nn % 2, 32 / (nn * np.pi) ** 3, 0), atol=1e-12)
