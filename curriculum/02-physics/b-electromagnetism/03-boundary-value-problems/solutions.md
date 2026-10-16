@@ -50,7 +50,7 @@ This is Green's reciprocity theorem: "charges of system 1 times potentials of sy
 
 **B2.** (a) With $\theta$ measured from the axis through $q$, a point of the sphere is at distance $d_1 = \sqrt{a^2 + R^2 - 2aR\cos\theta}$ from $q$ and $d_2 = \sqrt{b^2 + R^2 - 2bR\cos\theta}$ from $q'$. With $b = R^2/a$,
 $$d_2^2 = \frac{R^4}{a^2} + R^2 - \frac{2R^3\cos\theta}{a} = \frac{R^2}{a^2}\left(R^2 + a^2 - 2aR\cos\theta\right) = \left(\frac Ra\right)^2d_1^2,$$
-so $d_2 = (R/a)\,d_1$ for every $\theta$, and $V = k\left[\dfrac q{d_1} + \dfrac{-qR/a}{(R/a)d_1}\right] = 0$ on the whole sphere. (Part 2 checks $|V| < 10^{-13}$ V at 1000 random points.)
+so $d_2 = (R/a)\,d_1$ for every $\theta$, and $V = k\left[\dfrac q{d_1} + \dfrac{-qR/a}{(R/a)d_1}\right] = 0$ on the whole sphere. (Part 2 checks $|V| < 10^{-12}$ V at 1000 random points.)
 
 (b) For $r\ge R$, $V(r,\theta) = kq\left[\left(r^2 + a^2 - 2ar\cos\theta\right)^{-1/2} - \dfrac Ra\left(r^2 + b^2 - 2br\cos\theta\right)^{-1/2}\right]$. Differentiate: $\partial_r\left(r^2 + c^2 - 2cr\cos\theta\right)^{-1/2} = -(r - c\cos\theta)\left(r^2 + c^2 - 2cr\cos\theta\right)^{-3/2}$. At $r = R$ write $D = R^2 + a^2 - 2aR\cos\theta$; the second root is $(R/a)^3D^{3/2}$ by (a). Then
 $$\frac{\partial V}{\partial r}\Big|_R = kq\left[-\frac{R - a\cos\theta}{D^{3/2}} + \frac Ra\cdot\frac{R - (R^2/a)\cos\theta}{(R/a)^3D^{3/2}}\right] = \frac{kq}{D^{3/2}}\left[-R + a\cos\theta + \frac{a^2}{R^2}\left(R - \frac{R^2}a\cos\theta\right)\right] = \frac{kq}{D^{3/2}}\cdot\frac{a^2 - R^2}{R}.$$

@@ -159,7 +159,7 @@ fig.tight_layout(); fig.savefig(FIG / "frobenius_divergence.png", dpi=120); plt.
 
 # %%
 def V_pts(qs, pos, pts):
-    """Potential k sum_i q_i / |r - r_i| (EM-2 (3.8)) at field points pts (M, 3)."""
+    """Potential k sum_i q_i / |r - r_i| (EM-2 (3.7)) at field points pts (M, 3)."""
     return K * (qs[None, :] / np.linalg.norm(pts[:, None, :] - pos[None, :, :], axis=2)).sum(1)
 
 
@@ -201,7 +201,7 @@ R, a = 0.1, 0.2
 qp, b = -q * R / a, R**2 / a                                            # (3.6)
 u = rng.standard_normal((1000, 3)); u /= np.linalg.norm(u, axis=1)[:, None]
 qs_sp, pos_sp = np.array([q, qp]), np.array([[0, 0, a], [0, 0, b]])
-assert np.abs(V_pts(qs_sp, pos_sp, R * u)).max() < 1e-12 * K * q / R
+assert np.abs(V_pts(qs_sp, pos_sp, R * u)).max() < 1e-12                     # |V| < 1e-12 V on the sphere (kq/R ~ 90 V), §3.3 step 4
 F_sph = K * q * qp / (a - b) ** 2
 assert np.isclose(F_sph, -K * q**2 * R * a / (a**2 - R**2) ** 2, rtol=1e-12, atol=0)        # (3.7)
 sig_sph = lambda th_: -q * (a**2 - R**2) / (4 * np.pi * R * (R**2 + a**2 - 2 * a * R * np.cos(th_)) ** 1.5)
@@ -241,7 +241,7 @@ fig.tight_layout(); fig.savefig(FIG / "images.png", dpi=120); plt.close(fig)
 
 # %% [markdown]
 # ## Part 3: The slot by Fourier series and by relaxation (§3.4, Example 4.3, B3)
-# `sor` is red-black successive over-relaxation (LA-13) for any 5-point stencil
+# `sor` is red-black successive over-relaxation (EM-2 project Part 6; theory in LA-13 §3.9) for any 5-point stencil
 # sum_nb c_nb (V_nb - V) = 0; constant coefficients give the discrete Laplacian.
 
 
@@ -525,7 +525,7 @@ for rk in (0.5e-9, 1e-9, 2e-9):
     print(f"C3: r = {rk*1e9:.1f} nm: k p^2/r^3 = {U0:.3e} J = {U0/(kB*300):.3f} kT; <U> = {exact:.4e} J, "
           f"leading order -2U0^2/3kT = {lead:.4e} J, ratio {exact/lead:.4f}")
     if rk >= 1e-9:
-        assert abs(exact / lead - 1) < 0.1
+        assert abs(exact / lead - 1) < 2e-3                              # C3(c): leading order exact to a part in 1e3 for r >= 1 nm
 
 # %% [markdown]
 # ## Your turn

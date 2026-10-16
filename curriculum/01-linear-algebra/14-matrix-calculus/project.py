@@ -94,7 +94,7 @@ ax.set_xlabel("h"); ax.set_ylabel("relative error"); ax.set_title("Finite-differ
 ax.legend(fontsize=7); ax.grid(alpha=.3)
 fig.tight_layout(); fig.savefig(FIG / "fd_error_vs_h.png", dpi=120); plt.close(fig)
 h_best_c = hs[err_c.argmin()]; h_best_f = hs[err_f.argmin()]
-assert 1e-7 < h_best_c < 1e-4 and err_c.min() < 1e-9, (h_best_c, err_c.min())
+assert 1e-7 < h_best_c < 1e-4 and err_c.min() < 1e-10, (h_best_c, err_c.min())   # notes §8: best error about 1e-11, not 1e-16
 assert 1e-10 < h_best_f < 1e-6, h_best_f
 print(f"Part 1: best central h = {h_best_c:.1e} (eps^(1/3) = {EPS**(1/3):.1e}); best forward h = {h_best_f:.1e} (sqrt eps = {EPS**.5:.1e})")
 
@@ -128,6 +128,7 @@ identities = {   # name: (f, analytic gradient, point)
 }
 for name, (f, g, pt) in identities.items():
     e = grad_check(f, g, pt)
+    assert e < 1e-9, (name, e)   # notes §3.8: every catalogue identity passes at around 1e-11
     print(f"  {name:48s} rel err {e:.1e}")
 
 # Jacobians: d(Ax) = A dx; elementwise map has diagonal Jacobian (3.13), (3.19).
@@ -400,7 +401,7 @@ assert rel_error(gb, num_grad(lambda v: loss_np(Xr, Wr, v), br)) < 1e-6
 print("Part 4: Tensor engine (matmul, broadcast bias, tanh, relu, exp, log, pow, sum, T) agrees with finite differences.")
 
 # %% [markdown]
-# ## Part 5: Example 4.4 — backprop by hand, three ways
+# ## Part 5: Example 4.4 — backprop by hand, four ways
 #
 # Network (§3.7): z1 = W1 x + b1, a1 = tanh(z1), z2 = W2 a1 + b2, L = ½||z2 - y||².
 # Hand-derived (eqs. 3.28–3.33): δ2 = z2 - y, grad_W2 = δ2 a1^T, grad_b2 = δ2,
@@ -600,6 +601,9 @@ print(f"Example 4.1: Newton lands on {x_newton} in 1 step; GD needs {n_gd} (step
 #
 # r_i(a,b) = a e^{-b t_i} - y_i, J_r = [e^{-b t_i}, -a t_i e^{-b t_i}],
 # grad f = J_r^T r, H ≈ J_r^T J_r, step h = -(J_r^T J_r)^{-1} J_r^T r (eq. 3.25).
+# With a nonzero residual the iteration converges LINEARLY, with ratio equal to the
+# spectral radius of (J_r^T J_r)^{-1} Σ r_i ∇²r_i (the dropped term relative to the kept one),
+# about 0.017 here (Example 4.5); only a zero-residual fit makes Gauss–Newton quadratic.
 
 # %%
 t_d = np.array([0., 1., 2.]); y_d = np.array([2.0, 1.2, 0.8])
@@ -636,21 +640,31 @@ sol = least_squares(r_fn, p0, jac=J_fn, xtol=1e-14, ftol=1e-14, gtol=1e-14)
 assert np.allclose(sol.x, trace[-1], atol=1e-8)
 steps_gn = np.linalg.norm(np.diff(trace, axis=0), axis=1)
 n_gn = int(np.argmax(steps_gn < 1e-6)) + 1
+assert np.allclose(steps_gn[:5], [4.899e-1, 8.29e-3, 2.44e-4, 4.68e-6, 8.07e-8], rtol=5e-3)   # Example 4.5 quotes these to one digit
 # The dropped term sum_i r_i Hess(r_i) at the solution is small compared with J^T J.
 a_s, b_s = trace[-1]
 Hr = [np.array([[0, -ti * np.exp(-b_s * ti)], [-ti * np.exp(-b_s * ti), a_s * ti ** 2 * np.exp(-b_s * ti)]]) for ti in t_d]
 dropped = sum(ri * Hi for ri, Hi in zip(r_fn(trace[-1]), Hr))
 JtJ_s = J_fn(trace[-1]).T @ J_fn(trace[-1])
-assert np.linalg.norm(dropped) < 0.02 * np.linalg.norm(JtJ_s)
+assert np.allclose(dropped, [[0, 0], [0, -0.0462]], atol=5e-5), dropped
+assert np.allclose(JtJ_s, [[1.5372, -1.3663], [-1.3663, 3.9026]], atol=5e-5), JtJ_s
+assert 0.009 < np.linalg.norm(dropped) / np.linalg.norm(JtJ_s) < 0.011          # "about 1%"
 assert np.allclose(num_jac(lambda p: J_fn(p).T @ r_fn(p), trace[-1]), JtJ_s + dropped, atol=1e-6)  # exact Hessian
+# Linear convergence: successive step ratios settle to the spectral radius of (J^T J)^{-1} * dropped.
+rho_gn = max(abs(np.linalg.eigvals(np.linalg.solve(JtJ_s, dropped))))
+ratios_gn = steps_gn[1:] / steps_gn[:-1]
+assert np.isclose(rho_gn, 0.0172, atol=5e-5) and np.allclose(ratios_gn[3:6], rho_gn, rtol=0.01), (rho_gn, ratios_gn)
+assert np.all(np.diff(ratios_gn[:6] / steps_gn[:6]) > 0)          # h_{k+1}/h_k^2 keeps growing: not quadratic
+assert gauss_newton(r_fn, J_fn, [1., 1.], maxit=1)[1][1] < 0       # exercise B7(c): from (1,1) the first step sends b negative
 fig, axes = plt.subplots(1, 2, figsize=(10, 4))
 tt = np.linspace(0, 2.5, 100)
 axes[0].plot(t_d, y_d, "ko", label="data"); axes[0].plot(tt, a_s * np.exp(-b_s * tt), label=f"fit a={a_s:.4f}, b={b_s:.4f}")
 axes[0].plot(tt, p0[0] * np.exp(-p0[1] * tt), "--", label="start (1.5, 0.5)"); axes[0].legend(); axes[0].set_xlabel("t"); axes[0].grid(alpha=.3)
-axes[1].semilogy(steps_gn, "o-"); axes[1].set_xlabel("Gauss–Newton iteration"); axes[1].set_ylabel("||step||"); axes[1].set_title("Quadratic-looking convergence"); axes[1].grid(alpha=.3)
+axes[1].semilogy(steps_gn, "o-"); axes[1].set_xlabel("Gauss–Newton iteration"); axes[1].set_ylabel("||step||"); axes[1].set_title(f"Linear convergence, ratio ≈ {rho_gn:.3f}"); axes[1].grid(alpha=.3)
 fig.tight_layout(); fig.savefig(FIG / "gauss_newton_fit.png", dpi=120); plt.close(fig)
 print(f"  converged to (a,b) = {np.round(trace[-1], 6)} in {n_gn} steps (|step|<1e-6); f* = {f_ls(trace[-1]):.6e}; scipy agrees.")
 print(f"  dropped Hessian term at solution: {np.round(dropped, 4).tolist()} vs J^T J {np.round(JtJ_s, 4).tolist()}")
+print(f"  step ratios {np.round(ratios_gn[:6], 4).tolist()} -> linear rate {ratios_gn[4]:.4f}; spectral radius of (J^T J)^-1 (dropped) = {rho_gn:.4f}")
 
 # %% [markdown]
 # ## Part 9: Gaussian log-likelihood gradients and the MLE by gradient ascent (§3.9)

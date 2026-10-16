@@ -225,6 +225,18 @@ print(f"  Simulation alpha=2, n=50: n Var(MoM)={n_g*a_mom_sim.var():.2f} (asympt
       f"asymptotic efficiency of MoM = {asym_mle/asym_mom:.3f}")
 assert n_g * a_mle_sim.var() < n_g * a_mom_sim.var()
 assert abs(n_g * a_mle_sim.var() / asym_mle - 1) < 0.25 and abs(n_g * a_mom_sim.var() / asym_mom - 1) < 0.25
+# SymPy: the two asymptotic variances quoted in notes §3.4 and Example 4.5.
+# MoM: alpha_hat = m1^2/(m2 - m1^2) at (m1_hat, m2_hat); delta method (3.19) with the Gamma moments E[X^k].
+al_, be_, m1_, m2_ = sp.symbols("alpha beta m1 m2", positive=True)
+mom_k = lambda k: sp.gamma(al_ + k) / sp.gamma(al_) / be_**k
+a_of_m = m1_**2 / (m2_ - m1_**2)
+grad_a = sp.Matrix([sp.diff(a_of_m, m1_), sp.diff(a_of_m, m2_)]).subs({m1_: mom_k(1), m2_: mom_k(2)})
+cov_m = sp.Matrix([[mom_k(2) - mom_k(1)**2, mom_k(3) - mom_k(1) * mom_k(2)],
+                   [mom_k(3) - mom_k(1) * mom_k(2), mom_k(4) - mom_k(2)**2]])   # Cov of (X, X^2)
+assert sp.simplify(sp.gammasimp((grad_a.T * cov_m * grad_a)[0]) - 2 * al_ * (al_ + 1)) == 0
+# MLE: [I^-1]_{alpha alpha} = alpha / (alpha psi'(alpha) - 1) from the Fisher matrix of Example 4.5.
+I_gamma = sp.Matrix([[sp.polygamma(1, al_), -1 / be_], [-1 / be_, al_ / be_**2]])
+assert sp.simplify(I_gamma.inv()[0, 0] - al_ / (al_ * sp.polygamma(1, al_) - 1)) == 0
 
 # %% [markdown]
 # ## Part 5: Cramér-Rao ratios Var(MLE) / (1/(n I_1)) vs n (§3.7)
@@ -283,6 +295,7 @@ print(f"Example 4.2: l''(p_hat) = {curv[0]:.2f} + {curv[1]:.2f} = {sum(curv):.1f
 exact = stats.binom.cdf(10, n, p)
 approx = stats.norm.cdf((0.2 - p) / np.sqrt(p * (1 - p) / n))
 approx_cc = stats.norm.cdf((10.5 - n * p) / np.sqrt(n * p * (1 - p)))
+assert np.isclose(exact, 0.0789, atol=5e-5) and np.isclose(approx, 0.0614, atol=5e-5) and np.isclose(approx_cc, 0.0825, atol=5e-5)
 print(f"Example 4.2: p_hat={p_hat}, I1(p_hat)={I1:.4f}, CRB = Var(p_hat) = {se_p**2:.4f}, se={se_p:.4f}, "
       f"95% Wald CI = ({p_hat-1.96*se_p:.3f}, {p_hat+1.96*se_p:.3f})")
 print(f"  P(p_hat <= 0.2): exact {exact:.4f}, normal {approx:.4f} (z={(0.2-p)/se_p:.3f}), "
@@ -307,6 +320,7 @@ for n_, tol in [(20, 0.15), (200, 0.03)]:
     sd_g = np.exp(-Lsim).std(); delta_sd = np.exp(-3.2) * np.sqrt(3.2 / n_)
     cover = np.mean(np.abs(Lsim - 3.2) <= 1.96 * np.sqrt(Lsim / n_))
     assert abs(sd_g / delta_sd - 1) < tol
+    assert 0.93 < cover < 0.965, ("Wald coverage", n_, cover)   # Example 4.6: about 94.5% at n = 20
     print(f"  simulation n={n_}: sd of exp(-Xbar) = {sd_g:.5f} vs delta {delta_sd:.5f} (ratio {sd_g/delta_sd:.3f}); "
           f"Wald CI coverage = {cover:.3f}")
 

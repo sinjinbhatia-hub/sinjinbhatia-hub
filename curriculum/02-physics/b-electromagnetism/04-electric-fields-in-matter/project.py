@@ -114,19 +114,21 @@ assert abs(rho_grid[i0, j0, k0] - rho_sym(s[i0], s[j0], s[k0])) < 2e-3 * np.abs(
 print(f"Grid bound charge of a bounded blob: Q_b = {Qb:.2e} vs int|rho_b| = {Qabs:.3f}  (zero to {abs(Qb)/Qabs:.1e})")
 
 # Exercise B2: the dipole moment of the bound charges is the integral of P, int r rho_b dtau = int P dtau (no surface term here: P -> 0 smoothly).
-def P_blob_offset(Xg, Yg, Zg):
-    """P = f(r) (1/2 + x, 0.3 y, z) with f = (1 - r^2)^2 for r < 1: nonzero total dipole moment, int P_x dtau = (1/2) int f = 16 pi/105."""
+def P_blob_offset(Xg, Yg, Zg, offset=0.5):
+    """P = f(r) (offset + x, 0.3 y, z) with f = (1 - r^2)^2 for r < 1: int P_x dtau = offset * int f = offset * 32 pi/105."""
     r2 = Xg**2 + Yg**2 + Zg**2
     f = np.where(r2 < 1.0, (1 - r2)**2, 0.0)
-    return f * (0.5 + Xg), 0.3 * f * Yg, f * Zg
+    return f * (offset + Xg), 0.3 * f * Yg, f * Zg
 
 
-_, _, rho_off, h_off = bound_charge_on_grid(P_blob_offset)
 s_off = np.linspace(-1.5, 1.5, 121)
 Xo, Yo, Zo = np.meshgrid(s_off, s_off, s_off, indexing="ij")
-p_bound = np.array([(c * rho_off).sum() * h_off**3 for c in (Xo, Yo, Zo)])
-assert np.isclose(p_bound[0], 16 * np.pi / 105, rtol=2e-3) and np.abs(p_bound[1:]).max() < 1e-12, p_bound
-print(f"B2: dipole moment of the grid bound charge = ({p_bound[0]:.5f}, {p_bound[1]:.1e}, {p_bound[2]:.1e}); int P dtau = 16 pi/105 = {16 * np.pi / 105:.5f}")
+for off_ in (0.5, -1.0):                                                   # Exercise B2(e): predict p = offset * 32 pi/105
+    _, _, rho_off, h_off = bound_charge_on_grid(lambda X, Y, Z: P_blob_offset(X, Y, Z, off_))
+    p_bound = np.array([(c * rho_off).sum() * h_off**3 for c in (Xo, Yo, Zo)])
+    assert np.isclose(p_bound[0], off_ * 32 * np.pi / 105, rtol=2e-3) and np.abs(p_bound[1:]).max() < 1e-12, p_bound
+    print(f"B2: offset {off_:+.1f}: dipole moment of the grid bound charge = ({p_bound[0]:+.5f}, {p_bound[1]:.1e}, {p_bound[2]:.1e}); "
+          f"int P dtau = offset * 32 pi/105 = {off_ * 32 * np.pi / 105:+.5f}")
 
 # Exercise A2: P = k x x_hat in the cube 0 <= x, y, z <= L; k = 1e-4 C/m^3, L = 2 cm.
 k_A2, L_A2 = 1e-4, 0.02
@@ -150,7 +152,8 @@ for n_, name in [(1, "k r"), (2, "k r^2")]:
 k_B1, R_B, k_B3 = 1e-4, 0.01, 1e-2
 assert np.isclose(-k_B1 * R_B / EPS0, -1.1294e5, rtol=1e-4) and np.isclose(-3 * k_B1, -3e-4)
 assert np.isclose(-k_B3 * R_B**3 / (3 * EPS0), -376.47, rtol=1e-4) and np.isclose(-4 * k_B3 * R_B, -4e-4)
-print(f"B1: E_in(R) = {-k_B1 * R_B / EPS0:.4e} V/m, rho_b = {-3 * k_B1:.1e} C/m^3.  B3: V(0) = {-k_B3 * R_B**3 / (3 * EPS0):.2f} V, rho_b(R) = {-4 * k_B3 * R_B:.1e} C/m^3")
+print(f"B1: E_in(R) = {-k_B1 * R_B / EPS0:.4e} V/m, sigma_b = {k_B1 * R_B:.1e} C/m^2, rho_b = {-3 * k_B1:.1e} C/m^3.  "
+      f"B3: V(0) = {-k_B3 * R_B**3 / (3 * EPS0):.2f} V, E_in(R) = {-k_B3 * R_B**2 / EPS0:.4e} V/m, rho_b(R) = {-4 * k_B3 * R_B:.1e} C/m^3")
 
 # %% [markdown]
 # ## Part 2: The uniformly polarized sphere, and what "the field inside" means
@@ -493,8 +496,11 @@ sol = sp.solve([sp.Eq(-A_ * Rs, -E0s * Rs + B_ / Rs**2),                 # V con
 assert sp.simplify(sol[A_] - 3 * E0s / (ers + 2)) == 0
 assert sp.simplify(sol[B_] - Rs**3 * E0s * (ers - 1) / (ers + 2)) == 0
 # 2D version used above: V_in = -A s cos(phi), V_out = -E0 s cos(phi) + B cos(phi)/s.
-sol2 = sp.solve([sp.Eq(-A_ * Rs, -E0s * Rs + B_ / Rs), sp.Eq(ers * A_, E0s + B_ / Rs**2)], [A_, B_])
-assert sp.simplify(sol2[A_] - 2 * E0s / (ers + 1)) == 0
+# Matching: V continuous, eps dV/ds continuous (Exercise B7(b)), general eps_in, eps_out.
+ein, eout = sp.symbols("epsilon_in epsilon_out", positive=True)
+sol2 = sp.solve([sp.Eq(-A_ * Rs, -E0s * Rs + B_ / Rs), sp.Eq(ein * A_, eout * (E0s + B_ / Rs**2))], [A_, B_])
+assert sp.simplify(sol2[A_] - 2 * eout * E0s / (ein + eout)) == 0
+assert sp.simplify(sol2[B_] - Rs**2 * E0s * (ein - eout) / (ein + eout)) == 0
 # Example 4.4 numbers: E0 = 1e5 V/m, R = 2 cm, eps_r = 4.
 E0n, Rn, ern = 1e5, 0.02, 4.0
 E_in_n = 3 * E0n / (ern + 2); P_n = EPS0 * (ern - 1) * E_in_n; p_n = 4 / 3 * np.pi * Rn**3 * P_n
@@ -621,7 +627,8 @@ V2_8 = Q8 / C8(x2); F2_8 = 0.5 * V2_8**2 * EPS0 * 3 * w8 / d8
 assert np.isclose(C8(x1), 14.167e-12, rtol=1e-3) and np.isclose(W1 - W2, 3.0357e-6, rtol=1e-3) and np.isclose(V2_8, 571.4, rtol=1e-3)
 assert np.isclose(F2_8, 4.336e-5, rtol=1e-3) and np.isclose(0.5 * V8**2 * EPS0 * 3 * w8 / d8, F_B8)
 print(f"B8: fixed V: dC = {dC8 * 1e12:.3f} pF, battery {Wb:.4e} J = field {Wf:.4e} + mechanical {Wm:.4e}.  "
-      f"Fixed Q (disconnect at x = 2 cm): C1 = {C8(x1) * 1e12:.3f} pF, V falls {V8:.0f} -> {V2_8:.1f} V, work done by the field = {W1 - W2:.4e} J, "
+      f"Fixed Q (disconnect at x = 2 cm): C1 = {C8(x1) * 1e12:.3f} pF, C2 = {C8(x2) * 1e12:.3f} pF, Q = {Q8:.4e} C, W1 = {W1:.4e} J, W2 = {W2:.4e} J, "
+      f"V falls {V8:.0f} -> {V2_8:.1f} V, work done by the field = {W1 - W2:.4e} J, dC/dx = {EPS0 * 3 * w8 / d8:.4e} F/m, "
       f"F falls {F_B8:.4e} -> {F2_8:.4e} N")
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
@@ -662,10 +669,11 @@ print(f"Example 4.5: N = {N_stp:.4e} /m^3; chi_e(N2) = {chi_N2:.4e} (alpha tabul
 # C1: liquid argon (works) and water (fails for the static value, works for the optical one).
 N_Ar = 1.40 / 39.948 * 6.02214e23 * 1e6; chi_Ar = clausius_mossotti(N_Ar, 1.64 * A3)
 N_w = 1.00 / 18.015 * 6.02214e23 * 1e6; chi_w = clausius_mossotti(N_w, 1.45 * A3)
+assert np.isclose(4 * np.pi / 3 * N_Ar * 1.64 * A3, 0.14495, rtol=1e-3) and np.isclose(4 * np.pi / 3 * N_w * 1.45 * A3, 0.2030, rtol=1e-3)
 assert np.isclose(N_Ar, 2.11e28, rtol=5e-3) and np.isclose(1 + chi_Ar, 1.51, atol=0.01)
 assert np.isclose(N_w, 3.34e28, rtol=5e-3) and np.isclose(1 + chi_w, 1.76, atol=0.01) and abs(1 + chi_w - 1.333**2) < 0.02
-print(f"C1: liquid argon N = {N_Ar:.3e}, eps_r(CM) = {1 + chi_Ar:.3f} (measured about 1.5); "
-      f"water N = {N_w:.3e}, eps_r(CM, electronic alpha) = {1 + chi_w:.3f} vs n^2 = {1.333**2:.3f} and static 80.1")
+print(f"C1: liquid argon N = {N_Ar:.3e}, x = {4 * np.pi / 3 * N_Ar * 1.64 * A3:.4f}, eps_r(CM) = {1 + chi_Ar:.3f} (measured about 1.5); "
+      f"water N = {N_w:.3e}, x = {4 * np.pi / 3 * N_w * 1.45 * A3:.4f}, eps_r(CM, electronic alpha) = {1 + chi_w:.3f} vs n^2 = {1.333**2:.3f} and static 80.1")
 assert np.isclose(1 + clausius_mossotti(N_Ar, 1.64 * A3), 1.5086, atol=2e-3) and np.isclose(1 + 4 * np.pi * N_Ar * 1.64 * A3, 1.4349, atol=1e-3)
 # C1(c)-(d): add Debye's orientational polarizability p^2/(3 k T) to water's alpha, then Onsager's repair (quoted, not derived):
 #   (eps - n^2)(2 eps + n^2) / (eps (n^2 + 2)^2) = N p^2 / (9 eps0 k T).
@@ -681,8 +689,11 @@ eps_ons = brentq(lambda e: (e - n2_w) * (2 * e + n2_w) / (e * (n2_w + 2)**2) - r
 assert np.isclose(a_or / A3, 28.18, rtol=1e-3) and np.isclose(x_deb, 4.149, rtol=1e-3) and x_deb > 1 and eps_cm_deb < 0
 assert np.isclose(eps_dilute_deb, 13.4, atol=0.1) and np.isclose(rhs_ons, 3.946, rtol=1e-3) and np.isclose(eps_ons, 29.2, atol=0.3)
 assert 2.5 < 80.1 / eps_ons < 3.0
+lhs_80 = (80.1 - n2_w) * (2 * 80.1 + n2_w) / (80.1 * (n2_w + 2)**2); g_K = lhs_80 / rhs_ons       # p^2 -> g p^2 reaches 80.1
+assert np.isclose(g_K, 2.81, atol=0.02) and np.isclose(lhs_80, 11.10, atol=0.01)
 print(f"C1(c,d): alpha_or/4pi eps0 = {a_or / A3:.2f} A^3 (electronic 1.45); N alpha/3eps0 = {x_deb:.3f} > 1, so CM gives eps_r = {eps_cm_deb:.2f} (nonsense); "
-      f"dilute+Debye {eps_dilute_deb:.1f}; Onsager (RHS {rhs_ons:.3f}) eps_r = {eps_ons:.1f}; 80.1/Onsager = {80.1 / eps_ons:.2f}")
+      f"dilute+Debye {eps_dilute_deb:.1f}; Onsager (RHS {rhs_ons:.3f}) eps_r = {eps_ons:.1f}; 80.1/Onsager = {80.1 / eps_ons:.2f}; "
+      f"left side at 80.1 = {lhs_80:.3f}, g needed = {g_K:.2f}")
 
 Nalpha = np.linspace(0, 2.4, 300)                                           # N alpha / eps0
 fig, ax = plt.subplots(figsize=(6, 4))
@@ -701,6 +712,8 @@ E_atom = K_E * E_CH / (a_H * 1e-10)**2                                          
 assert np.isclose(E_atom, 1.886e11, rtol=1e-3) and np.isclose(d_H / (a_H * 1e-10), 1e6 / E_atom) and np.isclose(1e6 / E_atom, 5.30e-6, rtol=2e-3)
 N_w_tq = 6.17e-30 * 1e5; ratio_kT = 2 * N_w_tq / (K_B * 300); E_unit = K_B * 300 / (2 * 6.17e-30)  # A3 (water, p = 1.85 D)
 assert np.isclose(N_w_tq, 6.17e-25) and np.isclose(ratio_kT, 2.979e-4, rtol=1e-3) and np.isclose(E_unit, 3.356e8, rtol=1e-3)
+cos_avg = 6.17e-30 * 1e5 / (K_B * 300) / 3                                                       # Langevin <cos> = x/3, x = pE/kT
+assert np.isclose(cos_avg, 4.97e-5, rtol=2e-3) and np.isclose(E_unit / 3e6, 112, rtol=5e-3)
 C_A4 = 2.1 * EPS0 * 50e-4 / 1e-3; Q_A4 = C_A4 * 100; sig_A4 = Q_A4 / 50e-4; P_A4 = sig_A4 - EPS0 * 1e5     # A4
 assert np.isclose(C_A4, 92.97e-12, rtol=1e-3) and np.isclose(sig_A4, 1.859e-6, rtol=1e-3) and np.isclose(P_A4, 9.74e-7, rtol=2e-3)
 assert np.isclose(sig_A4 - P_A4, EPS0 * 1e5)                                                   # sigma_f + sigma_b = eps0 E
@@ -711,20 +724,24 @@ assert np.isclose(sig_B4, 2.122e-8, rtol=1e-3) and np.isclose(E_B4, 7490, rtol=1
 Qc_B4 = -(3 - 1) / 3 * 1e-9                                                                      # bound charge at the point charge: -(chi_e/eps_r) q
 assert np.isclose(Qc_B4 + sig_B4 * 4 * np.pi * 0.05**2, 0) and np.isclose(Qc_B4, -0.6667e-9, rtol=1e-3)
 assert np.isclose(K_E * 1e-9 / 0.05**2, 3595.2, rtol=1e-3)                                       # E just outside (and unchanged): kq/R^2
+E_Rin_B4 = K_E * 1e-9 / (3 * 0.05**2); jump_B4 = sig_B4 / EPS0                                    # E just inside R and the jump sigma_b/eps0
+assert np.isclose(E_Rin_B4, 1198.4, rtol=1e-3) and np.isclose(jump_B4, 2397, rtol=1e-3) and np.isclose(K_E * 1e-9 / 0.05**2 - E_Rin_B4, jump_B4)
 D_B5 = EPS0 * 200 / (1e-3 / 2 + 2e-3 / 5); E1, E2 = D_B5 / (2 * EPS0), D_B5 / (5 * EPS0)        # B5
 assert np.isclose(D_B5, 1.9676e-6, rtol=1e-3) and np.isclose(E1 * 1e-3 + E2 * 2e-3, 200)
 assert np.isclose(D_B5 * (1 / 5 - 1 / 2), EPS0 * (E2 - E1)) and np.isclose(D_B5 * 20e-4 / 200, 19.68e-12, rtol=1e-3)
 P1_B5, P2_B5 = D_B5 * (1 - 1 / 2), D_B5 * (1 - 1 / 5)                                            # P in each layer; faces: -P1, +P1, -P2, +P2
 assert np.isclose(P1_B5, 9.838e-7, rtol=1e-3) and np.isclose(P2_B5, 1.5741e-6, rtol=1e-3) and np.isclose(P1_B5 - P2_B5, D_B5 * (1 / 5 - 1 / 2))
 assert np.isclose(D_B5 * 20e-4, 3.935e-9, rtol=1e-3)                                            # Q = sigma_f A = C V
+C1_B5, C2_B5 = 2 * EPS0 * 20e-4 / 1e-3, 5 * EPS0 * 20e-4 / 2e-3                                 # series: 1/C = 1/C1 + 1/C2
+assert np.isclose(C1_B5, 35.42e-12, rtol=1e-3) and np.isclose(C2_B5, 44.27e-12, rtol=1e-3) and np.isclose(C1_B5 * C2_B5 / (C1_B5 + C2_B5), 19.68e-12, rtol=1e-3)
 E_A5 = 1.0                                                                                       # A5: |E2|/|E1| = sin(30)/sin(theta_2)
 print(f"A1: a = {a_H:.4f} A, p = {p_H:.3e} C m, d = {d_H:.3e} m, E_atom = {E_atom:.3e} V/m, d/a = {1e6 / E_atom:.2e}.  "
-      f"A3: N = {N_w_tq:.2e} N m, 2pE/kT = {ratio_kT:.2e}, field for 2pE/kT = 1: {E_unit:.3e} V/m.  "
+      f"A3: N = {N_w_tq:.2e} N m, 2pE/kT = {ratio_kT:.2e}, <cos> = {cos_avg:.2e}, field for 2pE/kT = 1: {E_unit:.3e} V/m = {E_unit / 3e6:.0f} x air breakdown.  "
       f"A4: C = {C_A4 * 1e12:.2f} pF, Q = {Q_A4 * 1e9:.3f} nC, sigma_f = {sig_A4:.3e}, P = {P_A4:.3e} C/m^2, sigma_f + sigma_b = {(sig_A4 - P_A4):.3e}.  "
       f"A5: theta_2 = {th2:.2f} deg, |E2|/|E1| = {np.sin(np.radians(30)) / np.sin(np.radians(th2)):.4f}.")
-print(f"B4: sigma_b(R) = {sig_B4:.3e} C/m^2, bound charge at the centre = {Qc_B4:.4e} C, E(2 cm) = {E_B4:.0f} V/m.  B5: D = {D_B5:.4e} C/m^2, "
+print(f"B4: sigma_b(R) = {sig_B4:.3e} C/m^2, bound charge at the centre = {Qc_B4:.4e} C, E(2 cm) = {E_B4:.0f} V/m, E(R-) = {E_Rin_B4:.1f}, E(R+) = {K_E * 1e-9 / 0.05**2:.1f}, sigma_b/eps0 = {jump_B4:.0f} V/m.  B5: D = {D_B5:.4e} C/m^2, "
       f"E1 = {E1:.4e}, E2 = {E2:.4e} V/m, P1 = {P1_B5:.4e}, P2 = {P2_B5:.4e}, sigma_b(interface) = {D_B5 * (1 / 5 - 1 / 2):.3e} C/m^2, "
-      f"C = {D_B5 * 20e-4 / 200 * 1e12:.2f} pF, Q = {D_B5 * 20e-4 * 1e9:.3f} nC")
+      f"C = {D_B5 * 20e-4 / 200 * 1e12:.2f} pF (C1 = {C1_B5 * 1e12:.2f}, C2 = {C2_B5 * 1e12:.2f} pF in series), Q = {D_B5 * 20e-4 * 1e9:.3f} nC")
 
 # %% [markdown]
 # ## Your turn

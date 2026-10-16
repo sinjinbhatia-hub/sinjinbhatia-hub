@@ -12,7 +12,7 @@ Probability went from a known model to data. Inference goes backwards. This modu
 
 ## 1. The problem that forced this idea
 
-In *Theoria motus* (1809) Gauss justified least squares, the method behind his recovery of the asteroid Ceres, by asking which error distribution makes the arithmetic mean of repeated measurements the most probable value. The answer was the normal law. A year later Laplace connected this to his central limit theorem: errors built from many small independent causes are approximately normal. So by 1810 there was a method and a justification, but for one model only, and no account of how accurate the answer was.
+In *Theoria motus* (1809) Gauss justified least squares, which he said he had been using in orbit computations since 1795, by asking which error distribution makes the arithmetic mean of repeated measurements the most probable value. The answer was the normal law. A year later Laplace connected this to his central limit theorem: errors built from many small independent causes are approximately normal. So by 1810 there was a method and a justification, but for one model only, and no account of how accurate the answer was.
 
 In 1894 Karl Pearson fitted W. F. R. Weldon's measurements of 1,000 Naples crabs, whose histogram was lopsided, with a mixture of two normals: five unknown parameters. He set the first five sample moments equal to the model's, which led to a ninth-degree polynomial he solved by hand. That is the **method of moments**. It gives *an* answer, and says nothing about whether the answer is good.
 
@@ -137,7 +137,7 @@ $$m_j(\hat\theta) = \hat m_j, \qquad j = 1, \dots, k. \tag{3.6}$$
 (Matching central moments instead is equivalent.)
 
 - **Normal.** $m_1 = \mu$, $m_2 = \sigma^2 + \mu^2$. So $\hat\mu = \bar X$ and $\hat\sigma^2 = \hat m_2 - \bar X^2 = \frac1n\sum(X_i - \bar X)^2$ (divisor $n$; use (3.3) with the constant 0).
-- **Gamma$(\alpha, \beta)$.** Mean $\alpha/\beta$, variance $\alpha/\beta^2$ (F5 (3.9)). Setting $\alpha/\beta = \bar X$ and $\alpha/\beta^2 = \hat\sigma^2$ and dividing,
+- **Gamma$(\alpha, \beta)$.** Mean $\alpha/\beta$, variance $\alpha/\beta^2$ (differentiate the MGF, F5 (3.9)). Setting $\alpha/\beta = \bar X$ and $\alpha/\beta^2 = \hat\sigma^2$ and dividing,
 $$\hat\beta_{\text{MoM}} = \bar X/\hat\sigma^2, \qquad \hat\alpha_{\text{MoM}} = \bar X^2/\hat\sigma^2. \tag{3.7}$$
 - **Uniform$(0, \theta)$.** $m_1 = \theta/2$, so $\hat\theta = 2\bar X$: unbiased, with variance $4\cdot\frac{\theta^2}{12}\cdot\frac1n = \frac{\theta^2}{3n}$. Its defect: $2\bar X$ can be smaller than the largest observation, an estimate the data have already ruled out.
 
@@ -188,7 +188,7 @@ $$\log\alpha - \psi(\alpha) = \log\bar x - \frac1n\sum_i\log x_i =: s. \tag{3.10
 
 ### 3.6 The score and Fisher information
 
-We need **regularity conditions (R)**: (R1) the support $\{x : p(x;\theta) > 0\}$ does not depend on $\theta$; (R2) $p$ is twice differentiable in $\theta$ and $\int p\,dx$ may be differentiated twice under the integral sign; (R3) $\theta$ is an interior point of $\Theta$; (R4) $I_1(\theta)$ is finite and positive definite. Every family in this module satisfies (R) except Uniform$(0, \theta)$, which fails (R1).
+We need **regularity conditions (R)**: (R1) the support $\{x : p(x;\theta) > 0\}$ does not depend on $\theta$; (R2) $p$ is twice differentiable in $\theta$ and $\int p\,dx$ may be differentiated twice under the integral sign; (R3) $\theta$ is an interior point of $\Theta$; (R4) $I_1(\theta)$ is finite and positive definite. Every family in these notes satisfies (R) except Uniform$(0, \theta)$, which fails (R1); so do the shifted uniforms of Exercises A3 and A6(c), for the same reason.
 
 **Theorem 3.12 (Score identities).** Under (R):
 $$\mathbb{E}_\theta[s(\theta;X)] = \mathbf{0}, \qquad I_1(\theta) = \mathrm{Cov}_\theta(s) = \mathbb{E}_\theta[ss^\top] = -\mathbb{E}_\theta\big[\nabla^2_\theta\log p(X;\theta)\big]. \tag{3.11}$$
@@ -256,7 +256,7 @@ For $\hat\sigma^2$, $b = -\sigma^2/n$, the bound is $(1 - 1/n)^2\cdot 2\sigma^4/
 - $\hat p$ (Bernoulli), $\hat\lambda = \bar X$ (Poisson): variances $p(1-p)/n$ and $\lambda/n$ equal $1/(nI_1)$. Efficient, at every $n$.
 - $S^2$ for $\sigma^2$ with $\mu$ unknown: the bound from (3.12) is $[I_1^{-1}]_{22}/n = 2\sigma^4/n$, while $\mathrm{Var}(S^2) = 2\sigma^4/(n-1)$. Efficiency $(n-1)/n$, never 1; yet no unbiased estimator does better (Lehmann–Scheffé, Casella & Berger §7.3).
 
-**Theorem 3.17 (When the bound is attained).** Under (R), an unbiased $\hat\theta$ attains (3.14) at every $\theta$ if and only if
+**Theorem 3.17 (When the bound is attained).** Under (R), an unbiased $\hat\theta$ attains (3.14) at every $\theta$ if and only if, for every $\theta$ and with probability 1,
 $$s_n(\theta;\mathbf{x}) = nI_1(\theta)\,\big(\hat\theta(\mathbf{x}) - \theta\big), \tag{3.16}$$
 and then $p_n(\mathbf{x};\theta) = e^{C(\mathbf{x})}\exp\big(\eta(\theta)\hat\theta(\mathbf{x}) - B(\theta)\big)$ for some functions $C, \eta, B$: an exponential family (§3.10) with $\hat\theta$ as its statistic.
 
@@ -264,7 +264,7 @@ and then $p_n(\mathbf{x};\theta) = e^{C(\mathbf{x})}\exp\big(\eta(\theta)\hat\th
 
 **Derivation.**
 1. Equality in step 4 of Theorem 3.15 holds iff the two centered variables are proportional (F5 Theorem 3.17): $s_n = a(\theta)(\hat\theta - \theta)$ with probability 1.
-2. Find $a$. $\mathrm{Cov}(s_n, \hat\theta) = a\,\mathrm{Var}\,\hat\theta = 1$ and $\mathrm{Var}(s_n) = a^2\mathrm{Var}\,\hat\theta = nI_1$. Dividing, $a = nI_1$: that is (3.16).
+2. Find $a$. $\mathrm{Cov}(s_n, \hat\theta) = a\,\mathrm{Var}\,\hat\theta = 1$ and $\mathrm{Var}(s_n) = a^2\mathrm{Var}\,\hat\theta = nI_1$. Dividing, $a = nI_1$: that is (3.16). Conversely, if (3.16) holds then $\mathrm{Var}(s_n) = (nI_1)^2\,\mathrm{Var}\,\hat\theta$, and $\mathrm{Var}(s_n) = nI_1$ forces $\mathrm{Var}\,\hat\theta = 1/(nI_1)$: the bound is attained.
 3. Integrate (3.16) in $\theta$: $\partial_\theta\log p_n = a(\theta)\hat\theta(\mathbf{x}) - a(\theta)\theta$. With $\eta(\theta) = \int a\,d\theta$ and $B(\theta) = \int a(\theta)\theta\,d\theta$, $\log p_n = \eta(\theta)\hat\theta(\mathbf{x}) - B(\theta) + C(\mathbf{x})$. ∎
 
 ■ **What just happened.** The bound is attainable only when the score is affine in the estimator. That forces exponential-family form and also decides *which* parameter can be estimated efficiently: the mean of the natural statistic. For Exponential$(\lambda)$ data, $s_n = n/\lambda - \sum X_i = -n(\bar X - 1/\lambda)$ is affine in $\bar X$, so $1/\lambda$ is efficiently estimable (by $\bar X$), and $\lambda$ itself is not, by any unbiased estimator (Exercise B3).
@@ -328,6 +328,8 @@ Once you know $T$, the rest of the data is noise with a known distribution: you 
 *Proof.* ($\Leftarrow$) 1. Fix $t$ and $\mathbf{x}$ with $T(\mathbf{x}) = t$ (otherwise the conditional probability is 0, free of $\theta$). Since $\{\mathbf{X} = \mathbf{x}\} \subseteq \{T = t\}$, $P(\mathbf{X} = \mathbf{x} \mid T = t) = P(\mathbf{X} = \mathbf{x})/P(T = t)$. 2. $P(T = t) = \sum_{\mathbf{y}:T(\mathbf{y}) = t}g(t;\theta)h(\mathbf{y}) = g(t;\theta)\sum_{T(\mathbf{y}) = t}h(\mathbf{y})$. 3. The ratio is $h(\mathbf{x})/\sum_{T(\mathbf{y}) = t}h(\mathbf{y})$: no $\theta$.
 ($\Rightarrow$) 4. If $T$ is sufficient, $p_n(\mathbf{x};\theta) = P_\theta(T = T(\mathbf{x}))\cdot P(\mathbf{X} = \mathbf{x} \mid T = T(\mathbf{x}))$. The second factor is free of $\theta$; call it $h(\mathbf{x})$, and call the first $g(T(\mathbf{x});\theta)$. ∎
 
+■ **What just happened.** Everything $\theta$ does to the joint density is confined to the factor $g$, and $g$ cancels when you condition on $T$. \"Sufficient\" means \"$\theta$ enters the likelihood only through $T$\", which is why you can read sufficient statistics off the likelihood by inspection.
+
 (The continuous case has the same statement; its proof needs conditional densities, Casella & Berger Theorem 6.2.6.) Factorizing the joint densities of §3.5: Bernoulli $p^{\sum x}(1-p)^{n-\sum x}$, Poisson $\lambda^{\sum x}e^{-n\lambda}\cdot\prod(x_i!)^{-1}$ and Exponential $\lambda^ne^{-\lambda\sum x}$ all have $T = \sum x_i$; the Normal density $(2\pi\sigma^2)^{-n/2}\exp\big(-\frac{\sum x^2 - 2\mu\sum x + n\mu^2}{2\sigma^2}\big)$ has $T = (\sum x_i, \sum x_i^2)$; Uniform$(0,\theta)$, $\theta^{-n}\mathbb{1}\{\max x \le \theta\}\cdot\mathbb{1}\{\min x \ge 0\}$, has $T = \max x_i$; Gamma, $(\beta^\alpha/\Gamma(\alpha))^n(\prod x)^{\alpha-1}e^{-\beta\sum x}$, has $T = (\sum\log x_i, \sum x_i)$. Every MLE in §3.5 is a function of these, as it must be.
 
 **Minimal sufficiency.** The whole dataset is trivially sufficient. A sufficient $T$ is **minimal** if it is a function of every other sufficient statistic: maximal compression with no information about $\theta$ lost. Criterion (Lehmann and Scheffé, 1950): $T$ is minimal if $p_n(\mathbf{x};\theta)/p_n(\mathbf{y};\theta)$ is free of $\theta$ exactly when $T(\mathbf{x}) = T(\mathbf{y})$. For Poisson the ratio is $\lambda^{\sum x_i - \sum y_i}\prod y_i!/\prod x_i!$, so $\sum x_i$ is minimal; the same check works for each statistic above.
@@ -370,7 +372,7 @@ so $A$ is convex.
 1. $e^{A(\eta)} = \int h(x)e^{\eta T(x)}dx$. Differentiate under the integral (legitimate in the interior; Casella & Berger Theorem 2.4.3): $A'(\eta)e^{A(\eta)} = \int T\,h\,e^{\eta T}dx$.
 2. Divide by $e^{A}$: $A'(\eta) = \int T\,h\,e^{\eta T - A}dx = \mathbb{E}_\eta[T]$.
 3. Differentiate step 1 again: $\big(A'' + (A')^2\big)e^A = \int T^2h\,e^{\eta T}dx$, so $A'' + (A')^2 = \mathbb{E}[T^2]$ and $A'' = \mathrm{Var}(T)$.
-4. With $\partial/\partial\eta_j$ and $\partial^2/\partial\eta_j\partial\eta_k$ the same steps give $\nabla^2A = \mathbb{E}[\mathbf{T}\mathbf{T}^\top] - \mathbb{E}\mathbf{T}\,\mathbb{E}\mathbf{T}^\top = \mathrm{Cov}(\mathbf{T})$, which is PSD (F5 Theorem 3.19). A PSD Hessian everywhere makes $A$ convex: second-order Taylor (LA-14 Theorem 3.13) with the mean-value remainder gives $A(\boldsymbol\eta') \ge A(\boldsymbol\eta) + \nabla A(\boldsymbol\eta)^\top(\boldsymbol\eta' - \boldsymbol\eta)$. ∎
+4. With $\partial/\partial\eta_j$ and $\partial^2/\partial\eta_j\partial\eta_k$ the same steps give $\nabla^2A = \mathbb{E}[\mathbf{T}\mathbf{T}^\top] - \mathbb{E}\mathbf{T}\,\mathbb{E}\mathbf{T}^\top = \mathrm{Cov}(\mathbf{T})$, which is PSD (F5 Theorem 3.19). A PSD Hessian on a convex domain makes $A$ convex (the domain $\{\boldsymbol\eta : A(\boldsymbol\eta) < \infty\}$ is convex by Hölder's inequality, so the segment from $\boldsymbol\eta$ to $\boldsymbol\eta'$ stays inside it): second-order Taylor (LA-14 Theorem 3.13) with the mean-value remainder gives $A(\boldsymbol\eta') \ge A(\boldsymbol\eta) + \nabla A(\boldsymbol\eta)^\top(\boldsymbol\eta' - \boldsymbol\eta)$. ∎
 
 ■ **What just happened.** $A$ is a cumulant generating function in disguise. Check: Poisson $A = e^\eta$ gives $A' = A'' = e^\eta = \lambda$ (mean = variance); Bernoulli $A' = e^\eta/(1 + e^\eta) = p$, $A'' = p(1-p)$. **SM-4's canonical ensemble is this object.** $p_i = e^{-\beta E_i}/Z$ is an exponential family with $T = E$ (energy), $\eta = -\beta$, $A = \ln Z$. Then $\langle E\rangle = -\partial\ln Z/\partial\beta$ and $\mathrm{Var}(E) = \partial^2\ln Z/\partial\beta^2 = k_BT^2C_V$ are (3.22): same function, same derivatives, different names.
 
@@ -416,7 +418,7 @@ $$\theta^* = \arg\min_\theta D\big(q\,\|\,p_\theta\big). \tag{3.26}$$
 
 *Derivation.* 1. Weak law under $q$: $\frac1n\sum\log p(X_i;\theta) \xrightarrow{p} \mathbb{E}_q[\log p_\theta]$. 2. $\mathbb{E}_q[\log p_\theta] = \mathbb{E}_q[\log q] - \mathbb{E}_q\big[\log\frac{q}{p_\theta}\big] = -H(q) - D(q\|p_\theta)$. 3. $H(q)$ does not depend on $\theta$, so maximizing the limit means minimizing $D(q\|p_\theta)$; with the same uniform-convergence caveat as before, $\hat\theta \xrightarrow{p} \theta^*$. ∎ Theorem 3.18 is the special case $q = p_{\theta_0}$, where the minimum is 0.
 
-*Example.* Fit $\mathcal{N}(\mu, \sigma^2)$ to Exponential$(\lambda)$ data. $-\mathbb{E}_q[\log p_{\mu,\sigma^2}] = \frac12\log(2\pi\sigma^2) + \mathbb{E}_q[(X - \mu)^2]/(2\sigma^2)$ is minimized at $\mu^* = \mathbb{E}_qX = 1/\lambda$ and $\sigma^{*2} = \mathrm{Var}_qX = 1/\lambda^2$ (moment matching again). The gap is $D = \frac12\log(2\pi e\sigma^{*2}) - H(q) = \frac12\log(2\pi e) - 1 \approx 0.4189$ nats for every $\lambda$, using the differential entropy $H(\mathrm{Exp}(\lambda)) = 1 - \log\lambda$ (F5 §3.13). Project Part 10 confirms both. Under misspecification (3.11) fails and the asymptotic variance becomes the **sandwich** $J^{-1}KJ^{-1}$ with $J = -\mathbb{E}_q[\nabla^2\log p_{\theta^*}]$, $K = \mathrm{Cov}_q(\nabla\log p_{\theta^*})$ (Huber 1967; White 1982), used in ST-3.
+*Example.* Fit $\mathcal{N}(\mu, \sigma^2)$ to Exponential$(\lambda)$ data. $-\mathbb{E}_q[\log p_{\mu,\sigma^2}] = \frac12\log(2\pi\sigma^2) + \mathbb{E}_q[(X - \mu)^2]/(2\sigma^2)$ is minimized at $\mu^* = \mathbb{E}_qX = 1/\lambda$ and $\sigma^{*2} = \mathrm{Var}_qX = 1/\lambda^2$ (moment matching again). The gap is $D = \frac12\log(2\pi e\sigma^{*2}) - H(q) = \frac12\log(2\pi e) - 1 \approx 0.4189$ nats for every $\lambda$, using the differential entropy $H(\mathrm{Exp}(\lambda)) = -\int_0^\infty\lambda e^{-\lambda x}(\log\lambda - \lambda x)\,dx = -\log\lambda + \lambda\,\mathbb{E}X = 1 - \log\lambda$ (F5 §3.13 writes it as $1 + \log\mu$ with $\mu = 1/\lambda$). Project Part 10 confirms both. Under misspecification (3.11) fails and the asymptotic variance becomes the **sandwich** $J^{-1}KJ^{-1}$ with $J = -\mathbb{E}_q[\nabla^2\log p_{\theta^*}]$, $K = \mathrm{Cov}_q(\nabla\log p_{\theta^*})$ (Huber 1967; White 1982), used in ST-3.
 
 ## 4. Worked examples
 
