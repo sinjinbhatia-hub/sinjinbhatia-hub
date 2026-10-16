@@ -288,7 +288,7 @@ print(f"  infinite line: lambda/(2 pi eps0) = {lam/(2*np.pi*EPS0):.3f} V; V(1 cm
 assert np.isclose(dV_inf, 41.39, atol=0.005)
 
 # %% [markdown]
-# ## Part 5: Poisson on a grid: the parallel-plate capacitor (Example 4.5, §3.11)
+# ## Part 5: Poisson on a grid: the parallel-plate capacitor (Example 4.5, §3.10)
 #
 # Five-point stencil for (3.9): V_ij = average of its 4 neighbours + rho h^2/(4 eps0).
 # Conductors and the grounded outer box are "fixed" nodes. We solve the sparse
@@ -393,7 +393,7 @@ print(f"Example 4.5: C = {C_p*1e12:.2f} pF, Q = {Q_p*1e9:.3f} nC, sigma = {Q_p/A
 assert np.isclose(F_p, W_p / d_p) and np.isclose(Q_p / A_p / EPS0, V_p / d_p)
 
 # %% [markdown]
-# ## Part 6: A grounded conductor in a uniform field, by relaxation (§3.10)
+# ## Part 6: A grounded conductor in a uniform field, by relaxation (§3.9)
 #
 # A grounded conducting cylinder of radius a (a disk in the 2D cross-section) in
 # a uniform field E0 x-hat. Red-black successive over-relaxation (Gauss-Seidel

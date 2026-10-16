@@ -747,10 +747,10 @@ See [exercises.md](exercises.md). A1–A5 drill the $2\times2$ and triangular co
 2. **The weather chain** of Example 4.1: eigen-decomposition, the exact $\mathbf{u}_1, \mathbf{u}_2$, and a 20,000-step simulation whose empirical frequencies are compared with the $\lambda = 1$ eigenvector. Theorem 3.11 is checked on random Markov matrices.
 3. **Fibonacci**: $A^k$ via (3.7), Binet's formula versus exact integer arithmetic, and where floating point gives out.
 4. **$\dot{\mathbf{u}} = A\mathbf{u}$** solved by (3.11)/(3.13) and by `scipy.integrate.solve_ivp`, overlaid, for the spiral of Example 4.4 and the saddle of B2.
-5. **The matrix exponential** by truncated series versus `scipy.linalg.expm`; $\frac{d}{dt}e^{At} = Ae^{At}$ by finite differences; the $e^Ae^B \ne e^{A+B}$ counterexample and the commuting case; $e^{J\theta} = R(\theta)$.
+5. **The matrix exponential** by truncated series versus `scipy.linalg.expm`; $\frac{d}{dt}e^{At} = Ae^{At}$ by finite differences; the $e^Ae^B \ne e^{A+B}$ counterexample and the commuting case; Example 4.5's $e^{At} = e^{-t}(I + Nt)$ against `expm`; $e^{J\theta} = R(\theta)$.
 6. **Phase portraits** of a saddle, a stable node, a stable spiral and a center, with eigenvectors drawn where they are real, plus the trace–determinant plane itself.
 7. **Normal modes** of Example 4.3: frequencies and shapes from `scipy.linalg.eigh(K, M)`, $M$-orthogonality, the trajectory against `solve_ivp`, and each mode as a grid of frames.
-8. **Identities**: trace and determinant on random matrices, eigenvalues of $A^2$, $A^{-1}$, $A + cI$, similar matrices, the shear's multiplicities, Example 4.5's $e^{At}$, and Example 4.6's orthogonal eigenvectors.
+8. **Identities**: trace and determinant on random matrices, eigenvalues of $A^2$, $A^{-1}$, $A + cI$, similar matrices, the shear's multiplicities, the nearly defective $A_\varepsilon$ of B7(d) (digits lost by $X\Lambda^kX^{-1}$ versus `matrix_power`), and Example 4.6's orthogonal eigenvectors.
 
 **Build it yourself first:** before reading Part 1, write `power_iteration(A, k_max)` (multiply, normalize, repeat; return the Rayleigh quotient and the vector) and `inverse_iteration(A, shift, k_max)` (same loop with `np.linalg.solve(A - shift*I, v)` in place of the multiply). Before Part 4, write `solve_linear_ode(A, u0, t)` from (3.11): eigendecompose, find $\mathbf{c} = X^{-1}\mathbf{u}_0$, assemble $\sum c_ie^{\lambda_it}\mathbf{x}_i$, take the real part. Then compare.
 

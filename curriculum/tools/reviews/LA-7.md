@@ -1,13 +1,47 @@
 # LA-7 review (Eigenvalues and eigenvectors)
 
-Reviewer: independent adversarial pass. Module folder: `01-linear-algebra/07-eigenvalues/`. Brief: none (`research/briefs/none` does not exist).
+Reviewer: independent adversarial pass. Module folder: `01-linear-algebra/07-eigenvalues/`. Brief: none (`research/briefs/none` does not exist; §10 checked against the roadmap row instead).
 Format: one item per finding — file, location, severity (HIGH / MED / LOW), what is wrong, fix. Status marked in Phase 2.
 
-## Phase 1 — in progress
+## What was checked (Phase 1)
 
-(Checks and findings are appended below as they are made. If this section still says "in progress", the reviewer was interrupted; re-verify each item before trusting it.)
+- MATH: notes §3.1–§3.15 every derivation step (Thms 3.2, 3.4, 3.5, 3.6, 3.8, 3.9, power iteration (3.9), 3.11(a)(b), §3.8 steps 1–4, 3.13, series convergence, 3.15(a)–(d) and the counterexample, §3.10, rotation (3.17), 3.16, (3.18)–(3.19) incl. the independence of r, s, (3.20), 3.17(a)(b), 3.18, 3.19 incl. the block-determinant argument, 3.20, §3.15 steps 1–6), Examples 4.1–4.6, and all 16 solutions read line by line. Every numerical value recomputed independently in `/tmp/claude-0/la7_check1.py`–`la7_check4.py` (numpy/scipy/sympy): §2 table (26.57°, 12.09°, √5, √(41/5) = 2.864, 3, 1); e^S = cosh1, sinh1 = 1.5431, 1.1752; Ex 4.1 (λ = 1, 0.4; u_1, u_2; (5/6)(0.4)^10 = 8.7e-5); Ex 4.2 (φ^10/√5 = 55.0036, F_100, Binet relative error 3.33e-15, δ(φ) = 3.36e-17 so 100δ = 3.36e-15 matches the "almost all of the error" claim); Ex 4.3 (2ω⁴ − 6ω² + 3, (3 ± √3)/2, ω = 0.79623/1.53819, modes, M-orthogonality 0, dot 1/2, a₁ = 0.21132, a₂ = 0.78868, √(2+√3) = 1.9319); Ex 4.4 (−1 ± 2i, eigenvector, u(t) verified symbolically, u̇(0) = (−4, 2), u(0.7) = (−0.32055, 0.48936), e^{−π} = 0.0432); Ex 4.5 (e^{At} symbolically); Ex 4.6 (char. poly, det 36, roots 2, 3, 6, eigenvectors, eigh's columns and signs exactly as printed); A1–A5, B2–B7 eigenpairs and closed forms symbolically; B8 Rayleigh expansions to second/first order symbolically, 1/14, log(1/14) = −2.639, 1.146 vs 0.398 digits; C1(b) snippet runs (max |p(A)| = 3e-14); C3 trig identity symbolically, T₃ eigenvalues, mode shapes. All agree with the text.
+- CONSISTENCY: exercise/solution numbering A1–A5, B1–B8, C1–C3 match; every part of every exercise has a complete solution; no "similarly"/"left to the reader"/"it can be shown" (the only hits for banned words are the template heading "What just happened"). Conventions box matches usage (p_A = det(A − λI), column-stochastic, T, D, inner product conjugate-first as in LA-8's box). Cross-references verified against the actual files: LA-6 Thm 3.6 (triangular), 3.7 (singular iff det 0), 3.9/(3.9) Leibniz, 3.10 product, 3.11 transpose, 3.12/(3.12) Laplace, 3.14 adjugate, Ex B1(a) block triangular; LA-1 Thm 3.5, (3.3), Thm 3.11, Ex 4.5 (t* = u·v/‖v‖²), C3(b) ‖Ax‖ ≤ ‖A‖_F‖x‖; LA-2 2×2 inverse; LA-3 Thm 3.29(c) rank A = rank Aᵀ; LA-4 change of basis P⁻¹AP; LA-8 Thm 3.4, Rayleigh quotient §3.9, conjugate-first convention; LA-10 §3.2 Cholesky, §3.5 Schur; LA-11 Thm 3.10 (Jordan), Thm 3.16 (Cayley–Hamilton); LA-13 §3.8, Thm 3.16; F1 Thm 3.22 (steps 2, 3 as cited), Thm 3.23 FTA; F2 wave equation/string; F5 row-vector Markov convention (its box says "LA-7 used columns"). CM-6, CM-7, QM-4, QC-1, ST-6, ST-7, ML-2, ML-6, ML-7/8, SM-5, SM-6 are not written yet; roadmap rows match the descriptions used, with one exception (item 3). Header: 14 h, prerequisites LA-6, F1 match the roadmap.
+- CODE: `MPLBACKEND=Agg timeout 300 python3 project.py` exits 0 in ~15 s; imports numpy/scipy/matplotlib + stdlib (time, fractions, pathlib) only; seeded; headless; nine figures saved. Each assert compared with the §7 claim it tests. All slopes, steady states, closed forms and worked-example numbers are asserted at the precision the notes quote, except item 5.
+- TEMPLATE: §0–§10 with template headings; conventions box (restated at the top of exercises.md); ▶/■ around §3.2, Thm 3.4, 3.6/diagonalization, power iteration, 3.11(a)(b), §3.8, 3.15(a)(b)(c), §3.10, rotation, (3.19), (3.20), 3.17(a), 3.19, §3.15; six worked examples incl. one mechanics (4.3); 5 A / 8 B / 3 C (16; B8 and C1(b) extend project.py); §8 specific; §9 has 12 questions; §10 matches the roadmap row (Strang ch. 6, Axler ch. 5, 18.06 lectures 21–25) plus 3Blue1Brown ep. 14 and Strogatz §5.1–5.2, all correctly described.
+- HISTORY: d'Alembert/Bernoulli/Euler 1740s–50s; Lagrange 1759–65 loaded string; Lagrange–Laplace secular theory 1770s–80s, h/k variables, Laplace's mass-weighted invariant; Cauchy 1829 (secular inequalities, real eigenvalues of symmetric matrices) and 1840 "équation caractéristique"; Euler 1765 principal axes; Markov 1906–13, the 1913 Onegin count; Perron 1907, Frobenius 1908–12; Hilbert 1904 "Eigenwert"; Sylvester "latent root"; Binet 1843 / de Moivre; Wilkinson's degree-20 polynomial; Picard–Lindelöf. All consistent with my knowledge; nothing to flag.
 
-### Checked so far
-- Read all four files in full. `MPLBACKEND=Agg python3 project.py` exits 0 on the unmodified module (~15 s). No prior LA-7.md existed.
+## Findings
 
-### Findings
+1. **project.py, "Your turn" item 4 (line 760) — MED — false premise.** "What happens with shift exactly equal to an eigenvalue (the matrix A − shift I is singular)? Why does the solve not crash, and why is the answer still right?" For `A6` (integer entries) `A6 − 3I` is *exactly* singular in floating point: `lu_factor` gives pivots (1, 1, 0) with `LinAlgWarning: Diagonal number 3 is exactly zero`, `lu_solve` returns inf/NaN, and the second step raises `ValueError: array must not contain infs or NaNs`. The folklore the prompt alludes to (inverse iteration tolerates a shift at an eigenvalue because rounding makes the matrix merely nearly singular) does not hold for this matrix. Verified: shifts 3 ± 1e-13 and 3 + 1e-12 converge in 2–3 steps. Fix: reword the prompt to say what actually happens with shift 3.0 and to use a shift displaced by 1e-13.
+
+2. **project.py, "Your turn" item 1 (lines 750–751) — MED — false premise.** "Then make one entry zero in a way that gives a second eigenvalue of modulus 1 and watch convergence fail." Impossible: a 3×3 column-stochastic matrix with one zero entry and the rest positive has A² > 0 (checked algebraically and on 2000 random draws; min 1 − |λ₂| = 0.094), so Theorem 3.12 as stated in the notes (some power strictly positive) still forces |λ₂| < 1 and convergence. Fix: ask for a periodic (cyclic permutation) or reducible (two closed classes) chain.
+
+3. **solutions.md, C3(d) (line 216) — LOW — wrong module in cross-link.** "the chain is a dispersive medium, which is the start of lattice dynamics in SM-3." SM-3 (roadmap) is microstates, multiplicity, the Einstein solid (independent oscillators) and two-state systems; the Debye model, which uses the small-k limit ω ≈ ck of this dispersion relation, is SM-5. Fix: point to SM-5's Debye model.
+
+4. **solutions.md, C1(c) (line 188) — LOW — misdescribes the cited proof.** "LA-11 Theorem 3.16 proves it from the Jordan form (LA-11 Theorem 3.10)." LA-11's Theorem 3.16 derivation is "via triangularization": Schur form (LA-10) and the chain of invariant subspaces V_k. Fix: say so.
+
+5. **project.py, Part 5 (lines 444–445) — LOW — assert weaker than the notes' claim.** Notes §3.9: "The project checks both to machine precision." The two asserts use `np.allclose` defaults (rtol 1e-5, atol 1e-8). Actual errors are 0 and 2.2e-16. Fix: `rtol=0, atol=1e-14`.
+
+6. **notes.md, §7 item 8 (line 753) — LOW — code mismatch.** Lists "Example 4.5's e^{At}" under Part 8 (Identities); the check is in Part 5 (the matrix exponential). Part 8 does hold the B7(d) nearly-defective experiment, which §7 does not mention. Fix: move the phrase to item 5 and name B7(d) in item 8.
+
+7. **solutions.md, B6(e) (line 112) — LOW — cross-link names the module but not the place.** "...with a Cholesky factor of M in place of M^{1/2} for non-diagonal M; LA-10." Fix: "LA-10 §3.2" (Triangular factorizations: LU, LDLᵀ, Cholesky).
+
+8. **notes.md / project.py — LOW — length over STYLE targets (not fixed).** notes.md is ~13,400 words (STYLE: 3,500–7,000 "depending on module weight"; this is a 14-hour module); project.py is 770 lines (STYLE: 150–400). The content is correct and the instructions say not to rewrite correct sections.
+
+No HIGH findings. No wrong numbers, no broken derivation steps, no failing asserts, no missing sections, no incomplete solutions were found.
+
+## Phase 2 — status
+
+1. FIXED — project.py "Your turn" item 4 now says: with shift exactly 3.0, A6 − 3I is exactly singular in floating point, `lu_factor` reports a zero pivot and the solve returns inf/NaN; move the shift by 1e-13 and it converges in two steps (verified); asks the reader to explain why a nearly singular solve is what inverse iteration wants.
+2. FIXED — project.py "Your turn" item 1 now says a single zero entry is not enough (A² > 0, Theorem 3.12 still applies) and asks for a periodic (cyclic permutation) or reducible (two closed classes) chain.
+3. FIXED — solutions.md C3(d): "SM-5's Debye model of a solid keeps only the small-k linear limit ω ≈ ck of this dispersion relation."
+4. FIXED — solutions.md C1(c): "LA-11 Theorem 3.16 proves it by triangularizing A (the Schur form of LA-10 §3.5) and chaining the invariant subspaces."
+5. FIXED — project.py Part 5: both counterexample asserts now `rtol=0, atol=1e-14`; they pass (errors 0 and 2.2e-16).
+6. FIXED — notes.md §7: Example 4.5's e^{At} check listed under item 5 (where the code is); item 8 now names the B7(d) nearly-defective experiment.
+7. FIXED — solutions.md B6(e): "the Cholesky factorization is LA-10 §3.2."
+8. NOT FIXED: length over STYLE targets (notes ~13,400 words, project 770 lines); fixing would mean rewriting correct sections, which the review brief forbids.
+
+Re-run after fixes: `MPLBACKEND=Agg timeout 300 python3 project.py` → exit 0 (~15 s), no warnings, "All checks passed."
+
+STATUS: 8 findings (0 HIGH, 2 MED, 6 LOW); 7 fixed, 1 deliberately left (length); script passes.

@@ -92,7 +92,7 @@ Rule 3 is consistent only because of the inverse square: $N$ lines from a point 
 
 Gauss's law is true for every closed surface and every charge distribution. It computes $\mathbf E$ only when you can find a surface on which $\mathbf E\cdot\hat{\mathbf n}$ is constant (on some pieces) and zero (on the rest), so that $|\mathbf E|$ comes out of the integral. That needs a symmetry that carries any point of the surface to any other point and leaves the charge unchanged. The surfaces that a continuous family of rigid motions can sweep out point-to-point in this way are **spheres** (rotations about a point), **infinite cylinders** (rotations about an axis plus translations along it), and **planes** (translations within the plane). Those are the three useful cases: spherical, cylindrical, planar. A finite rod, a cube, or a disk has no such surface; Gauss's law is still true for them but gives one equation for an unknown function (§8).
 
-**Spherical shell** (radius $R$, charge $Q$ spread uniformly). By the argument of §3.3, $\mathbf E = E(r)\hat{\mathbf r}$. A Gaussian sphere of radius $r<R$ encloses nothing, so $E = 0$ inside. For $r>R$ it encloses $Q$, so $E = Q/(4\pi\varepsilon_0r^2)$: outside, the shell is indistinguishable from a point charge at its centre (Newton's shell theorem; Exercise B1 proves it for gravity by this same argument). At $r = R$ the field jumps from $0$ to $Q/(4\pi\varepsilon_0R^2) = \sigma/\varepsilon_0$, previewing §3.8.
+**Spherical shell** (radius $R$, charge $Q$ spread uniformly). By the argument of §3.3, $\mathbf E = E(r)\hat{\mathbf r}$. A Gaussian sphere of radius $r<R$ encloses nothing, so $E = 0$ inside. For $r>R$ it encloses $Q$, so $E = Q/(4\pi\varepsilon_0r^2)$: outside, the shell is indistinguishable from a point charge at its centre (Newton's shell theorem; Exercise B1 proves it for gravity by this same argument). At $r = R$ the field jumps from $0$ to $Q/(4\pi\varepsilon_0R^2) = \sigma/\varepsilon_0$, previewing §3.7.
 
 **Infinite plane** (charge $\sigma$ per area in $z = 0$). Translations in $x$ and $y$ leave everything unchanged, so $\mathbf E$ depends only on $z$. A $180°$ rotation about the vertical line through the field point reverses $E_x, E_y$, so $\mathbf E = E_z(z)\hat{\mathbf z}$. Reflection $z\to-z$ gives $E_z(-z) = -E_z(z)$. A pillbox with faces of area $A$ at heights $\pm z$ has flux $2E_z(z)A$ (none through the sides) and encloses $\sigma A$:
 $$\mathbf E = \frac{\sigma}{2\varepsilon_0}\operatorname{sign}(z)\,\hat{\mathbf z}.$$
@@ -119,22 +119,22 @@ $$\nabla\times\mathbf E = 0. \tag{3.6}$$
 3. The curl of a gradient is zero (EM-1). ∎
 
 Step 2 hands us the potential. Define
-$$V(\mathbf r) = \frac{1}{4\pi\varepsilon_0}\int\frac{\rho(\mathbf r')}{\mathscr r}\,d\tau', \qquad \mathbf E = -\nabla V. \tag{3.8}$$
+$$V(\mathbf r) = \frac{1}{4\pi\varepsilon_0}\int\frac{\rho(\mathbf r')}{\mathscr r}\,d\tau', \qquad \mathbf E = -\nabla V. \tag{3.7}$$
 For localized $\rho$ the integral tends to $0$ as $r\to\infty$, which is the convention $V(\infty) = 0$. By the fundamental theorem for gradients (EM-1),
-$$V(\mathbf b) - V(\mathbf a) = -\int_{\mathbf a}^{\mathbf b}\mathbf E\cdot d\mathbf l, \tag{3.7}$$
+$$V(\mathbf b) - V(\mathbf a) = -\int_{\mathbf a}^{\mathbf b}\mathbf E\cdot d\mathbf l, \tag{3.8}$$
 independent of path, and $\oint\mathbf E\cdot d\mathbf l = 0$ for every loop. The electrostatic force $Q\mathbf E$ is conservative in the sense of CM-1 Theorem 3.3 with potential energy $QV$.
 
-■ **What just happened.** One scalar function carries all the information in three field components, and it superposes (it is linear in $\rho$). Two routes to it: (3.7) needs only $\nabla\times\mathbf E = 0$ on all of space (EM-1's curl-free-implies-gradient theorem) and works for any distribution once you pick a reference point; (3.8) needs the charge to be localized, and fails for infinite lines and planes (Example 4.2). The project checks $\oint\mathbf E\cdot d\mathbf l = 0$ around a loop threading a quadrupole, and that central differences of $V$ reproduce $\mathbf E$.
+■ **What just happened.** One scalar function carries all the information in three field components, and it superposes (it is linear in $\rho$). Two routes to it: (3.8) needs only $\nabla\times\mathbf E = 0$ on all of space (EM-1's curl-free-implies-gradient theorem) and works for any distribution once you pick a reference point; (3.7) needs the charge to be localized, and fails for infinite lines and planes (Example 4.2). The project checks $\oint\mathbf E\cdot d\mathbf l = 0$ around a loop threading a quadrupole, and that central differences of $V$ reproduce $\mathbf E$.
 
 ### 3.6 Poisson's and Laplace's equations
 
 Substitute $\mathbf E = -\nabla V$ into (3.4):
 $$\nabla^2 V = -\frac{\rho}{\varepsilon_0}\quad\text{(Poisson)},\qquad \nabla^2V = 0 \ \text{ where } \rho = 0\quad\text{(Laplace)}. \tag{3.9}$$
-Consistency check: apply $\nabla^2$ to (3.8) and use $\nabla^2(1/\mathscr r) = -4\pi\delta^3(\boldsymbol{\mathscr r})$ (EM-1): $\nabla^2V = \frac{1}{4\pi\varepsilon_0}\int\rho(\mathbf r')(-4\pi)\delta^3(\mathbf r-\mathbf r')\,d\tau' = -\rho/\varepsilon_0$. So (3.8) *is* the solution of (3.9) that vanishes at infinity, and $1/(4\pi\mathscr r)$ is the Green's function of $-\nabla^2$ (F3's impulse response, in space).
+Consistency check: apply $\nabla^2$ to (3.7) and use $\nabla^2(1/\mathscr r) = -4\pi\delta^3(\boldsymbol{\mathscr r})$ (EM-1): $\nabla^2V = \frac{1}{4\pi\varepsilon_0}\int\rho(\mathbf r')(-4\pi)\delta^3(\mathbf r-\mathbf r')\,d\tau' = -\rho/\varepsilon_0$. So (3.7) *is* the solution of (3.9) that vanishes at infinity, and $1/(4\pi\mathscr r)$ is the Green's function of $-\nabla^2$ (F3's impulse response, in space).
 
-You now have six arrows between $\rho$, $\mathbf E$, $V$: $\mathbf E$ from $\rho$ by (3.3), $\rho$ from $\mathbf E$ by (3.4), $V$ from $\rho$ by (3.8), $\rho$ from $V$ by (3.9), $V$ from $\mathbf E$ by (3.7), $\mathbf E$ from $V$ by $-\nabla$. The integral formulas need every charge known. Poisson's equation needs only the charge you know plus **boundary conditions**, which is how conductors with unknown charge get handled (EM-3; project Part 5).
+You now have six arrows between $\rho$, $\mathbf E$, $V$: $\mathbf E$ from $\rho$ by (3.3), $\rho$ from $\mathbf E$ by (3.4), $V$ from $\rho$ by (3.7), $\rho$ from $V$ by (3.9), $V$ from $\mathbf E$ by (3.8), $\mathbf E$ from $V$ by $-\nabla$. The integral formulas need every charge known. Poisson's equation needs only the charge you know plus **boundary conditions**, which is how conductors with unknown charge get handled (EM-3; project Part 5).
 
-**Standard potentials.** Point charge: $V = q/(4\pi\varepsilon_0 r)$. Spherical shell, integrating $E$ in from infinity with (3.7): $V = Q/(4\pi\varepsilon_0r)$ outside, and inside, where $E = 0$, $V$ stays at its surface value $Q/(4\pi\varepsilon_0R)$: zero field does not mean zero potential. Solid sphere: Example 4.1. Line: Example 4.2. Dipole: Example 4.3. Infinite plane: $V = -\sigma|z|/(2\varepsilon_0)$ plus a constant, unbounded in both directions, so as with the line, $V(\infty) = 0$ is unavailable.
+**Standard potentials.** Point charge: $V = q/(4\pi\varepsilon_0 r)$. Spherical shell, integrating $E$ in from infinity with (3.8): $V = Q/(4\pi\varepsilon_0r)$ outside, and inside, where $E = 0$, $V$ stays at its surface value $Q/(4\pi\varepsilon_0R)$: zero field does not mean zero potential. Solid sphere: Example 4.1. Line: Example 4.2. Dipole: Example 4.3. Infinite plane: $V = -\sigma|z|/(2\varepsilon_0)$ plus a constant, unbounded in both directions, so as with the line, $V(\infty) = 0$ is unavailable.
 
 ### 3.7 Boundary conditions at a surface charge
 
@@ -156,7 +156,7 @@ You now have six arrows between $\rho$, $\mathbf E$, $V$: $\mathbf E$ from $\rho
 
 ### 3.8 Work and energy
 
-Moving a test charge $Q$ slowly from $\mathbf a$ to $\mathbf b$ takes force $-Q\mathbf E$ from you, so by (3.7) your work is
+Moving a test charge $Q$ slowly from $\mathbf a$ to $\mathbf b$ takes force $-Q\mathbf E$ from you, so by (3.8) your work is
 $$W = -Q\int_{\mathbf a}^{\mathbf b}\mathbf E\cdot d\mathbf l = Q\,[V(\mathbf b) - V(\mathbf a)]. \tag{3.13}$$
 $V$ is potential energy per unit charge.
 
@@ -202,15 +202,15 @@ With the integral started at radius $a$ instead, $W = kq^2/(2a)$. This is the en
 
 **Theorem 3.4 (Conductor in equilibrium).** For a conductor in electrostatic equilibrium: (i) $\mathbf E = 0$ inside the material; (ii) $\rho = 0$ inside; (iii) any net charge lies on the surface; (iv) the conductor is an equipotential; (v) just outside, $\mathbf E$ is perpendicular to the surface, $\mathbf E = (\sigma/\varepsilon_0)\hat{\mathbf n}$, so $\sigma = -\varepsilon_0\,\partial V/\partial n$.
 
-▶ **Try it first.** Derive each from the one before, using (3.4), (3.7), (3.10), (3.11).
+▶ **Try it first.** Derive each from the one before, using (3.4), (3.8), (3.10), (3.11).
 
-*Proof.* (i) Free charges in a field feel force $q\mathbf E$ and move; equilibrium means no motion, so $\mathbf E = 0$ wherever there are free charges, i.e., throughout the material. (That such an arrangement exists for any external field is part of EM-3's uniqueness theory; physically, the induced charges move until their field cancels the applied one, in a time of order $\varepsilon_0/\sigma_{\text{cond}} \approx 1.5\times10^{-19}$ s for copper, a naive estimate that the true electron collision time of about $10^{-14}$ s replaces; either way, effectively instantly.) (ii) $\rho = \varepsilon_0\nabla\cdot\mathbf E = 0$ by (3.4). (iii) By (ii) there is no charge in the interior, so net charge can only sit on the surface. (iv) For any two points in a connected conductor, (3.7) along a path inside gives $V(\mathbf b)-V(\mathbf a) = 0$. (v) Tangential $\mathbf E$ is continuous (3.11) and zero inside, so zero just outside. (3.10) with $E_1^\perp = 0$ gives $E_2^\perp = \sigma/\varepsilon_0$. ∎
+*Proof.* (i) Free charges in a field feel force $q\mathbf E$ and move; equilibrium means no motion, so $\mathbf E = 0$ wherever there are free charges, i.e., throughout the material. (That such an arrangement exists for any external field is part of EM-3's uniqueness theory; physically, the induced charges move until their field cancels the applied one, in a time of order $\varepsilon_0/\sigma_{\text{cond}} \approx 1.5\times10^{-19}$ s for copper, a naive estimate that the true electron collision time of about $10^{-14}$ s replaces; either way, effectively instantly.) (ii) $\rho = \varepsilon_0\nabla\cdot\mathbf E = 0$ by (3.4). (iii) By (ii) there is no charge in the interior, so net charge can only sit on the surface. (iv) For any two points in a connected conductor, (3.8) along a path inside gives $V(\mathbf b)-V(\mathbf a) = 0$. (v) Tangential $\mathbf E$ is continuous (3.11) and zero inside, so zero just outside. (3.10) with $E_1^\perp = 0$ gives $E_2^\perp = \sigma/\varepsilon_0$. ∎
 
 **Induced charge.** Bring a positive charge near a neutral conductor. Negative charge gathers on the near side and positive on the far side, in exactly the pattern that cancels the external field inside. The near (negative) charge is closer, so the force is always attractive. The pattern itself is a boundary-value problem: EM-3 solves it by images, and project Part 6 solves it numerically for a conductor in a uniform field.
 
 **Theorem 3.5 (Empty cavity).** If a cavity inside a conductor contains no charge, then $\mathbf E = 0$ throughout the cavity and the cavity wall carries no charge, whatever the fields outside the conductor.
 
-*Proof.* Suppose $\mathbf E \ne 0$ at some point in the cavity. Follow the field line through it in both directions. With no charge in the cavity it cannot begin or end there, and it cannot close on itself (that would make $\oint\mathbf E\cdot d\mathbf l > 0$), so both ends are on the wall. Along the line $\mathbf E\cdot d\mathbf l > 0$, so by (3.7) the potential at its start exceeds that at its end. Both ends are on one conductor, an equipotential. Contradiction. So $\mathbf E = 0$ in the cavity, and by (3.10) $\sigma = 0$ on the wall. ∎ (EM-3's uniqueness theorem gives a second proof: $V = $ const solves Laplace's equation in the cavity with the right boundary value, so it is the solution.)
+*Proof.* Suppose $\mathbf E \ne 0$ at some point in the cavity. Follow the field line through it in both directions. With no charge in the cavity it cannot begin or end there, and it cannot close on itself (that would make $\oint\mathbf E\cdot d\mathbf l > 0$), so both ends are on the wall. Along the line $\mathbf E\cdot d\mathbf l > 0$, so by (3.8) the potential at its start exceeds that at its end. Both ends are on one conductor, an equipotential. Contradiction. So $\mathbf E = 0$ in the cavity, and by (3.10) $\sigma = 0$ on the wall. ∎ (EM-3's uniqueness theorem gives a second proof: $V = $ const solves Laplace's equation in the cavity with the right boundary value, so it is the solution.)
 
 This is the **Faraday cage**: in 1836 Faraday built a foil-covered cube about 12 feet on a side, sat inside it with electroscopes while it was charged to the point of sparking outside, and detected nothing. A wire mesh works too, as long as the holes are small compared with the distances you care about.
 
@@ -232,7 +232,7 @@ This is the **Faraday cage**: in 1836 Faraday built a foil-covered cube about 12
 
 Two conductors carry $+Q$ and $-Q$; let $V$ be the potential of the positive one minus the negative one. Doubling $Q$ doubles every field and every potential difference (everything is linear), so $Q/V$ depends only on geometry. The **capacitance** is $C = Q/V$, in farads.
 
-▶ **Try it first.** For each geometry: find $\mathbf E$ between the conductors by Gauss, integrate it from one to the other with (3.7), divide.
+▶ **Try it first.** For each geometry: find $\mathbf E$ between the conductors by Gauss, integrate it from one to the other with (3.8), divide.
 
 **Parallel plates** (area $A$, gap $d$, edges ignored). Each plate is a sheet; between them the fields $\sigma/2\varepsilon_0$ of the two sheets add to $E = \sigma/\varepsilon_0 = Q/(\varepsilon_0A)$, and outside they cancel. $V = Ed = Qd/(\varepsilon_0A)$, so
 $$C = \frac{\varepsilon_0A}{d}. \tag{3.18a}$$
@@ -273,7 +273,7 @@ Charge $Q$ is spread uniformly through a ball of radius $R$, so $\rho = 3Q/(4\pi
 - $r\ge R$: $Q_{\text{enc}} = Q$, so $E = \dfrac{Q}{4\pi\varepsilon_0r^2}$.
 - $r<R$: $Q_{\text{enc}} = \rho\cdot\tfrac43\pi r^3 = Q r^3/R^3$, so $4\pi r^2E = Qr^3/(\varepsilon_0R^3)$ and $E = \dfrac{Qr}{4\pi\varepsilon_0R^3}$.
 
-*Potential*, by integrating (3.7) inward from $V(\infty) = 0$:
+*Potential*, by integrating (3.8) inward from $V(\infty) = 0$:
 
 - $r\ge R$: $V(r) = -\displaystyle\int_\infty^r\frac{Q}{4\pi\varepsilon_0r'^2}dr' = \frac{Q}{4\pi\varepsilon_0r}$.
 - $r<R$: continue from $V(R) = Q/(4\pi\varepsilon_0R)$:
@@ -291,13 +291,13 @@ A straight line carries charge $\lambda$ per length. Find $\mathbf E$, then try 
 
 *Field.* Cylindrical symmetry (§3.4) gives $\mathbf E = E(s)\hat{\mathbf s}$. A Gaussian cylinder of radius $s$, length $\ell$: $2\pi s\ell E = \lambda\ell/\varepsilon_0$, so
 $$\mathbf E = \frac{\lambda}{2\pi\varepsilon_0s}\hat{\mathbf s}.$$
-*Potential with $V(\infty) = 0$.* $V(s) = -\int_\infty^s\frac{\lambda}{2\pi\varepsilon_0s'}ds' = \frac{\lambda}{2\pi\varepsilon_0}[\ln s']_s^{\infty} = \infty$. The integral diverges logarithmically. Formula (3.8) fails the same way: $\frac{1}{4\pi\varepsilon_0}\int_{-\infty}^{\infty}\frac{\lambda\,dz}{\sqrt{s^2+z^2}}$ diverges at large $|z|$.
+*Potential with $V(\infty) = 0$.* $V(s) = -\int_\infty^s\frac{\lambda}{2\pi\varepsilon_0s'}ds' = \frac{\lambda}{2\pi\varepsilon_0}[\ln s']_s^{\infty} = \infty$. The integral diverges logarithmically. Formula (3.7) fails the same way: $\frac{1}{4\pi\varepsilon_0}\int_{-\infty}^{\infty}\frac{\lambda\,dz}{\sqrt{s^2+z^2}}$ diverges at large $|z|$.
 
 *The fix.* Choose a finite reference radius $s_0$ with $V(s_0) = 0$:
 $$V(s) = -\frac{\lambda}{2\pi\varepsilon_0}\ln\frac{s}{s_0}.$$
 Changing $s_0$ adds a constant, which no field or force can detect.
 
-*Why the failure is physical.* Take a finite line of half-length $L$. Then (3.8) converges: $V(s) = \frac{\lambda}{2\pi\varepsilon_0}\operatorname{asinh}(L/s) \approx \frac{\lambda}{2\pi\varepsilon_0}[\ln 2L - \ln s]$ for $L\gg s$. The potential grows without bound as $L\to\infty$, but the $s$-dependence, which is all that matters, converges. With $\lambda = 1$ nC/m ($\lambda/2\pi\varepsilon_0 = 17.975$ V), the project gets
+*Why the failure is physical.* Take a finite line of half-length $L$. Then (3.7) converges: $V(s) = \frac{\lambda}{2\pi\varepsilon_0}\operatorname{asinh}(L/s) \approx \frac{\lambda}{2\pi\varepsilon_0}[\ln 2L - \ln s]$ for $L\gg s$. The potential grows without bound as $L\to\infty$, but the $s$-dependence, which is all that matters, converges. With $\lambda = 1$ nC/m ($\lambda/2\pi\varepsilon_0 = 17.975$ V), the project gets
 
 | $L$ | $V(1\text{ cm})$ | $V(10\text{ cm})$ | difference |
 |---|---|---|---|
@@ -388,7 +388,7 @@ with $r$ measured from the **centre of the conducting sphere**, not from the cha
 - **LA-13** is the numerical engine of project Part 5: the five-point Laplacian, Jacobi and Gauss–Seidel (LA-13 Theorem 3.19 for when they converge; (3.24) for how slowly), and conjugate gradients.
 - **CM-5** solves the Kepler problem for the point-mass potential $-GMm/r$. The shell theorem (Gauss's law with $-G$ in place of $1/4\pi\varepsilon_0$, Exercise B1) is what entitles CM-5 to treat the Sun and the planets as points.
 - **QM-6** puts the Coulomb potential $-e^2/(4\pi\varepsilon_0r)$ into the Schrödinger equation for hydrogen. QM-8's first-order perturbation theory then computes the shift from the proton's finite size using exactly Example 4.1's interior potential $\propto(3-r^2/R^2)$.
-- **F6** (Dirichlet principle) and **F3** (Green's functions as impulse responses) are the mathematical frames for §3.12 and (3.8).
+- **F6** (Dirichlet principle) and **F3** (Green's functions as impulse responses) are the mathematical frames for §3.12 and (3.7).
 
 ## 6. Exercises
 
@@ -398,19 +398,19 @@ See [exercises.md](exercises.md). A1–A6 are drills: superposition, flux throug
 
 `project.py` (about 15 s) builds:
 
-1. **Symbolic checks** with SymPy: Example 4.1's $V$ solves (3.9) with continuous $V$ and $dV/dr$; the energy $\tfrac35kQ^2/R$ three ways with interior share $\tfrac16$; (4.3) from $-\nabla$ of (4.1); the capacitor limits of Exercise B2; the shell potential of B3.
-2. **Point charges.** `field_potential` evaluates (3.2) and the matching $V$ by broadcasting. Field lines and equipotentials of a dipole and a quadrupole (`dipole_quadrupole.png`); Example 4.3's numbers; $\oint\mathbf E\cdot d\mathbf l = 0$; a dipole field line traced numerically stays on $r = r_0\sin^2\theta$ to $4\times10^{-5}$.
-3. **Gauss's-law checker.** Flux through spheres (Gauss–Legendre in $\cos\theta$) and cubes (Gauss–Legendre on each face) around twelve random charges, equal to $Q_{\text{enc}}/\varepsilon_0$ to $10^{-7}$; the corner-charge flux of A2.
-4. **The charged sphere and the line** (Examples 4.1, 4.2, 4.4): numerical inward integration of $E$; energy both ways; the point-charge pair sum; self-energy; nuclear numbers.
-5. **Poisson on a grid.** `solve_dirichlet` assembles the five-point Laplacian with conductors as fixed nodes and solves with `scipy.sparse`. The parallel-plate capacitor with fringing (`capacitor_fringing.png`), $C$ from energy equal to $C$ from charge (a discrete Green's identity: (3.15) and (3.16) agree to roundoff on the grid), and a Jacobi run whose sweep count quadruples ($3279\to13124$) when $h$ halves.
-6. **Relaxation around a conductor.** Red-black SOR for a grounded cylinder in a uniform field (`conductor_uniform_field.png`): $\sigma$ from the discrete charge at the conductor's nodes is $0.989\times2\varepsilon_0E_0\cos\phi$; the ratio of tangential to normal field on circles just outside the conductor falls ($0.189, 0.105, 0.061$ at distances $0.2a, 0.1a, 0.05a$) toward zero, as Theorem 3.4(v) requires.
-7. **The cavity** of Example 4.6, and every number in `solutions.md`.
+- **Part 0, symbolic checks** with SymPy: Example 4.1's $V$ solves (3.9) with continuous $V$ and $dV/dr$; the energy $\tfrac35kQ^2/R$ three ways with interior share $\tfrac16$; (4.3) from $-\nabla$ of (4.1); the capacitor limits of Exercise B2; the shell potential of B3.
+- **Part 1, point charges.** `field_potential` evaluates (3.2) and the matching $V$ by broadcasting. Field lines and equipotentials of a dipole and a quadrupole (`dipole_quadrupole.png`); Example 4.3's numbers; $\oint\mathbf E\cdot d\mathbf l = 0$; a dipole field line traced numerically stays on $r = r_0\sin^2\theta$ to $4\times10^{-5}$.
+- **Part 2, Gauss's-law checker.** Flux through spheres (Gauss–Legendre in $\cos\theta$) and cubes (Gauss–Legendre on each face) around twelve random charges, equal to $Q_{\text{enc}}/\varepsilon_0$ to $10^{-7}$; the corner-charge flux of A2.
+- **Parts 3–4, the charged sphere and the line** (Examples 4.1, 4.2, 4.4): numerical inward integration of $E$; energy both ways; the point-charge pair sum; self-energy; nuclear numbers.
+- **Part 5, Poisson on a grid.** `solve_dirichlet` assembles the five-point Laplacian with conductors as fixed nodes and solves with `scipy.sparse`. The parallel-plate capacitor with fringing (`capacitor_fringing.png`), $C$ from energy equal to $C$ from charge (a discrete Green's identity: (3.15) and (3.16) agree to roundoff on the grid), and a Jacobi run whose sweep count quadruples ($3279\to13124$) when $h$ halves.
+- **Part 6, relaxation around a conductor.** Red-black SOR for a grounded cylinder in a uniform field (`conductor_uniform_field.png`): $\sigma$ from the discrete charge at the conductor's nodes is $0.989\times2\varepsilon_0E_0\cos\phi$; the ratio of tangential to normal field on circles just outside the conductor falls ($0.189, 0.105, 0.061$ at distances $0.2a, 0.1a, 0.05a$) toward zero, as Theorem 3.4(v) requires.
+- **Parts 7–8, the cavity** of Example 4.6, and every number in `solutions.md`.
 
 **Build it yourself:** before reading the code, write `field_potential` (no Python loop over charges) and `solve_dirichlet` (the sparse matrix for the free nodes, with fixed neighbours moved to the right-hand side). Then compare. **Your turn** asks for the ring and disk on axis, a coaxial capacitor's $C$ against (3.18c), and a numerical demonstration that the field inside a charged shell vanishes; reference solutions follow the prompts.
 
 ## 8. Where you'll struggle
 
-- **Using Gauss's law where it is true but useless.** Everyone tries it on a finite rod or a charged square. The law holds; the trouble is that $|\mathbf E|$ varies over every closed surface you can draw, so you cannot pull it out of the integral. Before writing a Gaussian surface, write the symmetry argument that fixes the direction of $\mathbf E$ and what it depends on (§3.3, the $180°$ rotation). If you cannot, use (3.3) or (3.8) instead.
+- **Using Gauss's law where it is true but useless.** Everyone tries it on a finite rod or a charged square. The law holds; the trouble is that $|\mathbf E|$ varies over every closed surface you can draw, so you cannot pull it out of the integral. Before writing a Gaussian surface, write the symmetry argument that fixes the direction of $\mathbf E$ and what it depends on (§3.3, the $180°$ rotation). If you cannot, use (3.3) or (3.7) instead.
 - **The $\tfrac12$ in the energy.** Derive it every time from "each pair once" (§3.8) until it is automatic. The test: in $\tfrac12\sum q_iV(\mathbf r_i)$, can you say whether $V(\mathbf r_i)$ includes $q_i$'s own potential? (Discrete: no. Continuous: it doesn't matter.) The same $\tfrac12$ trips people in image-charge energies in EM-3.
 - **The self-energy infinity is real.** Do not convince yourself that it is a mathematical trick that goes away. It is a genuine failure of classical point charges, unresolved within classical physics. The practical rule: use (3.14) for point charges, (3.15)/(3.16) for continuous distributions, and never mix a point charge's own field into (3.16).
 - **"Where is the energy?"** (3.15) puts it where the charge is, (3.16) where the field is. People decide one must be wrong. In statics both are correct bookkeepings of the same total and no measurement distinguishes them. The field picture is forced only by dynamics (EM-6: radiation carries energy through empty space).

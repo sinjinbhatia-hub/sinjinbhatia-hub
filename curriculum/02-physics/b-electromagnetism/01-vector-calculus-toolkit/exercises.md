@@ -78,8 +78,8 @@ Conventions as in the notes: index notation with summed repeated indices, $\vare
 
 **C3.** (Screened Coulomb potential.) Let $u = e^{-\mu r}/r$ with $\mu > 0$.
 (a) Show $\nabla^2u = \mu^2u$ for $r \ne 0$.
-(b) Show that $(\nabla^2 - \mu^2)u = -4\pi\delta^3(\mathbf r)$ in the sense of distributions: for every smooth $\varphi$ vanishing outside a bounded region, $\int u\,(\nabla^2 - \mu^2)\varphi\,d\tau = -4\pi\varphi(\mathbf 0)$. (Excise a ball and use Green's second identity.)
-(c) The project evaluates the left side of (b) for $\varphi = e^{-r^2}$, $\mu = 1.5$. Set up that integral as a single integral in $r$ and say what it should equal.
+(b) Show that $(\nabla^2 - \mu^2)u = -4\pi\delta^3(\mathbf r)$ in the sense of distributions: for every smooth $\psi$ vanishing outside a bounded region, $\int u\,(\nabla^2 - \mu^2)\psi\,d\tau = -4\pi\psi(\mathbf 0)$. (Excise a ball and use Green's second identity.)
+(c) The project evaluates the left side of (b) for $\psi = e^{-r^2}$, $\mu = 1.5$. Set up that integral as a single integral in $r$ and say what it should equal.
 
 **C4.** (Why the curl is a pseudovector.) Let $R$ be orthogonal, $\mathbf x' = R\mathbf x$, and let a vector field transform as $\mathbf F'(\mathbf x') = R\,\mathbf F(\mathbf x)$.
 (a) Prove $\varepsilon_{lmn}R_{li}R_{mj}R_{nk} = (\det R)\,\varepsilon_{ijk}$.

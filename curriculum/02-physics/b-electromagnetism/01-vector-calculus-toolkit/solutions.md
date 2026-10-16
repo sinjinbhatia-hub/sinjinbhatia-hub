@@ -52,10 +52,10 @@ For $\hat{\boldsymbol\phi}/s$: $\frac1s\partial_s(1) = 0$ for $s \ne 0$.
 
 (b) On the circle of radius $a$ about the axis, $d\mathbf l = a\,d\phi\,\hat{\boldsymbol\phi}$, so $\mathbf F\cdot d\mathbf l = \frac1a\cdot a\,d\phi = d\phi$ and the circulation is $2\pi$ for every $a$. The unit circle centred at $(2, 0, 0)$ and the disk it bounds lie in $s \ge 1$, where $\mathbf F$ is smooth with zero curl, so Stokes gives circulation $0$. (Equivalently: on the half-space $x > 0$, $\mathbf F = \nabla\phi$ with the single-valued $\phi = \arctan(y/x)$, and (3.20) applies.) The project prints $6.283185$ for $a = 0.5$ and $a = 3$, and $-1.2\times10^{-14}$ for the off-axis circle.
 
-(c) Stokes needs $\mathbf F$ to be $C^1$ on a surface spanning the loop. Every surface spanning a loop around the axis is pierced by the axis, where $\mathbf F$ is undefined and unbounded, so Stokes does not apply and there is no contradiction. To find the curl as a distribution, repeat §3.11 in two dimensions. Let $\varphi(x, y)$ be a smooth test function vanishing for $s \ge R$. For smooth fields, integration by parts gives $\int\varphi\,(\partial_xF_y - \partial_yF_x)\,dx\,dy = -\int(F_y\partial_x\varphi - F_x\partial_y\varphi)\,dx\,dy$, and the right side is the definition of the weak curl.
-1. On the annulus $\epsilon < s < R$, $\partial_xF_y - \partial_yF_x = 0$, so $\partial_x(\varphi F_y) - \partial_y(\varphi F_x) = F_y\partial_x\varphi - F_x\partial_y\varphi$.
-2. Green's theorem in the plane (Theorem 3.4, step 3, summed) on the annulus: the integral of the left side equals the counterclockwise circulation of $\varphi\mathbf F$ around $s = R$ (zero, since $\varphi = 0$ there) minus the counterclockwise circulation around $s = \epsilon$, which is $\oint\varphi\,d\phi$.
-3. As $\epsilon\to0$, $\oint\varphi\,d\phi\to2\pi\varphi(0)$. So $-\int(F_y\partial_x\varphi - F_x\partial_y\varphi)\,dx\,dy = 2\pi\varphi(0)$: the weak $z$-curl is $2\pi\delta(x)\delta(y)$, and since nothing depends on $z$, $\nabla\times\mathbf F = 2\pi\delta(x)\delta(y)\hat{\mathbf z}$.
+(c) Stokes needs $\mathbf F$ to be $C^1$ on a surface spanning the loop. Every surface spanning a loop around the axis is pierced by the axis, where $\mathbf F$ is undefined and unbounded, so Stokes does not apply and there is no contradiction. To find the curl as a distribution, repeat §3.11 in two dimensions. Let $\psi(x, y)$ be a smooth test function vanishing for $s \ge R$. For smooth fields, integration by parts gives $\int\psi\,(\partial_xF_y - \partial_yF_x)\,dx\,dy = -\int(F_y\partial_x\psi - F_x\partial_y\psi)\,dx\,dy$, and the right side is the definition of the weak curl.
+1. On the annulus $\epsilon < s < R$, $\partial_xF_y - \partial_yF_x = 0$, so $\partial_x(\psi F_y) - \partial_y(\psi F_x) = F_y\partial_x\psi - F_x\partial_y\psi$.
+2. Green's theorem in the plane (Theorem 3.4, step 3, summed) on the annulus: the integral of the left side equals the counterclockwise circulation of $\psi\mathbf F$ around $s = R$ (zero, since $\psi = 0$ there) minus the counterclockwise circulation around $s = \epsilon$, which is $\oint\psi\,d\phi$.
+3. As $\epsilon\to0$, $\oint\psi\,d\phi\to2\pi\psi(0)$. So $-\int(F_y\partial_x\psi - F_x\partial_y\psi)\,dx\,dy = 2\pi\psi(0)$: the weak $z$-curl is $2\pi\delta(x)\delta(y)$, and since nothing depends on $z$, $\nabla\times\mathbf F = 2\pi\delta(x)\delta(y)\hat{\mathbf z}$.
 
 (d) Simple connectivity. $\mathbb R^3$ minus the $z$-axis has loops (around the axis) that cannot be shrunk to a point inside the region. Locally $\mathbf F = \nabla\phi$, but $\phi$ increases by $2\pi$ each time around, so no single-valued potential exists.
 
@@ -156,18 +156,18 @@ The left side is nonnegative and increases with $R$; the right side tends to $0$
 
 **C3.** (a) $u' = -e^{-\mu r}(1/r^2 + \mu/r)$, so $r^2u' = -e^{-\mu r}(1 + \mu r)$. Differentiating: $\mu e^{-\mu r}(1 + \mu r) - \mu e^{-\mu r} = \mu^2re^{-\mu r}$. Dividing by $r^2$ as in (3.29): $\nabla^2u = \mu^2e^{-\mu r}/r = \mu^2u$ for $r \ne 0$. The project checks this symbolically.
 
-(b) Let $\varphi$ vanish for $r \ge R$ and $V_\epsilon = \{\epsilon < r < R\}$.
-1. Green's second identity (3.23) with the pair $(u, \varphi)$: $\int_{V_\epsilon}(u\nabla^2\varphi - \varphi\nabla^2u)\,d\tau = \oint_{\partial V_\epsilon}(u\nabla\varphi - \varphi\nabla u)\cdot d\mathbf a$.
-2. On $V_\epsilon$, $\nabla^2u = \mu^2u$ by (a), so the left side is $\int_{V_\epsilon}u\,(\nabla^2 - \mu^2)\varphi\,d\tau$.
-3. On $r = R$, $\varphi$ and $\nabla\varphi$ vanish. On $r = \epsilon$, $d\mathbf a = -\hat{\mathbf r}\,\epsilon^2d\Omega$, so the right side is $-\oint(u\,\partial_r\varphi - \varphi\,\partial_ru)\,\epsilon^2\,d\Omega$.
-4. As $\epsilon\to0$: $u\,\epsilon^2 = \epsilon e^{-\mu\epsilon}\to0$ and $\partial_r\varphi$ is bounded, so the first term vanishes; $-\varphi\,\partial_ru\,\epsilon^2 = \varphi\,e^{-\mu\epsilon}(1 + \mu\epsilon)\to\varphi(\mathbf 0)$. The right side tends to $-4\pi\varphi(\mathbf 0)$.
-5. The left side tends to the integral over all space, since $u\,r^2 = re^{-\mu r}$ is bounded. Hence $\int u\,(\nabla^2 - \mu^2)\varphi\,d\tau = -4\pi\varphi(\mathbf 0)$, i.e. $(\nabla^2 - \mu^2)u = -4\pi\delta^3(\mathbf r)$. ∎
+(b) Let $\psi$ vanish for $r \ge R$ and $V_\epsilon = \{\epsilon < r < R\}$.
+1. Green's second identity (3.23) with the pair $(u, \psi)$: $\int_{V_\epsilon}(u\nabla^2\psi - \psi\nabla^2u)\,d\tau = \oint_{\partial V_\epsilon}(u\nabla\psi - \psi\nabla u)\cdot d\mathbf a$.
+2. On $V_\epsilon$, $\nabla^2u = \mu^2u$ by (a), so the left side is $\int_{V_\epsilon}u\,(\nabla^2 - \mu^2)\psi\,d\tau$.
+3. On $r = R$, $\psi$ and $\nabla\psi$ vanish. On $r = \epsilon$, $d\mathbf a = -\hat{\mathbf r}\,\epsilon^2d\Omega$, so the right side is $-\oint(u\,\partial_r\psi - \psi\,\partial_ru)\,\epsilon^2\,d\Omega$.
+4. As $\epsilon\to0$: $u\,\epsilon^2 = \epsilon e^{-\mu\epsilon}\to0$ and $\partial_r\psi$ is bounded, so the first term vanishes; $-\psi\,\partial_ru\,\epsilon^2 = \psi\,e^{-\mu\epsilon}(1 + \mu\epsilon)\to\psi(\mathbf 0)$. The right side tends to $-4\pi\psi(\mathbf 0)$.
+5. The left side tends to the integral over all space, since $u\,r^2 = re^{-\mu r}$ is bounded. Hence $\int u\,(\nabla^2 - \mu^2)\psi\,d\tau = -4\pi\psi(\mathbf 0)$, i.e. $(\nabla^2 - \mu^2)u = -4\pi\delta^3(\mathbf r)$. ∎
 
 Setting $\mu = 0$ recovers (3.33). This is the screened Coulomb potential: the Debye-screened potential of a charge in an electrolyte or plasma, and Yukawa's 1935 potential for the nuclear force (with $\mu$ the inverse range).
 
-(c) For $\varphi = e^{-r^2}$: $\varphi' = -2re^{-r^2}$, $r^2\varphi' = -2r^3e^{-r^2}$, and $\partial_r(r^2\varphi') = (4r^4 - 6r^2)e^{-r^2}$, so $\nabla^2\varphi = (4r^2 - 6)e^{-r^2}$. With $d\tau = 4\pi r^2dr$ for radial integrands:
-$$\int u\,(\nabla^2 - \mu^2)\varphi\,d\tau = 4\pi\int_0^\infty r\,e^{-\mu r}\,(4r^2 - 6 - \mu^2)\,e^{-r^2}\,dr,$$
-which should equal $-4\pi\varphi(0) = -4\pi$. The project gets $-12.5663706144 = -4\pi$ for $\mu = 1.5$.
+(c) For $\psi = e^{-r^2}$: $\psi' = -2re^{-r^2}$, $r^2\psi' = -2r^3e^{-r^2}$, and $\partial_r(r^2\psi') = (4r^4 - 6r^2)e^{-r^2}$, so $\nabla^2\psi = (4r^2 - 6)e^{-r^2}$. With $d\tau = 4\pi r^2dr$ for radial integrands:
+$$\int u\,(\nabla^2 - \mu^2)\psi\,d\tau = 4\pi\int_0^\infty r\,e^{-\mu r}\,(4r^2 - 6 - \mu^2)\,e^{-r^2}\,dr,$$
+which should equal $-4\pi\psi(0) = -4\pi$. The project gets $-12.5663706144 = -4\pi$ for $\mu = 1.5$.
 
 **C4.** (a) Let $T_{ijk} = \varepsilon_{lmn}R_{li}R_{mj}R_{nk}$. Swapping $i$ and $j$ and then renaming the dummies $l \leftrightarrow m$: $T_{jik} = \varepsilon_{lmn}R_{lj}R_{mi}R_{nk} = \varepsilon_{mln}R_{mj}R_{li}R_{nk} = -\varepsilon_{lmn}R_{li}R_{mj}R_{nk} = -T_{ijk}$. The same argument works for any pair, so $T$ is totally antisymmetric and therefore $T_{ijk} = c\,\varepsilon_{ijk}$ (a totally antisymmetric array in three indices has one independent entry). Setting $(i,j,k) = (1,2,3)$: $c = \varepsilon_{lmn}R_{l1}R_{m2}R_{n3}$, the signed sum over permutations that defines the determinant of the matrix with columns $R_{\cdot1}, R_{\cdot2}, R_{\cdot3}$. So $c = \det R$.
 

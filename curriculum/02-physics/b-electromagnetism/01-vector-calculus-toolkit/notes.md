@@ -58,7 +58,7 @@ Suppose you know the divergence (sources) and curl (swirls) everywhere, and the 
 
 ### 3.1 Vector algebra in index notation
 
-Dot product: $\mathbf A\cdot\mathbf B = A_iB_i = AB\cos\theta$. Cross product: $(\mathbf A\times\mathbf B)_i = \varepsilon_{ijk}A_jB_k$ (LA-12 (3.23)), of magnitude $AB\sin\theta$ (the area of the parallelogram on $\mathbf A$, $\mathbf B$), direction by the right-hand rule. **Triple product:** $\mathbf A\cdot(\mathbf B\times\mathbf C) = \varepsilon_{ijk}A_iB_jC_k = \det[\mathbf A\ \mathbf B\ \mathbf C]$, the signed volume of the parallelepiped on the three vectors (LA-6); unchanged by cyclic permutation, negated by a swap.
+Dot product: $\mathbf A\cdot\mathbf B = A_iB_i = AB\cos\theta$. Cross product: $(\mathbf A\times\mathbf B)_i = \varepsilon_{ijk}A_jB_k$ (LA-12 (3.23)), of magnitude $AB\sin\theta$ (the area of the parallelogram on $\mathbf A$, $\mathbf B$), direction by the right-hand rule. **Triple product:** $\mathbf A\cdot(\mathbf B\times\mathbf C) = \varepsilon_{ijk}A_iB_jC_k = \det[\mathbf A\ \mathbf B\ \mathbf C]$, the signed volume of the parallelepiped on the three vectors (LA-6 Theorem 3.15(a)); unchanged by cyclic permutation, negated by a swap.
 
 **Theorem 3.1 ($\varepsilon$–$\delta$ identity).**
 $$\varepsilon_{ijk}\varepsilon_{imn} = \delta_{jm}\delta_{kn} - \delta_{jn}\delta_{km}. \tag{3.1}$$
@@ -82,7 +82,7 @@ $$A'_i = R_{ij}A_j. \tag{3.3}$$
 
 1. **Dot products are scalars:** $A'_iB'_i = R_{ij}R_{ik}A_jB_k = (R^\top R)_{jk}A_jB_k = A_jB_j$.
 2. **$\nabla$ transforms as a vector.** Inverting, $x_j = R_{ij}x'_i$, so $\partial x_j/\partial x'_i = R_{ij}$ and the chain rule gives $\partial'_i = R_{ij}\partial_j$. So $\nabla f$ is a vector and, by 1, $\nabla\cdot\mathbf F$ is a scalar.
-3. **Cross products are vectors under rotations but not reflections.** The determinant identity $\varepsilon_{lmn}R_{il}R_{jm}R_{kn} = (\det R)\,\varepsilon_{ijk}$ (LA-6) gives $(\mathbf A'\times\mathbf B')_i = (\det R)\,R_{il}(\mathbf A\times\mathbf B)_l$. For rotations this is (3.3). A reflection ($\det R = -1$) adds a minus sign: $\mathbf A\times\mathbf B$, $\nabla\times\mathbf F$, and the magnetic field of EM-5 are **pseudovectors**. Exercise C4 does the curl.
+3. **Cross products are vectors under rotations but not reflections.** The determinant identity $\varepsilon_{lmn}R_{il}R_{jm}R_{kn} = (\det R)\,\varepsilon_{ijk}$ (the Leibniz formula, LA-6 Theorem 3.9, applied to the matrix whose rows are rows $i, j, k$ of $R$; Exercise C4(a) proves it) gives $(\mathbf A'\times\mathbf B')_i = (\det R)\,R_{il}(\mathbf A\times\mathbf B)_l$. For rotations this is (3.3). A reflection ($\det R = -1$) adds a minus sign: $\mathbf A\times\mathbf B$, $\nabla\times\mathbf F$, and the magnetic field of EM-5 are **pseudovectors**. Exercise C4 does the curl.
 
 Theorem 3.4 proves a fact about the $z$-component of the curl and extends it to every direction by rotating the axes; that step needs 3.
 
@@ -336,17 +336,17 @@ So $\int\delta^3\,d\tau = 1$ over all space, $\delta^3$ has units of 1/volume, a
 **Theorem 3.14 (The delta function in $\hat{\boldsymbol{\mathscr r}}/\mathscr r^2$).**
 $$\nabla\cdot\frac{\hat{\boldsymbol{\mathscr r}}}{\mathscr r^2} = 4\pi\delta^3(\boldsymbol{\mathscr r}), \tag{3.32}$$
 $$\nabla^2\frac{1}{\mathscr r} = -4\pi\delta^3(\boldsymbol{\mathscr r}). \tag{3.33}$$
-These are equations between distributions. (3.32) means: for every smooth test function $\varphi$ that vanishes outside a bounded region, $-\int(\hat{\boldsymbol{\mathscr r}}/\mathscr r^2)\cdot\nabla\varphi\,d\tau = 4\pi\varphi(\mathbf r')$. The left side is what $\int\varphi\,\nabla\cdot\mathbf v\,d\tau$ becomes after one integration by parts, which is how F3 §3.10 defines the derivative of a distribution.
+These are equations between distributions. (3.32) means: for every smooth test function $\psi$ that vanishes outside a bounded region, $-\int(\hat{\boldsymbol{\mathscr r}}/\mathscr r^2)\cdot\nabla\psi\,d\tau = 4\pi\psi(\mathbf r')$. The left side is what $\int\psi\,\nabla\cdot\mathbf v\,d\tau$ becomes after one integration by parts, which is how F3 §3.10 defines the derivative of a distribution.
 
-▶ **Try it first.** Put the source at the origin. Cut out a small ball of radius $\epsilon$. Outside it everything is smooth and $\nabla\cdot\mathbf v = 0$. Apply the divergence theorem to $\varphi\mathbf v$ on the region outside the ball, then let $\epsilon\to0$.
+▶ **Try it first.** Put the source at the origin. Cut out a small ball of radius $\epsilon$. Outside it everything is smooth and $\nabla\cdot\mathbf v = 0$. Apply the divergence theorem to $\psi\mathbf v$ on the region outside the ball, then let $\epsilon\to0$.
 
 **Derivation.**
-1. Take $\mathbf r' = \mathbf 0$. Let $V_\epsilon = \{\epsilon < r < R\}$, with $R$ so large that $\varphi = 0$ for $r \ge R$.
-2. On $V_\epsilon$, (P3) gives $\nabla\cdot(\varphi\mathbf v) = \varphi\,\nabla\cdot\mathbf v + \mathbf v\cdot\nabla\varphi = \mathbf v\cdot\nabla\varphi$.
-3. Divergence theorem on $V_\epsilon$. Its boundary is two spheres. On $r = R$, $\varphi = 0$. On $r = \epsilon$ the outward normal *of $V_\epsilon$* points toward the origin: $d\mathbf a = -\hat{\mathbf r}\,\epsilon^2\sin\theta\,d\theta\,d\phi$. So
-$$\int_{V_\epsilon}\mathbf v\cdot\nabla\varphi\,d\tau = -\oint_{r=\epsilon}\varphi\,\frac{1}{\epsilon^2}\,\epsilon^2\sin\theta\,d\theta\,d\phi = -\oint_{r = \epsilon}\varphi\,d\Omega,$$
+1. Take $\mathbf r' = \mathbf 0$. Let $V_\epsilon = \{\epsilon < r < R\}$, with $R$ so large that $\psi = 0$ for $r \ge R$.
+2. On $V_\epsilon$, (P3) gives $\nabla\cdot(\psi\mathbf v) = \psi\,\nabla\cdot\mathbf v + \mathbf v\cdot\nabla\psi = \mathbf v\cdot\nabla\psi$.
+3. Divergence theorem on $V_\epsilon$. Its boundary is two spheres. On $r = R$, $\psi = 0$. On $r = \epsilon$ the outward normal *of $V_\epsilon$* points toward the origin: $d\mathbf a = -\hat{\mathbf r}\,\epsilon^2\sin\theta\,d\theta\,d\phi$. So
+$$\int_{V_\epsilon}\mathbf v\cdot\nabla\psi\,d\tau = -\oint_{r=\epsilon}\psi\,\frac{1}{\epsilon^2}\,\epsilon^2\sin\theta\,d\theta\,d\phi = -\oint_{r = \epsilon}\psi\,d\Omega,$$
 with $d\Omega = \sin\theta\,d\theta\,d\phi$ the solid-angle element.
-4. Let $\epsilon\to0$. The right side tends to $-4\pi\varphi(\mathbf 0)$: $\varphi$ is continuous and the total solid angle is $4\pi$. The left side tends to the integral over all space, since $|\mathbf v|\,d\tau = \sin\theta\,dr\,d\theta\,d\phi$ is bounded near the origin. So $-\int\mathbf v\cdot\nabla\varphi\,d\tau = 4\pi\varphi(\mathbf 0)$, which is (3.32).
+4. Let $\epsilon\to0$. The right side tends to $-4\pi\psi(\mathbf 0)$: $\psi$ is continuous and the total solid angle is $4\pi$. The left side tends to the integral over all space, since $|\mathbf v|\,d\tau = \sin\theta\,dr\,d\theta\,d\phi$ is bounded near the origin. So $-\int\mathbf v\cdot\nabla\psi\,d\tau = 4\pi\psi(\mathbf 0)$, which is (3.32).
 5. A source at $\mathbf r'$: shift the origin; nothing above depended on where it was.
 6. (3.33): $\nabla(1/\mathscr r) = -\hat{\boldsymbol{\mathscr r}}/\mathscr r^2$ (§3.1). Take the divergence and use (3.32). ∎
 
@@ -468,11 +468,11 @@ The project's quadratures give $12.5663706 = 4\pi$ for radii $0.01$ to $1000$ an
 
 (a) *Cartesian brute force, $r \ne 0$.* $\partial_x(1/r) = -x/r^3$, so $\partial_x^2(1/r) = -1/r^3 + 3x^2/r^5$. Summing over $x, y, z$: $-3/r^3 + 3r^2/r^5 = 0$. (The spherical route (3.29) took one line.)
 
-(b) *A regularized point charge.* Replace the point by a unit Gaussian cloud $g_\sigma(r) = (2\pi\sigma^2)^{-3/2}e^{-r^2/2\sigma^2}$, with potential $u_\sigma(r) = \operatorname{erf}(r/\sqrt2\sigma)/r\to1/r$ as $\sigma\to0$. Check with (3.29): write $E(r) = \operatorname{erf}(r/\sqrt2\sigma)$, so $u = E/r$ and $r^2u' = rE' - E$. Then $\partial_r(r^2u') = rE''$, so $\nabla^2u_\sigma = E''/r$. Since $E' = \sqrt{2/\pi}\,\sigma^{-1}e^{-r^2/2\sigma^2}$, $E'' = -(r/\sigma^2)E'$, and
+(b) *A regularized point charge.* Replace the point by a unit Gaussian cloud $g_\sigma(r) = (2\pi\sigma^2)^{-3/2}e^{-r^2/2\sigma^2}$, with potential $u_\sigma(r) = \operatorname{erf}\big(r/(\sqrt2\,\sigma)\big)/r\to1/r$ as $\sigma\to0$. Check with (3.29): write $E(r) = \operatorname{erf}\big(r/(\sqrt2\,\sigma)\big)$, so $u = E/r$ and $r^2u' = rE' - E$. Then $\partial_r(r^2u') = rE''$, so $\nabla^2u_\sigma = E''/r$. Since $E' = \sqrt{2/\pi}\,\sigma^{-1}e^{-r^2/2\sigma^2}$, $E'' = -(r/\sigma^2)E'$, and
 $$\nabla^2u_\sigma = -\sqrt{2/\pi}\,\sigma^{-3}e^{-r^2/2\sigma^2} = -4\pi g_\sigma(r),$$
-because $4\pi(2\pi)^{-3/2} = \sqrt{2/\pi}$. Now test against $\varphi = e^{-r^2}$ (so $\varphi(0) = 1$):
-$$\int\varphi\,\nabla^2u_\sigma\,d\tau = -4\pi(2\pi\sigma^2)^{-3/2}\int e^{-r^2(1 + 1/2\sigma^2)}\,d\tau = -4\pi(2\pi\sigma^2)^{-3/2}\left(\frac{2\pi\sigma^2}{1 + 2\sigma^2}\right)^{3/2} = -4\pi(1 + 2\sigma^2)^{-3/2},$$
-using $\int e^{-ar^2}d\tau = (\pi/a)^{3/2}$. For $\sigma = 0.5, 0.2, 0.1, 0.05$: $-6.8403, -11.1963, -12.1986, -12.4727$, approaching $-4\pi\varphi(0) = -12.5664$. The project confirms each by quadrature, checks $\int(1/r)\nabla^2\varphi\,d\tau = -4\pi$ (the distributional meaning of (3.33)), and sums a finite-difference Laplacian of $1/r$ over a grid: $-12.568$, 99.9% of it within four grid spacings of the origin.
+because $4\pi(2\pi)^{-3/2} = \sqrt{2/\pi}$. Now test against $\psi = e^{-r^2}$ (so $\psi(0) = 1$):
+$$\int\psi\,\nabla^2u_\sigma\,d\tau = -4\pi(2\pi\sigma^2)^{-3/2}\int e^{-r^2(1 + 1/2\sigma^2)}\,d\tau = -4\pi(2\pi\sigma^2)^{-3/2}\left(\frac{2\pi\sigma^2}{1 + 2\sigma^2}\right)^{3/2} = -4\pi(1 + 2\sigma^2)^{-3/2},$$
+using $\int e^{-ar^2}d\tau = (\pi/a)^{3/2}$. For $\sigma = 0.5, 0.2, 0.1, 0.05$: $-6.8403, -11.1963, -12.1986, -12.4727$, approaching $-4\pi\psi(0) = -12.5664$. The project confirms each by quadrature, checks $\int(1/r)\nabla^2\psi\,d\tau = -4\pi$ (the distributional meaning of (3.33)), and sums a finite-difference Laplacian of $1/r$ over a grid: $-12.568$, 99.9% of it within four grid spacings of the origin.
 
 ### Example 4.6: A potential by line integration (a CM-1 force)
 
@@ -493,7 +493,7 @@ Work from the origin: $x^2y + yz^2 - xz$, so $U = -x^2y - yz^2 + xz$ (with $U(\m
 
 $\mathbf F = (\sin(x + y), 0, 0)$ on the periodic box $[0, 2\pi)^3$. Since $\sin(x + y) = (e^{i(x+y)} - e^{-i(x+y)})/2i$, only $\mathbf k = \pm(1, 1, 0)$ appear, with $\hat{\mathbf F}_{\mathbf k}\parallel\hat{\mathbf x}$ and $\hat{\mathbf k}(\hat{\mathbf k}\cdot\hat{\mathbf x}) = (1, 1, 0)/2$ for either sign, so by (3.35)
 $$\mathbf F = \underbrace{\tfrac12\sin(x+y)(1, 1, 0)}_{\text{curl-free}} + \underbrace{\tfrac12\sin(x+y)(1, -1, 0)}_{\text{divergence-free}}.$$
-Check: the first is $-\nabla U$ with $U = \tfrac12\cos(x + y)$, since $\nabla U = -\tfrac12\sin(x+y)(1,1,0)$. The second is $\nabla\times\mathbf W$ with $\mathbf W = (0, 0, w)$, $w = -\tfrac12\cos(x+y)$: $\nabla\times\mathbf W = (\partial_yw, -\partial_xw, 0) = \tfrac12\sin(x+y)(1, -1, 0)$. ✓ From (3.35) directly, for $\mathbf k = (1,1,0)$, $\hat{\mathbf F}_{\mathbf k} = \hat{\mathbf x}/2i$ gives $\hat U_{\mathbf k} = i(1/2i)/2 = \tfrac14$, and the same for $-\mathbf k$, so $U = \tfrac14e^{i(x+y)} + \tfrac14e^{-i(x+y)} = \tfrac12\cos(x+y)$. ✓ The parts are perpendicular pointwise. The project reproduces this with the FFT, then splits a random smooth field and checks every property to $10^{-14}$.
+Check: the first is $-\nabla U$ with $U = \tfrac12\cos(x + y)$, since $\nabla U = -\tfrac12\sin(x+y)(1,1,0)$. The second is $\nabla\times\mathbf W$ with $\mathbf W = (0, 0, w)$, $w = -\tfrac12\cos(x+y)$: $\nabla\times\mathbf W = (\partial_yw, -\partial_xw, 0) = \tfrac12\sin(x+y)(1, -1, 0)$. ✓ From (3.35) directly, for $\mathbf k = (1,1,0)$, $\hat{\mathbf F}_{\mathbf k} = \hat{\mathbf x}/2i$ gives $\hat U_{\mathbf k} = i(1/2i)/2 = \tfrac14$, and the same for $-\mathbf k$, so $U = \tfrac14e^{i(x+y)} + \tfrac14e^{-i(x+y)} = \tfrac12\cos(x+y)$. ✓ The parts are perpendicular pointwise. The project reproduces this with the FFT, then splits a random smooth field and checks every property to better than $10^{-13}$.
 
 ## 5. Why it matters and where it connects
 

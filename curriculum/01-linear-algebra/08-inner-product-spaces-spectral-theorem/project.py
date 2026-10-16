@@ -556,6 +556,9 @@ for _ in range(50):
     assert np.isclose(inner(vp, vm), 0) and np.isclose(inner(vp, vp), 1)
     # The Bloch vector of |n,+> is n itself: <ψ|σ_k|ψ> = n_k.
     assert np.allclose([np.real(inner(vp, s @ vp)) for s in (sx, sy, sz)], n)
+    # Example 4.4, general case: Born probabilities (3.16) for |0> measured along n are p± = (1 ± cos θ)/2.
+    e1 = np.array([1, 0], complex)
+    assert np.isclose(abs(inner(vp, e1)) ** 2, 0.5 * (1 + np.cos(th))) and np.isclose(abs(inner(vm, e1)) ** 2, 0.5 * (1 - np.cos(th)))
 
 # Example 4.4: θ = π/3, φ = π/2.
 n44, H44 = n_dot_sigma(np.pi / 3, np.pi / 2)

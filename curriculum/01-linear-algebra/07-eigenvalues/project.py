@@ -441,8 +441,8 @@ print("Example 4.5: e^{At} = e^{-t}(I + tN) matches expm at t = 1.3; x(t) = (1+t
 # e^A e^B != e^{A+B} when AB != BA (the pair from section 3.9), equality when they commute.
 A_n = np.array([[0.0, 1.0], [0.0, 0.0]]); B_n = np.array([[0.0, 0.0], [1.0, 0.0]])
 assert not np.allclose(A_n @ B_n, B_n @ A_n)
-assert np.allclose(expm(A_n) @ expm(B_n), [[2, 1], [1, 1]])
-assert np.allclose(expm(A_n + B_n), [[np.cosh(1), np.sinh(1)], [np.sinh(1), np.cosh(1)]])
+assert np.allclose(expm(A_n) @ expm(B_n), [[2, 1], [1, 1]], rtol=0, atol=1e-14)
+assert np.allclose(expm(A_n + B_n), [[np.cosh(1), np.sinh(1)], [np.sinh(1), np.cosh(1)]], rtol=0, atol=1e-14)
 assert not np.allclose(expm(A_n) @ expm(B_n), expm(A_n + B_n))
 assert not np.allclose(expm(A_n) @ expm(B_n), expm(B_n) @ expm(A_n))
 C1 = rng.standard_normal((3, 3)); C2 = 2 * C1 @ C1 - 0.5 * C1 + np.eye(3)      # a polynomial in C1 commutes with C1
@@ -747,8 +747,11 @@ print(f"A^100 for a random 60x60: matrix_power {1e3*(t1-t0):.2f} ms, eigendecomp
 #    eigenvalues, confirm lambda = 1 and |lambda_i| <= 1 (Theorem 3.11), find
 #    the steady state from the eigenvector, and simulate 50,000 steps with
 #    `simulate_markov`. Plot ||u_k - u_inf|| on a log scale and read off
-#    |lambda_2| from the slope. Then make one entry zero in a way that gives a
-#    second eigenvalue of modulus 1 and watch convergence fail.
+#    |lambda_2| from the slope. Then break convergence. A single zero entry is
+#    not enough: with the other entries positive, A^2 is strictly positive and
+#    Theorem 3.12 still applies. Make the chain periodic (a cyclic permutation
+#    of the three states) or reducible (two closed classes), check that a
+#    second eigenvalue now has modulus 1, and watch u_k stop converging.
 # 2. **A three-mass chain.** Build K = tridiag(-1, 2, -1) for n = 3 with
 #    M = I, solve K v = omega^2 v, and compare omega_j with
 #    2 sin(j pi / 8) from exercise C3. Reuse `draw_frame` (extend it to three
@@ -758,9 +761,14 @@ print(f"A^100 for a random 60x60: matrix_power {1e3*(t1-t0):.2f} ms, eigendecomp
 #    400. For a nearly defective matrix such as [[3, 1], [0, 3 + 1e-9]] (B7d),
 #    compare the two answers for A^30 and explain the discrepancy.
 # 4. **Inverse iteration as a root polisher.** Run `inverse_iteration` on A6
-#    with shifts 2.9, 3.0, 3.1 and count steps. What happens with shift exactly
-#    equal to an eigenvalue (the matrix A - shift I is singular)? Why does the
-#    solve not crash, and why is the answer still right?
+#    with shifts 2.9, 3.1 and 3.0 + 1e-12 and count steps: the closer the
+#    shift, the smaller the ratio |3 - sigma| / |2 - sigma| and the fewer the
+#    steps. Now try shift exactly 3.0. A6 has integer entries, so A6 - 3I is
+#    *exactly* singular in floating point: `lu_factor` reports a zero pivot and
+#    the solve returns inf/NaN. Move the shift by 1e-13 and it works in two
+#    steps. Explain why a nearly singular solve is what inverse iteration
+#    wants: the huge component of the solution lies along the eigenvector you
+#    are after, and normalizing throws away its size.
 # 5. (C1) Verify Cayley-Hamilton numerically: `np.poly(A)` gives the monic
 #    characteristic polynomial; evaluate it at A with `matrix_power` and
 #    check you get the zero matrix.

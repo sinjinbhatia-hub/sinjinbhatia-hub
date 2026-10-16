@@ -344,7 +344,8 @@ for ell in (1.0, 0.1, 0.01):
     circ, _ = parallelogram_check(Fnl, p0, ell * al0, ell * be0)
     m = p0 + ell * (al0 + be0) / 2
     errs.append(abs(circ / np.linalg.norm(np.cross(ell * al0, ell * be0)) - nhat @ np.array(Cnl(*m)).ravel()))
-assert errs[0] > errs[1] > errs[2] and errs[2] < 1e-5
+ratios = [errs[0] / errs[1], errs[1] / errs[2]]
+assert all(50 < q < 200 for q in ratios) and errs[2] < 1e-5, (errs, ratios)   # §3.4: error falls by ~100 per factor-10 shrink
 print("  Theorem 3.4 limit, |circ/area − n̂·curl| for ℓ = 1, 0.1, 0.01:", [f"{e:.1e}" for e in errs])
 
 # B4: triangle (1,0,0) → (0,1,0) → (0,0,1), F = (y, z, x).
@@ -379,7 +380,7 @@ cases = {"centre (0,0,0.5), radius 1": ((0, 0, 0.5), 1.0, 4 * PI), "centre (0,0,
          "centre (2,2,0), radius 2": ((2, 2, 0), 2.0, 0.0)}
 for name, (cen, rad, want) in cases.items():
     val = flux_sphere(coulomb, cen, rad, 120)
-    assert abs(val - want) < 1e-6, (name, val)
+    assert abs(val - want) < 5e-9, (name, val)                 # Example 4.4: 4π or 0 to eight decimals
     print(f"  flux of r̂/r² through sphere {name}: {val:.8f}")
 print(f"Example 4.4: concentric spheres R = 0.01 … 1000 all give 4π = {4 * PI:.10f}")
 
@@ -423,7 +424,7 @@ lap_rad = lambda e: sp.diff(rs_**2 * sp.diff(e, rs_), rs_) / rs_**2
 assert zero(lap_rad(u_sig) + 4 * sp.pi * g_sig)                       # Example 4.5(b), exact
 
 def pair_u_with_test(u):
-    """⟨∇²u, φ⟩ = ∫ u ∇²φ dτ for the test function φ = e^{-r²}, ∇²φ = (4r² − 6)e^{-r²}."""
+    """⟨∇²u, ψ⟩ = ∫ u ∇²ψ dτ for the test function ψ = e^{-r²}, ∇²ψ = (4r² − 6)e^{-r²}."""
     return 4 * PI * quad(lambda r: r**2 * u(r) * (4 * r**2 - 6) * np.exp(-r**2), 0, np.inf, limit=200)[0]
 
 print("  σ      ⟨∇²u_σ, e^{-r²}⟩     −4π(1+2σ²)^(-3/2)")
@@ -433,7 +434,7 @@ for s in (0.5, 0.2, 0.1, 0.05):
     print(f"  {s:<5}  {val:.6f}          {-4 * PI * (1 + 2 * s**2) ** -1.5:.6f}")
 val0 = pair_u_with_test(lambda r: 1 / r)
 assert np.isclose(val0, -4 * PI)
-print(f"  σ → 0 (u = 1/r): ⟨∇²(1/r), φ⟩ = {val0:.10f} = −4πφ(0) = {-4 * PI:.10f}")
+print(f"  σ → 0 (u = 1/r): ⟨∇²(1/r), ψ⟩ = {val0:.10f} = −4πψ(0) = {-4 * PI:.10f}")
 print(f"Example 4.5: σ = 0.1 gives {-4 * PI * 1.02 ** -1.5:.4f}")
 
 eps_ = sp.symbols("epsilon", positive=True)
@@ -452,7 +453,7 @@ L7 = (sum(np.roll(fgrid, sft, ax) for ax in range(3) for sft in (1, -1)) - 6 * f
 rin = np.sqrt(GX**2 + GY**2 + GZ**2)[1:-1, 1:-1, 1:-1]
 total = L7.sum() * hgrid**3
 near = L7[rin < 4 * hgrid].sum() * hgrid**3
-assert abs(total + 4 * PI) < 1e-2 and abs(near / total - 1) < 0.02
+assert abs(total - (-12.568)) < 5e-4 and near / total > 0.998, (total, near / total)   # Example 4.5: −12.568, 99.9 % within 4h
 print(f"  7-point Laplacian of 1/r summed over the cube: {total:.5f} (−4π = {-4 * PI:.5f}); "
       f"fraction from r < 4h: {near / total:.4f}")
 
@@ -511,12 +512,11 @@ print("Example 4.7: F = (sin(x+y),0,0) splits as ½(sin, sin, 0) + ½(sin, −si
 noise = rng.standard_normal((3, n, n, n))
 Fr_ = ifftv(fftv(noise) * np.exp(-K2 / 8)[None]) + np.array([0.3, 0.0, -0.1])[:, None, None, None]
 par, perp, mean, U, W = helmholtz_fft(Fr_)
-scale = np.abs(Fr_).max()
 checks = {"curl(grad part)": np.abs(scurl(par)).max(), "div(curl part)": np.abs(sdiv(perp)).max(),
           "reassembly": np.abs(par + perp + mean - Fr_).max(), "−∇U − grad part": np.abs(-sgrad(U) - par).max(),
           "∇×W − curl part": np.abs(scurl(W) - perp).max(), "div W": np.abs(sdiv(W)).max(),
           "⟨grad part, curl part⟩": abs(np.mean(np.sum(par * perp, axis=0)))}
-assert all(val < 1e-10 * scale for val in checks.values()), checks
+assert all(val < 1e-13 for val in checks.values()), checks            # Example 4.7: every property to better than 1e-13
 print("Part 8 (random field): max residuals", {k: f"{v:.1e}" for k, v in checks.items()})
 print(f"  mean (k = 0) piece = {mean[:, 0, 0, 0].round(12)}; it is both div- and curl-free")
 

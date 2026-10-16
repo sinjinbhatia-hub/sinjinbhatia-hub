@@ -50,3 +50,16 @@ independently in `/tmp/claude-0/em2_check.py` (numpy/scipy) and compared with th
 
 No high- or medium-severity findings: no mathematical error, no wrong number, no weakened assert, no missing section,
 no incomplete solution, no convention inconsistency, no dubious attribution.
+
+## Resolution
+
+1. FIXED — notes.md line 95 now reads "previewing §3.7".
+2. FIXED — notes.md: (3.7) is now V = k∫ρ/𝓇 and (3.8) is V(b)−V(a) = −∫E·dl; all 17 references swapped and each
+   re-read in context (line-integral uses → (3.8); integral-formula uses → (3.7)). exercises.md/solutions.md unaffected.
+3. FIXED — project.py Part 5 header cites §3.10, Part 6 header cites §3.9.
+4. FIXED — notes.md §7 list relabelled Part 0 / Part 1 / Part 2 / Parts 3–4 / Part 5 / Part 6 / Parts 7–8.
+
+Re-run after fixes: `MPLBACKEND=Agg python3 project.py` exits 0 in 12.7 s; printed output identical to the pre-fix run
+except the timing line.
+
+STATUS: 4 issues found (0 high, 0 medium, 4 low), 4 fixed, 0 open; module passes.
