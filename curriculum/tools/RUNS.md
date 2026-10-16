@@ -55,4 +55,6 @@ Script: `curriculum/tools/build_modules_workflow.js`. Resume a run with
 |---|---|
 | wf_546d5cfa-8b9 | verify: LA-7, LA-8, LA-14, CM-5 (resumes saved review notes) |
 | wf_bd87d67d-5f5 | verify: EM-1, EM-2, EM-3, ST-1, ST-2 |
-| wf_e0130d6e-53e | combined: write EM-4..EM-7 |
+| wf_e0130d6e-53e | combined: write EM-4..EM-7 (stopped after ~10 min; replaced by Sonnet writers below) |
+| wf_bee1ea55-0fb | combined, writerModel=sonnet: write EM-4..EM-8, Fable review |
+| wf_f541add1-916 | write-only, writerModel=sonnet: ST-3..ST-6 (review deferred) |

@@ -10,7 +10,7 @@ export const meta = {
 
 const ROOT = '/home/user/sinjinbhatia-hub/curriculum'
 const modules = (args && args.modules) || []
-if (!modules.length) throw new Error('args.modules required: [{code, dir, brief, mode?}]')
+if (!modules.length) throw new Error('args.modules required: [{code, dir, brief, mode?}]; mode: undefined = write+review, "verify" = review only, "write" = write only (combined mode)')
 
 const WRITE_SCHEMA = {
   type: 'object',
@@ -145,6 +145,7 @@ const results = COMBINED ? await pipeline(
     : agent(writePrompt(m), { label: `write:${m.code}`, phase: 'Write', schema: WRITE_SCHEMA, ...WRITER_OPTS }),
   (w, m) => {
     if (!w) { log(`${m.code}: writer died; skipping review`); return null }
+    if (m.mode === 'write') { log(`${m.code}: written; review deferred`); return { w, rf: null } }
     return agent(reviewFixPrompt(m), { label: `review+fix:${m.code}`, phase: 'Verify', schema: REVIEWFIX_SCHEMA }).then(rf => ({ w, rf }))
   },
 ) : await pipeline(
@@ -171,7 +172,7 @@ const summary = modules.map((m, i) => {
     return {
       code: m.code,
       write: r.w ? (r.w.skipped_write ? 'pre-existing' : `${r.w.status}, script ${r.w.script_passes ? 'passes' : 'FAILS'}`) : 'n/a',
-      review: r.rf ? `${r.rf.issues_found} issues (${r.rf.high ?? '?'} high, ${r.rf.medium ?? '?'} medium), ${r.rf.fixed} fixed; script ${r.rf.script_passes ? 'passes' : 'FAILS'}${r.rf.not_fixed ? '; not fixed: ' + r.rf.not_fixed : ''}` : 'REVIEW DIED',
+      review: r.rf ? `${r.rf.issues_found} issues (${r.rf.high ?? '?'} high, ${r.rf.medium ?? '?'} medium), ${r.rf.fixed} fixed; script ${r.rf.script_passes ? 'passes' : 'FAILS'}${r.rf.not_fixed ? '; not fixed: ' + r.rf.not_fixed : ''}` : (m.mode === 'write' ? 'deferred (write-only mode)' : 'REVIEW DIED'),
       deviations: r.w && r.w.deviations ? r.w.deviations : '',
     }
   }
