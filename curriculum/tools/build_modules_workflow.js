@@ -136,11 +136,13 @@ Return the structured result: counts of issues found (and how many high/medium),
 }
 
 const COMBINED = !!(args && args.combined)
+// Optional cheaper model for writers (e.g. args.writerModel = 'sonnet'); reviewers keep the session model.
+const WRITER_OPTS = (args && args.writerModel) ? { model: args.writerModel } : {}
 const results = COMBINED ? await pipeline(
   modules,
   m => (m.mode === 'verify')
     ? Promise.resolve({ status: 'complete', script_passes: true, skipped_write: true })
-    : agent(writePrompt(m), { label: `write:${m.code}`, phase: 'Write', schema: WRITE_SCHEMA }),
+    : agent(writePrompt(m), { label: `write:${m.code}`, phase: 'Write', schema: WRITE_SCHEMA, ...WRITER_OPTS }),
   (w, m) => {
     if (!w) { log(`${m.code}: writer died; skipping review`); return null }
     return agent(reviewFixPrompt(m), { label: `review+fix:${m.code}`, phase: 'Verify', schema: REVIEWFIX_SCHEMA }).then(rf => ({ w, rf }))
@@ -149,7 +151,7 @@ const results = COMBINED ? await pipeline(
   modules,
   m => (m.mode === 'verify')
     ? Promise.resolve({ status: 'complete', script_passes: true, skipped_write: true })
-    : agent(writePrompt(m), { label: `write:${m.code}`, phase: 'Write', schema: WRITE_SCHEMA }),
+    : agent(writePrompt(m), { label: `write:${m.code}`, phase: 'Write', schema: WRITE_SCHEMA, ...WRITER_OPTS }),
   (w, m) => {
     if (!w) { log(`${m.code}: writer died; skipping verify`); return null }
     return agent(verifyPrompt(m), { label: `verify:${m.code}`, phase: 'Verify', schema: VERIFY_SCHEMA }).then(v => ({ w, v }))
