@@ -300,14 +300,14 @@ $$p(y\mid M)=\int p(y\mid\theta,M)\,p(\theta\mid M)\,d\theta, \tag{3.36}$$
 the likelihood *averaged over the prior*. By the chain rule of probability (F4 Theorem 3.5) $p(y)=\prod_ip(y_i\mid y_{<i})$, the product of one-step-ahead predictive densities (3.3): the evidence is the score a model earns for predicting each observation from the earlier ones, with no held-out set. The project verifies this for the NIG regression model of §3.11. The **Bayes factor** is $\mathrm{BF}_{10}=p(y\mid M_1)/p(y\mid M_0)$ and, by Bayes' theorem in odds form (F4 Theorem 3.6), posterior odds = $\mathrm{BF}_{10}\times$ prior odds. Verbal scales for $\mathrm{BF}$ are conventions, not theorems.
 
 **The Occam factor.** Suppose the posterior is near-Normal with width $\sigma_{\rm post}$ at its peak $\hat\theta$ (Laplace, one parameter). Then
-$$p(y\mid M)\approx\underbrace{p(y\mid\hat\theta)}_{\text{best fit}}\times\underbrace{p(\hat\theta)\sqrt{2\pi}\,\sigma_{\rm post}}_{\text{Occam factor}}\ =\ p(y\mid\hat\theta)\cdot\frac{\sqrt{2\pi}\,\sigma_{\rm post}}{\Delta}\ \ \text{(prior flat on width }\Delta). \tag{3.38}$$
+$$p(y\mid M)\approx\underbrace{p(y\mid\hat\theta)}_{\text{best fit}}\times\underbrace{p(\hat\theta)\sqrt{2\pi}\,\sigma_{\rm post}}_{\text{Occam factor}}\ =\ p(y\mid\hat\theta)\cdot\frac{\sqrt{2\pi}\,\sigma_{\rm post}}{\Delta}\ \ \text{(prior flat on width }\Delta). \tag{3.37}$$
 The Occam factor is the fraction of the prior's range that survives the data: posterior width over prior width. It is at most about 1, it shrinks with each parameter the data pin down, and a diffuse prior makes it smaller. MacKay's point: the penalty falls out of the integral; nobody adds it. For $d$ parameters the factors multiply. In the linear-Gaussian model this is exact, not approximate.
 
 **Theorem 3.14 (Evidence of Bayesian linear regression).** For $y=\Phi\beta+\varepsilon$, $\varepsilon\sim\mathcal N(0,\sigma^2I_n)$, $\beta\sim\mathcal N(0,\alpha^{-1}I_d)$, let $A=\alpha I+\Phi^\top\Phi/\sigma^2$ and $m=A^{-1}\Phi^\top y/\sigma^2$. Then
-$$\log p(y)=\underbrace{-\tfrac n2\log(2\pi\sigma^2)-\tfrac1{2\sigma^2}\|y-\Phi m\|^2}_{\text{fit}}\ \underbrace{-\tfrac\alpha2\|m\|^2+\tfrac d2\log\alpha-\tfrac12\log|A|}_{\text{log Occam factor}}, \tag{3.37}$$
+$$\log p(y)=\underbrace{-\tfrac n2\log(2\pi\sigma^2)-\tfrac1{2\sigma^2}\|y-\Phi m\|^2}_{\text{fit}}\ \underbrace{-\tfrac\alpha2\|m\|^2+\tfrac d2\log\alpha-\tfrac12\log|A|}_{\text{log Occam factor}}, \tag{3.38}$$
 and equivalently $y\sim\mathcal N(0,\ \sigma^2I+\alpha^{-1}\Phi\Phi^\top)$.
 
-*Proof.* $g(\beta)=\log p(y\mid\beta)+\log p(\beta)$ is an exact quadratic in $\beta$ with Hessian $-A$ and maximizer $m$ (Theorem 3.13), so $g(\beta)=g(m)-\frac12(\beta-m)^\top A(\beta-m)$ with no remainder. Integrating $e^{g}$ gives $e^{g(m)}(2\pi)^{d/2}|A|^{-1/2}$. Write out $g(m)=-\frac n2\log(2\pi\sigma^2)-\frac1{2\sigma^2}\|y-\Phi m\|^2+\frac d2\log\frac\alpha{2\pi}-\frac\alpha2\|m\|^2$ and combine the $(2\pi)^{d/2}$: (3.37). The second form: $y=\Phi\beta+\varepsilon$ is a linear map of Gaussians (F5 Theorem 3.22). ∎
+*Proof.* $g(\beta)=\log p(y\mid\beta)+\log p(\beta)$ is an exact quadratic in $\beta$ with Hessian $-A$ and maximizer $m$ (Theorem 3.13), so $g(\beta)=g(m)-\frac12(\beta-m)^\top A(\beta-m)$ with no remainder. Integrating $e^{g}$ gives $e^{g(m)}(2\pi)^{d/2}|A|^{-1/2}$. Write out $g(m)=-\frac n2\log(2\pi\sigma^2)-\frac1{2\sigma^2}\|y-\Phi m\|^2+\frac d2\log\frac\alpha{2\pi}-\frac\alpha2\|m\|^2$ and combine the $(2\pi)^{d/2}$: (3.38). The second form: $y=\Phi\beta+\varepsilon$ is a linear map of Gaussians (F5 Theorem 3.22). ∎
 
 For unknown $\sigma^2$ with the NIG prior, the evidence is $\log p(y)=\log\frac{\Gamma(a_n)}{\Gamma(a_0)}+\frac12\log\frac{|V_n|}{|V_0|}+a_0\log b_0-a_n\log b_n-\frac n2\log2\pi$, again a ratio of normalizers (§3.1 (ii)). $\qquad(3.39)$
 
@@ -361,7 +361,7 @@ ST-3's five points centered: $x_c=(-2,-1,0,1,2)$, $y_c=(-2,0,1,0,1)$, so $S_{xx}
 
 ### Example 4.7: Bayesian regression on five points (Part 8)
 
-ST-3 Example 4.1: $x=1,\dots,5$, $y=(2,4,5,4,5)$, design $[\mathbf 1,x]$, treat $\sigma^2=0.8$ as known, prior $\beta\sim\mathcal N(0,10I)$ ($\lambda=0.08$). From (3.30): posterior mean $(2.0363,\ 0.6437)$ (OLS: $(2.2,\ 0.6)$), sd $(0.897,\ 0.272)$. The posterior mean equals the ridge solution (3.31), the minimizer of $-\log$ posterior, and the F5 conditional formula, all asserted. Predictive (3.32) at the interpolation point $x_*=3$: mean $3.967$, variance $0.958$ (sd $0.98$). At the extrapolation point $x_*=8$: mean $7.186$, variance $2.847$ (sd $1.69$), three times larger. In the flat-prior limit the variances are $0.8(1+h_*)$ with $h_*=\frac15+\frac{(x_*-3)^2}{10}=0.2,\ 2.7$, i.e. $0.96$ and $2.96$, ST-3's prediction variance. The 50 posterior lines fan out away from $x=3$ and the $\pm2$ sd band flares. With unknown $\sigma^2$ the predictive is a $t$ (3.33), checked by Monte Carlo, and (3.39) equals the product of one-step predictive densities.
+ST-3 Example 4.1: $x=1,\dots,5$, $y=(2,4,5,4,5)$, design $[\mathbf 1,x]$, treat $\sigma^2=0.8$ as known, prior $\beta\sim\mathcal N(0,10I)$ ($\lambda=0.08$). From (3.30): posterior mean $(2.0363,\ 0.6437)$ (OLS: $(2.2,\ 0.6)$), sd $(0.897,\ 0.272)$. The posterior mean equals the ridge solution (3.31), the minimizer of $-\log$ posterior, and the F5 conditional formula, all asserted. Predictive (3.32) at the interpolation point $x_*=3$: mean $3.967$, variance $0.958$ (sd $0.98$). At the extrapolation point $x_*=8$: mean $7.186$, variance $2.847$ (sd $1.69$), three times larger. In the flat-prior limit the variances are $0.8(1+h_*)$ with $h_*=\frac15+\frac{(x_*-3)^2}{10}=0.2,\ 2.7$, i.e. $0.96$ and $2.96$, ST-3's prediction variance. The 50 posterior lines fan out away from $x=3$ and the $\pm2$ sd band flares. With unknown $\sigma^2$ the predictive is a $t$ (3.33), and the project checks that the closed-form evidence (3.39) equals the product of the five one-step $t$ predictives, which tests both formulas at once.
 
 ### Example 4.8: Laplace approximation, logistic regression (Part 9)
 
@@ -369,7 +369,7 @@ ST-3 Example 4.1: $x=1,\dots,5$, $y=(2,4,5,4,5)$, design $[\mathbf 1,x]$, treat 
 
 ### Example 4.9: Evidence picks the degree (Part 10)
 
-Thirty points from $y=0.5+x-2x^2+\mathcal N(0,0.3^2)$ on $[-1,1]$; polynomial models of degree 0 to 7 with prior $\beta\sim\mathcal N(0,2I)$ and known $\sigma=0.3$. Closed form (3.37), cross-checked against the multivariate Normal density:
+Thirty points from $y=0.5+x-2x^2+\mathcal N(0,0.3^2)$ on $[-1,1]$; polynomial models of degree 0 to 7 with prior $\beta\sim\mathcal N(0,2I)$ and known $\sigma=0.3$. Closed form (3.38), cross-checked against the multivariate Normal density:
 
 | degree | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 |---|---|---|---|---|---|---|---|---|
@@ -399,7 +399,7 @@ Nine heads and three tails. *Plan A,* 12 flips: $P(Y\ge9\mid p=\frac12)=0.0730$.
 - **ML-4 (Gaussian processes).** §3.11's predictive (3.32) with $\phi(x)$ infinite-dimensional is GP regression; the kernel is $k(x,x')=\phi(x)^\top\Sigma_0\phi(x')$. ST-3's kernel ridge regression is the posterior *mean*; the variance flaring away from data is what the Bayesian view adds. GP classification uses the Laplace approximation (3.34)–(3.35).
 - **ML-1, ML-2, ML-3.** An $\ell^2$ penalty is a Gaussian prior (3.27) and weight decay is its gradient; $\ell^1$ is a Laplace prior (3.28); cross-entropy loss is ST-4's negative log-likelihood.
 - **ML-10 (VAEs, the ELBO).** The evidence (3.36) is the quantity a latent-variable model maximizes; when the integral is intractable one maximizes a lower bound on $\log p(y)$ and the gap is a KL divergence (F5 Definition 3.44) between an approximate and the true posterior.
-- **SM-4 (canonical ensemble).** The conjugate normalizer $Z(\chi,\nu)$ in (3.18) is a partition function; the evidence is a ratio of partition functions, $Z(\chi',\nu')/Z(\chi,\nu)$, and $\ln Z$ differences are free energies. The Occam factor (3.38) is a ratio of phase-space volumes: the volume of parameter space consistent with the data over the volume the prior allowed.
+- **SM-4 (canonical ensemble).** The conjugate normalizer $Z(\chi,\nu)$ in (3.18) is a partition function; the evidence is a ratio of partition functions, $Z(\chi',\nu')/Z(\chi,\nu)$, and $\ln Z$ differences are free energies. The Occam factor (3.37) is a ratio of phase-space volumes: the volume of parameter space consistent with the data over the volume the prior allowed.
 - **ST-8 (state-space models).** The Kalman filter is (3.10) and (3.30) applied one observation at a time; sequential equals batch (§3.1) is why it works.
 - **ST-9 (causal inference).** A prior does not remove confounding. Bayesian regression of $y$ on $x$ is exactly as causal as OLS.
 
@@ -425,20 +425,18 @@ See [exercises.md](exercises.md): 16 problems. A1–A5 are drills (each family's
 
 ## 9. Check yourself
 
-1. State the posterior, the evidence, and the posterior predictive for parameters, as integrals of the prior and likelihood.
-2. Beta(α₀,β₀) prior, $y$ successes in $n$ trials: posterior, mean, and the weight on the data. What is $\alpha_0+\beta_0$ in words?
-3. Why is the Beta–Binomial predictive for $m$ future trials more spread out than Binomial$(m,\hat p)$?
-4. State the Normal–Normal update. What adds? What is $n_0$?
-5. What is the posterior of $\mu$ under the reference prior $p(\mu,\sigma^2)\propto\sigma^{-2}$, and how does its 95% interval compare with ST-2's? What differs in interpretation?
-6. State the exponential-family conjugate update. What do $\chi$ and $\nu$ mean? Verify it for Poisson–Gamma.
-7. Derive the density on the logit scale of a uniform prior on $p$. What does it tell you about "flat"?
-8. Define Jeffreys' prior and prove it is invariant under reparametrization. What is it for Bernoulli?
-9. What is the guarantee in Theorem 3.10, and why is it not a statement about a fixed $\theta$?
-10. Prove the posterior mean minimizes expected squared error. What is the Bayes risk of the posterior mean?
-11. Which prior makes MAP equal ridge, and what is $\lambda$ in terms of the variances?
-12. Give the Bayesian linear regression posterior and the predictive variance. Why does the band widen away from the data?
-13. What is the Occam factor, and why does the evidence penalize complexity without a penalty term?
-14. State the Jeffreys–Lindley paradox and explain why a significant $p$-value and a Bayes factor for $H_0$ can both be right.
+1. State the posterior, the evidence, and the posterior predictive as integrals of the prior and likelihood.
+2. Beta(α₀,β₀) prior, $y$ successes in $n$ trials: give the posterior, its mean, and the weight on the data. What is $\alpha_0+\beta_0$ in words? Why is the predictive for $m$ future trials more spread out than Binomial$(m,\hat p)$?
+3. State the Normal–Normal update. What adds? What is $n_0$?
+4. What is the posterior of $\mu$ under $p(\mu,\sigma^2)\propto\sigma^{-2}$, how does its 95% interval compare with ST-2's, and what differs in interpretation?
+5. State the exponential-family conjugate update. What do $\chi$ and $\nu$ mean? Verify it for Poisson–Gamma.
+6. Derive the logit-scale density of a uniform prior on $p$. What does it say about "flat"?
+7. Define Jeffreys' prior, prove it is invariant under reparametrization, and give it for Bernoulli.
+8. What is the guarantee in Theorem 3.10, and why is it not a statement about a fixed $\theta$?
+9. Prove the posterior mean minimizes expected squared error. Which prior makes MAP equal ridge, and what is $\lambda$?
+10. Give the Bayesian linear regression posterior and predictive variance. Why does the band widen away from the data?
+11. What is the Occam factor, and why does the evidence penalize complexity without a penalty term?
+12. State the Jeffreys–Lindley paradox and explain why a significant $p$-value and a Bayes factor favoring $H_0$ can both be right.
 
 ## 10. Pair with
 
