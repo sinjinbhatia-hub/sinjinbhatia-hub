@@ -218,8 +218,8 @@ Derivation: by (3.24), $X(\hat{\boldsymbol\beta}-\hat{\boldsymbol\beta}_{(i)})=X
 | $r_i^2$ vs $h_{ii}$, and $D_i$ | points far up or right | outlier, leverage, influence (above) |
 
 **Heteroscedasticity.** Suppose $\operatorname{Var}(\boldsymbol\varepsilon)=\Sigma=\operatorname{diag}(\sigma_i^2)$. Step 2 of Theorem 3.5 did not use (A3), so $\hat{\boldsymbol\beta}$ is still unbiased. Its variance, however, is
-$$\operatorname{Var}(\hat{\boldsymbol\beta})=(X^\top X)^{-1}X^\top\Sigma X(X^\top X)^{-1}=\Big(\sum_i\mathbf w_i\ \text{rows}\Big),\ \ \text{i.e. for coefficient } j:\ \sum_iw_{ji}^2\sigma_i^2, \tag{3.28}$$
-where $w_{ji}$ is entry $i$ of row $j$ of $(X^\top X)^{-1}X^\top$ (use (3.10): $\hat\beta_j-\beta_j=\sum_iw_{ji}\varepsilon_i$). The textbook $\sigma^2(X^\top X)^{-1}$ is simply the wrong number, so $t$ intervals mis-cover. The **sandwich (Huber–White) estimator** replaces each unknown $\sigma_i^2$ by $e_i^2$:
+$$\operatorname{Var}(\hat{\boldsymbol\beta})=(X^\top X)^{-1}X^\top\Sigma X(X^\top X)^{-1},\qquad\operatorname{Var}(\hat\beta_j)=\sum_iw_{ji}^2\sigma_i^2, \tag{3.28}$$
+where $w_{ji}$ is entry $i$ of row $j$ of $(X^\top X)^{-1}X^\top$, so that (3.10) reads $\hat\beta_j-\beta_j=\sum_iw_{ji}\varepsilon_i$ (the matrix form is F5 Theorem 3.19 applied to (3.10); the scalar form is the variance of a weighted sum of uncorrelated terms). The textbook $\sigma^2(X^\top X)^{-1}$ is simply the wrong number, so $t$ intervals mis-cover. The **sandwich (Huber–White) estimator** replaces each unknown $\sigma_i^2$ by $e_i^2$:
 $$\widehat{\operatorname{Var}}_{\rm HC0}(\hat\beta_j)=\sum_iw_{ji}^2e_i^2.\tag{3.29}$$
 It is consistent because $e_i\approx\varepsilon_i$; HC3 uses the leave-one-out residuals $(e_i/(1-h_{ii}))^2$ from (3.25), the finite-sample repair. In the project, the error standard deviation grows like $x^2$ ($n=60$): the naive 95% slope interval covers 0.894 of the time, HC0 covers 0.934, HC3 0.943. The naive formula averages a variance of 0.092 where the truth is 0.134.
 
@@ -461,8 +461,7 @@ See [exercises.md](exercises.md). A1–A6 are drills: simple regression, leverag
 10. Give the leave-one-out identity for the prediction error and the formula for Cook's distance. What are its two factors?
 11. How does the SVD of $X$ show that nearly collinear predictors have large variance but no bias? What is the variance of $\mathbf v_p^\top\hat{\boldsymbol\beta}$?
 12. Write the ridge solution in the SVD basis. By what factor does it shrink the $i$th direction? Prove that some $\lambda>0$ beats OLS in MSE.
-13. Derive soft-thresholding. Why does the lasso give exact zeros and ridge does not?
-14. Give the KKT conditions for the lasso and the formula for $\lambda_{\max}$.
+13. Derive soft-thresholding. Why does the lasso give exact zeros and ridge does not? Give the optimality conditions (3.45) and the formula for $\lambda_{\max}$.
 
 ## 10. Pair with
 

@@ -114,7 +114,7 @@ $$B_z = B_0\left[1 - \tfrac{144}{125}(z/R)^4 + \cdots\right],\qquad B_0 = (4/5)^
 with the coefficient derived symbolically in the project. With *opposite* currents and $d = \sqrt3R$ the third derivative cancels instead, giving a clean linear gradient (Exercise B3).
 
 **Parallel wires.** Wire 1 (current $I_1$ along $+z$) makes $B = \mu_0I_1/2\pi d$ circling it, perpendicular to wire 2 at distance $d$. By (3.6) the force per length on wire 2 (current $I_2$ along $+z$) has magnitude $I_2B$ and points toward wire 1:
-$$\frac{F}{L} = \frac{\mu_0I_1I_2}{2\pi d}\quad(\text{attractive for parallel currents}). \tag{3.16}$$
+$$\frac{F}{L} = \frac{\mu_0I_1I_2}{2\pi d}\quad(\text{attractive for parallel currents}). \tag{3.17}$$
 For $1$ A each at $1$ m this is $2\times10^{-7}$ N/m. Until 2019 that *defined* the ampere and fixed $\mu_0 = 4\pi\times10^{-7}$ N/A² exactly. Since 20 May 2019 the ampere is defined by fixing the elementary charge $e$; $\mu_0$ is measured and equals $4\pi\times10^{-7}$ to better than $10^{-9}$ (the project uses SciPy's value).
 
 ### 3.5 The divergence and curl of $\mathbf B$
@@ -378,7 +378,7 @@ Square C-core, $20$ cm outside, $4$ cm legs, mean path $l = 0.636$ m (gap remove
 ### Example 4.7: Three problems with matter (Part 5)
 (a) *Iron-filled solenoid.* $n = 1000$ /m, $I = 0.1$ A, $\mu_r = 2000$. $H = nI = 100$ A/m regardless of the filling; $B = \mu H = 0.2513$ T (empty: $0.126$ mT); $M = (\mu_r - 1)H = 1.999\times10^5$ A/m $= K_b$, which is $1999$ times the free $K$ and parallel to it. Aluminium ($\chi_m = 2.1\times10^{-5}$) gives $K_b = 2.1$ mA/m, same sign; a diamagnet's is antiparallel.
 (b) *Toroid.* $N = 500$, $I = 0.5$ A, mean radius $10$ cm, $\mu_r = 2000$: $H = NI/2\pi s = 397.9$ A/m, $B = 1.000$ T, $M = 7.954\times10^5$ A/m. Across an $8$–$12$ cm section $B$ falls by $1.5$ from inner to outer edge, and the mean-radius flux estimate is $1.35\%$ below the exact $\ln1.5$ result (Your turn 2).
-(c) *Magnetized cylinder.* $R = 5$ mm, $L = 20$ mm, $M = 10^6$ A/m. On the end faces $\mathbf M\parallel\hat{\mathbf n}$ so $\mathbf K_b = 0$; on the side $\mathbf K_b = M\hat{\boldsymbol\phi}$, a solenoid with $nI = M$. By (3.14), $B(\text{centre}) = \mu_0M(L/2)/\sqrt{R^2 + L^2/4} = 1.1240$ T (Biot–Savart: $1.1243$ T), below the long-rod limit $\mu_0M = 1.2566$ T; at the centre of an end face $B = \tfrac12\mu_0ML/\sqrt{R^2 + L^2} = 0.6094$ T (Exercise B6).
+(c) *Magnetized cylinder.* $R = 5$ mm, $L = 20$ mm, $M = 10^6$ A/m. On the end faces $\mathbf M\parallel\hat{\mathbf n}$ so $\mathbf K_b = 0$; on the side $\mathbf K_b = M\hat{\boldsymbol\phi}$, a solenoid with $nI = M$. By (3.14), $B(\text{centre}) = \mu_0M(L/2)/\sqrt{R^2 + L^2/4} = 1.1240$ T (Biot–Savart: $1.1243$ T), below the long-rod limit $\mu_0M = 1.2566$ T; at the centre of an end face $B = \tfrac12\mu_0ML/\sqrt{R^2 + L^2} = 0.6096$ T, where $H$ jumps from $-5.149\times10^5$ (inside) to $+4.851\times10^5$ A/m (Exercise B6).
 
 ## 5. Why it matters and where it connects
 
@@ -390,7 +390,7 @@ Square C-core, $20$ cm outside, $4$ cm legs, mean path $l = 0.636$ m (gap remove
 
 ## 6. Exercises
 
-See [exercises.md](exercises.md). A1–A5: cyclotron numbers, a straight wire and the force between wires, a coil on axis, a toroid, units and the right-hand rule. B1–B8: B1 (surface independence of $I_{\rm enc}$), B3 (anti-Helmholtz), B5 (the sheet's $\mathbf A$ and boundary conditions), B6 (magnetized cylinder with $\mathbf B$ and $\mathbf H$) and B8 (`project.py` extension) are essential. C1–C3: the delta term in the dipole field, a saturating core, and demagnetizing a Preisach ensemble.
+See [exercises.md](exercises.md). A1–A5: cyclotron numbers, wires, a coil on axis, a toroid, units and the right-hand rule. B1–B8: B1 (surface independence of $I_{\rm enc}$), B3 (anti-Helmholtz), B5 (the sheet's $\mathbf A$), B6 (magnetized cylinder, $\mathbf B$ and $\mathbf H$) and B8 (`project.py`: force and torque on a small loop) are essential; B2 (non-uniform $\mathbf J$), B4 (two gauges) and B7 (a permeable wire's bound currents) are drills. C1–C3: the delta term in the dipole field, a saturating core, demagnetizing a Preisach ensemble.
 
 ## 7. Coding project
 
@@ -425,6 +425,6 @@ See [exercises.md](exercises.md). A1–A5: cyclotron numbers, a straight wire an
 
 ## 10. Pair with
 
-- **Griffiths, *Introduction to Electrodynamics*, ch. 5–6.** The same order and nearly the same derivations; ch. 5 is where (3.5)'s curl computation and the spinning shell come from, ch. 6 matches §3.13–3.15. Griffiths is better on worked problems and on the figures of the right-hand rule.
+- **Griffiths, *Introduction to Electrodynamics*, ch. 5–6.** The same order and nearly the same derivations; ch. 5 is where §3.5's curl computation and the spinning shell come from, ch. 6 matches §3.13–3.15. Griffiths is better on worked problems and on the figures of the right-hand rule.
 - **Purcell and Morin, *Electricity and Magnetism*, ch. 6 and ch. 11.** Magnetism derived as a relativistic consequence of the electric force on moving charges (read for intuition, e.g. why Example 4.3 is $c^{-2}$ small), and a long treatment of matter.
 - **MIT 8.07 notes, lectures 10–14.** A more compact, more mathematical presentation of the vector potential, gauge choice and the multipole expansion; good as a second pass.
