@@ -538,14 +538,14 @@ for dg in degs:
     bhat = np.linalg.lstsq(Phi, yp, rcond=None)[0]
     ll_hat = stats.norm.logpdf(yp, Phi @ bhat, sig_n).sum()
     bic = -2 * ll_hat + (dg + 1) * np.log(xp.size)
-    rows.append((dg, le, ll_hat, -bic / 2, occam))
+    rows.append((dg, le, ll_hat, -bic / 2, occam, fit))
 R = np.array(rows)
 assert int(R[:, 1].argmax()) == 2 and int((R[:, 3]).argmax()) == 2      # evidence and BIC both peak at the true degree
 assert np.all(np.diff(R[:, 2]) >= -1e-9)                                # the maximized likelihood never decreases
-assert np.all(np.diff(R[1:, 4]) < 0)                                    # the Occam term only gets worse past degree 1
-print("Ex 4.9: degree, log evidence, max log-lik, -BIC/2, log Occam factor")
+assert np.all(np.diff(R[:, 4]) < 0) and np.allclose(R[:, 1], R[:, 4] + R[:, 5])   # Occam term only worsens; evidence = fit + Occam
+print("Ex 4.9: degree | log evidence | max log-lik | -BIC/2 | log Occam | fit at posterior mean")
 for r_ in R:
-    print(f"  d={int(r_[0])}: {r_[1]:8.2f} {r_[2]:8.2f} {r_[3]:8.2f} {r_[4]:8.2f}")
+    print(f"  d={int(r_[0])}: " + " ".join(f"{v:8.2f}" for v in r_[1:]))
 fig, ax = plt.subplots(figsize=(6.5, 4))
 ax.plot(degs, R[:, 2], "o-", label="max log-likelihood"); ax.plot(degs, R[:, 1], "s-", label="log evidence"); ax.plot(degs, R[:, 3], "^--", label="-BIC/2")
 ax.set(xlabel="polynomial degree", title="evidence peaks at the true degree (2)"); ax.legend()
@@ -602,7 +602,7 @@ normal_data = rng.normal(0, 1, 60)
 p_sk, T_sk = ppc_pvalue(skewed, stats.skew)
 p_no, _ = ppc_pvalue(normal_data, stats.skew)
 print(f"Ex 4.11: skewness check, lognormal data: observed {stats.skew(skewed):.3f}, p_B={p_sk:.4f}; Normal data: p_B={p_no:.3f}")
-assert p_sk < 0.005 and 0.05 < p_no < 0.95
+assert p_sk == 0.0 and 0.05 < p_no < 0.95        # none of 4000 replicates is as skewed as the data
 fig, ax = plt.subplots(figsize=(6, 3.5))
 ax.hist(T_sk, 60, alpha=.6); ax.axvline(stats.skew(skewed), c="r"); ax.set_title("replicated skewness vs observed (red)")
 fig.tight_layout(); fig.savefig(FIG / "p12_ppc.png", dpi=110); plt.close(fig)
