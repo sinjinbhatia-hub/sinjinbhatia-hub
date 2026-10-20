@@ -18,7 +18,7 @@ Fisher's *Statistical Methods for Research Workers* (1925) made significance tes
 
 Jerzy Neyman and Egon Pearson asked a different question: among procedures with a fixed false-alarm rate, which detects real effects most often? Their 1933 paper (*Phil. Trans. R. Soc. A*) introduced the alternative hypothesis, the two error types, power, and the lemma of §3.5. Neyman's 1937 paper defined the confidence interval by its long-run coverage. Fisher attacked the framework for the rest of his life. Textbooks then fused the two: Fisher's p-value compared with Neyman's fixed α, with power computed only when a grant application demands it. Neither man endorsed the hybrid.
 
-Two later events matter. Bradley Efron's "Bootstrap methods: another look at the jackknife" (*Annals of Statistics*, 1979) replaced analytic sampling distributions by resampling on a computer, so an interval can be attached to a median, a correlation, or a 500-line pipeline. The replication crisis, from John Ioannidis's "Why most published research findings are false" (*PLoS Medicine*, 2005) to the Open Science Collaboration's 2015 attempt to replicate 100 psychology studies (97% of the originals were significant, 36% of the replications), showed what the hybrid does when combined with low power, flexible analysis and a publication filter. In 2016 the American Statistical Association published a statement on p-values (Wasserstein and Lazar), the first time it had taken a position on a specific matter of statistical practice.
+Two later events matter. Bradley Efron's "Bootstrap methods: another look at the jackknife" (*Annals of Statistics*, 1979) replaced analytic sampling distributions by resampling on a computer, so an interval can be attached to a median, a correlation, or a 500-line pipeline. The replication crisis, from John Ioannidis's "Why most published research findings are false" (*PLoS Medicine*, 2005) to the Open Science Collaboration's 2015 attempt to replicate 100 psychology studies (97% of the originals were significant, 36% of the replications), showed what the hybrid does when combined with low power, flexible analysis and a publication filter. In 2016 the American Statistical Association published a statement on p-values (Wasserstein and Lazar), by its own account the first time it had issued explicit recommendations on a specific matter of statistical practice.
 
 The forcing problem: every estimate needs an honest uncertainty, and every decision between hypotheses needs a calibrated procedure. "Calibrated" means "over hypothetical repetitions of the experiment," and almost everyone misreads that.
 
@@ -68,7 +68,7 @@ $$\bar X\sim\mathcal N(\mu,\sigma^2/n),\qquad (n-1)S^2/\sigma^2\sim\chi^2_{n-1}.
 5. Its squared length, by Pythagoras for orthonormal vectors (LA-5 Theorem 3.2): $(n-1)S^2 = \|\mathbf X-\bar X\mathbf 1\|^2 = \sigma^2\sum_{i=2}^nW_i^2$. A sum of $n-1$ squared iid standard Normals is $\chi^2_{n-1}$ (F5 §3.5). That is (b).
 6. $\bar X$ is a function of $W_1$ alone and $S^2$ of $W_2,\dots,W_n$ alone, so they are independent. That is (c). ∎
 
-■ **What just happened.** The data vector splits into a component along $\mathbf 1$ (one dimension: the mean) and a component perpendicular to it ($n-1$ dimensions: the spread). Spherical Gaussian noise does not care which axes you use, so the components are independent. **Degrees of freedom are the dimension of the subspace the residual lives in.** You lose one because you projected out one direction; ST-3 projects out $p$ and gets $n-p$. Part (c) is special to the Normal: for Exponential data the project finds $\operatorname{corr}(\bar X,S^2)\approx0.68$.
+■ **What just happened.** The data vector splits into a component along $\mathbf 1$ (one dimension: the mean) and a component perpendicular to it ($n-1$ dimensions: the spread). Spherical Gaussian noise does not care which axes you use, so the components are independent. **Degrees of freedom are the dimension of the subspace the residual lives in.** You lose one because you projected out one direction; ST-3 projects out $p$ and gets $n-p$. Part (c) is special to the Normal: for Exponential data at $n = 5$ the project finds $\operatorname{corr}(\bar X,S^2)\approx0.68$ (exactly $2\sqrt{(n-1)/(8n-6)} = 0.686$, from $\operatorname{Cov}(\bar X,S^2) = \mu_3/n$; it tends to $1/\sqrt2$ as $n\to\infty$).
 
 **Definition 3.2 ($t$ and $F$).** If $Z\sim\mathcal N(0,1)$ and $V\sim\chi^2_k$ are independent,
 $$T = \frac{Z}{\sqrt{V/k}}\sim t_k. \tag{3.2}$$
@@ -116,7 +116,7 @@ A level-α test of $H_0:\theta = \theta_0$ is described by its **acceptance regi
 
 *Proof.* (a) By construction $\theta\in C(\mathbf X)$ iff $\mathbf X\in A(\theta)$, so $P_\theta(\theta\in C(\mathbf X)) = P_\theta(\mathbf X\in A(\theta))\ge1-\alpha$ for every θ. (b) $P_{\theta_0}(\text{reject}) = P_{\theta_0}(\theta_0\notin C(\mathbf X))\le\alpha$ by the coverage of $C$ at $\theta_0$. ∎
 
-The $t$ interval is the set of $\mu_0$ the two-sided $t$ test does not reject, and Wilson is the inverted score test: "is $\mu_0$ in the 95% interval?" and "is $p\ge0.05$?" are one question.
+The $t$ interval is the set of $\mu_0$ the two-sided $t$ test does not reject, and Wilson is the inverted score test: "is $\mu_0$ in the 95% interval?" and "is $p>0.05$?" are one question.
 
 ### 3.4 The bootstrap and the permutation test
 
@@ -145,7 +145,7 @@ $$P^*(\hat\theta^* = \hat\theta) = 1-(1-1/n)^n\to1-e^{-1}\approx0.632. \tag{3.11
 
 ■ **What just happened.** The maximum depends on $F$ only through the edge of its support, and $\hat F_n$ has nothing beyond $X_{(n)}$. Smoothness in $F$ is what the bootstrap needs, and the maximum does not have it. Here an exact pivot exists: $X_{(n)}/\theta\sim\mathrm{Beta}(n,1)$, so $[X_{(n)},X_{(n)}/\alpha^{1/n}]$ has coverage exactly $1-\alpha$ (0.948 in the project's 1,000 replications). Other failures: **heavy tails** (with infinite variance the bootstrap of the mean is inconsistent), **dependent data** (resampling points destroys the dependence; block bootstraps resample stretches), and **small $n$** (Example 4.4's bootstrap distribution of a median sits on three or four values).
 
-**The jackknife** (Quenouille 1949, Tukey 1958), the bootstrap's ancestor, recomputes $\hat\theta_{(-i)}$ without observation $i$ and estimates ${\rm se}^2$ by $\frac{n-1}{n}\sum_i(\hat\theta_{(-i)}-\bar\theta_{(\cdot)})^2$. It agrees with the bootstrap for smooth statistics and is inconsistent for the median, which takes only two values when one point is deleted.
+**The jackknife** (Quenouille 1949, Tukey 1958), the bootstrap's ancestor, recomputes $\hat\theta_{(-i)}$ without observation $i$ and estimates ${\rm se}^2$ by $\frac{n-1}{n}\sum_i(\hat\theta_{(-i)}-\bar\theta_{(\cdot)})^2$. It agrees with the bootstrap for smooth statistics and is inconsistent for the median, which takes only two values (three when $n$ is odd) when one point is deleted.
 
 **Permutation tests.** Two samples $X_1..X_m\sim F$, $Y_1..Y_n\sim G$; test $H_0:F = G$ with a statistic such as $T = \bar X-\bar Y$. Let $N = m+n$.
 
@@ -281,7 +281,7 @@ Test $H_1,\dots,H_m$ with p-values $p_1,\dots,p_m$; the true nulls form the set 
 
 **Theorem 3.12 (Bonferroni).** Rejecting $H_i$ iff $p_i\le\alpha/m$ gives ${\rm FWER}\le\alpha$, whatever the dependence between tests.
 
-*Proof.* ${\rm FWER} = P\big(\bigcup_{i\in\mathcal I_0}\{p_i\le\alpha/m\}\big)\le\sum_{i\in\mathcal I_0}P(p_i\le\alpha/m)\le m_0\alpha/m\le\alpha$, by the union bound (F4 Theorem 3.4) and Theorem 3.11. ∎
+*Proof.* ${\rm FWER} = P\big(\bigcup_{i\in\mathcal I_0}\{p_i\le\alpha/m\}\big)\le\sum_{i\in\mathcal I_0}P(p_i\le\alpha/m)\le m_0\alpha/m\le\alpha$, by the union bound ($P(A\cup B)\le P(A)+P(B)$, F4 Theorem 3.4(4), applied $m_0-1$ times) and Theorem 3.11. ∎
 
 **Holm (1979)**, step-down: sort $p_{(1)}\le\cdots\le p_{(m)}$; reject $H_{(1)}$ if $p_{(1)}\le\alpha/m$, then $H_{(2)}$ if $p_{(2)}\le\alpha/(m-1)$, and so on, stopping at the first failure. It controls FWER at α under any dependence (exercise B6 proves it), and since its first threshold is Bonferroni's and the rest are larger, it rejects everything Bonferroni does. There is no reason to use plain Bonferroni except arithmetic.
 
@@ -339,7 +339,7 @@ A pendulum lab gives ten measurements of $g$ (m/s²): 9.79, 9.83, 9.76, 9.85, 9.
 - $t_{9,0.025} = 2.2622$, so the half-width is $2.2622\times0.01318 = 0.0298$.
 - 95% interval for μ: $[9.7762,\ 9.8358]$ m/s².
 
-It came from a procedure that covers the true $g$ in 95% of repetitions; that is all the 95% says. Using 1.96 in place of 2.262 gives the "z with $S$" interval, whose coverage at $n = 10$ the project measures as 0.912.
+It came from a procedure that covers the true $g$ in 95% of repetitions; that is all the 95% says. Using 1.96 in place of 2.262 gives the "z with $S$" interval, whose coverage at $n = 10$ is $P(|t_9|\le1.960) = 0.918$, not 0.95 (the project's $10^4$ replications give 0.912).
 
 For σ, (3.4) with $\chi^2_{9,0.025} = 19.023$ and $\chi^2_{9,0.975} = 2.700$ gives $\sigma^2\in[0.01564/19.023,\ 0.01564/2.700]$, so $\sigma\in[0.0287,\ 0.0761]$ m/s². Ten points pin down a mean far better than a spread.
 
@@ -424,7 +424,7 @@ See [exercises.md](exercises.md). A1–A6 drill the pivot intervals, Wilson at $
 
 ## 7. Coding project
 
-`project.py` checks every promise in this module by brute force, in nine parts: (1) Example 4.1's rotation and simulated $\chi^2_4$, $t_4$ against SciPy, with $\operatorname{corr}(\bar X,S^2)\approx0$ for Normal data and 0.68 for Exponential; (2) coverage of $z$, $t$ and "z with $S$" intervals ($10^4$ replications) and of Wald and Wilson by exact enumeration, with coverage curves over $p$; (3) a bootstrap library (`bootstrap_se`, `bootstrap_ci` with normal, percentile, basic) on the mean, median and correlation with coverage by simulation, Example 4.4 against the exact ideal bootstrap, and the maximum's 0.632 atom and zero coverage; (4) a permutation test over all 924 relabelings; (5) Example 4.5, power curves from the noncentral $t$, Example 4.8; (6) Example 4.6, Wilks for a Poisson rate (QQ plot, SymPy expansion) and the trinity; (7) Example 4.7 and ANOVA from explicit projection matrices, with traces equal to degrees of freedom and $F$ equal to `scipy.stats.f_oneway`; (8) uniform null p-values, the winner's curse, p-hacking; (9) Example 4.9 and FWER/FDR/power of Bonferroni, Holm and BH on 2,000 simulated families.
+`project.py` checks every promise in this module by brute force, in ten parts (the tenth prints and asserts the numbers behind the exercise solutions): (1) Example 4.1's rotation and simulated $\chi^2_4$, $t_4$ against SciPy, with $\operatorname{corr}(\bar X,S^2)\approx0$ for Normal data and 0.68 for Exponential at $n = 5$; (2) coverage of $z$, $t$ and "z with $S$" intervals ($10^4$ replications) and of Wald and Wilson by exact enumeration, with coverage curves over $p$; (3) a bootstrap library (`bootstrap_se`, `bootstrap_ci` with normal, percentile, basic) on the mean, median and correlation with coverage by simulation, Example 4.4 against the exact ideal bootstrap, and the maximum's 0.632 atom and zero coverage; (4) a permutation test over all 924 relabelings; (5) Example 4.5, power curves from the noncentral $t$, Example 4.8; (6) Example 4.6, Wilks for a Poisson rate (QQ plot, SymPy expansion) and the trinity; (7) Example 4.7 and ANOVA from explicit projection matrices, with traces equal to degrees of freedom and $F$ equal to `scipy.stats.f_oneway`; (8) uniform null p-values, the winner's curse, p-hacking; (9) Example 4.9 and FWER/FDR/power of Bonferroni, Holm and BH on 2,000 simulated families.
 
 **Build it yourself:** before reading the code, write `wilson_prop` from (3.6), `bootstrap_ci` from (3.10), and `bh` from Theorem 3.13, about ten lines each. "Your turn" asks for a bootstrapped regression slope (B8), optional stopping (C3), a look-elsewhere bump hunt, and heavy-tailed data; reference solutions for B8 and C3 are at the bottom.
 

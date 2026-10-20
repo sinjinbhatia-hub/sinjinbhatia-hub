@@ -118,7 +118,7 @@ for _ in range(1000):
 
 Coverage over 1,000 datasets (Monte Carlo standard error about 0.007): percentile 0.931, basic 0.927, classical $t$ 0.952. The classical interval is exact here because the errors are Normal (ST-3 derives it with the projection of §3.1 in two dimensions). The bootstrap intervals undercover by about two points at $n = 25$: they are built from $\hat F_n$, whose spread is too small (the B5 effect) and whose quantiles are noisy. That is the usual small-sample price of the bootstrap; it buys validity when the errors are not Normal or the variance is not constant, where the classical interval can fail.
 
-*Why pairs:* each observation is a pair $(x_i,y_i)$ drawn from a joint distribution, and the slope is a property of that joint distribution. Resampling $x$'s and $y$'s separately would pair each $y$ with a random $x$, destroying the relation; the bootstrap slopes would scatter around 0, simulating the null of no relationship rather than the sampling variability of $\hat b$. (ST-3 also covers the residual bootstrap, which keeps the $x_i$ fixed and resamples residuals.)
+*Why pairs:* each observation is a pair $(x_i,y_i)$ drawn from a joint distribution, and the slope is a property of that joint distribution. Resampling $x$'s and $y$'s separately would pair each $y$ with a random $x$, destroying the relation; the bootstrap slopes would scatter around 0, simulating the null of no relationship rather than the sampling variability of $\hat b$. (The alternative *residual bootstrap* keeps the $x_i$ fixed and resamples the fitted residuals; Efron and Tibshirani ch. 9 compares the two.)
 
 ## C. Challenge
 
@@ -150,7 +150,7 @@ Each look is a valid 5% test, but the analyst rejects if *any* of 10 looks rejec
 
 Why it is p-hacking: the reported p-value is computed as though $n$ had been fixed in advance. The stopping rule makes $n$ depend on the data, so "$p<0.05$ at the final look" has probability 0.198 under $H_0$, not 0.05. Every single computation was correct; the procedure was not.
 
-**C4.** *Derivation.* Under $H_0$, $\bar X\sim\mathcal N(0,1/n)$. Under $H_1$, $\bar X = \mu+e$ with $\mu\sim\mathcal N(0,\tau^2)$ independent of $e\sim\mathcal N(0,1/n)$, so $\bar X\sim\mathcal N(0,\tau^2+1/n)$ (independent Normals add, F4 §3.14). The Bayes factor is the ratio of the two densities at $\bar x$:
+**C4.** *Derivation.* Under $H_0$, $\bar X\sim\mathcal N(0,1/n)$. Under $H_1$, $\bar X = \mu+e$ with $\mu\sim\mathcal N(0,\tau^2)$ independent of $e\sim\mathcal N(0,1/n)$, so $\bar X\sim\mathcal N(0,\tau^2+1/n)$ (independent Normals add, F5 §3.4). The Bayes factor is the ratio of the two densities at $\bar x$:
 $$B_{01} = \frac{\sqrt n\,e^{-n\bar x^2/2}}{(\tau^2+1/n)^{-1/2}e^{-\bar x^2/(2(\tau^2+1/n))}} = \sqrt{1+n\tau^2}\,\exp\Big(-\frac{\bar x^2}{2}\Big(n-\frac{n}{1+n\tau^2}\Big)\Big).$$
 Since $n-\frac{n}{1+n\tau^2} = \frac{n^2\tau^2}{1+n\tau^2}$ and $\bar x^2 = z^2/n$, the exponent is $-\frac{z^2}{2}\cdot\frac{n\tau^2}{1+n\tau^2}$, the formula of §3.11.
 

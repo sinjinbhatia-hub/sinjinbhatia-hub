@@ -104,7 +104,7 @@ def P_blob(Xg, Yg, Zg, P0=1.0, Rb=1.0):
 
 
 Qb, Qabs, rho_grid, h_grid = bound_charge_on_grid(P_blob)
-assert Qabs > 1.0 and abs(Qb) < 1e-3 * Qabs, (Qb, Qabs)
+assert Qabs > 1.0 and abs(Qb) < 1e-12 * Qabs, (Qb, Qabs)      # notes section 7: Q_b ~ 1e-17 against int|rho_b| = 1.8
 # Compare the grid rho_b with SymPy at one interior point.
 f_sym = (1 - rr**2)**2
 rho_sym = sp.lambdify((x, y, z), -div([f_sym * x, sp.Rational(3, 10) * f_sym * y, f_sym * z]))
@@ -126,7 +126,7 @@ Xo, Yo, Zo = np.meshgrid(s_off, s_off, s_off, indexing="ij")
 for off_ in (0.5, -1.0):                                                   # Exercise B2(e): predict p = offset * 32 pi/105
     _, _, rho_off, h_off = bound_charge_on_grid(lambda X, Y, Z: P_blob_offset(X, Y, Z, off_))
     p_bound = np.array([(c * rho_off).sum() * h_off**3 for c in (Xo, Yo, Zo)])
-    assert np.isclose(p_bound[0], off_ * 32 * np.pi / 105, rtol=2e-3) and np.abs(p_bound[1:]).max() < 1e-12, p_bound
+    assert np.isclose(p_bound[0], off_ * 32 * np.pi / 105, rtol=1e-4) and np.abs(p_bound[1:]).max() < 1e-12, p_bound   # solutions B2(e): 0.47872 to five figures
     print(f"B2: offset {off_:+.1f}: dipole moment of the grid bound charge = ({p_bound[0]:+.5f}, {p_bound[1]:.1e}, {p_bound[2]:.1e}); "
           f"int P dtau = offset * 32 pi/105 = {off_ * 32 * np.pi / 105:+.5f}")
 
@@ -204,13 +204,13 @@ u = rng.standard_normal((150, 3)); u /= np.linalg.norm(u, axis=1)[:, None]
 pts_in = u * (0.8 * rng.random(150)**(1 / 3))[:, None]
 E_in = coulomb_field(pts_in, pos_s, chg_s)
 err_in = np.abs(E_in - np.array([0, 0, -1 / 3])).max()
-assert err_in < 2e-3, err_in
+assert err_in < 1e-9, err_in                                        # Example 4.1: interior uniform to 2e-10
 # Exterior points (1.5 R to 4 R): pure dipole with p = (4/3) pi R^3 P z_hat.
 pts_out = u * (1.5 + 2.5 * rng.random(150))[:, None]
 E_out = coulomb_field(pts_out, pos_s, chg_s)
 E_dip = dipole_field(pts_out, np.zeros((1, 3)), np.array([0, 0, 4 * np.pi / 3]))
 err_out = (np.linalg.norm(E_out - E_dip, axis=1) / np.linalg.norm(E_dip, axis=1)).max()
-assert err_out < 2e-3, err_out
+assert err_out < 1e-13, err_out                                     # Example 4.1: exterior dipole to 2e-14
 print(f"Patch sum: interior field uniform -P/3 to {err_in:.1e}; exterior is a dipole to {err_out:.1e} relative.")
 
 
@@ -236,11 +236,12 @@ R_lat = 8.0
 g = np.arange(-9, 10)
 G = np.stack(np.meshgrid(g, g, g, indexing="ij"), -1).reshape(-1, 3).astype(float)
 sites = G[np.linalg.norm(G, axis=1) <= R_lat]
+assert len(sites) == 2109, len(sites)                            # the "2109 dipoles" of sections 3.6, 3.7 and 7
 p_hat = np.array([0, 0, 1.0])
 probe = sites[np.linalg.norm(sites, axis=1) <= 4.0]            # deep interior lattice sites
 E_site = np.array([dipole_field(s[None, :], sites[~np.all(sites == s, axis=1)], p_hat)[0] for s in probe])
 micro = np.abs(E_site).max()
-assert micro < 0.03, micro                                       # microscopic field at a site: ~0, not -1/3
+assert micro < 0.007, micro                                      # sections 3.7, 3.14: about 0.006 P/eps0 at a site, not 0.333
 far = u * (2 * R_lat + R_lat * rng.random(150))[:, None]        # 2R to 3R
 E_far = dipole_field(far, sites, p_hat)
 E_far_dip = dipole_field(far, np.zeros((1, 3)), len(sites) * p_hat)
@@ -283,9 +284,10 @@ fig.tight_layout(); fig.savefig(FIG / "polarized_sphere.png", dpi=120); plt.clos
 # ## Part 3: A finite-difference solver for div(eps grad V) = -rho_f, and the half-filled capacitor
 #
 # (3.14) in the form div(eps_r grad V) = -rho_f/eps0 with E = -grad V. Nodes carry V; faces
-# between neighbouring nodes carry eps_r (harmonic mean is what a sharp interface between two
-# node values would give; here eps is sampled at face midpoints, so each face lies in one medium
-# and the normal component of D = eps_r E is continuous across every face by construction).
+# between neighbouring nodes carry eps_r, assigned one of two ways: `harmonic_faces` takes the harmonic
+# mean of the two node values (exact when the interface lies midway between nodes; used for Example 4.3
+# below), and `face_eps` samples eps_r at the face midpoint so each face lies in one medium (Parts 4 and 6).
+# Either way the normal component of D = eps_r E is continuous across every face by construction.
 # Dirichlet nodes are fixed; other boundary nodes are zero-flux.
 #
 # **Build it yourself first** (notes section 7): write `solve_poisson2d` and `node_charges` before reading on.
@@ -389,6 +391,8 @@ W_E0 = field_energy(V_ser, np.ones_like(ex), np.ones_like(ey))       # (eps0/2) 
 assert np.isclose(field_energy(V_ser, ex, ey) - W_E0, field_energy(V_ser, ex - 1, ey - 1))   # difference is 1/2 int P.E (3.24)
 print(f"Series half-fill: C/C0 = {C_ser / C0:.4f} (theory {2 * er / (er + 1):.4f}); E_slab/E_gap = {Ey_face[0, 0] / Ey_face[-1, 0]:.4f}; "
       f"W = {field_energy(V_ser, ex, ey):.4f}, (eps0/2) int E^2 = {W_E0:.4f}, difference 1/2 int P.E = {field_energy(V_ser, ex, ey) - W_E0:.4f}")
+frac_grid = (field_energy(V_ser, ex, ey) - W_E0) / field_energy(V_ser, ex, ey)
+assert np.isclose(frac_grid, 0.156, atol=5e-4), frac_grid              # solutions B6(d): the grid's 0.156 against the analytic 0.150
 # Exercise B6: the analytic split. Per unit area, W = D^2 d (er + 1)/(4 eps0 er) and 1/2 int P.E = D^2 d (er - 1)/(4 eps0 er^2),
 # so the "spring" fraction is (er - 1)/(er (er + 1)) = 0.15 for er = 4. The grid's 0.1246/0.8 = 0.156 differs only because the
 # single interface face carries the harmonic-mean eps and the mean E, which is exact for D.E but not for E^2.
@@ -586,14 +590,14 @@ C_x, W_x = CW[:, 0], CW[:, 1]
 assert np.allclose(W_x, 0.5 * C_x * 1.0**2, rtol=1e-10)                      # W = 1/2 C V^2 on the grid
 slope, icpt = np.polyfit(x_list, C_x, 1)
 chi_e = 3.0
-assert abs(slope - chi_e / 1.0) < 0.03 * chi_e, slope                         # dC/dx = eps0 chi_e w/d per unit w, d = 1
+assert abs(slope - chi_e / 1.0) < 1e-6, slope                                 # dC/dx = eps0 chi_e w/d per unit w, d = 1: "slope 3.000" (section 3.13)
 assert np.abs(C_x - (slope * x_list + icpt)).max() < 1e-3 * C_x.mean()        # linear in x
 F_V = 0.5 * 1.0**2 * slope                                                    # fixed V, battery's work included
 Q0 = C_x[2] * 1.0                                                             # fixed Q: hold the charge of the x = 4 state
 W_Q = Q0**2 / (2 * C_x)
 C_lo, C_hi = slab_capacitor(3.9)[0], slab_capacitor(4.1)[0]                  # central difference of W(x) at fixed Q, step 0.1 d
 F_Q = -(Q0**2 / (2 * C_hi) - Q0**2 / (2 * C_lo)) / 0.2                       # -dW/dx at fixed Q
-assert np.isclose(F_Q, F_V, rtol=3e-3)
+assert np.isclose(F_Q, F_V, rtol=3e-4)                                        # section 3.13: fixed Q and fixed V agree to 0.02%
 print(f"Slab force: C(x) = {slope:.4f} x + {icpt:.3f} (units eps0 per unit depth; theory slope chi_e/d = {chi_e:.1f}); "
       f"F/eps0 V^2 = {F_V:.4f} (fixed V) vs {F_Q:.4f} (fixed Q, finite difference of W = Q^2/2C).")
 
@@ -609,7 +613,8 @@ g_k = h_k * ((Ex_c**2 + Ey_c**2)[np.abs(yc_k) < 0.5, :]).sum(axis=0)            
 col = xc_k < 4.0
 F_kelvin = 0.5 * chi_e * (g_k[col][-1] - g_k[col][0])
 cum = lambda xq: 0.5 * chi_e * g_k[np.searchsorted(xc_k, xq)] / F_kelvin
-assert np.isclose(F_kelvin, F_V, rtol=0.02) and cum(-1.0) < 0.05 and cum(1.0) > 0.97
+assert np.isclose(F_kelvin, F_V, rtol=1e-5)                                   # "1.5000 against 1.5000" (section 3.13, B8(e))
+assert cum(-1.0) < 0.01 and 1.15 < cum(0.0) < 1.30 and abs(cum(1.0) - 1) < 1e-4   # 0.6%, 121%, 100.0% (section 3.13, B8(e))
 print(f"Fringing-field picture: (P.grad)E integrates to {F_kelvin:.4f} (energy method {F_V:.4f}); "
       f"cumulative fraction of the force at x = -1, 0, +1: {cum(-1.0):.3f}, {cum(0.0):.3f}, {cum(1.0):.3f} (plate edge at 0, slab end at 4).")
 # Exercise B8 numbers: d = 1 cm, w = 10 cm, V = 1 kV, eps_r = 4.
@@ -687,7 +692,7 @@ n2_w = 1.333**2
 rhs_ons = N_w * p_w**2 / (9 * EPS0 * K_B * T_w)
 eps_ons = brentq(lambda e: (e - n2_w) * (2 * e + n2_w) / (e * (n2_w + 2)**2) - rhs_ons, n2_w, 1e3)
 assert np.isclose(a_or / A3, 28.18, rtol=1e-3) and np.isclose(x_deb, 4.149, rtol=1e-3) and x_deb > 1 and eps_cm_deb < 0
-assert np.isclose(eps_dilute_deb, 13.4, atol=0.1) and np.isclose(rhs_ons, 3.946, rtol=1e-3) and np.isclose(eps_ons, 29.2, atol=0.3)
+assert np.isclose(eps_dilute_deb, 13.4, atol=0.1) and np.isclose(rhs_ons, 3.946, rtol=1e-3) and np.isclose(eps_ons, 29.1, atol=0.05)
 assert 2.5 < 80.1 / eps_ons < 3.0
 lhs_80 = (80.1 - n2_w) * (2 * 80.1 + n2_w) / (80.1 * (n2_w + 2)**2); g_K = lhs_80 / rhs_ons       # p^2 -> g p^2 reaches 80.1
 assert np.isclose(g_K, 2.81, atol=0.02) and np.isclose(lhs_80, 11.10, atol=0.01)
@@ -785,7 +790,7 @@ C_cx_th = 2 * np.pi / (np.log(2) / 2.3 + np.log(2) / 4.0)
 c0 = n_cx // 2
 E_s_num = lambda s_: -(V_cx[c0, c0 + round(s_ / h_cx) + 1] - V_cx[c0, c0 + round(s_ / h_cx) - 1]) / (2 * h_cx)
 E1_th, E2_th = C_cx_th / (2 * np.pi * 2.3 * 1.5), C_cx_th / (2 * np.pi * 4.0 * 3.0)
-assert abs(C_cx_num / C_cx_th - 1) < 0.02 and abs(E_s_num(1.5) / E1_th - 1) < 0.03 and abs(E_s_num(3.0) / E2_th - 1) < 0.03
+assert abs(C_cx_num / C_cx_th - 1) < 0.015 and abs(E_s_num(1.5) / E1_th - 1) < 0.03 and abs(E_s_num(3.0) / E2_th - 1) < 0.03
 print(f"Your turn 1 (solver): C'/eps0 = {C_cx_num:.4f} vs analytic {C_cx_th:.4f} ({C_cx_num / C_cx_th - 1:+.2%}); "
       f"E_s(1.5) = {E_s_num(1.5):.4f} vs {E1_th:.4f}, E_s(3.0) = {E_s_num(3.0):.4f} vs {E2_th:.4f}")
 # 2: water, computed in Part 7 (eps_r(CM) = 1.76 vs n^2 = 1.78 vs static 80.1; Debye + CM overshoots to eps_r < 0; Onsager 29).

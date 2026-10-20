@@ -53,7 +53,8 @@ assert stats.kstest(T, stats.t(n - 1).cdf).pvalue > 0.01
 assert stats.kstest(T, stats.norm.cdf).pvalue < 1e-3   # the t really is not Normal at n = 5
 assert abs(np.corrcoef(xbar, s2)[0, 1]) < 0.03          # Theorem 3.1(c): independent
 E = rng.exponential(1.0, (R, n)); r_exp = np.corrcoef(E.mean(1), E.var(1, ddof=1))[0, 1]
-assert r_exp > 0.3                                      # independence is special to the Normal
+r_exp_th = 2 * np.sqrt((n - 1) / (8 * n - 6))           # exact: Cov(xbar, S^2) = mu3/n, Var S^2 = mu4/n - sigma^4 (n-3)/(n(n-1)); Exp(1): mu3 = 2, mu4 = 9
+assert abs(r_exp - r_exp_th) < 0.02 and abs(r_exp_th - 0.686) < 1e-3   # notes §3.1: 0.68 at n = 5; independence is special to the Normal
 print(f"Part 1: KS tests pass; corr(xbar, S^2) Normal = {np.corrcoef(xbar, s2)[0,1]:+.3f}, Exponential = {r_exp:.2f}")
 
 fig, ax = plt.subplots(1, 2, figsize=(10, 3.8))
@@ -115,7 +116,7 @@ wl, wh = wald_prop(2, 20); sl, sh = wilson_prop(2, 20)
 cov = {f: [exact_coverage(f, 20, p) for p in (0.10, 0.05)] for f in (wald_prop, wilson_prop)}
 print(f"Ex 4.3: Wald [{wl:.4f}, {wh:.4f}], Wilson [{sl:.4f}, {sh:.4f}]; exact coverage at p=0.10, 0.05: "
       f"Wald {cov[wald_prop][0]:.4f}, {cov[wald_prop][1]:.4f}; Wilson {cov[wilson_prop][0]:.4f}, {cov[wilson_prop][1]:.4f}")
-assert cov[wald_prop][1] < 0.70 and cov[wilson_prop][1] > 0.90
+assert np.allclose(cov[wald_prop], [0.876, 0.639], atol=1e-3) and np.allclose(cov[wilson_prop], [0.957, 0.925], atol=1e-3)  # Example 4.3, exact
 print(f"   Wald se {np.sqrt(.09/20):.4f}, half {Z*np.sqrt(.09/20):.4f}; Wilson centre {(0.1 + Z**2/40)/(1 + Z**2/20):.4f}, "
       f"half {Z*np.sqrt(.0045 + Z**2/1600)/(1 + Z**2/20):.4f}; Wald at x=5: {np.round(wald_prop(5, 20), 3)}")
 
@@ -130,6 +131,8 @@ for n in (5, 10, 20, 50):
     assert abs(cz - .95) < .01 and abs(ct - .95) < .01
     if n == 5:
         assert cS < 0.90  # plugging S into the z interval undercovers at small n
+    if n == 10:
+        assert abs(cS - 0.912) < 0.01 and abs(cS - (1 - 2 * stats.t.sf(Z, n - 1))) < 0.01  # Example 4.2: exact P(|t_9| <= 1.96) = 0.918
 k_sim = rng.binomial(20, 0.05, R); lo_s, hi_s = wald_prop(k_sim, 20)
 mc_wald = np.mean((lo_s <= .05) & (.05 <= hi_s))
 assert abs(mc_wald - cov[wald_prop][1]) < 0.015
@@ -139,8 +142,8 @@ for a, n in zip(ax, (20, 100)):
     for f, lab in ((wald_prop, "Wald"), (wilson_prop, "Wilson")):
         c = np.array([exact_coverage(f, n, p) for p in pgrid]); a.plot(pgrid, c, label=lab, lw=1)
         print(f"n = {n:3d}: mean exact coverage over p in [0.01, 0.99]: {lab} {c.mean():.3f}")
-        if lab == "Wilson":
-            assert abs(c.mean() - 0.95) < 0.01
+        quoted_mean = {(20, "Wald"): 0.858, (20, "Wilson"): 0.954, (100, "Wald"): 0.931, (100, "Wilson"): 0.950}[n, lab]
+        assert abs(c.mean() - quoted_mean) < 1e-3 and (lab == "Wald" or abs(c.mean() - 0.95) < 0.01)   # Example 4.3 / §3.2
     a.axhline(.95, color="k", ls=":"); a.set_title(f"exact coverage, n = {n}"); a.set_xlabel("p"); a.legend()
 ax[0].set_ylim(.5, 1); fig.tight_layout(); fig.savefig(FIG / "proportion_coverage.png", dpi=120); plt.close(fig)
 print(f"MC check: Wald coverage at n=20, p=0.05 is {mc_wald:.3f} (exact {cov[wald_prop][1]:.3f})")
@@ -205,7 +208,8 @@ print("Bootstrap coverage (n=30, 1000 reps, B=1000):")
 for s in truth:
     c = {k: hits[s, k] / Rb for k in ("normal", "percentile", "basic")}
     print(f"   {s:6s} " + "  ".join(f"{k} {v:.3f}" for k, v in c.items()))
-    assert min(c["normal"], c["percentile"]) > 0.87 and c["basic"] > 0.78  # basic is the weakest here
+    quoted = {"mean": {"percentile": 0.914, "basic": 0.892}, "median": {"basic": 0.824}}.get(s, {})   # §3.4: 91%, 89%, 0.82
+    assert all(abs(c[k] - v) < 0.015 for k, v in quoted.items()) and min(c.values()) > 0.80  # basic is the weakest here
 
 # Failure: the maximum of Uniform(0, theta). P*(max* = max) = 1 - (1 - 1/n)^n -> 1 - 1/e.
 nu = 50; u = rng.uniform(0, 1, nu); r_max = bootstrap_reps(u, lambda a: a.max(1), 10_000, rng)
@@ -219,7 +223,7 @@ for _ in range(Rb):
     cov_max["exact pivot"] += u.max() <= 1.0 <= u.max() / 0.05 ** (1 / nu)  # X_(n)/theta ~ Beta(n, 1)
 cov_max = {k: round(float(v / Rb), 4) for k, v in cov_max.items()}
 print(f"Max of U(0,1), n=50: atom P*(max*=max) = {atom:.3f} (theory {atom_th:.3f}, limit {1-np.exp(-1):.3f}); coverage {cov_max}")
-assert cov_max["percentile"] == 0 and cov_max["basic"] < 0.90 and cov_max["exact pivot"] > 0.92
+assert cov_max["percentile"] == 0 and abs(cov_max["basic"] - 0.877) < 0.015 and abs(cov_max["exact pivot"] - 0.948) < 0.015  # §3.4
 se_mean = bootstrap_se(med_data, mean_stat, 20_000, rng)             # exercise B5(a): equals sigma-hat / sqrt(n)
 assert abs(se_mean / (med_data.std() / np.sqrt(15)) - 1) < 0.02
 
@@ -234,7 +238,7 @@ assert len(diffs) == 924
 p_perm = np.mean(np.abs(diffs) >= abs(d_obs) - 1e-12)
 p_t = stats.ttest_ind(trt, ctl).pvalue
 print(f"Permutation test: diff {d_obs:.3f}, exact p = {p_perm:.4f} over 924 splits; pooled t p = {p_t:.4f}")
-assert abs(p_perm - p_t) < 0.01
+assert np.isclose(p_perm, 16 / 924) and abs(p_t - 0.0113) < 5e-5 and abs(p_perm - p_t) < 0.01  # §3.4: 0.0173 vs 0.0113
 
 # %% [markdown]
 # ## Part 5: Neyman–Pearson, power, sample size (§3.5, §3.9, Examples 4.5 and 4.8)
@@ -256,6 +260,7 @@ def pow_t(n, d, a=0.05):
     return stats.nct.sf(tc, n - 1, nc) + stats.nct.cdf(-tc, n - 1, nc)
 
 n_t = next(m for m in range(2, 200) if pow_t(m, 0.5) >= 0.8)
+assert n_t == 34 and abs(pow_t(32, .5) - 0.782) < 1e-3 and abs(pow_t(34, .5) - 0.808) < 1e-3  # Example 4.8
 sim = rng.normal(0.5, 1, (20_000, n_t)); p_sim = stats.ttest_1samp(sim, 0, axis=1).pvalue
 assert np.isclose(n_z, 31.39, atol=0.01) and pow_z(32, .5) >= .8 and pow_z(31, .5) < .8
 assert abs(np.mean(p_sim < .05) - pow_t(n_t, .5)) < .01
@@ -277,6 +282,7 @@ lam = (np.mean((g_data - xb) ** 2) / np.mean((g_data - mu0) ** 2)) ** (n / 2)   
 assert np.isclose(lam, (1 + t_obs ** 2 / (n - 1)) ** (-n / 2))                    # (4.1)
 m2l = -2 * np.log(lam)
 p_exact, p_wilks = 2 * stats.t.sf(abs(t_obs), n - 1), stats.chi2.sf(m2l, 1)
+assert abs(t_obs - 1.972) < 1e-3 and abs(lam - 0.166) < 5e-4 and abs(m2l - 3.592) < 1e-3 and abs(p_exact - 0.080) < 5e-4 and abs(p_wilks - 0.058) < 5e-4  # Example 4.6
 print(f"Ex 4.6: t = {t_obs:.4f}, t^2 = {t_obs**2:.3f}, 1 + t^2/9 = {1 + t_obs**2/9:.4f}, lambda = {lam:.4f}, -2 log lambda = {m2l:.3f}; p exact t = {p_exact:.4f}, Wilks = {p_wilks:.4f}")
 
 # Wilks: Poisson rate, H0: lambda = 2, n = 30. SymPy: the statistic is n(xbar - l0)^2 / l0 to second order.
@@ -298,6 +304,7 @@ qs = np.quantile(lr, [.9, .95, .99]) / stats.chi2.ppf([.9, .95, .99], 1)
 print(f"Wilks (Poisson, n=30): null rejection rates LRT/Wald/score = {np.round(rates, 4)}; quantile ratios {np.round(qs, 3)}")
 assert all(abs(r - .05) < .01 for r in rates) and np.all(np.abs(qs - 1) < .1)
 one = rng.poisson(2.6, n).mean()
+assert np.isclose(one, 92 / 30) and np.allclose(poisson_trinity(one, n, l0), [14.65, 11.13, 17.07], atol=5e-3)  # §3.6: xbar = 3.067
 print(f"Trinity on one sample (xbar = {one:.3f}, H0 lambda = 2): LRT, Wald, score = {np.round(poisson_trinity(one, n, l0), 3)}")
 fig, ax = plt.subplots(figsize=(4.5, 4.5)); pp = (np.arange(1, 2001) - .5) / 2000
 ax.plot(stats.chi2.ppf(pp, 1), np.quantile(lr, pp), ".", ms=2); ax.plot([0, 12], [0, 12], "k:")
@@ -316,6 +323,8 @@ d = .6 - .36; se_d = np.sqrt(.6 * .4 / 50 + .36 * .64 / 50); zp = d / np.sqrt(.4
 assert np.isclose(zp ** 2, X2)
 print(f"Ex 4.7: X^2 = {X2:.3f} (p {stats.chi2.sf(X2, 1):.4f}), G = {Gs:.3f} (p {stats.chi2.sf(Gs, 1):.4f}); "
       f"z = {zp:.4f}; diff 0.24, 95% CI [{d - Z*se_d:.3f}, {d + Z*se_d:.3f}]; odds ratio {30*32/(20*18):.3f}")
+assert abs(Gs - 5.826) < 1e-3 and abs(stats.chi2.sf(X2, 1) - 0.0163) < 5e-5 and abs(stats.chi2.sf(Gs, 1) - 0.0158) < 5e-5 and abs(zp - 2.402) < 5e-4
+assert np.allclose([d - Z * se_d, d + Z * se_d], [0.050, 0.430], atol=5e-4) and abs(30 * 32 / (20 * 18) - 2.667) < 5e-4   # Example 4.7
 
 def anova_projection(groups):
     """F = [||(P1 - P0) y||^2/(k-1)] / [||(I - P1) y||^2/(N-k)]  (3.19)-(3.20), from explicit projection matrices."""
@@ -356,7 +365,8 @@ e_pub = dlt + se * stats.norm.pdf(aa) / stats.norm.sf(aa)                 # (3.2
 print(f"Winner's curse: s = {se:.3f}, c = {cz:.3f}, a = {aa:.3f}; power {np.mean(tt.pvalue < .05):.3f} (z approx {pow_z(n, dlt):.3f}); mean published estimate "
       f"{est[pub].mean():.3f} = {est[pub].mean()/dlt:.2f} x truth (formula {e_pub:.3f} = {e_pub/dlt:.2f} x); "
       f"wrong-sign share of significant {np.mean(tt.statistic[tt.pvalue < .05] < 0):.3f}")
-assert 2.5 < est[pub].mean() / dlt < 3.3 and abs(e_pub / dlt - 2.77) < .01
+assert abs(est[pub].mean() / dlt - 2.71) < 0.05 and abs(e_pub - 0.553) < 5e-4 and abs(e_pub / dlt - 2.76) < .01   # §3.9: 2.7x simulated, 0.553 sigma = 2.8x by (3.22)
+assert abs(np.mean(tt.statistic[tt.pvalue < .05] < 0) - 0.018) < 0.005                                              # §3.9: type S share 1.8%
 
 for m, label in ((20, "20 outcomes"), (5, "5 subgroups")):
     a_, b_ = rng.normal(0, 1, (2, 5000, m, 20))
@@ -401,6 +411,7 @@ for k, (fw, fd, pw) in summ.items():
     print(f"   {k:10s} FWER {fw:.3f}  FDR {fd:.3f}  power {pw:.3f}")
 assert summ["bonferroni"][0] <= .065 and summ["holm"][0] <= .065 and summ["bh"][1] <= .05 + .01
 assert summ["bh"][0] > .05 and summ["bh"][2] > summ["holm"][2] >= summ["bonferroni"][2]
+assert abs(summ["bh"][1] - 0.041) < 0.005 and abs(summ["bh"][2] - 0.72) < 0.02 and abs(summ["holm"][2] - 0.40) < 0.02 and abs(summ["bh"][0] - 0.47) < 0.02  # §3.10
 p3 = stats.norm.sf(3); p5 = stats.norm.sf(5)
 print(f"Look-elsewhere: local 3 sigma p = {p3:.2e}; over 100 independent bins global p = {1-(1-p3)**100:.3f}; 5 sigma p = {p5:.2e}")
 
@@ -411,23 +422,32 @@ print(f"Look-elsewhere: local 3 sigma p = {p3:.2e}; over 100 independent bins gl
 h = stats.t.ppf(.975, 15) * 4.8 / 4; cl, ch = stats.chi2.ppf([.025, .975], 15)
 print(f"A1: t_15 = {stats.t.ppf(.975, 15):.4f}, t CI [{52.3-h:.3f}, {52.3+h:.3f}]; z CI [{52.3-Z*5/4:.3f}, {52.3+Z*5/4:.3f}]; "
       f"chi2_15 {cl:.3f}, {ch:.3f}; sigma^2 in [{15*4.8**2/ch:.3f}, {15*4.8**2/cl:.2f}], sigma in [{np.sqrt(15*4.8**2/ch):.3f}, {np.sqrt(15*4.8**2/cl):.3f}]")
+assert abs(stats.t.ppf(.975, 15) - 2.1314) < 5e-5 and np.allclose([52.3 - h, 52.3 + h], [49.742, 54.858], atol=5e-4) and np.allclose([cl, ch], [6.262, 27.488], atol=5e-4)
+assert np.allclose(np.sqrt(15 * 4.8 ** 2 / np.array([ch, cl])), [3.546, 7.429], atol=5e-4)                      # A1
 print(f"A2: Wilson for 0/10 = [{wilson_prop(0, 10)[0]:.4f}, {wilson_prop(0, 10)[1]:.4f}]; P(X=0 | p=0.1) = {0.9**10:.4f}")
+assert np.allclose(wilson_prop(0, 10), [0, 0.2775], atol=5e-5) and abs(0.9 ** 10 - 0.3487) < 5e-5                    # A2
+assert np.allclose([stats.binom.sf(7, 10, .5), stats.binom.sf(7, 10, .7), stats.binom.sf(8, 10, .5), stats.binom.sf(8, 10, .7)], [0.0547, 0.3828, 0.0107, 0.1493], atol=5e-5)  # A3
 print(f"A3: size P(X>=8|.5) = {stats.binom.sf(7, 10, .5):.4f}, power at .7 = {stats.binom.sf(7, 10, .7):.4f}; "
       f"X>=9: size {stats.binom.sf(8, 10, .5):.4f}, power {stats.binom.sf(8, 10, .7):.4f}; pmf(8,9,10 | .7) = {np.round(stats.binom.pmf([8, 9, 10], 10, .7), 4)}")
 pa4 = np.array([0.001, 0.012, 0.020, 0.024, 0.040, 0.046, 0.30, 0.70])
 assert [int(f(pa4).sum()) for f in (bonferroni, holm, bh)] == [1, 1, 4] and bh(pa4)[2] and pa4[2] > 3 * .05 / 8  # step-up
 print(f"A6: n = {((Z + stats.norm.ppf(.9)) / .3) ** 2:.2f}, two groups {2 * ((Z + stats.norm.ppf(.9)) / .3) ** 2:.1f} per group")
+assert abs(((Z + stats.norm.ppf(.9)) / .3) ** 2 - 116.75) < 0.01                                                  # A6: 117, and 234 per group
 life = np.array([12.1, 3.4, 27.9, 8.6, 15.2, 5.3, 41.0, 9.5]); S, n = life.sum(), 8
 ql, qh = stats.chi2.ppf([.025, .975], 16); thr = stats.chi2.ppf(.95, 16) / (2 * .1)
 print(f"B2: sum {S:.1f}, lambda-hat {n/S:.5f}, chi2_16 {ql:.3f}, {qh:.3f}; lambda in [{ql/(2*S):.5f}, {qh/(2*S):.5f}], "
       f"mean life in [{2*S/qh:.2f}, {2*S/ql:.2f}]")
+assert abs(n / S - 0.06504) < 5e-6 and np.allclose([ql, qh], [6.908, 28.845], atol=5e-4) and np.allclose([ql / (2 * S), qh / (2 * S)], [0.02808, 0.11726], atol=5e-6)
+assert np.allclose([2 * S / qh, 2 * S / ql], [8.53, 35.61], atol=5e-3)                                              # B2
 print(f"B3: chi2_(16, 0.05) = {stats.chi2.isf(.05, 16):.3f}; reject if sum > {thr:.2f}; v = {2*.1*S:.1f}, v1 = {2*.05*thr:.3f}; p = {stats.chi2.sf(2*.1*S, 16):.4f}; power at lambda=0.05: {stats.chi2.sf(2*.05*thr, 16):.4f}")
+assert abs(stats.chi2.isf(.05, 16) - 26.296) < 5e-4 and abs(thr - 131.48) < 5e-3 and abs(stats.chi2.sf(2 * .1 * S, 16) - 0.0772) < 5e-5 and abs(stats.chi2.sf(2 * .05 * thr, 16) - 0.6619) < 5e-5  # B3
 lh = n / S; LRT = 2 * (n * np.log(lh / .1) - (lh - .1) * S); Wl = n * (1 - .1 / lh) ** 2; Sc = (n / .1 - S) ** 2 / (n / .01)
 th = S / n; Wth = n * (th - 10) ** 2 / th ** 2
 pex = 2 * min(stats.chi2.sf(2 * .1 * S, 16), stats.chi2.cdf(2 * .1 * S, 16))
 print(f"B4: log(lhat/l0) = {np.log(lh/.1):.5f}, theta-hat = {th:.3f}; LRT {LRT:.4f} (p {stats.chi2.sf(LRT,1):.3f}), Wald(lambda) {Wl:.4f} (p {stats.chi2.sf(Wl,1):.3f}), "
       f"score {Sc:.4f}, Wald(theta) {Wth:.4f} (p {stats.chi2.sf(Wth,1):.3f}); exact two-sided p {pex:.3f}")
 assert np.isclose(Wl, Sc)
+assert np.allclose([LRT, Wl, Wth], [1.7175, 2.3112, 0.9777], atol=5e-5) and np.allclose([stats.chi2.sf(LRT, 1), stats.chi2.sf(Wl, 1), stats.chi2.sf(Wth, 1), pex], [0.190, 0.128, 0.323, 0.154], atol=5e-4)  # B4
 l_theta = lambda t: -n * np.log(t) - S / t                     # log-likelihood in the mean theta = 1/lambda
 LRT_th = 2 * (l_theta(th) - l_theta(10.0)); Sc_th = (-n / 10 + S / 100) ** 2 / (n / 100)
 assert np.isclose(LRT_th, LRT) and np.isclose(Sc_th, Sc)        # LRT and score invariant; Wald is not
@@ -437,10 +457,13 @@ print(f"B5: 27 resamples, var(xbar*) = {xb5.var():.4f} = 14/9, se_boot {np.sqrt(
 Dl = 2.5; zu = stats.norm.isf([.05, .04, .001]); g04 = np.exp(Dl * zu[1] - Dl ** 2 / 2)
 print(f"B7: z_u = {np.round(zu, 3)}; P(p<=.05) = {stats.norm.cdf(Dl - zu[0]):.4f}; likelihood ratio of p at .04: {g04:.3f}, "
       f"at .001: {np.exp(Dl*zu[2]-Dl**2/2):.1f}; P(H0 | p=.04) at 1:1 prior odds = {1/(1+g04):.3f}")
+assert abs(stats.norm.cdf(Dl - zu[0]) - 0.804) < 5e-4 and abs(g04 - 3.50) < 5e-3 and abs(np.exp(Dl * zu[2] - Dl ** 2 / 2) - 99.5) < 0.05 and abs(1 / (1 + g04) - 0.22) < 5e-3  # B7
 for nn in (10, 100, 1000, 10 ** 4, 10 ** 6):
     print(f"C4: n = {nn:>7d}, z = 2.5: BF01 = {np.sqrt(1 + nn) * np.exp(-2.5 ** 2 / 2 * nn / (1 + nn)):.4f}")
 n_cross = optimize.brentq(lambda m: 0.5 * np.log1p(m) - 3.125 * m / (1 + m), 10, 1e4)
 print(f"C4: BF01 = 1 at n = {n_cross:.1f}; two-sided p = {2 * stats.norm.sf(2.5):.4f} for every n")
+bf01 = [np.sqrt(1 + nn) * np.exp(-2.5 ** 2 / 2 * nn / (1 + nn)) for nn in (10, 100, 1000, 10 ** 4, 10 ** 6)]
+assert np.allclose(bf01, [0.1936, 0.4554, 1.394, 4.395, 43.94], rtol=1e-3) and abs(n_cross - 510.7) < 0.05 and abs(2 * stats.norm.sf(2.5) - 0.0124) < 5e-5  # C4, §3.11
 # C2 check: the multinomial score statistic u' I^{-1} u equals Pearson's X^2.
 pk = np.array([.1, .2, .3, .4]); Nk = np.array([14, 15, 35, 36]); nn = Nk.sum()
 u = Nk[:-1] / pk[:-1] - Nk[-1] / pk[-1]
@@ -485,14 +508,14 @@ for _ in range(Rb):
     lr_ = stats.linregress(xr, yr); hw = stats.t.ppf(.975, 23) * lr_.stderr
     hit["classical t"] += abs(lr_.slope - 0.5) <= hw
 print("B8 slope coverage:", {k: round(float(v / Rb), 4) for k, v in hit.items()})
-assert all(v / Rb > 0.88 for v in hit.values())
+assert all(abs(hit[k] / Rb - v) < 0.01 for k, v in {"percentile": 0.931, "basic": 0.927, "classical t": 0.952}.items())  # solutions B8
 
 rng = np.random.default_rng(11); Xs = rng.standard_normal((20_000, 100)); looks = np.arange(10, 101, 10)
 zs = Xs.cumsum(1)[:, looks - 1] / np.sqrt(looks)
 alpha_os = np.mean((np.abs(zs) > Z).any(1)); alpha_bonf = np.mean((np.abs(zs) > stats.norm.isf(.0025)).any(1))
 print(f"C3: optional stopping with 10 looks: type I error {alpha_os:.3f} (independent looks would give {1 - .95 ** 10:.3f}); "
       f"with 0.05/10 per look: {alpha_bonf:.3f}")
-assert 0.17 < alpha_os < 0.22 and alpha_bonf < 0.05
+assert abs(alpha_os - 0.198) < 0.01 and abs(alpha_bonf - 0.027) < 0.005 and alpha_bonf < 0.05  # solutions C3
 
 # %%
 if __name__ == "__main__":

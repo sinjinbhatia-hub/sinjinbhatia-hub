@@ -8,12 +8,16 @@ Severity: HIGH = wrong central math/number; MEDIUM = wrong statement, wrong refe
 ## Findings
 
 1. **MEDIUM — notes.md §0 line 9 and §3.4 step 6 (line 111): wrong cross-reference.** Both cite "EM-2 (3.8)" as the potential of a charge distribution. In EM-2, (3.8) is $V(\mathbf b)-V(\mathbf a) = -\int\mathbf E\cdot d\mathbf l$; the potential of a distribution $V = \frac{1}{4\pi\varepsilon_0}\int\rho/\mathscr r\,d\tau'$ is (3.7). Fix: change both to (3.7).
+   → **FIXED**
 
 2. **MEDIUM — notes.md §1 line 17: historical overclaim, internally inconsistent.** "Debye (1912) added molecules with permanent dipole moments and explained why water's $\varepsilon_r$ is 80 while glass's is 5." Debye's theory explains qualitatively why polar liquids have large $\varepsilon_r$ and its $1/T$ dependence; it does not give 80 for water — the module's own §3.14 shows Debye + Clausius–Mossotti returns a negative $\varepsilon_r$ for water and that Onsager/Kirkwood are needed. Fix: soften to "explained qualitatively why polar liquids have $\varepsilon_r$ in the tens while nonpolar glass has about 5 (the quantitative story for water is harder: §3.14)".
+   → **FIXED**
 
 3. **MEDIUM (history) — notes.md §1 line 17: "with Lorentz's 1880 correction".** Mossotti/Clausius already obtained the relation from a conducting-spheres model; Lorentz (1880) re-derived it from molecular dipoles via the local field (the route §3.14 takes). Calling it a "correction" is not something I can confirm. Fix: reword to "re-derived by Lorentz (1880) from the field one molecule actually feels, the route §3.14 takes".
+   → **FIXED**
 
 4. **MEDIUM — notes.md §3.7 line 185 and §3.14 line 323: stated number contradicted by the code.** Notes say the lattice gives $|\mathbf E|\le0.006\,P/\varepsilon_0$ at interior sites; the code gives $0.00637$ (printed as 0.006 at 3 decimals). Also "at the lattice sites" (line 185) — the probe is only the deep-interior sites $r\le R/2$. Fix: write "about $0.006$" and "at interior lattice sites ($r\le R/2$)"; assert `micro < 0.007`.
+   → **FIXED (notes now say "about 0.006" at interior sites $r\le R/2$; assert `micro < 0.007`)**
 
 5. **MEDIUM — project.py: asserts weaker than what the notes claim.**
    - line 207 `err_in < 2e-3` vs notes "uniform to $2\times10^{-10}$" (actual 2.3e-10) → `< 1e-9`.
@@ -26,18 +30,25 @@ Severity: HIGH = wrong central math/number; MEDIUM = wrong statement, wrong refe
    - line 612 `rtol=0.02` on the fringing-field integral vs notes "1.5000 against 1.5000" (actual 2.6e-7) → `rtol=1e-5`; `cum(-1)<0.05, cum(1)>0.97` vs notes "0.6%, 121%, 100.0%" → `cum(-1)<0.01`, `1.15<cum(0)<1.3`, `abs(cum(1)-1)<1e-4`.
    - line 690 `eps_ons ≈ 29.2 ± 0.3` vs solutions "29.1" (actual 29.085) → `29.1 ± 0.05`.
    - lattice count 2109 (notes §3.6, §3.7, §7) and B6 grid fraction 0.156 (solutions B6(d), project comment) are printed but never asserted → add asserts.
+   → **FIXED (all ten tightened/added; script exits 0 in 17 s)**
 
 6. **LOW — notes.md §3.2 line 75: "EM-3 Exercise A6 did the integral".** EM-3 A6 states the Langevin function and asks the reader to evaluate it; it does not derive it. Fix: "EM-3 Exercise A6 evaluated the Langevin function; SM-4 derives it".
+   → **FIXED**
 
 7. **LOW — notes.md §3.14 line 330: "for liquid argon it is a 20% effect".** Clausius–Mossotti exceeds the dilute $\chi_e$ by 17% (0.5087 vs 0.4349; solutions C1(a) quote the inverse, 14.5%). Fix: "a 17% effect".
+   → **FIXED**
 
 8. **LOW — notes.md §7 line 429: "matches $C'$ to 1%".** Actual −1.05%. Fix: "to about 1%"; assert `< 0.015`.
+   → **FIXED (assert `< 0.015`)**
 
 9. **LOW — project.py Part 3 markdown (lines 285–288)** says "here eps is sampled at face midpoints", but Example 4.3 uses `harmonic_faces` on node values with the interface midway between nodes; `face_eps` is what Parts 4 and 6 use. Fix the comment.
+   → **FIXED**
 
 10. **LOW — solutions.md B4(b) line 57: "just by Gauss for $\mathbf E$"** — style guide bans "just" in this sense. Fix: "directly by Gauss's law for $\mathbf E$".
+   → **FIXED**
 
 11. **LOW — project.py length 805 lines** vs STYLE "150–400". Sibling EM modules are 570–690 lines and the brief's project list is long; shortening would delete checks. NOT FIXED (course-wide convention; flag for the author).
+   → **NOT FIXED: course-wide convention (EM-1..3 are 570–690 lines); shortening would delete checks the brief asks for**
 
 ## Checked and found correct (no action)
 - All numerical values in Examples 4.1–4.5 and solutions A1–C3 (recomputed independently; agree to the printed digits).
@@ -47,3 +58,6 @@ Severity: HIGH = wrong central math/number; MEDIUM = wrong statement, wrong refe
 - Template: sections 0–10 with template headings; conventions box consistent with usage; Try-it-first/What-just-happened around every key derivation; 5 worked examples (4.5 is the cross-field one); §8 specific; §10 matches the brief; 12 check-yourself questions.
 - History: Faraday 1837/Whewell/"specific inductive capacity", Mossotti 1850, Clausius 1879, Debye 1912, Onsager 1936, Kirkwood g — consistent with what I know.
 - Code: imports numpy/scipy/matplotlib/sympy only; seeded; headless; 16.8 s; exit 0; figures saved.
+
+## Status
+DONE — 11 findings (0 high, 5 medium, 6 low); 10 fixed, 1 not fixed (project length, course-wide convention). `MPLBACKEND=Agg python3 project.py` exits 0 (16.8 s) with the tightened asserts; notes, exercises, solutions and code are mutually consistent.

@@ -53,4 +53,27 @@ Status line is at the bottom. Items are numbered in order found; each has file, 
 
 ## Phase 2 resolutions
 
-(filled in below as each item is resolved)
+Before each fix the problem was re-verified (exact Exponential correlation 2√((n−1)/(8n−6)) = 0.686 at n = 5 by formula and by a 2×10⁵-sample simulation; P(|t₉| ≤ 1.960) = 0.918; leave-one-out median value counts 3/2 for n = 5/6 numerically; F4 §3.14 and ST-3 notes re-read; F4 Theorem 3.4 re-read). Every quoted value the new asserts test was first reproduced independently in st2_check.py (see Phase 1).
+
+1. FIXED: project.py Part 1 computes the exact correlation `r_exp_th = 2*sqrt((n-1)/(8n-6))`, asserts it equals 0.686 to 10⁻³ and the simulated value within 0.02 of it; notes §3.1 now says "at n = 5", gives the exact value and formula source (Cov(X̄,S²) = μ₃/n) and the n→∞ limit 1/√2; §7 says "at n = 5".
+2. FIXED: Part 2 asserts the exact coverages [0.876, 0.639] (Wald) and [0.957, 0.925] (Wilson) to 10⁻³, the grid means 0.858/0.954 (n = 20) and 0.931/0.950 (n = 100) to 10⁻³, and the n = 10 "z with S" Monte Carlo coverage within 0.01 of both 0.912 and the exact P(|t₉| ≤ 1.96) = 0.918; Example 4.2 now quotes the exact 0.918 with the simulated 0.912 in parentheses.
+3. FIXED: Part 3 asserts percentile 0.914 / basic 0.892 (mean) and basic 0.824 (median) within 0.015, all coverages > 0.80, and the maximum's basic 0.877 and exact-pivot 0.948 within 0.015.
+4. FIXED: Part 4 asserts p_perm = 16/924 exactly and the pooled-t p = 0.0113 to 5×10⁻⁵.
+5. FIXED: Part 6 asserts t = 1.972, λ = 0.166, −2 log λ = 3.592, p = 0.080 and 0.058 (Example 4.6), and x̄ = 92/30 with the trinity [14.65, 11.13, 17.07] to 5×10⁻³.
+6. FIXED: Part 7 asserts G = 5.826, both p-values, z = 2.402, the CI [0.050, 0.430] and the odds ratio 2.667.
+7. FIXED: Part 5 asserts n_t = 34, pow_t(32) = 0.782 and pow_t(34) = 0.808 to 10⁻³.
+8. FIXED: Part 8 asserts the simulated ratio within 0.05 of 2.71, the formula value 0.553σ to 5×10⁻⁴ (2.76×), and the type-S share within 0.005 of 0.018.
+9. FIXED: Part 9 asserts BH FDR 0.041 (±0.005), BH power 0.72, Holm power 0.40 and BH FWER 0.47 (±0.02), keeping the control asserts.
+10. FIXED: Part 10 now asserts A1 (t₁₅, both intervals, χ² quantiles, σ interval), A2 (Wilson [0, 0.2775], 0.3487), A3 (four probabilities), A6 (116.75), B2 (λ̂, quantiles, both intervals), B3 (26.296, 131.48, 0.0772, 0.6619), B4 (the three statistics and four p-values), B7 (0.804, 3.50, 99.5, 0.22), C4 (five Bayes factors to 0.1%, n* = 510.7, p = 0.0124); the reference cells assert B8's 0.931/0.927/0.952 within 0.01 and C3's 0.198/0.027 within 0.01/0.005.
+11. FIXED: solutions C4 cites F5 §3.4.
+12. FIXED: solutions B8 describes the residual bootstrap in one clause and cites Efron and Tibshirani ch. 9; the claim about ST-3 is gone.
+13. FIXED: Theorem 3.12's proof cites F4 Theorem 3.4(4) with the two-event inequality written out and "applied m₀−1 times".
+14. FIXED: "two values (three when n is odd)".
+15. FIXED: "is p > 0.05?".
+16. FIXED: "in ten parts (the tenth prints and asserts the numbers behind the exercise solutions)".
+17. FIXED: "by its own account the first time it had issued explicit recommendations on a specific matter of statistical practice".
+18. NOT FIXED: length (notes ≈9,400 words, project.py 522 lines after the added asserts) is forced by the brief's topic list and the module's 12-hour weight; cutting would remove brief-required content.
+
+Re-ran `MPLBACKEND=Agg timeout 300 python3 project.py` after all fixes: exit 0 (about 10 s), 32 edits applied (8 notes, 2 solutions, 22 project), all asserts pass, every printed value identical to the pre-fix run.
+
+STATUS: review complete; 18 findings (0 HIGH, 6 MED, 12 LOW); 17 fixed, 1 not fixed (item 18, notes/project length, by design); project.py exits 0.
