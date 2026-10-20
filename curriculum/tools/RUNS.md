@@ -58,3 +58,14 @@ Script: `curriculum/tools/build_modules_workflow.js`. Resume a run with
 | wf_e0130d6e-53e | combined: write EM-4..EM-7 (stopped after ~10 min; replaced by Sonnet writers below) |
 | wf_bee1ea55-0fb | combined, writerModel=sonnet: write EM-4..EM-8, Fable review |
 | wf_f541add1-916 | write-only, writerModel=sonnet: ST-3..ST-6 (review deferred) |
+
+## Seventh round (2026-10-20 02:55 UTC) — sized to finish below the limit (~4 Fable reviews + 3 Sonnet writes)
+
+Cost calibration from transcripts (cache-read tokens): Fable review 2–4M; a from-scratch write 10–17M on either model;
+a window dies after ~20–30M Fable tokens, but round 6 survived 20M Fable + 40M Sonnet, so Sonnet counts at a fraction.
+
+| Run ID | Modules |
+|---|---|
+| wf_29176906-6af | verify (Fable): CM-5, ST-1, ST-2, EM-4 |
+| wf_c8e3bc61-b71 | write-only (Fable) EM-5, ST-3 — stopped after 1 min, replaced by Sonnet writers |
+| wf_5cea2e5a-bd3 | write-only (Sonnet): EM-5, ST-3, ST-5 |
