@@ -11,11 +11,11 @@ Every number below is printed by `project.py` (Parts 9 and 10); every symbolic s
 $$
 \Delta\lambda = \lambda_H\Big(1 - \frac{\mu_H}{\mu_D}\Big) = 656.28\text{ nm}\times\Big(1 - \frac{0.99945568}{0.99972763}\Big) = 0.1785\text{ nm},
 $$
-toward the *blue* (deuterium's heavier nucleus gives a larger $\mu$, deeper levels, shorter wavelength). A shift of this size in the Balmer lines is how deuterium was identified spectroscopically in 1932.
+toward the *blue* (deuterium's heavier nucleus gives a larger $\mu$, deeper levels, shorter wavelength). A shift of this size in the Balmer lines is how deuterium was identified spectroscopically in 1931–32 (Urey, Brickwedde and Murphy).
 
 (c) Equal masses: $\mu = m_e/2$, so $E_1 = -13.605693/2 = -6.8028$ eV.
 
-(d) $\mu/m_{\rm Moon} = m_\oplus/(m_\oplus + m_{\rm Moon}) = 5.9722/(5.9722 + 0.07342) = 0.98786$. By (3.2) Earth sits at $-(m_{\rm Moon}/M)\mathbf r$ from the barycenter, a distance $384{,}400\times0.07342/6.04562 = 4668$ km. That is less than 6371 km: the barycenter is inside the Earth, about 1700 km below the surface.
+(d) $\mu/m_{\rm Moon} = m_\oplus/(m_\oplus + m_{\rm Moon}) = 5.9722/(5.9722 + 0.07342) = 0.98786$. By (3.2) each body sits at $(m_{\rm other}/M)$ times the separation from the barycenter, on the side away from the other body, so Earth's center is $(m_{\rm Moon}/M)\times384{,}400\text{ km} = 384{,}400\times0.07342/6.04562 = 4668$ km from it. That is less than 6371 km: the barycenter is inside the Earth, about 1700 km below the surface.
 
 **A2.** Compare with (3.12): $c = 2$, $e = 0.5$, an ellipse. By (3.13): $r_p = c/(1 + e) = 1.3333$, $r_a = c/(1 - e) = 4.0000$, $a = c/(1 - e^2) = 2/0.75 = 2.6667$, $b = a\sqrt{1 - e^2} = 2.6667\times0.86603 = 2.3094$. From $c = \ell^2/\mu k$: $\ell = \sqrt2 = 1.4142$. From (3.15): $E = -k/2a = -0.1875$. Check (3.14): $1 + 2E\ell^2/\mu k^2 = 1 + 2(-0.1875)(2) = 0.25$, so $e = 0.5$ ✓. Period (3.16): $T = 2\pi a^{3/2} = 2\pi\times4.3546 = 27.36$. Speeds: $v_p = \ell/\mu r_p = 1.4142/1.3333 = 1.0607$, $v_a = 1.4142/4 = 0.3536$. Vis-viva at perihelion: $v_p^2 = 2/r_p - 1/a = 1.5 - 0.375 = 1.125$, $v_p = 1.0607$ ✓.
 
@@ -23,7 +23,7 @@ toward the *blue* (deuterium's heavier nucleus gives a larger $\mu$, deeper leve
 
 **A4.** By (3.16), $T \propto [G(M_\odot + m_J)]^{-1/2}$. Using $GM_\odot$ alone overestimates $T$ by the factor $\sqrt{1 + q}$, $q = GM_J/GM_\odot = 9.5459\times10^{-4}$:
 $$
-\Delta T = T\big(\sqrt{1 + q} - 1\big) \approx \tfrac12qT = 4332.59\text{ d}\times4.772\times10^{-4} = 2.07\text{ d}.
+\Delta T = T\big(\sqrt{1 + q} - 1\big) = 4332.59\text{ d}\times4.772\times10^{-4} = 2.07\text{ d} \qquad(\approx \tfrac12qT;\ \tfrac12q = 4.773\times10^{-4}).
 $$
 Kepler, with periods good to perhaps a day, could not have seen it; any modern ephemeris must include it.
 
@@ -51,7 +51,7 @@ The $\mathbf R$ equation is $M\ddot{\mathbf R} = M\mathbf g$: $\mathbf R(t) = \m
 
 (b) $\mathbf g$ appears only in the $\mathbf R$ bracket, so $\mu\ddot{\mathbf r} = -\nabla V(r)$, unchanged. A uniform field accelerates both bodies equally and cannot change their separation.
 
-(c) The external energy is $-[m_1\Phi(\mathbf r_1) + m_2\Phi(\mathbf r_2)]$ with $\mathbf r_1 = \mathbf R + (m_2/M)\mathbf r$, $\mathbf r_2 = \mathbf R - (m_1/M)\mathbf r$. Taylor-expand $\Phi(\mathbf R + \boldsymbol\delta) = \Phi + \boldsymbol\delta\cdot\nabla\Phi + \tfrac12\boldsymbol\delta^\top H\boldsymbol\delta$ with $H_{ij} = \partial_i\partial_j\Phi(\mathbf R)$:
+(c) The external potential energy is $m_1\Phi(\mathbf r_1) + m_2\Phi(\mathbf r_2)$ (it enters $L$ with a minus sign) with $\mathbf r_1 = \mathbf R + (m_2/M)\mathbf r$, $\mathbf r_2 = \mathbf R - (m_1/M)\mathbf r$. Taylor-expand $\Phi(\mathbf R + \boldsymbol\delta) = \Phi + \boldsymbol\delta\cdot\nabla\Phi + \tfrac12\boldsymbol\delta^\top H\boldsymbol\delta$ with $H_{ij} = \partial_i\partial_j\Phi(\mathbf R)$:
 - zeroth order: $(m_1 + m_2)\Phi(\mathbf R) = M\Phi(\mathbf R)$;
 - first order: $\big[m_1\tfrac{m_2}{M} - m_2\tfrac{m_1}{M}\big]\mathbf r\cdot\nabla\Phi = 0$;
 - second order: $\tfrac12\big[m_1\tfrac{m_2^2}{M^2} + m_2\tfrac{m_1^2}{M^2}\big]\mathbf r^\top H\mathbf r = \tfrac12\mu\,\mathbf r^\top H(\mathbf R)\,\mathbf r$.
@@ -149,7 +149,7 @@ $$
 $$
 which is (3.23). For Mercury the project gets $5.019\times10^{-7}$ rad per orbit, $42.98''$ per century.
 
-(d) The project finds $0.006299$ rad per orbit against $2\pi\delta = 0.006283$, a ratio $1.00252$. The first-order theory drops $O(\delta^2)$ terms. Estimate them from the near-circular orbit: the circular solution satisfies $w_c = 1 + \delta w_c^2$, so $w_c = 1 + \delta + O(\delta^2)$; linearizing $w = w_c + x$ gives $x'' + (1 - 2\delta w_c)x = 0$, frequency $\omega^2 = 1 - 2\delta - 2\delta^2$. The advance is $2\pi(\omega^{-1} - 1)$ with $\omega^{-1} = (1 - y)^{-1/2} = 1 + y/2 + 3y^2/8$, $y = 2\delta + 2\delta^2$: $\omega^{-1} = 1 + \delta + 2.5\delta^2$. So the advance is $2\pi\delta(1 + 2.5\delta)$, ratio $1.00250$ for $\delta = 10^{-3}$, matching the measured $1.00252$ (the remaining difference is the $e = 0.2$ correction).
+(d) The project finds $0.006299$ rad per orbit against $2\pi\delta = 0.006283$, a ratio $1.00252$. The first-order theory drops $O(\delta^2)$ terms. Estimate them from the near-circular orbit: the circular solution satisfies $w_c = 1 + \delta w_c^2$, so $w_c = 1 + \delta + O(\delta^2)$; linearizing $w = w_c + x$ gives $x'' + (1 - 2\delta w_c)x = 0$, frequency $\omega^2 = 1 - 2\delta - 2\delta^2$. The advance is $2\pi(\omega^{-1} - 1)$ with $\omega^{-1} = (1 - y)^{-1/2} = 1 + y/2 + 3y^2/8$, $y = 2\delta + 2\delta^2$: $\omega^{-1} = 1 + \delta + 2.5\delta^2$. So the advance is $2\pi\delta(1 + 2.5\delta)$, ratio $1.00250$ for $\delta = 10^{-3}$, matching the measured $1.00252$ (the remaining $2\times10^{-5}$ is shared between the $O(\delta^3)$ terms and the $e = 0.2$ correction).
 
 **C2.**
 (a) $(x + ae)^2/a^2 + y^2/b^2 = \cos^2\psi + \sin^2\psi = 1$: the ellipse (3.13), center at $(-ae, 0)$, focus at the origin. And

@@ -217,7 +217,7 @@ fig.tight_layout(); fig.savefig(FIG / "two_body_direct.png", dpi=120); plt.close
 # ## Part 2: Kepler's third law across ten orbits
 #
 # In Kepler units ($\mu = k = 1$) we launch ten orbits from perihelion with
-# random $a \in [0.3, 5]$ and random $e$, measure the period as the time between
+# $a$ on a log-spaced grid from $0.3$ to $5$ and random $e$, measure the period as the time between
 # successive perihelion events, and fit $\log T$ against $\log a$. Theorem 3.7
 # says the slope is exactly $3/2$ and the intercept is $\log 2\pi$.
 
@@ -372,6 +372,11 @@ for ax, (n, title) in zip(axes, cases):
             stop.terminal = True
             s = integrate_orbit((1, 0), (0, (1 + eps) * v_circ), power_law_accel(k, mu, n), 60.0,
                                 events=stop, n_out=4000, rtol=1e-10, atol=1e-12)
+            # Theorem 3.9 for n < -3: the circular orbit is unstable. A slightly slow launch must
+            # fall in (reach r = 0.03) and a slightly fast one must escape (reach r = 12), not merely wander.
+            assert s.status == 1, f"n = {n}, eps = {eps}: no stop event; the orbit neither fell in nor escaped"
+            r_stop = np.hypot(*s.y_events[0][0][:2])
+            assert (r_stop < 0.05) if eps < 0 else (r_stop > 11.9), (eps, r_stop)
             ax.plot(s.y[0], s.y[1], color=col, lw=0.8, label=lab)
         ax.legend(fontsize=7, loc="upper right")
         ax.set_xlim(-3, 3); ax.set_ylim(-3, 3)
@@ -384,6 +389,9 @@ assert abs(ratios[1] - 2.0) < 1e-6, ratios[1]
 # For other n the small-amplitude formula holds to O(eps^2).
 assert abs(ratios[-1] - np.sqrt(2.0)) < 3e-3, ratios[-1]
 assert abs(ratios[-2.1] - np.sqrt(0.9)) < 3e-3, ratios[-2.1]
+# The measured values quoted in Example 4.5 (deterministic: fixed launch, fixed tolerances).
+assert abs(ratios[-1] - 1.414319) < 1e-5, ratios[-1]
+assert abs(ratios[-2.1] - 0.948627) < 1e-5, ratios[-2.1]
 for n in (-2, -1, 1, -2.1):
     print(f"Part 4: n = {n:+.1f}: omega_r/omega_phi measured {ratios[n]:.6f}, theory sqrt(n+3) = {np.sqrt(n+3):.6f}; "
           f"apsidal angle {np.pi/ratios[n]*180/np.pi:.2f} deg")
@@ -424,6 +432,7 @@ prec_first = np.pi * mu * lam / ell0**2
 s_prec, ye_prec = s, ye[keep]                         # kept for exercise B8 in Part 10
 assert np.max(np.abs(prec_meas - prec_exact)) < 1e-6, (prec_meas, prec_exact)
 assert abs(prec_first - prec_exact) / prec_exact < 0.03
+assert abs(prec_meas.mean() - 0.076163) < 1e-6, prec_meas.mean()        # value quoted in §3.10 and B8
 print(f"Part 5: 1/r^3 perturbation lam={lam}, ell^2={ell0**2:.3f}: precession/orbit measured {prec_meas.mean():.6f} rad, "
       f"exact 2pi(1/beta-1) = {prec_exact:.6f}, first order pi*mu*lam/ell^2 = {prec_first:.6f} "
       f"({100*(prec_first-prec_exact)/prec_exact:+.2f}%)")
@@ -442,7 +451,7 @@ a_merc, e_merc, T_merc_days = 5.7909e10, 0.20563, 87.969
 dphi_orbit = 6 * np.pi * GM_sun / (c_light**2 * a_merc * (1 - e_merc**2))
 orbits_per_century = 36525.0 / T_merc_days
 arcsec = dphi_orbit * orbits_per_century * (180 / np.pi) * 3600
-assert 42.8 < arcsec < 43.2, arcsec
+assert abs(arcsec - 42.98) < 0.01, arcsec                              # value quoted in §3.10 and C1
 print(f"        GR: Mercury perihelion shift {dphi_orbit:.3e} rad/orbit = {arcsec:.2f} arcsec/century (observed anomalous shift about 43 arcsec/century)")
 
 # %% [markdown]
@@ -499,8 +508,8 @@ dsdo_err = (np.sqrt(np.maximum(counts, 1)) / N_mc) * sigma_disk / (2 * np.pi * n
 rutherford = (k / (4 * E_mc))**2 / np.sin(mid / 2)**4
 good = counts >= 50
 rel = np.abs(dsdo_mc[good] - rutherford[good]) / rutherford[good]
-assert np.all(rel < 0.35), rel
-assert np.median(rel) < 0.12, np.median(rel)
+assert np.all(rel < 0.20), rel                 # measured max 0.124 (seeded, deterministic)
+assert np.median(rel) < 0.05, np.median(rel)   # Example 4.6 quotes a median relative error of 2.7%
 print(f"Part 6: {N_mc} trajectories integrated in {time.perf_counter()-t_mc:.1f} s; max |theta_num - theta(b)| = {err_theta:.1e} rad")
 print(f"        d sigma/d Omega vs Rutherford on {good.sum()} well-populated bins: median rel. error {np.median(rel):.3f}, max {rel.max():.3f}")
 
@@ -567,6 +576,9 @@ v_a_t = np.sqrt(GM_E * (2 / r2 - 1 / a_t))
 dv1, dv2 = v_p_t - v_c1, v_c2 - v_a_t
 t_transfer = np.pi * np.sqrt(a_t**3 / GM_E)
 assert abs(v_a_t - v_p_t * r1 / r2) < 1e-9          # angular momentum on the transfer ellipse
+# Example 4.4's quoted numbers
+assert abs(dv1 - 2399.5) < 0.05 and abs(dv2 - 1457.2) < 0.05 and abs(dv1 + dv2 - 3856.7) < 0.05, (dv1, dv2)
+assert abs(t_transfer / 3600 - 5.290) < 5e-4, t_transfer / 3600
 
 acc_E = kepler_accel(GM_E, 1.0)                       # per unit mass: k/mu = GM
 # leg 0: a quarter of the parking orbit
@@ -623,6 +635,10 @@ T_GxM = kepler_period(a_E, 1.0, G_SI * M_sun_kg)
 wobble = a_E * GM_earth / GMtot                           # Sun's distance from the barycentre
 assert abs(v_peri / v_apo - (1 + e_E) / (1 - e_E)) < 1e-12
 assert abs(v_peri**2 / (GMtot * (2 / (a_E * (1 - e_E)) - 1 / a_E)) - 1) < 1e-12   # vis-viva (3.18) agrees
+# Example 4.1's quoted numbers
+assert abs(ratio - 0.999996997) < 1e-9 and abs(wobble / 1e3 - 449) < 0.5, (ratio, wobble)
+assert abs(v_peri / 1e3 - 30.286) < 1e-3 and abs(v_apo / 1e3 - 29.291) < 1e-3, (v_peri, v_apo)
+assert abs(T_E / 86400 - 365.25635) < 1e-5 and abs((T_sun_only - T_E) - 47.4) < 0.05, (T_E, T_sun_only - T_E)
 print(f"Part 9, Ex 4.1 Earth-Sun: mu/m_E = {ratio:.9f} (1 - {1-ratio:.3e}); Sun-barycentre distance {wobble/1e3:.0f} km; "
       f"r_p = {a_E*(1-e_E)/1e9:.2f} Gm, r_a = {a_E*(1+e_E)/1e9:.2f} Gm")
 print(f"        sqrt(G(M+m)/a) = {v_mean/1e3:.3f} km/s, factor sqrt((1+e)/(1-e)) = {np.sqrt((1+e_E)/(1-e_E)):.5f}, "
@@ -640,6 +656,7 @@ v_p_c = np.sqrt(GM_sun * (2 / q_c + 1 / a_hyp))   # vis-viva (3.18) with a = -|a
 b_c = a_hyp * np.sqrt(e_c**2 - 1)              # (3.26): cot(theta/2) = 2Eb/k = b/|a|
 assert abs(b_c / (v_p_c * q_c / v_inf_c) - 1) < 1e-12      # ell = mu v_inf b = mu v_p q
 assert abs(1 / np.tan(theta_c / 2) - b_c / a_hyp) < 1e-12
+assert abs(e_c - 1.200) < 5e-4 and abs(np.degrees(theta_c) - 112.8) < 0.05 and abs(v_p_c / 1e3 - 87.5) < 0.05   # Example 4.3
 print(f"Part 9, Ex 4.3 visitor: |a| = {a_hyp:.3e} m = {a_hyp/AU:.3f} AU, e = {e_c:.3f}, sin(theta/2) = {1/e_c:.3f}, b = {b_c/AU:.3f} AU, "
       f"deflection = {np.degrees(theta_c):.1f} deg, v_peri = {v_p_c/1e3:.1f} km/s, E/mu = {0.5*v_inf_c**2/1e6:.1f} MJ/kg, "
       f"v_inf b = v_p q = {v_inf_c*b_c:.3e} m^2/s")
@@ -652,6 +669,7 @@ amp_lin = dv_r / omega0                        # linearized radial oscillation a
 e_k = dv_r / v_c0                              # exact, from (3.14)
 E_k = 0.5 * (v_c0**2 + dv_r**2) - GM_E / r0_k
 assert abs(ecc_from_E_ell(E_k, r0_k * v_c0, 1.0, GM_E) - e_k) < 1e-12
+assert abs(e_k - 1.3033e-3) < 1e-7, e_k                                   # Example 4.5
 rp_k, ra_k = r0_k / (1 + e_k), r0_k / (1 - e_k)   # c = ell^2/(mu k) = r0 because the kick leaves ell alone
 s_k = integrate_orbit((r0_k, 0), (dv_r, v_c0), acc_E, kepler_period(r0_k, 1.0, GM_E), n_out=4000)
 r_k = np.hypot(s_k.y[0], s_k.y[1])
@@ -680,6 +698,9 @@ theta_thomson = k_coul / (E_alpha * 1e5)                # Thomson atom: deflecti
 layers = t_foil / n_Au ** (-1 / 3)                      # atomic layers in the foil
 theta_rms = np.sqrt(layers) * theta_thomson
 log10_P90 = -(np.pi / 2 / theta_rms)**2 / np.log(10)
+# Example 4.6's quoted numbers
+assert abs(k_coul - 227.5) < 0.05 and abs(sigma_gt90 - 1626) < 0.5 and abs(frac_gt90 - 3.84e-5) < 5e-8, (k_coul, sigma_gt90, frac_gt90)
+assert abs(dsdo_90 - 518) < 0.5 and abs(np.degrees(theta_rms) - 1.03) < 5e-3, (dsdo_90, theta_rms)
 print(f"Part 9, Ex 4.6 Rutherford: k = {k_coul:.1f} MeV fm, head-on r_min = k/E = {r_min_headon:.1f} fm (gold nuclear radius ~ {R_Au:.1f} fm); E_cm/E_lab = {E_cm_factor:.4f}")
 print(f"        k/2E = {2*k_over_4E:.2f} fm, k/4E = {k_over_4E:.2f} fm, (k/4E)^2 = {k_over_4E**2:.1f} fm^2/sr = {k_over_4E**2/100:.2f} b/sr; d sigma/d Omega(90 deg) = {dsdo_90:.0f} fm^2/sr = {dsdo_90/100:.2f} b/sr")
 print(f"        sigma(theta > 90 deg) = pi (k/2E)^2 = {sigma_gt90:.0f} fm^2 = {sigma_gt90/100:.1f} b; gold n = {n_Au:.3e} /cm^3; "
@@ -822,6 +843,7 @@ sw = solve_ivp(lambda p, w: [w[1], 1 + delta * w[0]**2 - w[0]], (0, 12 * np.pi),
                rtol=1e-12, atol=1e-12, method="DOP853")
 adv = np.diff(sw.t_events[0]) - 2 * np.pi
 assert abs(adv.mean() / (2 * np.pi * delta) - 1) < 0.01
+assert abs(adv.mean() / (2 * np.pi * delta) - 1.00252) < 1e-5, adv.mean() / (2 * np.pi * delta)   # ratio quoted in C1(d)
 print(f"C1: modified Binet, delta = {delta}: advance per orbit {adv.mean():.6f} rad vs first-order 2 pi delta = {2*np.pi*delta:.6f} "
       f"(ratio {adv.mean()/(2*np.pi*delta):.5f}; near-circular second order 1 + 2.5 delta = {1+2.5*delta:.5f})")
 # C2: Kepler's equation, time averages, Molniya dwell time

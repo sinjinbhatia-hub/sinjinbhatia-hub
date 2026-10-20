@@ -39,3 +39,48 @@ Status line is at the bottom. Items are numbered in order found; each has file, 
 11. **notes.md length — LOW (style, not fixed).** 9,452 words against the STYLE guideline of 3,500–7,000 for a module of this weight. The extra length is correct material tied to the brief's long topic list; trimming would mean rewriting correct sections, which this review does not do.
 
 No HIGH-severity findings: every derivation step, every quoted number, and every assert in project.py checked out.
+
+## Second pass (previous reviewer was interrupted after applying fixes; this pass re-verified and continued)
+
+### Re-verification of items 1–11
+- `git show c9d8f9b` shows items 1–10 applied to notes.md / project.py; each diff hunk was read against the item and matches. Re-ran `MPLBACKEND=Agg timeout 300 python3 project.py`: exit 0 in 14 s.
+- Independently recomputed (python3 -I, numpy/scipy/sympy, /tmp/claude-0/st1_recheck.py): Ex 4.2 (0.0789/0.0614/0.0825, z = −1.543), Ex 4.5 (s = 0.1378, α̂ = 3.7865, β̂ = 2.2273, [I⁻¹]_αα(2) = 6.8997, efficiency 0.575), §3.12 D = 0.41894, B1 (c* = 1/(n+1), 2/(n+1)), B2 (Var((n+1)/n·max) = 1/(n(n+2))), B3 (E[1/S], E[1/S²], both variances, by SymPy integration), B4 (−0.8473, 0.3086), B5 (0.03910, 2.883e-4, 2.658e-4), B6 (roots 0.1447/0.8553, MSE 0.003942), A2 (I₁ = 1/(p²(1−p)) by SymPy summation; se 0.1217), C2 (I₁ = 1/2 by quadrature; B(3/2,3/2) = π/8), Normal (μ, v) Fisher matrix and inverse (SymPy), H(Exp(λ)) = 1 − log λ (SymPy), Ex 4.1 n = 100 spread 2.02%. All agree with the files.
+- Every Monte Carlo number quoted in notes/solutions (Ex 4.5: 12.53/8.26; Ex 4.6: 0.01779/1.091/1.014/94.5%; Ex 4.7: 3.267/0.1596; B5: 3.57e-3/3.358e-4; B8: 0.717, 2.052, −1.006, 748.40, 1034.43, 197; C1: 0.4986; C2: 2.029/2.514/2.02) matches the script's printed output.
+- Cross-references re-grepped in the actual files: F5 Theorems 3.4, 3.8, 3.9, 3.12, 3.17, 3.19, 3.22, 3.26, 3.28, 3.29, 3.30, 3.32, 3.34, 3.45, 3.46, Definition 3.33, tags (3.9) Gamma MGF, (3.14), (3.21), (3.24), (3.29), (3.30), §3.4, §3.11 (incl. "What the CLT does not say", Cauchy via characteristic functions, continuity correction), §3.13; LA-14 Theorems 3.2, 3.6, 3.13, tags (3.6), (3.17), (3.38)–(3.39), §3.1 (Riesz named), §3.9; LA-8 Theorems 3.4 (Cauchy–Schwarz), 3.19 (second-derivative test); LA-5 Gram–Schmidt; LA-12 covariant; F4 Poisson process; ML-2 brief names the natural gradient; SM-4, ST-6, ML-6, ML-10 briefs as described. All resolve.
+- Hand re-read of every derivation in §3.2–§3.12 and Examples 4.1–4.7 and all solutions: no new mathematical errors found.
+- Style grep: no "simply/just/obviously/clearly/similarly/left to the reader/it can be shown". 14 Try-it-first, 14 What-just-happened, 7 worked examples, §0–§10 headings in order, 11 check-yourself questions.
+
+### Resolution of items 1–11
+1. FIXED (c9d8f9b; re-verified: "differentiate the MGF, F5 (3.9)" present).
+2. FIXED (c9d8f9b; Ceres claim replaced by the 1795 statement).
+3. FIXED (c9d8f9b; converse line and "with probability 1" present).
+4. FIXED (c9d8f9b; convex-domain parenthetical present).
+5. FIXED (c9d8f9b), but the wording it introduced is imprecise: see item 15.
+6. FIXED (c9d8f9b; the entropy integral is in the text and SymPy confirms 1 − log λ).
+7. FIXED (c9d8f9b), but the inserted paragraph contains a rendering defect: see item 12.
+8. FIXED (c9d8f9b; assert present and passing).
+9. FIXED (c9d8f9b; coverage assert present and passing).
+10. FIXED (c9d8f9b; SymPy delta-method and Fisher-inverse asserts present and passing).
+11. NOT FIXED: the extra length is correct material tied to the brief's topic list; trimming would mean rewriting correct sections.
+
+### New findings (second pass)
+
+12. **notes.md §3.9, the What-just-happened after Theorem 3.22 (line 331) — MED (rendering defect introduced by fix 7).** The text contains literal backslash-escaped quotes: `\"Sufficient\" means \"$\theta$ enters ...\"`. Markdown renders the backslashes. Fix: replace `\"` with `"`.
+
+13. **solutions.md B5(e) — LOW (checkability).** Quotes the Monte Carlo bias 3.57×10⁻³ and MSE 3.358×10⁻⁴ of the MLE e^{−X̄} to 3–4 significant figures. These are seed-dependent and accurate to about two figures; the pgf introduced in B5(c) gives them exactly: E[e^{−T/n}] = exp(nλ(e^{−1/n} − 1)) = 0.044099, so bias = 3.337×10⁻³, E[e^{−2T/n}] = exp(nλ(e^{−2/n} − 1)) = 0.0022636, MSE = 3.309×10⁻⁴. Fix: state the exact values with the one-line derivation, keep the simulation as the check, and have project.py assert the Monte Carlo values against the exact ones within Monte Carlo error.
+
+14. **project.py Part 7 and the C2 reference cell — LOW (weakened asserts).** (a) Part 7 asserts only |sd_MC/sd_delta − 1| < 0.15 (n = 20) and < 0.03 (n = 200); the notes' claim is that the ratio is 1.09 and 1.01 (delta method underestimates), and the exact sd is available from the same pgf (0.01788 at n = 20, ratio 1.097; 0.005209 at n = 200, ratio 1.009). Fix: compute the exact sd, assert the simulated sd within 4 Monte Carlo SEs of it, print the exact ratio, and add the exact figures to Example 4.6 in one parenthetical. (b) The C2 cell asserts n·Var(MLE) ≈ 2 but not the solution's two other claims, n·Var(median) ≈ π²/4 and IQR(X̄) ≈ 2. Fix: assert |n·Var(median) − π²/4| < 0.4 and |IQR − 2| < 0.35 (about 5 and 4 Monte Carlo SEs).
+
+15. **notes.md §3.6, regularity paragraph — LOW (wording from fix 5).** "so do the shifted uniforms of Exercises A3 and A6(c)": A3's Uniform(−θ, θ) is symmetric, not shifted. Fix: name them, "Uniform(−θ, θ) of Exercise A3 and Uniform(θ, θ+1) of A6(c)".
+
+No further HIGH or MED mathematical findings: every derivation step, quoted number and assert checked out on this independent pass.
+
+### Resolution of items 12–15
+12. FIXED: the four `\"` replaced by `"`; `grep -c '\\"' notes.md` is 0.
+13. FIXED: solutions B5(e) now derives E[e^{−X̄}] = 0.044099 (bias 3.337×10⁻³) and E[e^{−2X̄}] = 0.0022645 (MSE 3.309×10⁻⁴) from the pgf, keeps the simulated 3.57×10⁻³ / 3.358×10⁻⁴ as the Monte Carlo check; project.py Part 8 computes the exact values, asserts them to 4 figures, and asserts the Monte Carlo bias and MSE within 4 Monte Carlo SEs of them (and that MSE(MLE) > Var(g̃), the solution's conclusion).
+14. FIXED: (a) Part 7 computes the exact sd of e^{−X̄} from the pgf, asserts the exact ratio equals the quoted 1.097 (n = 20) and 1.010 (n = 200) to 5×10⁻⁴, asserts the Monte Carlo sd within 4 SEs of it, and asserts the delta method underestimates; Example 4.6 now quotes the exact values in a parenthetical (0.01788, ratio 1.097; exact 1.010 at n = 200) next to the simulated ones. (b) C2 cell asserts |n·Var(median) − π²/4| < 0.4 and |IQR(X̄) − 2| < 0.35.
+15. FIXED: sentence now names Uniform(−θ, θ) of Exercise A3 and Uniform(θ, θ+1) of Exercise A6(c).
+
+Re-ran `MPLBACKEND=Agg timeout 300 python3 project.py` after all fixes: exit 0 (about 14 s), all asserts pass, printed values unchanged except for the added exact figures.
+
+STATUS: review complete; 15 findings (0 HIGH, 2 MED, 13 LOW); 14 fixed, 1 not fixed (item 11, notes length, by design); project.py exits 0.

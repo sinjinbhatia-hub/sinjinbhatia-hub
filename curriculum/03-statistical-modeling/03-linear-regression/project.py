@@ -206,6 +206,9 @@ Bw = np.linalg.solve(Xh.T @ (Wt[:, None] * Xh), Xh.T * Wt) @ Yh; var_wls = np.li
 print("Part 5  slope coverage:", cov, " mean naive var %.4f vs true %.4f; Var WLS %.4f" % (v_naive.mean(), true_var, var_wls))
 assert cov["naive"] < 0.92 and abs(cov["HC3"] - 0.95) < 0.015 and cov["HC0"] > cov["naive"] and var_wls < true_var / 5
 assert abs(Bw[1].var() / var_wls - 1) < 0.08 and abs(Bh[1].mean() - 0.5) < 0.01 and abs(Bh[1].var() / true_var - 1) < 0.08  # both unbiased
+fig, ax = plt.subplots(1, 2, figsize=(9, 3.6)); ax[0].scatter(Xh @ Bh[:, 0], Eh[:, 0], s=12); ax[0].axhline(0, c="k", lw=.5); ax[0].set(title="residuals vs fitted: the fan", xlabel="fitted", ylabel="e_i")
+ax[1].hist(np.sqrt(v_naive), 40, alpha=.6, label="naive se"); ax[1].hist(np.sqrt(v_hc3), 40, alpha=.6, label="HC3 se"); ax[1].axvline(np.sqrt(true_var), c="k", ls="--", label="true sd of slope"); ax[1].legend(fontsize=7); ax[1].set(title="slope standard errors, 4000 datasets")
+fig.tight_layout(); fig.savefig(FIG / "heteroscedasticity.png", dpi=110); plt.close(fig)
 
 # %% [markdown]
 # ## Part 6: multicollinearity: VIF and the SVD variance decomposition (notes 3.7, Example 4.5)
@@ -380,9 +383,10 @@ assert not lasso_cd(Xs6, ys6, lmax * 1.0001).any() and (lasso_cd(Xs6, ys6, lmax 
 print("Part 9  CD vs L-BFGS-B reference: max diff %.1e; KKT holds; lambda_max = %.3f; nonzeros at lam=8: %d" % (np.abs(b_cd - b_ref).max(), lmax, (b_cd != 0).sum()))
 
 
-def lasso_path(X, y, lams):
+def lasso_path(X, y, lams, l2=0.0):
+    """Warm-started path over a decreasing grid of lambdas (l2 > 0 gives the elastic-net path, exercise C4)."""
     b, out = None, []
-    for l in lams: b = lasso_cd(X, y, l, b, tol=1e-7); out.append(b)
+    for l in lams: b = lasso_cd(X, y, l, b, tol=1e-7, l2=l2); out.append(b)
     return np.array(out)
 
 
@@ -436,30 +440,52 @@ xa, ya = np.array([0.0, 1, 2, 3]), np.array([1.0, 2, 4, 5]); Xa = np.c_[np.ones(
 assert close(fa["b"], [0.9, 1.4]) and close(fa["e"], [0.1, -0.3, 0.3, -0.1]) and close([fa["rss"], fa["tss"], fa["R2"]], [0.2, 10, 0.98])
 assert close(fa["h"], [0.7, 0.3, 0.3, 0.7]) and close(fa["e"] / (1 - fa["h"]), [0.3333, -0.4286, 0.4286, -0.3333], 5e-5) and close(Xa.T @ fa["e"], [0, 0], 1e-12)
 press = ((fa["e"] / (1 - fa["h"])) ** 2).sum(); assert close([press, press / 4], [0.5896, 0.1474], 5e-5)
+assert (((xa - 1.5) ** 2).sum(), ((xa - 1.5) * (ya - 3)).sum()) == (5.0, 7.0) and close(1.4**2 * 5, 9.8) and close(7**2 / (5 * 10), fa["R2"])  # A1
+bm1 = ols_qr(Xa[1:], ya[1:]); assert close(bm1, [2 / 3, 1.5], 1e-10) and close(ya[0] - Xa[0] @ bm1, 1 / 3, 1e-10)                                # A2(b): refit without obs 1
+assert close(fa["e"] / (1 - fa["h"]) / fa["e"], [10 / 3, 10 / 7, 10 / 7, 10 / 3], 1e-10)                                                          # A2(c): growth factors 1/(1-h)
 s2_ = 45 / 17; t17 = stats.t.ppf(0.975, 17)                                                                          # A3
 assert close([s2_, np.sqrt(s2_), t17, t17 * np.sqrt(s2_ * 0.1), t17 * np.sqrt(s2_ * 1.1)], [2.6471, 1.6270, 2.1098, 1.0855, 3.6002], 5e-5)
 za = np.array([2.5, -0.7, 1.1, -3.2]); assert close(soft(za, 1.0), [1.5, 0, 0.1, -2.2]) and close(za / 2, [1.25, -0.35, 0.55, -1.6])  # A4
 sa = np.array([4, 2, 0.5]); assert close(sa**2 / (sa**2 + 1), [0.9412, 0.8, 0.2], 5e-5) and close((sa**2 / (sa**2 + 1)).sum(), 1.9412, 5e-5)  # A5
-assert close([1 / 0.5**2, 0.5**2 / (0.5**2 + 1) ** 2], [4.0, 0.16], 1e-12)
+assert close([1 / 0.5**2, 0.5**2 / (0.5**2 + 1) ** 2], [4.0, 0.16], 1e-12) and close(-1 / (0.5**2 + 1), -0.8, 1e-12) and close(4.0 / 0.16, 25, 1e-12)
+bo = np.array([1.0, 0.5, 0.5, 0.2, 0.1]); lo_ = 5 * 0.25 / (bo @ bo); mo = lambda l: (5 * 0.25 + l**2 * (bo @ bo)) / (1 + l) ** 2  # A5(c): orthonormal design, (3.42)
+assert close([bo @ bo, lo_, mo(0.0), mo(lo_)], [1.55, 0.8065, 1.25, 0.6920], 5e-5) and np.isclose(mo(lo_), 1.25 / (1 + lo_))
 Xd = np.array([[1, 1, 0], [1, 1, 0], [1, 0, 1], [1, 0, 1.0]]); yd = np.array([3.0, 5, 6, 8]); bd = np.linalg.pinv(Xd) @ yd                              # A6
 assert np.linalg.matrix_rank(Xd) == 2 and np.allclose(Xd @ [1, -1, -1], 0) and close(bd, [3.6667, 0.3333, 3.3333], 5e-5) and close(Xd @ bd, [4, 4, 7, 7])
 assert close(np.linalg.norm(bd), 4.9666, 5e-5) and close(ols_qr(np.c_[np.ones(4), [0, 0, 1, 1]], yd), [4.0, 3.0], 1e-12)
 zc = np.array([0.0, 1, -1, 0, 0]); f2 = ols_fit(np.c_[X41, zc], y41)                                                 # B2
 assert close([f2["R2"], f2["adjR2"]], [0.6140, 0.2281]) and f41["R2"] < f2["R2"] and f2["adjR2"] < f41["adjR2"]
+zt = zc - X41 @ ols_qr(X41, zc); dr = f41["rss"] - f2["rss"]; tz = f2["t"][-1]                                          # B2(c),(d): RSS_old - RSS_new = (z~'e)^2/||z~||^2 = t^2 RSS_new/(n-p-1)
+assert close([f2["rss"], f2["s2"], zt @ zt, zt @ f41["e"], dr], [2.3158, 1.1579, 1.9, -0.4, 0.0842], 5e-5) and close(dr, (zt @ f41["e"]) ** 2 / (zt @ zt), 1e-12)
+assert close([tz**2, abs(tz)], [0.0727, 0.2697], 5e-5) and close(tz**2, dr / (f2["rss"] / 2), 1e-12) and abs(tz) < 1 and close(zt, [-0.2, 0.9, -1, 0.1, 0.2], 1e-12)                # |t| < 1  <=>  adjusted R^2 falls
 assert close(np.corrcoef(y41, X41 @ f41["b"])[0, 1] ** 2, f41["R2"], 1e-12)
 bl_, bs_ = ols_qr(X42[:, :3], y42), ols_qr(X42[:, :2], y42); gam = ols_qr(X42[:, :2], x2)[1]                           # B3
 assert close(bs_[1], bl_[1] + gam * bl_[2], 1e-12) and close([bs_[1], bl_[1], gam, bl_[2]], [1.0440, 0.3103, 0.8214, 0.8933], 5e-5)
 assert close(30 * np.log(1 + 2 * 3.5 / 26), 7.1523) and close(stats.f.sf(3.5, 2, 26), 0.0451) and close(stats.chi2.sf(7.1523, 2), 0.0280)  # B5
+x5 = 1 + 2 * 3.5 / 26; assert close([x5 ** -13, x5 ** -15], [stats.f.sf(3.5, 2, 26), stats.chi2.sf(30 * np.log(x5), 2)], 1e-12) and close(x5 ** -2, 0.0280 / 0.0451, 2e-3)  # q = 2: closed forms, exponents (n-p)/2 and n/2
 yb = np.array([1.0, 2, 3, 6]); eb = yb - yb.mean()                                                                    # B6
 assert close([eb @ eb / 3 / 4, eb @ eb / 16, (eb**2 / 0.5625).sum() / 16], [1.1667, 0.875, 1.5556], 5e-5)
+assert eb @ eb == 14 and close(eb @ eb / 16 * 4 / 3, eb @ eb / 3 / 4, 1e-12) and close((eb**2 / 0.5625).sum() / 16, 14 / 9, 1e-12)   # HC1 = naive; HC3 = sum e^2/(n-1)^2
+x4 = np.arange(1.0, 6); a4 = np.array([-0.25, 0, 0, 0, 0.25]); X4 = np.c_[np.ones(5), x4]; H4 = X4 @ np.linalg.solve(X4.T @ X4, X4.T)   # B4: (y5 - y1)/4 vs OLS slope
+w4 = (x4 - 3) / 10; d4 = a4 - w4
+assert close(a4 @ X4, [0, 1], 1e-12) and np.allclose(H4 @ a4, w4) and close(d4, [-0.05, 0.1, 0, -0.1, 0.05], 1e-12) and np.allclose((np.eye(5) - H4) @ a4, d4)
+assert close([a4 @ a4, w4 @ w4, d4 @ d4], [0.125, 0.1, 0.025], 1e-12) and close(a4 @ a4, w4 @ w4 + d4 @ d4, 1e-12)
+G7 = np.array([[1, 0.9], [0.9, 1]]); ev7 = np.linalg.eigvalsh(G7); Gi7 = np.linalg.inv(G7); lam7 = 0.1                           # B7: rho = 0.9, unit-length columns
+assert close(ev7, [0.1, 1.9], 1e-12) and close(np.sqrt(ev7[1] / ev7[0]), 4.3589, 5e-5) and close([Gi7[0, 0], 1 / (1 - 0.81), 0.5 / 1.9 + 0.5 / 0.1], [5.2632] * 3, 5e-5)
+assert close([np.ones(2) @ Gi7 @ np.ones(2), np.array([1, -1]) @ Gi7 @ [1, -1], Gi7[0, 1] / Gi7[0, 0]], [1.0526, 20.0, -0.9], 5e-5)
+assert close([ev7[0] / (ev7[0] + lam7) ** 2, 1 / ev7[0], ev7[0] / (ev7[0] + lam7), -lam7 / (ev7[0] + lam7), ev7[1] / (ev7[1] + lam7)], [2.5, 10, 0.5, -0.5, 0.95], 1e-12) and close((10 - 2.5) / 0.25, 30)
 xc = np.array([1.0, 2, 3, 4]); Xc2 = np.c_[xc, xc]; yc2 = np.array([1.5, 2.5, 3.0, 4.5])                              # C2, C4
 b_a, b_b = lasso_cd(Xc2, yc2, 1.0, np.array([5.0, 0.0])), lasso_cd(Xc2, yc2, 1.0, np.array([0.0, 5.0])); lo = lambda b: 0.5 * np.sum((yc2 - Xc2 @ b) ** 2) + np.abs(b).sum()
 rb = np.linalg.solve(Xc2.T @ Xc2 + np.eye(2), Xc2.T @ yc2); en = lasso_cd(Xc2, yc2, 1.0, np.array([5.0, 0.0]), l2=1.0); en2 = lasso_cd(Xc2, yc2, 1.0, np.array([0.0, 5.0]), l2=1.0)
 assert np.isclose(b_a.sum(), b_b.sum()) and np.isclose(lo(b_a), lo(b_b)) and not np.allclose(b_a, b_b) and np.isclose(rb[0], rb[1]) and np.allclose(en, en2, atol=1e-7) and np.isclose(en[0], en[1])
 assert close([b_a.sum(), rb[0], en[0]], [1.0833, 0.5492, 0.5328], 5e-5) and close(b_a, [1.0833, 0], 5e-5)
+assert close(Xc2.T @ yc2, [33.5, 33.5]) and close((Xc2**2).sum(0), [30, 30]) and close([32.5 / 30, 33.5 / 61, 32.5 / 61], [b_a.sum(), rb[0], en[0]], 1e-7) and close(b_b, [0, 1.0833], 5e-5)  # C2, C4 by hand
 Xm = np.c_[np.c_[np.ones(5), xl], np.eye(5)[:, 4]]; yl4 = np.array([1.1, 1.9, 3.2, 3.9, 3.0]); bm = np.linalg.solve(Xm.T @ Xm, Xm.T @ yl4)   # C3: mean-shift model
 em = yl4 - Xm @ bm; tm = bm[2] / np.sqrt(em @ em / 2 * np.linalg.inv(Xm.T @ Xm)[2, 2]); h4, r4, t4, D4, f4 = influence(np.c_[np.ones(5), xl], yl4)
 assert close(bm[2], f4["e"][4] / (1 - h4[4]), 1e-10) and close(tm, t4[4], 1e-10) and close([bm[2], tm], [-6.8, -10.8367])
+b4 = ols_qr(np.c_[np.ones(4), xl[:4]], yl4[:4]); r4_ = yl4[:4] - np.c_[np.ones(4), xl[:4]] @ b4                                  # C3: the 4-point fit that the dummy leaves behind
+assert close(b4, [0.1, 0.97], 1e-10) and close([r4_ @ r4_, em @ em, f4["e"][4], h4[4], b4 @ [1, 10]], [0.063, 0.063, -0.544, 0.92, 9.8], 5e-5)
+assert close(tm, f4["e"][4] / np.sqrt(r4_ @ r4_ / 2 * (1 - h4[4])), 1e-10) and close(2 * stats.t.sf(abs(tm), 2), 0.0084, 5e-5) and close(np.sqrt(r4_ @ r4_ / 2), 0.17748, 5e-6)                                                   # t = e_i / (s_(i) sqrt(1 - h_ii))
 xsm, ysm, gsm = np.array([1, 2, 3, 6, 7, 8.0]), np.array([8, 9, 10, 1, 2, 3.0]), np.array([0, 0, 0, 1, 1, 1.0])      # Simpson (notes 3.11)
 assert close(ols_qr(np.c_[np.ones(6), xsm], ysm), [10.759, -1.1687]) and close(ols_qr(np.c_[np.ones(6), xsm, gsm], ysm), [7, 1, -12], 1e-9)
 print("Part 10 exercise numbers verified.")
@@ -470,9 +496,10 @@ print("Part 10 exercise numbers verified.")
 # 1. **WLS** (notes 3.6): Part 5 compares OLS and WLS with the true variances. Estimate them instead (fit OLS, regress log e_i^2 on log x_i,
 #    use the fitted variances as weights). Does the coverage of the slope interval survive?
 # 2. **Interaction and FWL** (exercise B8): reference solution below.
-# 3. **Elastic net** (exercise C4): `lasso_cd(..., l2=...)` already has it; rerun the correlated comparison of Part 9 with l2 > 0.
+# 3. **Elastic net** (exercise C4): `lasso_cd(..., l2=...)` already has it; reference solution below on a grouped design.
 # 4. **Omitted-variable bias** (notes 3.8): reference solution below.
-# 5. **Stepwise** (exercise C1): `forward_aic` in Part 7; change the stopping rule to BIC and to a p-value threshold and compare.
+# 5. **Stepwise** (exercise C1): `forward_aic` in Part 7; change the stopping rule to BIC and to a p-value threshold and compare;
+#    reference solution below, with a sample-splitting repair.
 
 # %%
 rng = np.random.default_rng(10)                       # Reference solution 1 (B8): y ~ 1 + x + g + x*g
@@ -481,13 +508,63 @@ Xg = np.c_[np.ones(n), xg, gg, xg * gg]; bg = ols_qr(Xg, yg); Mg = np.eye(n) - X
 assert np.isclose((Mg @ Xg[:, 3]) @ (Mg @ yg) / ((Mg @ Xg[:, 3]) @ (Mg @ Xg[:, 3])), bg[3])   # FWL slope on the residualized product column
 sl0, sl1 = ols_qr(Xg[gg == 0][:, :2], yg[gg == 0])[1], ols_qr(Xg[gg == 1][:, :2], yg[gg == 1])[1]
 assert np.isclose(bg[1], sl0) and np.isclose(bg[1] + bg[3], sl1)                               # interaction = difference of within-group slopes
-print("B8  interaction coefficient %.4f = slope(g=1) - slope(g=0) = %.4f" % (bg[3], sl1 - sl0))
+print("B8  interaction coefficient %.4f = slope(g=1) - slope(g=0) = %.4f - %.4f = %.4f (truth 0.8)" % (bg[3], sl1, sl0, sl1 - sl0))
 n, Rr = 50, 20_000                                    # Reference solution 2: omitted-variable bias, E[b_short] = b_1 + gamma b_2 (3.37)
 xa_ = rng.standard_normal(n); xb_ = 0.6 * xa_ + 0.8 * rng.standard_normal(n); xb_ -= xb_.mean(); xa_ -= xa_.mean()
 Xfull = np.c_[np.ones(n), xa_, xb_]; bt = np.array([1.0, 2.0, 1.5]); Yo = (Xfull @ bt)[:, None] + rng.standard_normal((n, Rr))
 b_short = np.linalg.solve(Xfull[:, :2].T @ Xfull[:, :2], Xfull[:, :2].T @ Yo)[1]; gamma = (xa_ @ xb_) / (xa_ @ xa_)
 print("OVB  mean of short-regression slope %.4f; theory b_1 + gamma b_2 = %.4f (gamma = %.4f)" % (b_short.mean(), bt[1] + gamma * bt[2], gamma))
 assert abs(b_short.mean() - (bt[1] + gamma * bt[2])) < 0.01 and abs(gamma * bt[2]) > 0.5
+
+# %%
+def forward_select(X, y, rule="aic", kmax=15, alpha=0.05):
+    """Reference solution to C1: greedy forward selection (most residual-correlated column first); stop when AIC (penalty 2k),
+    BIC (penalty k log n) or the t-test p-value of the newly added coefficient (< alpha) says to."""
+    n_ = len(y); chosen, old, e_ = [], n_ * np.log(y @ y / n_), y.copy()
+    for k in range(1, kmax + 1):
+        j = int(np.argmax([abs(X[:, c] @ e_) / np.linalg.norm(X[:, c]) if c not in chosen else -1 for c in range(X.shape[1])]))
+        ft = ols_fit(np.c_[np.ones(n_), X[:, chosen + [j]]], y)
+        if rule == "pval":
+            if ft["p"][-1] >= alpha: break
+        else:
+            crit = n_ * np.log(ft["rss"] / n_) + (2 if rule == "aic" else np.log(n_)) * k
+            if crit >= old: break
+            old = crit
+        chosen, e_ = chosen + [j], ft["e"]
+    return chosen
+
+
+rng = np.random.default_rng(11); C1 = {}                 # Reference solution (C1): pure-noise y, n = 100, 50 candidates, 200 datasets
+for rule in ("aic", "bic", "pval"):
+    sz, sg, r2, sg_split = [], [], [], []
+    for _ in range(200):
+        Xn = rng.standard_normal((100, 50)); Xn -= Xn.mean(0); yn = rng.standard_normal(100); yn -= yn.mean()
+        ch = forward_select(Xn, yn, rule); sz.append(len(ch))
+        if ch: ft = ols_fit(np.c_[np.ones(100), Xn[:, ch]], yn); sg.append((ft["p"][1:] < 0.05).mean()); r2.append(ft["R2"])
+        ch2 = forward_select(Xn[:50], yn[:50], rule)     # repair: select on the first 50 rows ...
+        if ch2: ft2 = ols_fit(np.c_[np.ones(50), Xn[50:, ch2]], yn[50:]); sg_split.append((ft2["p"][1:] < 0.05).mean())  # ... test on the other 50
+    C1[rule] = (np.mean(sz), np.mean(r2), np.mean(sg), np.mean(sg_split))
+    print("C1  %-4s size %.2f  R^2 %.3f  share p<0.05 %.3f  | select-then-test on separate halves: share p<0.05 %.3f" % ((rule,) + C1[rule]))
+assert C1["bic"][0] < 3.5 < C1["aic"][0] and all(v[2] > 0.45 for v in C1.values()) and all(abs(v[3] - 0.05) < 0.03 for v in C1.values())
+print("C1  P(at least one of 50 null predictors has p < 0.05) = 1 - 0.95^50 = %.4f" % (1 - 0.95**50)); assert close(1 - 0.95**50, 0.9231, 5e-5)
+thr = [np.sqrt(97 * (np.exp(2 / 100) - 1)), np.sqrt(97 * (100 ** (1 / 100) - 1)), stats.t.ppf(0.975, 97)]; print("C1  entry thresholds on |t| (AIC, BIC, p<0.05):", np.round(thr, 3))
+assert close(np.square(thr[0]), 1.96, 5e-3) and close(thr, [1.40, 2.14, 1.98], 6e-3)
+
+rng = np.random.default_rng(13)                          # Reference solution (C4): grouped design, 3 groups x 5 correlated columns, beta = 1 on all 15
+def grouped_design(n, rng):
+    Z = rng.standard_normal((n, 3)); X = rng.standard_normal((n, 50))
+    for g in range(3): X[:, 5 * g:5 * g + 5] = Z[:, [g]] + 0.35 * rng.standard_normal((n, 5))
+    return (X - X.mean(0)) / X.std(0)
+Xcorr = grouped_design(20_000, np.random.default_rng(1)); print("C4  within-group correlation %.3f" % np.corrcoef(Xcorr[:, :5].T)[0, 1]); assert abs(np.corrcoef(Xcorr[:, :5].T)[0, 1] - 0.89) < 0.01
+bgrp = np.r_[np.ones(15), np.zeros(35)]; C4 = {m: [] for m in (0, 5, 20, 50)}
+for _ in range(12):
+    Xa = grouped_design(300, rng); ya = Xa @ bgrp + 2 * rng.standard_normal(300); ya -= ya.mean()
+    Xt, yt, Xv, yv = Xa[:100], ya[:100], Xa[100:200], ya[100:200]; lm = np.abs(Xt.T @ yt).max(); lams = np.geomspace(lm, 1e-2 * lm, 20)
+    for m in C4:                                         # mu = 0 is the lasso; lambda chosen on the validation half
+        pth = lasso_path(Xt, yt, lams, l2=m); C4[m].append(np.linalg.norm(pth[int(np.argmin(((yv[:, None] - Xv @ pth.T) ** 2).sum(0)))] - bgrp))
+C4 = {m: float(np.mean(v)) for m, v in C4.items()}
+print("C4  mean ||b - beta|| over 12 runs by mu:", {m: round(v, 2) for m, v in C4.items()})
+assert C4[20] < 0.6 * C4[0] and C4[5] < C4[0] and close([C4[0], C4[5], C4[20], C4[50]], [2.24, 1.52, 0.92, 0.84], 0.05)
 
 # %%
 if __name__ == "__main__":

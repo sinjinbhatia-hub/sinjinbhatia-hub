@@ -6,7 +6,7 @@
 
 ## 0. Where this sits
 
-You need CM-4: cyclic coordinates give conserved momenta (CM-4 Theorem 3.1), a time-independent Lagrangian conserves $h$ (CM-4 Theorem 3.7), and the Laplace–Runge–Lenz vector is conserved for $-k/r$ (CM-4 Example 4.6). CM-3's spherical pendulum (CM-3 Example 4.7) is this module's method in miniature.
+You need CM-4: cyclic coordinates give conserved momenta (CM-4 Theorem 3.1), a time-independent Lagrangian conserves $h$, which equals $T + V$ for fixed constraints (CM-4 Theorems 3.6–3.7), and the Laplace–Runge–Lenz vector is conserved for $-k/r$ (CM-4 Example 4.6). CM-3's spherical pendulum (CM-3 Example 4.7) is this module's method in miniature.
 
 Afterwards, QM-6 solves hydrogen by the same reduction with $\ell^2 \to \hbar^2\ell(\ell+1)$; QM-1 starts from the Rutherford nucleus derived here; CM-8 recasts Kepler in action-angle variables; CM-6 generalizes §3.9's radial oscillation frequency to many degrees of freedom.
 
@@ -57,7 +57,7 @@ At $E = V_{\min}$ the radius never changes: a **circle**. For $V_{\min} < E < 0$
 
 **The bounded orbit closes.** Near the bottom of the well, $r$ oscillates with angular frequency $\omega_r = \sqrt{V_{\rm eff}''(r_0)/\mu}$ while $\varphi$ advances at $\omega_\varphi = \ell/\mu r_0^2$. For $-k/r$, the minimum is at $r_0 = \ell^2/\mu k$, and $V_{\rm eff}''(r_0) = 3\ell^2/\mu r_0^4 - 2k/r_0^3 = k/r_0^3$. So $\omega_r^2 = k/\mu r_0^3$, while $\omega_\varphi^2 = \ell^2/\mu^2r_0^4 = k/\mu r_0^3$. They are *equal*: the radius goes in and out exactly once per revolution, so the orbit closes, with one closest point per turn, which is what an ellipse with the force center at a focus does. For a force $\propto r^n$ the same computation gives $\omega_r/\omega_\varphi = \sqrt{n+3}$, irrational for almost every $n$.
 
-So guess, before §3 derives it: bound inverse-square orbits are ellipses with the force center at a focus; their energy and (by CM-4 Example 4.4's scaling) their period depend only on $a$; circular orbits are stable only for forces falling more slowly than $1/r^3$; and in scattering, closer passes mean bigger deflections, so the fraction that bounces back measures how compact the target's charge is.
+So guess, before §3 derives it: bound inverse-square orbits are ellipses with the force center at a focus; their energy and, as CM-4 Example 4.4's scaling suggests, their period depend only on $a$; circular orbits are stable only for forces falling more slowly than $1/r^3$; and in scattering, closer passes mean bigger deflections, so the fraction that bounces back measures how compact the target's charge is.
 
 ## 3. Formal development
 
@@ -141,7 +141,7 @@ $$
 
 1. $\varphi$ does not appear in $L$, so $\dot p_\varphi = \partial L/\partial\varphi = 0$: $p_\varphi = \mu r^2\dot\varphi$ is constant, and by (3.5) it is $\ell$.
 2. The $r$ equation: $\partial L/\partial\dot r = \mu\dot r$ and $\partial L/\partial r = \mu r\dot\varphi^2 - V'(r)$, so $\mu\ddot r = \mu r\dot\varphi^2 - V'(r)$. Substitute $\dot\varphi = \ell/\mu r^2$ *in the equation of motion*: $\mu r\dot\varphi^2 = \ell^2/\mu r^3$. That is (3.7).
-3. $L$ has no explicit $t$ and $T$ is quadratic in velocities, so $E = T + V$ is conserved (CM-4 Theorem 3.7): $E = \tfrac12\mu\dot r^2 + \tfrac12\mu r^2\dot\varphi^2 + V = \tfrac12\mu\dot r^2 + \ell^2/2\mu r^2 + V$, which is (3.8). As a check, multiply (3.7) by $\dot r$: $\mu\dot r\ddot r = -\dot r\,dV_{\rm eff}/dr$, i.e. $\tfrac{d}{dt}[\tfrac12\mu\dot r^2 + V_{\rm eff}] = 0$. ∎
+3. $L$ has no explicit $t$ and $T$ is quadratic in velocities, so $E = T + V$ is conserved (CM-4 Theorems 3.6–3.7): $E = \tfrac12\mu\dot r^2 + \tfrac12\mu r^2\dot\varphi^2 + V = \tfrac12\mu\dot r^2 + \ell^2/2\mu r^2 + V$, which is (3.8). As a check, multiply (3.7) by $\dot r$: $\mu\dot r\ddot r = -\dot r\,dV_{\rm eff}/dr$, i.e. $\tfrac{d}{dt}[\tfrac12\mu\dot r^2 + V_{\rm eff}] = 0$. ∎
 
 ■ **What just happened.** $r$ moves like a particle on a line in $V_{\rm eff}$. A warning: substitute $\dot\varphi = \ell/\mu r^2$ into the *equation of motion* or the *energy*, never into the *Lagrangian*. If you do, $L \to \tfrac12\mu\dot r^2 + \ell^2/2\mu r^2 - V$, whose Euler–Lagrange equation $\mu\ddot r = -V' - \ell^2/\mu r^3$ has the centrifugal force with the wrong sign: varying $L$ holds $\dot\varphi$ fixed, not $\ell$. The correct reduced Lagrangian is Routh's, $L - p_\varphi\dot\varphi$ (CM-8). CM-7's spinning top has the same trap.
 
@@ -199,6 +199,8 @@ $$
 ### 3.6 The Kepler orbit: conic sections
 
 **Theorem 3.5 (Kepler's first law).** For $F = -k/r^2$, every orbit with $\ell \ne 0$ is $r(\varphi) = c/[1 + e\cos(\varphi - \varphi_0)]$ with $c = \ell^2/\mu k$, a conic with eccentricity $e \ge 0$ and a focus at the origin. Bounded orbits ($e < 1$) are ellipses.
+
+▶ **Try it first.** Put $F = -k/r^2$ into the right side of (3.10). What kind of ODE is left? Write down its general solution before reading on.
 
 **Derivation.**
 
@@ -259,6 +261,8 @@ $$
 T^2 = \frac{4\pi^2\mu}{k}\,a^3 = \frac{4\pi^2}{G(m_1 + m_2)}\,a^3. \tag{3.16}
 $$
 
+▶ **Try it first.** You know the sweep rate (3.6) and the area of an ellipse, $\pi ab$. Divide one by the other, then eliminate $\ell$ and $b$ with $c = \ell^2/\mu k$ and (3.13).
+
 **Derivation.**
 
 1. By (3.6) the area grows at the constant rate $\ell/2\mu$, and in one period it covers the ellipse, area $\pi ab$. So $T = \pi ab\big/(\ell/2\mu) = 2\pi\mu ab/\ell$.
@@ -268,7 +272,7 @@ T = \frac{2\pi\mu\,a^2\sqrt{1 - e^2}}{\sqrt{\mu k a}\,\sqrt{1 - e^2}} = 2\pi\sqr
 $$
 3. For gravity $\mu/k = \dfrac{m_1m_2/M}{Gm_1m_2} = \dfrac{1}{G(m_1 + m_2)}$. ∎
 
-■ **What just happened.** The eccentricity cancelled, which CM-4's scaling argument could not show. Kepler's constant $T^2/a^3 = 4\pi^2/G(M_\odot + m)$ differs between planets by their mass fractions, about $10^{-3}$ for Jupiter (Exercise A4), and $a$ is the semi-major axis of the *relative* orbit. Project Part 2 measures ten orbits with random $a, e$: log–log slope $1.50000000$.
+■ **What just happened.** The eccentricity cancelled, which CM-4's scaling argument could not show. Kepler's constant $T^2/a^3 = 4\pi^2/G(M_\odot + m)$ differs between planets by their mass fractions, about $10^{-3}$ for Jupiter (Exercise A4), and $a$ is the semi-major axis of the *relative* orbit. Project Part 2 measures ten orbits with $a$ from $0.3$ to $5$ and random $e$: log–log slope $1.50000000$.
 
 ### 3.8 Speeds, vis-viva, and orbit transfers
 
@@ -429,6 +433,8 @@ $$
 \frac{d\sigma}{d\Omega} = \left(\frac{k}{4E}\right)^2\frac{1}{\sin^4(\theta/2)}. \tag{3.27}
 $$
 
+▶ **Try it first.** Differentiate $b(\theta)$ from (3.26), put it into (3.24), and use $\sin\theta = 2\sin(\theta/2)\cos(\theta/2)$.
+
 **Derivation.**
 
 1. From (3.26), $b = (k/2E)\cot(\theta/2)$, so $\dfrac{db}{d\theta} = -\dfrac{k}{2E}\cdot\dfrac{1}{2\sin^2(\theta/2)}$.
@@ -470,7 +476,7 @@ is constant. Here is what it is.
 
 ### 3.13 Three bodies
 
-Add a third body and, after the center of mass, energy and angular momentum are used, too many degrees of freedom remain; Poincaré showed (around 1890) that there are no further conserved quantities and the general motion is chaotic, so no closed form of this module's kind exists. Special solutions survive, notably Lagrange's (1772) equilateral L4 and L5 points, where Jupiter's Trojan asteroids sit (Exercise C4, project "Your turn").
+Add a third body and, after the center of mass, energy and angular momentum are used, too many degrees of freedom remain; Poincaré showed (around 1890) that there are no further analytic conserved quantities and that the motion can be chaotic, so no closed form of this module's kind exists. Special solutions survive, notably Lagrange's (1772) equilateral L4 and L5 points, where Jupiter's Trojan asteroids sit (Exercise C4, project "Your turn").
 
 ## 4. Worked examples
 

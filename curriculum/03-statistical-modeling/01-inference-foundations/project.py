@@ -315,14 +315,18 @@ assert counts.sum() == 64 and np.isclose(lam_hat, 3.2) and np.isclose(se_lam, 0.
 assert np.allclose(ci, (2.416, 3.984))
 print(f"Example 4.6: lam_hat={lam_hat}, se={se_lam:.3f}, observed info={J_obs:.2f} = n/lam_hat, "
       f"95% CI=({ci[0]:.3f}, {ci[1]:.3f}); exp(-lam_hat)={g_hat:.5f}, delta se={se_g:.5f}")
-for n_, tol in [(20, 0.15), (200, 0.03)]:
+for n_, ratio_quoted in [(20, 1.097), (200, 1.010)]:
     Lsim = rng.poisson(3.2 * n_, R) / n_   # sample means at lambda = 3.2
     sd_g = np.exp(-Lsim).std(); delta_sd = np.exp(-3.2) * np.sqrt(3.2 / n_)
+    # exact sd of exp(-Xbar) from the Poisson pgf E[z^T] = exp(n lam (z - 1)) with T = n Xbar (Exercise B5)
+    sd_exact = np.sqrt(np.exp(3.2 * n_ * (np.exp(-2 / n_) - 1)) - np.exp(2 * 3.2 * n_ * (np.exp(-1 / n_) - 1)))
     cover = np.mean(np.abs(Lsim - 3.2) <= 1.96 * np.sqrt(Lsim / n_))
-    assert abs(sd_g / delta_sd - 1) < tol
+    assert np.isclose(sd_exact / delta_sd, ratio_quoted, atol=5e-4)   # Example 4.6's exact ratios
+    assert abs(sd_g - sd_exact) < 4 * sd_g / np.sqrt(2 * R)           # MC sd has SE about sd/sqrt(2R)
+    assert sd_exact > delta_sd                                         # delta method underestimates: e^{-x} is convex
     assert 0.93 < cover < 0.965, ("Wald coverage", n_, cover)   # Example 4.6: about 94.5% at n = 20
-    print(f"  simulation n={n_}: sd of exp(-Xbar) = {sd_g:.5f} vs delta {delta_sd:.5f} (ratio {sd_g/delta_sd:.3f}); "
-          f"Wald CI coverage = {cover:.3f}")
+    print(f"  simulation n={n_}: sd of exp(-Xbar) = {sd_g:.5f} vs delta {delta_sd:.5f} (ratio {sd_g/delta_sd:.3f}; "
+          f"exact sd {sd_exact:.5f}, ratio {sd_exact/delta_sd:.3f}); Wald CI coverage = {cover:.3f}")
 
 # %% [markdown]
 # ## Part 8: Rao-Blackwell (Example 4.7, Exercise B5)
@@ -342,10 +346,17 @@ v_ind, v_rb, crb_g = g * (1 - g), np.exp(-2 * lam) * (np.exp(lam / n) - 1), lam 
 mc_check((Xp[:, 0] == 0).astype(float), g, 0.0, v_ind, label="1{X1=0}")
 mc_check((1 - 1 / n)**T, g, 0.0, v_rb, label="RB of 1{X1=0}")
 e_mle = np.exp(-T / n)
-assert v_rb > crb_g
+# Exact moments of the MLE exp(-T/n) from the pgf E[z^T] = exp(n lam (z - 1)), Exercise B5(e).
+E_mle, E_mle2 = np.exp(n * lam * (np.exp(-1 / n) - 1)), np.exp(n * lam * (np.exp(-2 / n) - 1))
+bias_mle, mse_mle = E_mle - g, E_mle2 - 2 * g * E_mle + g**2
+assert np.isclose(bias_mle, 3.3369e-03, atol=5e-7) and np.isclose(mse_mle, 3.3090e-04, atol=5e-8)
+assert abs(e_mle.mean() - E_mle) < 4 * e_mle.std() / np.sqrt(R)                       # MC bias vs exact
+assert abs(np.mean((e_mle - g)**2) - mse_mle) < 4 * np.std((e_mle - g)**2) / np.sqrt(R)  # MC MSE vs exact
+assert v_rb > crb_g and mse_mle > v_rb
 print(f"Example 4.7: Var(X1)={Xp[:,0].var():.3f} (theory {lam}), Var(T/n)={(T/n).var():.4f} (theory {lam/n})")
 print(f"B5: Var(1{{X1=0}})={v_ind:.5f}, Var((1-1/n)^T)={v_rb:.3e}, CRB={crb_g:.3e}, ratio={v_rb/crb_g:.4f}; "
-      f"MSE of MLE exp(-Xbar) (MC) = {np.mean((e_mle-g)**2):.3e}, bias = {e_mle.mean()-g:.2e}")
+      f"MSE of MLE exp(-Xbar) (MC) = {np.mean((e_mle-g)**2):.3e}, bias = {e_mle.mean()-g:.2e} "
+      f"(exact via pgf: MSE {mse_mle:.3e}, bias {bias_mle:.3e})")
 
 # %% [markdown]
 # ## Part 9: Exponential-family identities A'(eta) = E[T], A''(eta) = Var[T], (3.22)
@@ -496,6 +507,7 @@ iqr = lambda v: np.subtract(*np.quantile(v, [0.75, 0.25]))
 print(f"C2: I_1 = {I_cauchy:.4f}; n Var(MLE) = {n*th.var():.3f} (1/I = 2), n Var(median) = {n*med.var():.3f} "
       f"(pi^2/4 = {np.pi**2/4:.3f}); IQR of Xbar = {iqr(Xc.mean(1)):.2f} (one observation: 2)")
 assert abs(n * th.var() - 2) < 0.4 and n * med.var() > n * th.var()
+assert abs(n * med.var() - np.pi**2 / 4) < 0.4 and abs(iqr(Xc.mean(1)) - 2) < 0.35   # C2(c): median's pi^2/4; IQR of Xbar
 
 # %%
 if __name__ == "__main__":

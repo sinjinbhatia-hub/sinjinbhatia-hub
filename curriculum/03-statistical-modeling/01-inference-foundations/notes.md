@@ -188,7 +188,7 @@ $$\log\alpha - \psi(\alpha) = \log\bar x - \frac1n\sum_i\log x_i =: s. \tag{3.10
 
 ### 3.6 The score and Fisher information
 
-We need **regularity conditions (R)**: (R1) the support $\{x : p(x;\theta) > 0\}$ does not depend on $\theta$; (R2) $p$ is twice differentiable in $\theta$ and $\int p\,dx$ may be differentiated twice under the integral sign; (R3) $\theta$ is an interior point of $\Theta$; (R4) $I_1(\theta)$ is finite and positive definite. Every family in these notes satisfies (R) except Uniform$(0, \theta)$, which fails (R1); so do the shifted uniforms of Exercises A3 and A6(c), for the same reason.
+We need **regularity conditions (R)**: (R1) the support $\{x : p(x;\theta) > 0\}$ does not depend on $\theta$; (R2) $p$ is twice differentiable in $\theta$ and $\int p\,dx$ may be differentiated twice under the integral sign; (R3) $\theta$ is an interior point of $\Theta$; (R4) $I_1(\theta)$ is finite and positive definite. Every family in these notes satisfies (R) except Uniform$(0, \theta)$, which fails (R1); so do $\mathrm{Uniform}(-\theta, \theta)$ of Exercise A3 and $\mathrm{Uniform}(\theta, \theta + 1)$ of Exercise A6(c), for the same reason.
 
 **Theorem 3.12 (Score identities).** Under (R):
 $$\mathbb{E}_\theta[s(\theta;X)] = \mathbf{0}, \qquad I_1(\theta) = \mathrm{Cov}_\theta(s) = \mathbb{E}_\theta[ss^\top] = -\mathbb{E}_\theta\big[\nabla^2_\theta\log p(X;\theta)\big]. \tag{3.11}$$
@@ -328,7 +328,7 @@ Once you know $T$, the rest of the data is noise with a known distribution: you 
 *Proof.* ($\Leftarrow$) 1. Fix $t$ and $\mathbf{x}$ with $T(\mathbf{x}) = t$ (otherwise the conditional probability is 0, free of $\theta$). Since $\{\mathbf{X} = \mathbf{x}\} \subseteq \{T = t\}$, $P(\mathbf{X} = \mathbf{x} \mid T = t) = P(\mathbf{X} = \mathbf{x})/P(T = t)$. 2. $P(T = t) = \sum_{\mathbf{y}:T(\mathbf{y}) = t}g(t;\theta)h(\mathbf{y}) = g(t;\theta)\sum_{T(\mathbf{y}) = t}h(\mathbf{y})$. 3. The ratio is $h(\mathbf{x})/\sum_{T(\mathbf{y}) = t}h(\mathbf{y})$: no $\theta$.
 ($\Rightarrow$) 4. If $T$ is sufficient, $p_n(\mathbf{x};\theta) = P_\theta(T = T(\mathbf{x}))\cdot P(\mathbf{X} = \mathbf{x} \mid T = T(\mathbf{x}))$. The second factor is free of $\theta$; call it $h(\mathbf{x})$, and call the first $g(T(\mathbf{x});\theta)$. ∎
 
-■ **What just happened.** Everything $\theta$ does to the joint density is confined to the factor $g$, and $g$ cancels when you condition on $T$. \"Sufficient\" means \"$\theta$ enters the likelihood only through $T$\", which is why you can read sufficient statistics off the likelihood by inspection.
+■ **What just happened.** Everything $\theta$ does to the joint density is confined to the factor $g$, and $g$ cancels when you condition on $T$. "Sufficient" means "$\theta$ enters the likelihood only through $T$", which is why you can read sufficient statistics off the likelihood by inspection.
 
 (The continuous case has the same statement; its proof needs conditional densities, Casella & Berger Theorem 6.2.6.) Factorizing the joint densities of §3.5: Bernoulli $p^{\sum x}(1-p)^{n-\sum x}$, Poisson $\lambda^{\sum x}e^{-n\lambda}\cdot\prod(x_i!)^{-1}$ and Exponential $\lambda^ne^{-\lambda\sum x}$ all have $T = \sum x_i$; the Normal density $(2\pi\sigma^2)^{-n/2}\exp\big(-\frac{\sum x^2 - 2\mu\sum x + n\mu^2}{2\sigma^2}\big)$ has $T = (\sum x_i, \sum x_i^2)$; Uniform$(0,\theta)$, $\theta^{-n}\mathbb{1}\{\max x \le \theta\}\cdot\mathbb{1}\{\min x \ge 0\}$, has $T = \max x_i$; Gamma, $(\beta^\alpha/\Gamma(\alpha))^n(\prod x)^{\alpha-1}e^{-\beta\sum x}$, has $T = (\sum\log x_i, \sum x_i)$. Every MLE in §3.5 is a function of these, as it must be.
 
@@ -474,7 +474,7 @@ A Geiger counter records counts in twenty one-second windows: $3, 5, 2, 4, 3, 1,
 
 $\hat\lambda = 64/20 = 3.2$. By (3.18) with $I_1 = 1/\lambda$, $\sqrt n(\hat\lambda - \lambda) \xrightarrow{d} \mathcal{N}(0, \lambda)$. The Wald standard error is $\sqrt{\hat\lambda/n} = \sqrt{0.16} = 0.4$; the observed information $J_n = T/\hat\lambda^2 = 64/10.24 = 6.25 = n/\hat\lambda$ gives the same. The 95% Wald interval is $3.2 \pm 1.96(0.4) = (2.416, 3.984)$ decays per second. In the project's simulation at $\lambda = 3.2$, $n = 20$, this recipe covers the truth $94.5\%$ of the time.
 
-Now estimate the probability that a one-second window is empty, $g(\lambda) = e^{-\lambda}$. By invariance the MLE is $e^{-3.2} = 0.04076$. By the delta method (3.19), $\mathrm{se} \approx |g'(\hat\lambda)|\cdot 0.4 = e^{-3.2}\cdot 0.4 = 0.01630$. The simulated standard deviation of $e^{-\bar X}$ at $n = 20$ is $0.01779$ (ratio 1.091), and at $n = 200$ the ratio is 1.014: the delta method linearizes $e^{-\lambda}$, which curves noticeably over $\pm 0.4$.
+Now estimate the probability that a one-second window is empty, $g(\lambda) = e^{-\lambda}$. By invariance the MLE is $e^{-3.2} = 0.04076$. By the delta method (3.19), $\mathrm{se} \approx |g'(\hat\lambda)|\cdot 0.4 = e^{-3.2}\cdot 0.4 = 0.01630$. The simulated standard deviation of $e^{-\bar X}$ at $n = 20$ is $0.01779$ (ratio 1.091; the exact value, from the probability generating function used in Exercise B5, is $0.01788$, ratio 1.097), and at $n = 200$ the ratio is 1.014 (exact 1.010): the delta method linearizes $e^{-\lambda}$, which curves noticeably over $\pm 0.4$.
 
 ### Example 4.7: Rao–Blackwellizing $X_1$ for the Poisson mean
 
