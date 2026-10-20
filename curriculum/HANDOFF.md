@@ -1,72 +1,66 @@
-# Handoff — where the build stopped and how to continue
+# Handoff — where the build stands and how to continue
 
-Paused 2026-10-14 at the user's request, so the next window starts with less context. This file is the only thing a new session needs to read first. After it, read `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
+Last updated 2026-10-20 03:45 UTC, after round 7. The branch is `claude/brave-knuth-64723m`; everything below is committed and pushed. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
 
-Branch: `claude/brave-knuth-64723m`. All work below is committed and pushed.
+## Status (34 of 80 modules done)
 
-## Status (32 of 80 modules have all four files)
-
-Every module listed as having four files has `notes.md`, `exercises.md`, `solutions.md` and `project.py`. At pause time, every `project.py` touched in the last round passed headless (F5, F6, LA-8, LA-9, EM-1, EM-2, ST-1, ST-2).
+"Done" means all four files exist (`notes.md`, `exercises.md`, `solutions.md`, `project.py`), an independent reviewer re-derived the math and recomputed the numbers, the fixes were applied, and the script passes headless. Review notes for each module are in `tools/reviews/<code>.md`.
 
 | State | Modules |
 |---|---|
-| **Done**: written, independently reviewed, fixes applied | F4, F5, LA-1, LA-2, LA-3, LA-4, LA-13, CM-1, CM-2, CM-3, CM-4, CM-6, CM-7, CM-8 |
-| **Reviewed, fixes not applied**: the fix run was stopped and its issue list is lost with the old container | F1, LA-5, LA-6, LA-7, LA-8, LA-9, LA-10, LA-11, LA-12, LA-14 |
-| **Written, not yet reviewed** | F2, F3, F6, CM-5, EM-1, EM-2, ST-1, ST-2 |
-| **Partial**: only a draft `project.py` exists | EM-3 |
-| **Not started** (briefs ready in `research/briefs/`) | EM-4–8, SM-1–7, QM-1–9, ST-3–9, ML-1–10, QC-1–9 (47 modules) |
+| **Done** (34) | F1–F6 · LA-1–14 · CM-1–8 · EM-1–4 · ST-1, ST-2 |
+| **Written, awaiting review** (4) | ST-3, ST-4, ST-5, EM-5 (written by Sonnet; scripts pass; math not yet independently checked) |
+| **Not started** (42) | EM-6, EM-7, EM-8 · SM-1–7 · QM-1–9 · ST-6–9 · ML-1–10 · QC-1–9 |
 
-The second and third rows (18 modules) need one combined review-and-fix pass each. LA-8 and LA-9 may already be partly fixed, because the stopped run edited them. The review re-derives the math anyway, so this is harmless.
+Until a module is in the Done row, treat its derivations and numbers as unverified.
 
-## How to continue
+## How to run a round
 
-The build runs through the Workflow tool with the script at `tools/build_modules_workflow.js`. Pass the script with `scriptPath`, because a script path from an old session will not resolve.
+The build runs through the Workflow tool with `tools/build_modules_workflow.js` (pass it as `scriptPath`). Arguments:
 
 ```json
 {
   "combined": true,
+  "writerModel": "sonnet",
   "modules": [
-    {"code": "EM-3", "dir": "02-physics/b-electromagnetism/03-boundary-value-problems", "brief": "EM-3.md"},
-    {"code": "LA-5", "dir": "01-linear-algebra/05-orthogonality-and-least-squares", "brief": "none", "mode": "verify"}
+    {"code": "ST-3", "dir": "03-statistical-modeling/03-linear-regression", "brief": "ST-3.md", "mode": "verify"},
+    {"code": "EM-6", "dir": "02-physics/b-electromagnetism/06-electrodynamics-maxwell", "brief": "EM-6.md", "mode": "write"},
+    {"code": "EM-7", "dir": "02-physics/b-electromagnetism/07-electromagnetic-waves", "brief": "EM-7.md"}
   ]
 }
 ```
 
-- `combined: true` runs one writer, then one agent that reviews and fixes. This is about a third cheaper than the old write → verify → fix pipeline. Use it.
-- `mode: "verify"` skips writing and only reviews and fixes an existing module. F1, LA-1–12 and LA-14 have no brief file because they were written from `ROADMAP.md`. Pass `"brief": "none"`; the review prompt treats the brief as optional.
-- Folder paths for every module are in the course READMEs and at the top of each brief.
+- `mode` omitted: write, then review+fix. `"verify"`: review+fix an existing module. `"write"`: write only, review deferred.
+- `writerModel: "sonnet"` puts the writers on Sonnet; reviewers always use the session model (Fable). Keep this. Measured from transcripts: a from-scratch write costs 10–17M cache-read tokens on either model, a review 2–4M, and Sonnet tokens count against the usage limit at a fraction of Fable's rate.
+- Modules without a brief file (F1, LA-1–12, LA-14) take `"brief": "none"`. Folder paths for every module are in `research/briefs/*.md` ("Folder:" line) and the course READMEs.
+- Reviewers write their findings to `tools/reviews/<code>.md` as they go. If a reviewer is killed, the next one resumes from that file.
+- `tokenCap` exists in the script but is not useful: `budget.spent()` does not track the usage limit.
 
-**Concurrency: run 3 workflows at a time, with 3–4 modules each, and no more.** Eight parallel workflows used up a whole usage window in about 15 minutes earlier in this build. After each workflow returns, commit and push before you start the next one. A usage limit kills runs, and whatever is uncommitted at that point is at risk.
+## Sizing a round so it finishes before the usage limit
 
-Suggested order (each line is roughly one workflow):
+There is no usage signal readable from inside the session. The limit kills every running agent at once; observed windows died after roughly 20–30M Fable-weighted tokens. A round of **4 Fable reviews + 2–3 Sonnet writes** (about 17M weighted) finished with room to spare in round 7. Run that as two workflows (one verify, one write-only), both at once, then stop and wait for the user before the next round. Do not run more than three workflows at a time. Commit after each workflow returns; an autosave loop (`/tmp/claude-0/autosave.sh`, commits every 10 min) helps but does not survive a worker restart, so restart it with `setsid nohup ... & disown`.
 
-1. Verify: F1, F2, F3, F6
-2. Verify: LA-5, LA-6, LA-7, LA-8
-3. Verify: LA-9, LA-10, LA-11, LA-12, LA-14
-4. Verify: CM-5, EM-1, EM-2, ST-1, ST-2
-5. Write: EM-3, EM-4, EM-5, EM-6, then EM-7 and EM-8
-6. Write: ST-3 to ST-9, three or four per workflow
-7. Write: QM-1 to QM-9
-8. Write: SM-1 to SM-7
-9. Write: ML-1 to ML-10
-10. Write: QC-1 to QC-9
+## Build order (prerequisites first)
 
-The order follows prerequisites: E&M before QM, QM before SM-5 and QC, and ST before ML. Writers can then cite earlier modules by code instead of re-deriving them.
+1. Verify ST-3, ST-4, ST-5, EM-5. Write EM-6, EM-7.
+2. Verify EM-6, EM-7. Write EM-8, ST-6, ST-7.
+3. Verify those. Write ST-8, ST-9, QM-1.
+4. QM-2 through QM-9 (needs EM done; QM-6 reuses EM-3's Legendre machinery).
+5. SM-1 through SM-7 (SM-5 needs QM-5).
+6. ML-1 through ML-10 (needs ST-1–5).
+7. QC-1 through QC-9 (needs QM-4, QM-7).
 
-## Known issues to watch
+Writers can cite earlier modules by code rather than re-deriving.
 
-- **Length.** Writers overshoot the notes target. The 6–8k word target with a 9.5k ceiling is in the prompt. Several finished modules run 11–19k words. That is acceptable where the content is dense, but don't let a new module pad.
-- **Assert drift.** When a fix changes a number, the number has to change in the notes, the solutions and the assert together. The review prompt says so; spot-check it.
-- **Conventions** (fixed; see `STYLE.md`):
-  - The complex inner product is conjugate-linear in the first slot.
-  - Qubit 0 is the leftmost tensor factor.
-  - The QFT uses e^{+2πijk/N}.
-  - Fourier uses the Osgood convention in F3 and symmetric 1/√(2π) in the physics modules.
-  - Units are SI, with ℏ and k_B written out.
+## Known issues
 
-## Final pass, once all 80 modules exist
+- **Length.** Almost every module runs over the STYLE.md targets (notes 9–15k words, scripts 500–900 lines). Reviewers consistently decline to trim because the material is correct and brief-mandated. Accepted; not worth the tokens to shorten.
+- **Equation tags** out of numerical order in a few modules (EM-3, LA-14) because later modules cite them. Cosmetic; leave them.
+- **Conventions** are fixed in `STYLE.md` (complex inner product conjugate-linear in the first slot; qubit 0 leftmost; QFT e^{+2πijk/N}; Osgood Fourier convention in F3, symmetric 1/√(2π) in physics; SI with ℏ and k_B explicit). ST-5 uses Bayes factor BF10 while ST-2 used B01; both state it in their conventions box.
 
-1. `bash tools/run_all_projects.sh`: every module must print PASS.
-2. `python tools/py_to_ipynb.py` builds a `project.ipynb` next to every `project.py`.
-3. Update the status column in `README.md`, then delete this file or mark it "complete".
+## Final pass, once all 80 modules are done
+
+1. `bash tools/run_all_projects.sh` — every module must print PASS.
+2. `python3 tools/py_to_ipynb.py` — builds a `project.ipynb` beside every `project.py`.
+3. Update the status column in `README.md`; replace this file with a one-line "complete" note.
 4. Commit and push.

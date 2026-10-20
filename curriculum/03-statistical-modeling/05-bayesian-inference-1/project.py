@@ -485,7 +485,8 @@ ns_ = np.logspace(1, 8, 100); xs_ = 2 / np.sqrt(ns_)
 fig, ax = plt.subplots(figsize=(6.5, 4))
 for tau_ in (1, 0.1):
     ax.loglog(ns_, 1 / bf10(xs_, ns_, 1, tau_), label=f"BF01, tau={tau_}")
-ax.axhline(1, c="k", lw=.5); ax.set(xlabel="n (z fixed at 2, p = 0.0455 throughout)", ylabel="BF01 (>1 favors H0)", title="Jeffreys-Lindley"); ax.legend()
+ax.axhline(1, c="k", lw=.5); ax.axhline(pval, c="r", ls="--", label="two-sided p-value (constant)")
+ax.set(xlabel="n (z fixed at 2)", ylabel="BF01 (>1 favors H0)", title="Jeffreys-Lindley"); ax.legend()
 save(fig, "p11_jl.png")
 assert (1 / bf10(xs_, ns_, 1, 1))[-1] > 1e3 and (1 / bf10(xs_, ns_, 1, 1))[0] < 1
 
