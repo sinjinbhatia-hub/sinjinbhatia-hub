@@ -135,17 +135,32 @@ PHASE 2 — FIX. Fix every mathematical error, wrong number, failing or weakened
 Return the structured result: counts of issues found (and how many high/medium), how many you fixed, a one-line list of anything you could not fix in \`not_fixed\`, and a summary under 150 words. Do not paste file contents.`
 }
 
+// Pause before the usage limit: once budget.spent() (shared across all workflows in this turn)
+// reaches args.tokenCap, no new agent starts; in-flight agents finish and their work is kept.
+const CAP = (args && args.tokenCap) || Infinity
+let paused = false
+function capped(code, stage) {
+  if (paused) return true
+  const spent = budget.spent()
+  if (spent >= CAP) { paused = true; log(`PAUSE: token cap ${CAP} reached (spent ${spent}); ${code} ${stage} not started`); return true }
+  return false
+}
+
 const COMBINED = !!(args && args.combined)
 // Optional cheaper model for writers (e.g. args.writerModel = 'sonnet'); reviewers keep the session model.
 const WRITER_OPTS = (args && args.writerModel) ? { model: args.writerModel } : {}
 const results = COMBINED ? await pipeline(
   modules,
-  m => (m.mode === 'verify')
-    ? Promise.resolve({ status: 'complete', script_passes: true, skipped_write: true })
-    : agent(writePrompt(m), { label: `write:${m.code}`, phase: 'Write', schema: WRITE_SCHEMA, ...WRITER_OPTS }),
+  m => {
+    if (m.mode === 'verify') return { status: 'complete', script_passes: true, skipped_write: true }
+    if (capped(m.code, 'write')) return { paused: true }
+    return agent(writePrompt(m), { label: `write:${m.code}`, phase: 'Write', schema: WRITE_SCHEMA, ...WRITER_OPTS })
+  },
   (w, m) => {
     if (!w) { log(`${m.code}: writer died; skipping review`); return null }
+    if (w.paused) return { w, rf: null, paused: true }
     if (m.mode === 'write') { log(`${m.code}: written; review deferred`); return { w, rf: null } }
+    if (capped(m.code, 'review')) return { w, rf: null, paused: true }
     return agent(reviewFixPrompt(m), { label: `review+fix:${m.code}`, phase: 'Verify', schema: REVIEWFIX_SCHEMA }).then(rf => ({ w, rf }))
   },
 ) : await pipeline(
@@ -168,6 +183,7 @@ const results = COMBINED ? await pipeline(
 const summary = modules.map((m, i) => {
   const r = results[i]
   if (!r) return { code: m.code, status: 'FAILED (writer or pipeline died)' }
+  if (r.paused) return { code: m.code, status: r.w && r.w.paused ? 'PAUSED before write (token cap)' : `PAUSED before review (token cap); write: ${r.w.skipped_write ? 'pre-existing' : r.w.status + ', script ' + (r.w.script_passes ? 'passes' : 'FAILS')}` }
   if (COMBINED) {
     return {
       code: m.code,
@@ -184,4 +200,4 @@ const summary = modules.map((m, i) => {
     deviations: r.w && r.w.deviations ? r.w.deviations : '',
   }
 })
-return summary
+return { spent: budget.spent(), cap: CAP, paused, results: summary }
