@@ -10,4 +10,20 @@ You are writing one module of a self-study curriculum. Do these in order.
 6. Self-check before finishing: every central result derived (no "it can be shown"); every number in a worked example reproduced by an assert or print in project.py; no "similarly"/"left to the reader" in solutions; cross-links use module codes and name the specific object; §8 is honest and specific; conventions box present at top; equations referred to later are tagged.
 7. Report back in under 200 words: files written with word counts, script status (pass/fail and runtime), and any place where you deviated from the brief and why. Do not paste the content back.
 
-Student profile and non-negotiables are in STYLE.md. The student is strong in calculus/ODEs and Python, weak in linear algebra at the start, and wants bluntness about difficulty. Write to that person.
+Student profile and non-negotiables are in STYLE.md. The student is strong in calculus/ODEs, can already write working Python but is building real fluency in course 00-python, is weak in linear algebra at the start, and wants bluntness about difficulty. Write to that person.
+
+
+## Python course (PY) addendum
+
+Modules PY-1 to PY-10 teach programming, not mathematics. Keep the template's sections 0–10 and the four files, with these substitutions:
+
+- **§1 (the problem)** names the concrete programming problem the language feature solves (why dicts exist, why exceptions, why arrays), not a historical anecdote.
+- **§2 (intuition)** gives a mental model drawn in text: names → objects, the call stack as frames, an array as memory plus a (shape, strides, dtype) recipe.
+- **§3 (formal development)** states the precise semantics and replaces derivations with **build-it-yourself sequences**: numbered steps in which the reader writes their own version of a thing (their own `enumerate`, decorator, matrix multiply, dual numbers) before being handed the library version. Every ▶ Try it first asks the reader to **predict the output** of a snippet before running it; the following ■ What just happened explains the gap.
+- **§4 (worked examples)** are complete, annotated programs with their **real output** shown. You must run every code block in notes.md and solutions.md and paste the actual output. Never type an output from memory.
+- **Exercises** are coding exercises: A = predict the output, fix the bug, or write a 5–15 line function; B = a 30–80 line program; C = a small system, a design question with a written justification, or a performance problem with measurements. **Solutions** are complete code plus a short explanation, and every solution has been run and passes its own asserts.
+- **project.py** is unchanged in form (`# %%` cells, headless, asserts, figures to `figures/`, a "Your turn" section) and must run in under 90 s. Third-party imports are those the brief allows (numpy, scipy, matplotlib, sympy, plus pandas and pytest where the brief says so). Where the brief says a timing is reported, the script measures it at run time; a quoted speedup that was not measured is an error.
+- **§8** is about the mistakes programmers actually make with this feature, from experience, not generic advice.
+- **Length**: notes.md 6,000–8,000 words including code blocks (ceiling 9,500). Code counts; do not pad prose to compensate.
+- **Style**: Python 3.11+, PEP 8, f-strings, `pathlib`, type hints on public functions from PY-5 on, `np.random.default_rng`, the matplotlib object-oriented API. No `from x import *`, no bare `except:`, no mutable defaults except as the named trap.
+- Each PY brief ends with a **REVIEW FOCUS** section; the reviewer applies it in addition to the standard checks.

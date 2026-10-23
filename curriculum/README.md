@@ -8,6 +8,7 @@ A self-contained, derivation-first course of study built for one student: a seco
 
 | Folder | Course | Modules | Hours | Status |
 |---|---|---|---|---|
+| [00-python](00-python/) | Objects and names → collections → functions and modules → classes → testing and debugging → NumPy → Matplotlib → SciPy/SymPy → pandas → performance and packaging | 10 | ~87 | building |
 | [00-foundations](00-foundations/) | Proof and complex numbers · Fourier series and transforms · Probability I/II · Calculus of variations | 6 | ~62 | building |
 | [01-linear-algebra](01-linear-algebra/) | From vectors to SVD, then Jordan form, tensors, numerical LA, matrix calculus | 14 | ~156 | building |
 | [02-physics/a-classical-mechanics](02-physics/a-classical-mechanics/) | Newton → least action → Lagrange → Noether → orbits → normal modes → rigid bodies → Hamilton | 8 | ~80 | building |
@@ -24,7 +25,7 @@ Every module has the same four files: `notes.md`, `exercises.md`, `solutions.md`
 
 Work two tracks at once, never more. Full version with week numbers in [ROADMAP.md §6](ROADMAP.md#6-recommended-study-path).
 
-1. **Phase 0 (2 weeks):** F1 → LA-1 → LA-2
+1. **Phase 0 (3 weeks):** PY-1 → PY-5 ‖ F1 → LA-1 → LA-2 (Python is the applied track here; PY-6/PY-7 follow during Phase 1, PY-8/PY-9 before CM-3/ST-1, PY-10 before ML-7)
 2. **Phase 1 (12 weeks):** LA-3 → LA-9 (track A) ‖ F4 (track B). Checkpoint: `01-linear-algebra/CHECKPOINT-core.md`.
 3. **Phase 2 (12 weeks):** F2 → F3 → LA-10 → LA-14 ‖ F5 → F6 → CM-1 → CM-4
 4. **Phase 3 (19 weeks):** CM-5 → CM-8 → EM-1 → EM-4 ‖ ST-1 → ST-4 → ML-1

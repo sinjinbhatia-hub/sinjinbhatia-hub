@@ -4,7 +4,7 @@ Read this before writing any module. It applies to every course.
 
 ## Who you're writing for
 
-One specific student: second-year mechanical engineering and applied math undergraduate, physics concentration. Solid in calculus through multivariable, ODEs, some PDEs. Partial Fourier. Weak linear algebra at the start (rebuilt in course 01). Strong programmer (builds multi-agent systems in Python). Learns best by building the picture, deriving the result, then coding it. Wants bluntness about difficulty, not reassurance.
+One specific student: second-year mechanical engineering and applied math undergraduate, physics concentration. Solid in calculus through multivariable, ODEs, some PDEs. Partial Fourier. Weak linear algebra at the start (rebuilt in course 01). Can write working Python and wants to become genuinely good at it (course 00-python builds that fluency and goes first). Learns best by building the picture, deriving the result, then coding it. Wants bluntness about difficulty, not reassurance.
 
 Write to that one person. "You" throughout.
 
@@ -47,7 +47,7 @@ Write to that one person. "You" throughout.
 
 ## Code
 
-- Python 3.11+, NumPy, SciPy, Matplotlib, SymPy only. No sklearn/torch unless the module is explicitly about using them (ML-5 onward may use scikit-learn; ML-7 onward may use PyTorch for comparison only, with a NumPy implementation as the primary).
+- Python 3.11+, NumPy, SciPy, Matplotlib, SymPy only (the PY course additionally uses pandas and pytest where its briefs say so). No sklearn/torch unless the module is explicitly about using them (ML-5 onward may use scikit-learn; ML-7 onward may use PyTorch for comparison only, with a NumPy implementation as the primary).
 - Implement the algorithm yourself first, then compare to the library.
 - `# %%` cells, markdown cells explaining the math, asserts checking theory against computation. Seeded RNG. Headless matplotlib. Figures saved to `figures/`.
 - Must run clean with `MPLBACKEND=Agg python3 project.py` in under about 60 seconds and exit 0.

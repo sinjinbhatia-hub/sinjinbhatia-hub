@@ -53,6 +53,23 @@ Not needed for this path, so deliberately excluded: measure-theoretic probabilit
 
 Folder names are prefixed by the order you'll *start* them. The dependency graph in §5 is what actually governs sequencing.
 
+### 00-python (10 modules, ~87 hours)
+
+Added after the first build round at the student's request ("I want to get really good at Python"). Every module in every other course ends with a Python project, so this course goes first and runs as the applied track beside F1 and early LA. Where a math module derives a theorem, a PY module makes you build the thing yourself before handing you the library version, and every ▶ Try it first asks you to predict output before running.
+
+| # | Module | Hours | Prereqs | Pair with |
+|---|---|---|---|---|
+| PY-1 | Objects, names, numbers (floating point), control flow, functions, scope | 8 | none | Downey, *Think Python* 3e (free) ch. 1–8; Batchelder, "Facts and myths about Python names and values"; MIT 6.100A lectures 1–4 |
+| PY-2 | Collections, iteration, generators, files; the data model | 9 | PY-1 | *Think Python* ch. 9–14; Ramalho, *Fluent Python* 2e ch. 2–3, 17 |
+| PY-3 | Functions as values, closures, decorators, recursion, modules, the standard library | 8 | PY-2 | *Fluent Python* ch. 7, 9; Slatkin, *Effective Python* 2e items 19–26 |
+| PY-4 | Classes and the object model; dual-number automatic differentiation | 10 | PY-3 | *Fluent Python* ch. 1, 11–13, 16; the Data Model reference |
+| PY-5 | Errors, testing (pytest), debugging (pdb), logging, type hints | 8 | PY-4 | Okken, *Python Testing with pytest* 2e ch. 1–5; *Effective Python* ch. 10 |
+| PY-6 | NumPy: arrays, memory, broadcasting, vectorization, views vs copies | 10 | PY-5 | NumPy user guide (basics, indexing, broadcasting, copies and views); VanderPlas, *Python Data Science Handbook* 2e ch. 2 |
+| PY-7 | Matplotlib and scientific communication | 7 | PY-6 | Matplotlib quick start and Artist tutorial; Rougier, *Scientific Visualization* (free) ch. 1–4 |
+| PY-8 | SciPy and SymPy: optimize, integrate, solve_ivp, sparse, special, stats; symbolic → numeric pipelines | 9 | PY-7 | SciPy tutorials; Johansson, *Numerical Python* 3e ch. 3, 5–9; SymPy tutorial |
+| PY-9 | pandas: tables, alignment, groupby, merge, time series, tidy data | 8 | PY-6, PY-7 | McKinney, *Python for Data Analysis* 3e (free) ch. 5–8, 10–11; Wickham, "Tidy Data" |
+| PY-10 | Performance (profiling, vectorization, multiprocessing, Numba) and real software (packaging, tests, CLI, git) | 10 | PY-8 | Gorelick & Ozsvald, *High Performance Python* 2e ch. 1–2, 6–7, 9; Wilson et al., "Good enough practices in scientific computing" |
+
 ### 00-foundations (6 modules, ~62 hours)
 
 | # | Module | Hours | Prereqs | Pair with |
@@ -206,6 +223,8 @@ At 12 hours/week during term and 25 hours/week in summer, this is **about 18 mon
 
 ## 5. Dependency graph (what must come before what)
 
+The Python course is a chain PY-1 → … → PY-10 that feeds in from the side: PY-5 before LA-2's project in earnest, PY-6/7 before CM-1, PY-8 before CM-3 and ST-1, PY-9 before ST-1, PY-10 before ML-7 and SM-6.
+
 ```
 F1 ──► LA-3 ──► LA-4 ──► LA-5 ──► LA-8 ──► LA-9 ──► LA-10 ──► LA-13
  │               │         │        │  │      │
@@ -238,9 +257,11 @@ QM-1 ──► QM-2 ──► QM-3 ──► QM-4 ──► QM-5 ──► QM-6 
 
 Work **two tracks at once**, never more. One "hard new abstraction" track and one "applied / familiar" track. Switching between them when stuck is more productive than grinding one.
 
-### Phase 0 — Weeks 1–2 (≈25 h)
+### Phase 0 — Weeks 1–3 (≈70 h)
+- PY-1 → PY-5 as the applied track (about 43 h). Light on math, heavy on typing. Do every A exercise.
 - F1 (proof, complex numbers). Do every exercise. This is the cheapest insurance in the whole plan.
 - LA-1, LA-2. Should feel easy. If it doesn't, slow down here rather than later.
+- Then PY-6 and PY-7 during Phase 1 (before any physics project), PY-8 before CM-3, PY-9 before ST-1, PY-10 before ML-7.
 
 ### Phase 1 — Weeks 3–14 (≈130 h): Linear algebra core
 - **Track A:** LA-3 → LA-4 → LA-5 → LA-6 → LA-7 → LA-8 → LA-9.
