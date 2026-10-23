@@ -69,3 +69,10 @@ a window dies after ~20–30M Fable tokens, but round 6 survived 20M Fable + 40M
 | wf_29176906-6af | verify (Fable): CM-5, ST-1, ST-2, EM-4 |
 | wf_c8e3bc61-b71 | write-only (Fable) EM-5, ST-3 — stopped after 1 min, replaced by Sonnet writers |
 | wf_5cea2e5a-bd3 | write-only (Sonnet): EM-5, ST-3, ST-5 |
+
+## Eighth round (2026-10-23 23:36 UTC) — Python course starts; sized to finish below the limit
+
+| Run ID | Modules |
+|---|---|
+| wf_1b31082c-bf9 | write-only (Sonnet): PY-1, PY-2, PY-3, PY-4 |
+| wf_a6929edc-579 | verify (Fable): ST-3, ST-4, EM-5 |
