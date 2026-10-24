@@ -164,6 +164,11 @@ with tempfile.TemporaryDirectory() as tmp:
     assert proc.returncode != 0 and "ModuleNotFoundError: No module named 'tools'" in proc.stderr
     proc = run_py("-c", "from os import *; open('notes.txt')", cwd=tmp, check=False)
     assert "open() missing required argument 'flags'" in proc.stderr
+    if sys.platform != "win32":                                              # section 3.10: a venv is a private prefix
+        run_py("-m", "venv", "--without-pip", ".venv", cwd=tmp)
+        inside = subprocess.run([str(tmp / ".venv" / "bin" / "python"), "-c", "import sys; print(sys.prefix != sys.base_prefix)"],
+                                capture_output=True, text=True)
+        assert inside.stdout == "True\n"
 print("Part 1: package, import system and CLI checks passed.")
 
 # %% [markdown]

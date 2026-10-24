@@ -59,7 +59,7 @@ Find the formula for $g(n)$'s calls, then confirm your counts with a global coun
 
 **B4.** (The recursion limit.) (a) Measure the largest `n` for which each of `down(n)` (one argument), `down3(n)` (three local variables) and a `functools.lru_cache`-wrapped version succeeds. Which differ, and why? (b) Write `sum_to(n)` as a plain recursion, show that it fails for $n = 10^4$, then write two fixes: a loop, and a divide-and-conquer recursion on halves that works for $n = 10^6$. State the depth of each.
 
-**B5.** (A package from scratch.) In a temporary directory, create a package `geom` with modules `vectors.py` (`dot`, `norm`) and `stats.py` (`mean`, `variance`), an `__init__.py` that re-exports the four functions and defines `__all__`, and a `__main__.py` that prints a small demonstration. Verify from a subprocess started in the parent directory that `import geom`, `from geom import norm` and `python -m geom` work, and that running `python geom/vectors.py` directly fails when `vectors.py` uses a relative import. Which working directory makes each command succeed?
+**B5.** (A package from scratch.) In a temporary directory, create a package `geom` with modules `vectors.py` (`dot`, `norm`) and `stats.py` (`mean`, `variance`, where `variance` calls `dot` imported from `vectors.py` with a relative import), an `__init__.py` that re-exports the four functions and defines `__all__`, and a `__main__.py` that prints a small demonstration. Verify from subprocesses that `import geom`, `from geom import norm` and `python -m geom` work when started in the parent directory, that `python geom/stats.py` fails, and that `import geom` fails when started inside `geom/`. Explain each result with `sys.path[0]`.
 
 **B6.** (An `argparse` tool.) Write `summarize.py` with `main(argv=None)` returning an exit status. Subcommands: `mean FILE --column N` and `minmax FILE --column N`, both with `--delimiter` (default `,`) and `--skip-header`. Non-numeric cells are skipped with a warning on stderr and counted; a missing file is an error message on stderr with status 2. Test `main([...])` on a temporary CSV, capturing output with `contextlib.redirect_stdout`.
 
@@ -67,7 +67,7 @@ Find the formula for $g(n)$'s calls, then confirm your counts with a global coun
 
 ## C. Challenge (do at least one)
 
-**C1.** (Optional arguments.) Write `counted` so that both `@counted` and `@counted(label="fib")` work, and so that it also works on methods (`self` is just the first positional argument). The trick is that the first call receives either the function or keyword arguments. Test both forms and a method. What goes wrong with `@counted(fib)` (a function passed positionally), and how do you make that an explicit error?
+**C1.** (Optional arguments.) Write `counted` so that both `@counted` and `@counted(label="fib")` work, and so that it also works on methods (`self` is the first positional argument). The trick is that the first call receives either the function or keyword arguments. Test both forms and a method. What goes wrong with `@counted("fib")` (a string passed positionally), and how do you make that an explicit error?
 
 **C2.** (A cache-hit-rate study.) Simulate $10^5$ requests with keys drawn (a) uniformly from $N = 1000$ items and (b) from a Zipf-like distribution (weights $1/k$ for key $k = 1..N$, using `random.Random(0).choices`) through `functools.lru_cache(maxsize=m)` for $m = 50, 100, 250, 500$. Argue why the uniform hit rate should be close to $m/N$ once the cache is full, check it within 0.02, and explain the gap for the Zipf workload.
 
