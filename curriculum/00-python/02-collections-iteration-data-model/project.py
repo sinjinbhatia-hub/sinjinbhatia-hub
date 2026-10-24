@@ -377,6 +377,56 @@ print("Part 6: my_range, my_enumerate, my_zip, for_sum match the built-ins.")
 # ## Part 7: Every number in the notes' worked examples (notes §4)
 
 # %%
+def raises(exc, fn, *args) -> bool:
+    """True if fn(*args) raises exc."""
+    try:
+        fn(*args)
+    except exc:
+        return True
+    return False
+
+
+# Language facts quoted in notes §3.1-3.5
+assert [3, 1, 2].sort() is None and sorted((3, 1, 2)) == [1, 2, 3]
+d3 = {"a": 1, "b": 2, "c": 3}
+d3["a"] = 10
+assert list(d3) == ["a", "b", "c"]            # re-assigning keeps the position
+del d3["a"]
+d3["a"] = 1
+assert list(d3) == ["b", "c", "a"]            # delete + re-insert moves the key to the end
+assert {"a": 1, "b": 2} | {"a": 100, "y": 5} == {"a": 100, "b": 2, "y": 5}   # right operand wins
+
+
+def grow_while_iterating():
+    for k in d3:
+        d3[k + "x"] = 0
+
+
+assert raises(RuntimeError, grow_while_iterating)
+assert all(raises(TypeError, hash, x) for x in ([1], (1, [2]), {1}))
+assert hash(frozenset({1, 2})) == hash(frozenset({2, 1})) and hash((1, 2)) == hash((1, 2))
+assert (hash(1), hash(1.0), hash(True), hash(-1), hash(-2)) == (1, 1, 1, -2, -2)
+assert {1: "int", 1.0: "float", True: "bool"} == {1: "bool"}
+assert len({0.1 + 0.2, 0.3}) == 2 and len({1, True, 1.0}) == 1
+
+
+class Box:  # hashes by value: a trap when the value is mutable (notes §3.4, step 6)
+    def __init__(self, v):
+        self.v = v
+
+    def __eq__(self, other):
+        return self.v == other.v
+
+    def __hash__(self):
+        return hash(self.v)
+
+
+bx = Box(1)
+boxed = {bx: "found"}
+bx.v = 2
+assert (len(boxed), Box(1) in boxed, Box(2) in boxed, bx in boxed) == (1, False, False, False)
+assert [k.v for k in boxed] == [2]
+
 # 4.1 slicing
 s = "abcdefghij"
 assert (s[2:7], s[-3:], s[1:8:3], s[5:2:-1], s[::-1], s[2:5:-1]) == ("cdefg", "hij", "beh", "fed", "jihgfedcba", "")
@@ -457,12 +507,7 @@ assert back != data and back["t"] == [0.0, 0.1] and list(back)[-1] == "3"
 nan_text = json.dumps({"v": float("nan")})
 nan_back = json.loads(nan_text)["v"]
 assert nan_text == '{"v": NaN}' and nan_back != nan_back and {"v": float("nan")} != json.loads(nan_text)
-try:
-    json.dumps(float("nan"), allow_nan=False)
-except ValueError:
-    pass
-else:
-    raise AssertionError("allow_nan=False must raise")
+assert raises(ValueError, lambda: json.dumps(float("nan"), allow_nan=False))
 
 # 4.7 a parameter grid, lazily
 masses, dampers, springs = (0.5, 1.0, 2.0), (0.5, 1.0, 2.0, 4.0), (1.0, 2.0, 8.0)

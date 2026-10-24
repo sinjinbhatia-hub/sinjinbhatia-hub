@@ -1,6 +1,6 @@
 # ST-4 Exercises
 
-Conventions as in the notes: $\theta,b,a(\phi),V(\mu)$ from (3.1)–(3.3); $w_i$ and $z_i$ from (3.10); $d(y,\mu)$ is the unit deviance (3.18); $r^P,r^D$ are (3.21). $\sigma(t)=1/(1+e^{-t})$. Use a calculator or Python for numbers; the project's helper functions are fair game.
+Conventions as in the notes: $\theta,b,a(\phi),V(\mu)$ from (3.1)–(3.3); $w_i$ from (3.6) and $z_i$ from (3.10); $d(y,\mu)$ is the unit deviance (3.18); $r^P,r^D$ are (3.21). $\sigma(t)=1/(1+e^{-t})$. Use a calculator or Python for numbers; the project's helper functions are fair game.
 
 ## A. Warm-up (do all; 5–10 minutes each)
 

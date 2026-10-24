@@ -144,11 +144,13 @@ sl_ = x > 1.5; sk, sw = stats.skew(res_l[sl_]), stats.shapiro(res_l[sl_]).pvalue
 print(f"Binary: OLS line b = {np.round(b_ols, 3)}; {100*frac_out:.1f}% of fitted values outside [0,1]; residual variance "
       f"{v_ends:.3f} for |x|>2 vs {v_mid:.3f} for |x|<0.6; slice x>1.5 ({sl_.sum()} points): skewness {sk:.2f}, Shapiro p = {sw:.1e}")
 assert frac_out > 0.1 and v_mid > 5 * v_ends and sk < -1.5 and sw < 1e-6
+assert np.allclose(b_ols, [0.493, 0.197], atol=6e-4) and np.isclose(frac_out, 0.160, atol=6e-4) and np.isclose(v_ends, 0.031, atol=6e-4) and np.isclose(v_mid, 0.235, atol=6e-4) and np.isclose(sk, -2.26, atol=6e-3) and sw < 1e-13   # notes section 1
 xc = rng.uniform(-3, 3, n); Xc = np.column_stack([np.ones(n), xc]); yc = rng.poisson(np.exp(0.3 + 0.6 * xc))
 b_c = np.linalg.lstsq(Xc, yc, rcond=None)[0]; fit_c = Xc @ b_c; res_c = yc - fit_c
 lo3, hi3 = xc < -1, xc > 1
 print(f"Counts: {100*np.mean(fit_c < 0):.1f}% of OLS fitted means are negative; residual variance {res_c[lo3].var():.2f} (x<-1) vs {res_c[hi3].var():.2f} (x>1)")
 assert np.mean(fit_c < 0) > 0.05 and res_c[hi3].var() > 10 * res_c[lo3].var()
+assert np.isclose(np.mean(fit_c < 0), 0.145, atol=6e-4) and np.isclose(res_c[lo3].var(), 0.58, atol=6e-3) and np.isclose(res_c[hi3].var(), 6.79, atol=6e-3)
 fig, ax = plt.subplots(1, 2, figsize=(10, 3.6))
 ax[0].scatter(x, yb, s=6, alpha=.4); gx = np.linspace(-3, 3, 100)
 ax[0].plot(gx, b_ols[0] + b_ols[1] * gx, "r", label="OLS"); ax[0].plot(gx, expit(1.2 * gx), "k", label="true p(x)")
@@ -183,7 +185,7 @@ assert np.isclose(th_b, -0.8473, atol=5e-5) and np.isclose(b_b, 0.3567, atol=5e-
 assert np.isclose(expit(th_b), 0.3) and np.isclose(expit(th_b) * (1 - expit(th_b)), 0.21) and np.isclose(0.21 / 10, 0.021)
 assert np.isclose(np.log(3.7), 1.3083, atol=5e-5)
 print(f"Ex 4.1: Bernoulli p=0.3: theta = {th_b:.4f}, b = {b_b:.4f}, V = 0.21; Poisson mu=3.7: theta = {np.log(3.7):.4f}")
-# Canonical link = (b')^{-1}: logit, log, identity, -1/mu (inverse), mu^{-2}.  Poisson deviance by quadrature equals the closed form:
+# Canonical link = (b')^{-1}: logit, log, identity, -1/mu (inverse), -1/(2 mu^2).  Poisson deviance by quadrature equals the closed form:
 yv, mv = 7.0, 4.2
 quad = 2 * integrate.quad(lambda t: (yv - t) / t, mv, yv)[0]
 assert np.isclose(quad, FAMILIES["poisson"]["dev"](np.array(yv), np.array(mv)))
@@ -250,6 +252,7 @@ for t, (e_, d_) in enumerate(zip(err, dev_tr), 1):
 for e0, e1 in zip(err[:-1], err[1:]):
     if 1e-6 < e0 < 0.3:
         assert e1 < 5 * e0 ** 2         # quadratic: e_{t+1} <= C e_t^2
+assert np.allclose(err[:4], [1.13e-1, 4.66e-3, 8.45e-6, 2.78e-11], rtol=0.01) and err[4] < 1e-14   # the trace quoted in notes 3.4
 # non-canonical link (probit): Fisher scoring is not Newton; it still converges, just not quadratically in general
 # Gamma/log has constant weights W = I (Exercise B1)
 fg = glm_fit(X, data[("gamma", "log")], "gamma", "log")
@@ -279,6 +282,8 @@ f6s = glm_fit(X6[:, :1], y6, "bernoulli")       # intercept-only: p-hat = 1/2
 assert np.allclose(f6s["mu"], .5) and np.isclose(lrt6, 3.3618, atol=5e-5) and np.isclose(wz6, 1.330, atol=5e-4)
 print(f"   LRT for slope {lrt6:.4f} (p = {stats.chi2.sf(lrt6, 1):.4f}); Wald z = {wz6:.3f} (p = {2*stats.norm.sf(wz6):.4f})")
 assert np.isclose(f6["null_dev"], 2 * 6 * np.log(2)) and np.allclose(X6.T @ (y6 - f6["mu"]), 0, atol=1e-8)
+assert np.allclose(b2, [-0.5549, 1.1098], atol=6e-5) and np.allclose(f6["beta"], [-0.6070, 1.2140], atol=6e-5) and np.allclose(f6["se"], [1.2181, 0.9126], atol=6e-5)
+assert np.isclose(f6["dev"], 4.9560, atol=6e-5) and f6["iters"] == 6 and np.isclose(stats.chi2.sf(lrt6, 1), 0.067, atol=6e-4) and np.isclose(2 * stats.norm.sf(wz6), 0.18, atol=6e-3)
 
 # %% [markdown]
 # ## Part 5: Logistic regression with a known beta: inference, Wald coverage, LRT (notes 3.5, 3.7)
@@ -307,6 +312,7 @@ print(f"Wald 95% coverage over {R} replications (n=200): {np.round(cover, 3)}")
 assert np.all(np.abs(cover - .95) < .025)
 print(f"Ex 4.3: x1 OR = {np.exp(fl['beta'][1]):.4f}, 95% CI [{np.exp(fl['ci'][1, 0]):.4f}, {np.exp(fl['ci'][1, 1]):.4f}]")
 assert np.allclose(np.round([np.exp(fl["beta"][1]), *np.exp(fl["ci"][1])], 2), [3.34, 2.20, 5.08])
+assert np.allclose(fl["beta"], [-0.9270, 1.2057, 1.1738], atol=6e-5) and np.allclose(fl["ci"][1], [0.7871, 1.6243], atol=6e-5)   # Example 4.3
 # odds ratio versus relative risk (Example 4.3 and 3.7): RR = OR / (1 - p0 + p0 OR)
 b_or = 0.7; OR = np.exp(b_or); print(f"Ex 4.3: OR = e^0.7 = {OR:.4f}")
 for p0 in (.01, .1, .5):
@@ -316,13 +322,13 @@ for p0 in (.01, .1, .5):
 # latent variable: P(Y=1) = F(x'beta); slope matching gives 4 phi(0) = 1.596, sd matching pi/sqrt(3) = 1.814, LS fit ~ 1.70
 c_ls = optimize.minimize_scalar(lambda c: integrate.quad(lambda t: (stats.norm.cdf(t) - expit(c * t)) ** 2, -8, 8)[0], bounds=(1, 2.5), method="bounded").x
 print(f"logit/probit scale: slope match 4*phi(0) = {4*stats.norm.pdf(0):.4f}, sd match pi/sqrt(3) = {np.pi/np.sqrt(3):.4f}, least squares c = {c_ls:.4f}")
-assert 1.69 < c_ls < 1.71
+assert np.isclose(c_ls, 1.701, atol=6e-4)
 n_big = 40000; xb = rng.normal(size=n_big); Xb = np.column_stack([np.ones(n_big), xb])
 ylat = (0.3 + 1.0 * xb + rng.normal(size=n_big) > 0).astype(float)
 fprob = glm_fit(Xb, ylat, "bernoulli", "probit", with_null=False); flogit = glm_fit(Xb, ylat, "bernoulli", "logit", with_null=False)
 ratio = flogit["beta"][1] / fprob["beta"][1]
 print(f"Latent-normal data: probit slope {fprob['beta'][1]:.3f}, logit slope {flogit['beta'][1]:.3f}, ratio {ratio:.3f}")
-assert 1.55 < ratio < 1.85 and abs(fprob["beta"][1] - 1.0) < 0.05
+assert np.isclose(fprob["beta"][1], 0.998, atol=6e-4) and np.isclose(flogit["beta"][1], 1.701, atol=6e-4) and np.isclose(ratio, 1.705, atol=6e-4)   # notes 3.7
 
 # %% [markdown]
 # ## Part 6: ROC, AUC, calibration, Hosmer-Lemeshow, decision boundary (notes 3.7)
@@ -333,7 +339,7 @@ def roc_curve(y, s):
     order = np.argsort(-s); s_, y_ = s[order], y[order]
     last = np.r_[np.where(np.diff(s_))[0], len(s_) - 1]
     tpr = np.r_[0, np.cumsum(y_)[last] / y.sum()]; fpr = np.r_[0, np.cumsum(1 - y_)[last] / (1 - y).sum()]
-    return fpr, tpr, np.trapezoid(tpr, fpr)
+    return fpr, tpr, (np.trapezoid if hasattr(np, "trapezoid") else np.trapz)(tpr, fpr)   # np.trapz on NumPy < 2.0
 
 def auc_pairs(y, s):
     """P(S1 > S0) + 0.5 P(S1 = S0) over all positive-negative pairs ((3.27)."""
@@ -364,6 +370,7 @@ def hosmer_lemeshow(y, p, g=10):
 C_good, C_bad = hosmer_lemeshow(y2, p2), hosmer_lemeshow(y2, p2 ** 3)
 print(f"Hosmer-Lemeshow: model {C_good:.2f} (p = {stats.chi2.sf(C_good, 8):.3f}); same ranking after p -> p^3: {C_bad:.1f} (p = {stats.chi2.sf(C_bad, 8):.1e})")
 assert stats.chi2.sf(C_good, 8) > 0.05 and stats.chi2.sf(C_bad, 8) < 1e-4
+assert np.isclose(auc, 0.8229, atol=6e-5) and np.isclose(C_good, 9.60, atol=6e-3) and np.isclose(stats.chi2.sf(C_good, 8), 0.29, atol=6e-3) and np.isclose(C_bad, 2639, atol=0.6)   # notes 3.7, Exercise B2(d)
 fig, ax = plt.subplots(1, 3, figsize=(14, 4))
 ax[0].plot(fpr, tpr); ax[0].plot([0, 1], [0, 1], "k:"); ax[0].set(title=f"ROC, AUC = {auc:.3f}", xlabel="FPR", ylabel="TPR")
 for pp, lab in ((p2, "fitted"), (p2 ** 3, "p^3 (same AUC)")):
@@ -390,6 +397,9 @@ print(f"  after 25 passes: slope {sl[-1]:.2f}, se {fsep['se'][1]:.3g}, Wald z = 
 assert fsep["se"][1] > 1e4 and abs(fsep["z"][1]) < 0.01                       # the Wald test sees nothing (Hauck-Donner)
 # working residual z - eta -> +-1 for the two points next to the boundary, so the slope gains 2/(4-3) = 2 per step
 assert np.all(np.diff(sl) > 0) and sl[-1] > 40 and dv[-1] < 1e-6 and np.all(np.abs(np.diff(sl[8:]) - 2) < 0.05)
+for t_, (b0_, b1_, d_) in {1: (-3.600, 1.029, 2.94), 2: (-6.360, 1.817, 1.65), 5: (-22.89, 6.539, 0.149), 10: (-58.22, 16.64, 9.8e-4), 25: (-163.2, 46.64, 3.0e-10)}.items():   # Example 4.4 as quoted
+    assert np.allclose(fsep["path"][t_ - 1], [b0_, b1_], rtol=6e-4, atol=0) and np.isclose(dv[t_ - 1], d_, rtol=6e-3, atol=0)
+assert np.isclose(fsep["se"][1], 1.6e5, rtol=0.03) and np.isclose(fsep["z"][1], 0.0003, atol=6e-5)
 for c in (1, 10, 100):                                                       # loglik(c beta) increases in c for a separating beta
     bs = np.array([-3.5, 1.]); ll = lambda c: np.sum(ys * (c * (Xsep @ bs)) - np.log1p(np.exp(c * (Xsep @ bs))))
     assert ll(2 * c) > ll(c) and ll(2 * c) < 0
@@ -397,6 +407,7 @@ frid = glm_fit(Xsep, ys, "bernoulli", ridge=1.0, with_null=False)
 b_step = np.linalg.solve(Xsep.T @ (0.25 * np.eye(6)) @ Xsep + np.diag([0, 1.]), Xsep.T @ (0.25 * (4 * ys - 2)))
 assert np.allclose(glm_fit(Xsep, ys, "bernoulli", ridge=1.0, beta0=np.zeros(2), maxit=1)["beta"], b_step)
 assert abs(frid["beta"][0] / frid["beta"][1] + 3.5) < 1e-6      # boundary midway between x = 3 and x = 4
+assert np.allclose(frid["beta"], [-3.9221, 1.1206], atol=6e-5) and frid["iters"] == 5 and np.allclose(b_step, [-2.9302, 0.8372], atol=6e-5)   # notes 3.4, Exercise B3(c)
 print(f"Ridge (lambda = 1 on slope): beta = {np.round(frid['beta'], 4)}, {frid['iters']} iterations; first penalized step from 0: {np.round(b_step, 4)}")
 fig, ax = plt.subplots(1, 2, figsize=(9, 3.4))
 ax[0].plot(range(1, 26), sl, "o-", ms=3); ax[0].axhline(frid["beta"][1], color="r", ls="--", label="ridge, lambda = 1")
@@ -431,6 +442,7 @@ ref = optimize.minimize(softmax_ce, np.zeros(9), args=(Xm, Y), jac=True, method=
 acc = np.mean(np.argmax(Xm @ Wg.reshape(3, 3), 1) == lab)
 print(f"Softmax: GD loss {softmax_ce(Wg, Xm, Y)[0]:.5f}, L-BFGS loss {ref.fun:.5f}, |grad| {np.linalg.norm(softmax_ce(Wg, Xm, Y)[1]):.1e}, accuracy {acc:.3f}")
 assert abs(softmax_ce(Wg, Xm, Y)[0] - ref.fun) < 2e-4 and acc > 0.85
+assert np.isclose(softmax_ce(Wg, Xm, Y)[0], 0.36764, atol=6e-6) and np.isclose(acc, 0.862, atol=6e-4) and np.linalg.norm(softmax_ce(Wg, Xm, Y)[1]) < 1e-12   # notes 3.7
 gg1, gg2 = np.meshgrid(np.linspace(-6, 6, 200), np.linspace(-5, 7, 200))
 pred = np.argmax(np.c_[np.ones(gg1.size), gg1.ravel(), gg2.ravel()] @ Wg.reshape(3, 3), 1).reshape(gg1.shape)
 fig, ax = plt.subplots(figsize=(5, 4.2)); ax.contourf(gg1, gg2, pred, alpha=.25, levels=[-.5, .5, 1.5, 2.5]); ax.scatter(P[:, 0], P[:, 1], c=lab, s=6, cmap="viridis")
@@ -449,6 +461,7 @@ f_free = glm_fit(np.column_stack([Xp, np.log(tt)]), yp, "poisson")
 print(f"Offset fit: beta = {np.round(f_off['beta'], 3)} (truth -1, 0.5), deviance {f_off['dev']:.1f}; no offset: deviance {f_no['dev']:.1f}; "
       f"free coefficient on log t: {f_free['beta'][2]:.3f} +/- {f_free['se'][2]:.3f}")
 assert np.all(np.abs(f_off["beta"] - [-1, .5]) < 3 * f_off["se"]) and f_free["ci"][2, 0] < 1 < f_free["ci"][2, 1] and f_no["dev"] > f_off["dev"] + 100
+assert np.allclose(f_off["beta"], [-0.946, 0.455], atol=6e-4) and np.isclose(f_off["dev"], 399.9, atol=0.06) and np.isclose(f_no["dev"], 651.7, atol=0.06) and np.isclose(f_free["beta"][2], 1.127, atol=6e-4) and np.isclose(f_free["se"][2], 0.079, atol=6e-4)   # notes 3.8
 # Example 4.5: Geiger-counter counts at dwell times t = 1, 2, 4, 8 s
 tg = np.array([1, 2, 4, 8.]); yg = np.array([3, 5, 9, 21.]); Xg = np.ones((4, 1))
 fo = glm_fit(Xg, yg, "poisson", offset=np.log(tg)); fn0 = glm_fit(Xg, yg, "poisson")
@@ -462,9 +475,12 @@ print(f"   Ex 4.5 terms y log(y/mu) = {np.round(terms, 4)}, sum {terms.sum():.4f
 print(f"Ex 4.5: rate {38/15:.4f}; mu with offset {np.round(fo['mu'], 3)}, D = {D_off:.4f}; no offset: mu = 9.5, D = {D_no:.4f}, X^2 = {fn0['pearson']:.3f}")
 print(f"Ex 4.7: y = 21, mu = 9.5: unit deviance {FAMILIES['poisson']['dev'](21., 9.5):.4f}, r_D = {dres[3]:.4f}, r_P = {pres[3]:.4f}; all r_D = {np.round(dres, 3)}")
 assert np.isclose(dres[3] ** 2, 2 * (21 * np.log(21 / 9.5) - 11.5)) and np.isclose(np.sum(dres ** 2), D_no)
+assert np.isclose(np.exp(fo["beta"][0]), 2.5333, atol=6e-5) and np.allclose(fo["mu"], [2.533, 5.067, 10.133, 20.267], atol=6e-4) and np.allclose(terms, [0.5072, -0.0662, -1.0675, 0.7464], atol=6e-5)   # Example 4.5
+assert np.isclose(D_off, 0.2400, atol=6e-5) and np.isclose(stats.chi2.sf(D_off, 3), 0.97, atol=6e-3) and np.isclose(D_no, 19.008, atol=6e-4) and np.isclose(fn0["pearson"], 20.53, atol=6e-3) and np.isclose(stats.chi2.sf(D_no, 3), 2.7e-4, rtol=0.02)
+assert np.isclose(FAMILIES["poisson"]["dev"](21., 9.5), 10.3157, atol=6e-5) and np.isclose(dres[3], 3.2118, atol=6e-5) and np.isclose(pres[3], 3.7311, atol=6e-5) and np.allclose(dres, [-2.467, -1.607, -0.164, 3.212], atol=6e-4)   # Example 4.7
 
 # %% [markdown]
-# ## Part 10: Overdispersion: Gamma-mixed Poisson, quasi-Poisson, Negative Binomial (notes 3.6, Example 4.6)
+# ## Part 10: Overdispersion: Gamma-mixed Poisson, quasi-Poisson, Negative Binomial (notes 3.8, Example 4.6)
 
 # %%
 rng = np.random.default_rng(10)
@@ -476,6 +492,7 @@ pmf_int = np.array([integrate.quad(lambda l: stats.poisson.pmf(k, l) * stats.gam
 assert np.allclose(pmf_int, pmf_nb) and np.max(np.abs(pmf_mix - pmf_nb)) < 2e-3
 print(f"Ex 4.6: mixture mean {ymix.mean():.3f}, variance {ymix.var():.3f} (theory {m0 + m0**2/r0}); pmf(3): quad {pmf_int[3]:.5f} = nbinom {pmf_nb[3]:.5f}; dispersion index {ymix.var()/ymix.mean():.3f}")
 assert abs(ymix.var() - 12) < 0.15
+assert np.isclose(pmf_int[3], 0.13169, atol=6e-6) and np.isclose(ymix.mean(), 4.006, atol=6e-4) and np.isclose(ymix.var(), 12.014, atol=6e-4)   # Example 4.6
 
 def sim_over(n, rng, b=(1.0, 0.5), r=2.0):
     x_ = rng.normal(size=n); Xo = np.column_stack([np.ones(n), x_]); m_ = np.exp(Xo @ b)
@@ -498,19 +515,22 @@ hit /= R
 print(f"Slope 95% coverage ({R} reps, n=200, true r=2): Poisson {hit[0]:.3f}, quasi-Poisson {hit[1]:.3f}, NB {hit[2]:.3f}; "
       f"mean phi-hat {np.mean(phis):.2f}, median r-hat {np.median(r_hats):.2f}; empirical sd of slope {np.std(bh):.4f}")
 assert hit[0] < 0.80 and hit[1] > 0.90 and hit[2] > 0.90 and 1.2 < np.median(r_hats) < 3.5
+assert np.allclose(hit, [0.743, 0.927, 0.957], atol=6e-4) and np.isclose(np.mean(phis), 2.52, atol=6e-3) and np.isclose(np.median(r_hats), 2.04, atol=6e-3)   # the table in notes 3.8
 Xo, yo = sim_over(200, np.random.default_rng(11))
 fp_ = glm_fit(Xo, yo, "poisson"); fq = glm_fit(Xo, yo, "poisson", est_phi=True); fnb, rh = fit_nb(Xo, yo)
 assert np.allclose(fp_["beta"], fq["beta"]) and np.allclose(fq["se"], fp_["se"] * np.sqrt(fq["phi"]))
 print(f"One dataset: slope se Poisson {fp_['se'][1]:.4f}, quasi {fq['se'][1]:.4f} (x sqrt(phi) = x{np.sqrt(fq['phi']):.3f}), NB {fnb['se'][1]:.4f} (r-hat {rh:.2f}); "
       f"AIC Poisson {fp_['aic']:.1f}, NB {fnb['aic'] + 2:.1f} (r counted as a parameter)")
 assert fnb["aic"] + 2 < fp_["aic"]
+assert np.allclose([fp_["se"][1], fq["se"][1], fnb["se"][1]], [0.0460, 0.0633, 0.0666], atol=6e-5) and np.isclose(np.sqrt(fq["phi"]), 1.375, atol=6e-4) and np.isclose(rh, 3.00, atol=6e-3)
+assert np.isclose(fp_["aic"], 871.2, atol=0.06) and np.isclose(fnb["aic"] + 2, 823.1, atol=0.06)
 fig, ax = plt.subplots(figsize=(5.4, 3.6)); ax.hist(bh, 25, density=True, alpha=.5, label="slope-hat over replications")
 gs_ = np.linspace(min(bh), max(bh), 200)
 ax.plot(gs_, stats.norm.pdf(gs_, .5, fp_["se"][1]), "r", label="Poisson claim"); ax.plot(gs_, stats.norm.pdf(gs_, .5, fq["se"][1]), "g", label="quasi-Poisson claim")
 ax.legend(fontsize=7); fig.tight_layout(); fig.savefig(FIG / "overdispersion.png", dpi=110); plt.close(fig)
 
 # %% [markdown]
-# ## Part 11: Analysis of deviance, chi-squared calibration, and where the deviance is not chi-squared (notes 3.8)
+# ## Part 11: Analysis of deviance, chi-squared calibration, and where the deviance is not chi-squared (notes 3.5-3.6)
 
 # %%
 rng = np.random.default_rng(12)
@@ -522,6 +542,9 @@ for k in range(4):
     print(f"  +x{k}: {fits[k]['dev']:8.3f} {fits[k]['df_res']:4d}   {dD:8.3f}   {stats.chi2.sf(dD, 1) if k else np.nan:.4f}")
 print("   p-values:", [f"{stats.chi2.sf(fits[k-1]['dev'] - fits[k]['dev'], 1):.2e}" for k in (1, 2, 3)])
 assert stats.chi2.sf(fits[0]["dev"] - fits[1]["dev"], 1) < 1e-3 and stats.chi2.sf(fits[2]["dev"] - fits[3]["dev"], 1) > .001
+dD_ = [fits[k - 1]["dev"] - fits[k]["dev"] for k in (1, 2, 3)]; pD_ = [stats.chi2.sf(d, 1) for d in dD_]   # notes 3.5 as quoted
+assert np.allclose([f["dev"] for f in fits], [234.16, 182.44, 169.27, 168.25], atol=6e-3) and np.isclose(dD_[0], 51.7, atol=0.06) and np.isclose(dD_[1], 13.2, atol=0.06) and np.isclose(dD_[2], 1.02, atol=6e-3)
+assert np.isclose(pD_[0], 6.4e-13, rtol=0.02) and np.isclose(pD_[1], 2.8e-4, rtol=0.02) and np.isclose(pD_[2], 0.31, atol=6e-3)
 R = 2000; lr_stat = np.empty(R)
 for r_ in range(R):
     Xr = np.column_stack([np.ones(100), rng.normal(size=100)]); yr = rng.poisson(5.0, 100).astype(float)
@@ -529,6 +552,7 @@ for r_ in range(R):
 rej = np.mean(lr_stat > stats.chi2.ppf(.95, 1)); ks = stats.kstest(lr_stat, stats.chi2(1).cdf).pvalue
 print(f"LRT under H0 ({R} reps): rejection rate at 5% = {rej:.4f}, KS p = {ks:.3f}")
 assert abs(rej - .05) < .015 and ks > .01
+assert np.isclose(rej, 0.046, atol=6e-4) and np.isclose(ks, 0.83, atol=6e-3)
 # Bernoulli: D depends on the data only through the fitted values (3.24), so it cannot test fit
 Dber, Dgrp, ident = [], [], []
 xg = np.linspace(-1.5, 1.5, 8); Xg8 = np.column_stack([np.ones(8), xg])
@@ -542,12 +566,14 @@ print(f"Bernoulli n=100, beta1=3: mean D = {np.mean(Dber):.1f} vs n-p = 98 (sd {
       f"Grouped binomial (8 x 100): mean D = {np.mean(Dgrp):.2f} vs n-p = 6, "
       f"P(D > chi2_6 95% point) = {np.mean(np.array(Dgrp) > stats.chi2.ppf(.95, 6)):.3f}")
 assert max(ident) < 1e-6 and np.mean(Dber) < 80 and abs(np.mean(Dgrp) - 6) < 0.3 and abs(np.mean(np.array(Dgrp) > stats.chi2.ppf(.95, 6)) - .05) < .02
+assert np.isclose(np.mean(Dber), 70.5, atol=0.06) and np.isclose(np.std(Dber), 11.3, atol=0.06) and np.isclose(np.mean(Dgrp), 5.99, atol=6e-3) and np.isclose(np.mean(np.array(Dgrp) > stats.chi2.ppf(.95, 6)), 0.046, atol=6e-4)   # notes 3.6
 # Exercise B6: intercept-only Bernoulli, n = 50, ybar = 0.3: D = 61.09 whatever the order of the data
 D6 = -2 * 50 * (.3 * np.log(.3) + .7 * np.log(.7)); assert np.isclose(D6, glm_fit(np.ones((50, 1)), np.r_[np.ones(15), np.zeros(35)], "bernoulli", with_null=False)["dev"])
 print(f"Ex B6: D = {D6:.3f}, P(chi2_49 > D) = {stats.chi2.sf(D6, 49):.4f}")
+assert np.isclose(D6, 61.086, atol=6e-4) and np.isclose(stats.chi2.sf(D6, 49), 0.115, atol=6e-4)
 
 # %% [markdown]
-# ## Part 12: Residuals, leverage, Cook's distance (notes 3.8)
+# ## Part 12: Residuals, leverage, Cook's distance (notes 3.6)
 
 # %%
 fq = glm_fit(Xa[:, :3], ya, "poisson"); mu_a = fq["mu"]
@@ -570,11 +596,16 @@ assert np.isclose(stats.binom(10, .3).var() / 100, .3 * .7 / 10)                
 p2_, p3_ = expit(-1.4), expit(-0.6)                                                                  # A2
 print(f"A2: p(2) = {p2_:.4f}, p(3) = {p3_:.4f}, OR = {np.exp(.8):.4f}, RR = {p3_/p2_:.4f}, ME(3) = {.8*p3_*(1-p3_):.4f}, p=.5 at x = {3/.8}")
 assert np.isclose((p3_ / (1 - p3_)) / (p2_ / (1 - p2_)), np.exp(.8))
+assert np.allclose([p2_, p3_], [0.1978, 0.3543], atol=6e-5) and np.allclose([p2_ / (1 - p2_), p3_ / (1 - p3_)], [0.2466, 0.5488], atol=6e-5) and np.isclose(np.exp(.8), 2.2255, atol=6e-5)
+assert np.isclose(p3_ / p2_, 1.7913, atol=6e-5) and np.isclose(.8 * p3_ * (1 - p3_), 0.1830, atol=6e-5)
 mu_dry, mu_wet = 3.2 * np.exp(-2.0), 3.2 * np.exp(-1.5)                                              # A3
 print(f"A3: dry {mu_dry:.4f}, wet {mu_wet:.4f}, RR = {np.exp(.5):.4f}, P(0 | dry) = {np.exp(-mu_dry):.4f}, P(0 | wet) = {np.exp(-mu_wet):.4f}")
+assert np.allclose([mu_dry, mu_wet], [0.4331, 0.7140], atol=6e-5) and np.allclose([np.exp(-mu_dry), np.exp(-mu_wet)], [0.6485, 0.4897], atol=6e-5) and np.isclose(np.exp(.5), 1.6487, atol=6e-5)
 ya4, mu4 = np.array([0, 2, 7.]), np.array([1.2, 3.1, 4.4])                                           # A4
 d4 = FAMILIES["poisson"]["dev"](ya4, mu4); rd4 = np.sign(ya4 - mu4) * np.sqrt(d4); rp4 = (ya4 - mu4) / np.sqrt(mu4)
 print(f"A4: unit deviances {np.round(d4, 4)}, D = {d4.sum():.4f}; r_D = {np.round(rd4, 4)}; r_P = {np.round(rp4, 4)}; X^2 = {np.sum(rp4**2):.4f}")
+assert np.allclose(d4, [2.4, 0.4470, 1.3003], atol=6e-5) and np.isclose(d4.sum(), 4.1473, atol=6e-5) and np.allclose(rd4, [-1.5492, -0.6686, 1.1403], atol=6e-5)
+assert np.allclose(rp4, [-1.0954, -0.6248, 1.2395], atol=6e-5) and np.isclose(np.sum(rp4 ** 2), 3.1267, atol=6e-5)
 yy5, b_ = np.array([2., 4., 6.]), 0.0                                                                # A5
 seq = [b_]
 for _ in range(7):
@@ -582,9 +613,14 @@ for _ in range(7):
 print(f"A5: intercept-only Poisson IRLS from 0 on y = (2,4,6): {np.round(seq, 4)}; log 4 = {np.log(4):.4f}")
 print(f"   errors |beta_t - log 4| = {np.array2string(np.abs(np.array(seq) - np.log(4)), precision=2)}")
 assert np.isclose(seq[1], 3) and abs(seq[-1] - np.log(4)) < 1e-6 and np.isclose(glm_fit(np.ones((3, 1)), yy5, "poisson", beta0=np.array([np.log(4.)]), maxit=1)["beta"][0], np.log(4))
+err5 = np.abs(np.array(seq) - np.log(4))                                                            # A5(b): overshoot on pass 1, then Newton's squaring
+assert np.allclose(seq[1:7], [3, 2.1991, 1.6427, 1.4165, 1.3867, 1.3863], atol=6e-5) and np.isclose(np.log(4), 1.3863, atol=6e-5)
+assert np.isclose(err5[0], 1.39, atol=6e-3) and np.isclose(err5[1], 1.61, atol=6e-3) and np.allclose(err5[2:7], [0.81, 0.26, 0.030, 4.5e-4, 1e-7], rtol=0.05, atol=0)
 r_ = 10 / 3; assert np.isclose(1 + 5 / r_, 2.5)                                                       # B5: V/mu = 1 + mu/r = 2.5 at mu = 5
 print(f"B5: weights at mu = 5, r = {r_:.3f}: quasi {5:.1f}, NB {5/(1+5/r_):.3f}; mu = 50: quasi 50, NB {50/(1+50/r_):.3f}")
+assert np.allclose([5 / (1 + 5 / r_), 50 / (1 + 50 / r_)], [2.0, 3.125]) and np.isclose(np.sqrt(2.5), 1.581, atol=6e-4)
 print(f"B7: slope match {4*stats.norm.pdf(0):.4f}; Phi(1.5) = {stats.norm.cdf(1.5):.4f}, sigmoid(1.7*1.5) = {expit(1.7*1.5):.4f}")
+assert np.isclose(4 * stats.norm.pdf(0), 1.596, atol=6e-4) and np.isclose(np.pi / np.sqrt(3), 1.814, atol=6e-4) and np.isclose(stats.norm.cdf(1.5), 0.9332, atol=6e-5) and np.isclose(expit(1.7 * 1.5), 0.9276, atol=6e-5)
 f_b1 = glm_fit(np.ones((3, 1)), np.array([1., 2., 6.]), "gamma", "log")                          # B1
 assert np.isclose(f_b1["beta"][0], np.log(3)) and np.allclose(f_b1["w"], 1)
 fpr_b, tpr_b, _ = roc_curve(yy, ss)                                                                  # B2
@@ -595,6 +631,7 @@ assert np.isclose(true_u, 3 - np.e, atol=1e-8) and np.isclose(true_u, 0.2817, at
 assert np.allclose(fsep["path"][0], [-3.6, 108 / 105]) and np.isclose(np.linalg.det(Xsep.T @ Xsep), 105) and np.allclose(Xsep.T @ Xsep, [[6, 21], [21, 91]])   # B3
 print(f"B3: pass 1 from 0 = {np.round(fsep['path'][0], 4)}; ridge pass 1 = {np.round(b_step, 4)}")
 print(f"B4 (z for offset=1): z = {(0.93-1)/0.06:.3f}, p = {2*stats.norm.sf(abs((0.93-1)/0.06)):.3f}")
+assert np.isclose((0.93 - 1) / 0.06, -1.167, atol=6e-4) and np.isclose(2 * stats.norm.sf(abs((0.93 - 1) / 0.06)), 0.243, atol=6e-4) and np.allclose([0.93 - Z * 0.06, 0.93 + Z * 0.06], [0.81, 1.05], atol=6e-3)
 
 # %% [markdown]
 # ## Your turn
@@ -615,6 +652,8 @@ print(f"   C2(d): Gamma ML shape nu-hat = {nu_ml:.3f} (Pearson 1/phi-hat = {1/fg
 assert abs(fgm["beta"][0] - 1) < 3 * fgm["se"][0] and abs(b_lo[0] - (1 + shift)) < 0.1 and abs(b_lo[1] - .5) < .1
 print(f"   C2(c): mean(exp(OLS fit))/mean(y) = {np.exp(Xa_ @ b_lo).mean() / ya_.mean():.4f} vs e^shift = {np.exp(shift):.4f}")
 assert np.isclose(fgm["phi"], 1 / nu_, atol=0.05) and abs(np.exp(Xa_ @ b_lo).mean() / ya_.mean() - np.exp(shift)) < 0.08
+assert np.allclose(fgm["beta"], [0.978, 0.521], atol=6e-4) and np.isclose(fgm["phi"], 0.334, atol=6e-4) and np.allclose(b_lo, [0.793, 0.517], atol=6e-4) and np.isclose(shift, -0.1758, atol=6e-5) and np.isclose(np.exp(shift), 0.8388, atol=6e-5)   # C2 as quoted
+assert np.isclose(nu_ml, 2.873, atol=6e-4) and np.isclose(1 / fgm["phi"], 2.991, atol=6e-4) and np.isclose(fgm["dev"], 184.009, atol=6e-4) and np.isclose(np.exp(Xa_ @ b_lo).mean() / ya_.mean(), 0.8357, atol=6e-5)
 
 def zip_nll(par, Xz, yz):
     """Zero-inflated Poisson: P(0) = pi + (1-pi) e^{-mu}, P(k) = (1-pi) Pois(k; mu)  (Exercise C3)."""
@@ -631,6 +670,8 @@ rz = optimize.minimize(zip_nll, np.zeros(3), args=(Xz, yz), method="BFGS"); fpz 
 print(f"C3: ZIP beta = {np.round(rz.x[:2], 3)}, pi = {expit(rz.x[2]):.3f} (truth 0.8, 0.5, 0.3); zeros observed {np.mean(yz==0):.3f}, "
       f"Poisson-GLM expects {np.mean(np.exp(-fpz['mu'])):.3f}; ZIP logL {-rz.fun:.1f} vs Poisson {fpz['loglik']:.1f}")
 assert abs(expit(rz.x[2]) - .3) < .06 and np.all(np.abs(rz.x[:2] - [.8, .5]) < .08) and -rz.fun > fpz["loglik"] + 50
+assert np.allclose(rz.x[:2], [0.831, 0.513], atol=6e-4) and np.isclose(expit(rz.x[2]), 0.307, atol=6e-4) and np.isclose(np.mean(yz == 0), 0.399, atol=6e-4) and np.isclose(np.mean(np.exp(-fpz["mu"])), 0.223, atol=6e-4)   # C3 as quoted
+assert np.isclose(-rz.fun, -2507.3, atol=0.06) and np.isclose(fpz["loglik"], -2845.8, atol=0.06)
 
 rng = np.random.default_rng(22)                                                      # (c) / Exercise C1
 n = 100; xi = rng.uniform(0, 2, n); Xi = np.column_stack([np.ones(n), xi]); yi = rng.poisson(2 + 3 * xi).astype(float)
@@ -640,11 +681,14 @@ tF = glm_fit(Xi, yi, "poisson", "identity", beta0=np.array([1., 1.]), tol=0, max
 tN = glm_fit(Xi, yi, "poisson", "identity", beta0=np.array([1., 1.]), observed=True, tol=0, maxit=8)["path"]
 eF, eN = np.linalg.norm(tF - fF["beta"], axis=1), np.linalg.norm(tN - fF["beta"], axis=1)
 print(f"C1: identity-link Poisson, beta-hat = {np.round(fF['beta'], 4)}; error per iteration from beta=(1,1):\n  Fisher {np.array2string(eF, precision=1)}\n  Newton {np.array2string(eN, precision=1)}")
-print(f"   iterations at the default tolerance: Fisher {fF0['iters']}, Newton {fN0['iters']}; se from expected info {np.round(fF['se'], 4)}, from observed info {np.round(np.sqrt(np.diag(np.linalg.inv(Xi.T @ ((yi / fF['mu'] ** 2)[:, None] * Xi)))), 4)}")
+se_obs = np.sqrt(np.diag(np.linalg.inv(Xi.T @ ((yi / fF["mu"] ** 2)[:, None] * Xi))))          # observed information sum_i y_i x_i x_i^T / mu_i^2 (C1(c))
+print(f"   iterations at the default tolerance: Fisher {fF0['iters']}, Newton {fN0['iters']}; se from expected info {np.round(fF['se'], 4)}, from observed info {np.round(se_obs, 4)}")
 gF, vF, dVF, gppF = LINKS["identity"][2](fF["mu"]), FAMILIES["poisson"]["V"](fF["mu"]), FAMILIES["poisson"]["dV"](fF["mu"]), LINKS["identity"][3](fF["mu"])
 w_obs_ = 1 / (vF * gF ** 2) + (yi - fF["mu"]) * (dVF * gF + vF * gppF) / (vF ** 2 * gF ** 3)
 assert np.allclose(w_obs_, yi / fF["mu"] ** 2)                                      # C1(a): w_obs = y / mu^2 for the identity link
 assert np.allclose(fF["beta"], fN["beta"], atol=1e-10) and eN[4] < 10 * eN[3] ** 2 and np.all((eF[1:4] / eF[:3] > .01) & (eF[1:4] / eF[:3] < .1))   # Newton quadratic, Fisher linear (rate ~0.04)
+assert np.allclose(fF["beta"], [1.9143, 2.6611], atol=6e-5) and fF0["iters"] == 6 and fN0["iters"] == 6 and np.allclose(fF["se"], [0.3857, 0.3730], atol=6e-5) and np.allclose(se_obs, [0.3791, 0.3670], atol=6e-5)   # C1 as quoted
+assert np.allclose(eF[:6], [1.8e-2, 6.6e-4, 2.5e-5, 9.2e-7, 3.4e-8, 1.3e-9], rtol=0.06) and np.allclose(eN[:5], [1.1, 0.39, 4.8e-2, 6.7e-4, 1.1e-7], rtol=0.06) and eN[5] < 1e-14
 
 # %% [markdown]
 # ## Reference solution to Exercise B8 (write your own first): the Inverse Gaussian family
@@ -659,6 +703,7 @@ fig_ = glm_fit(Xg_, yg_, "invgauss", "log")
 b_dir = optimize.minimize(lambda b: -stats.invgauss.logpdf(yg_, np.exp(Xg_ @ b) / lam_, scale=lam_).sum(), np.zeros(2), method="BFGS", options={"gtol": 1e-9}).x
 print(f"B8: Inverse Gaussian/log IRLS beta = {np.round(fig_['beta'], 4)}, direct ML {np.round(b_dir, 4)}, phi-hat = {fig_['phi']:.3f} (1/lambda = {1/lam_:.3f})")
 assert np.allclose(fig_["beta"], b_dir, atol=1e-4) and abs(fig_["phi"] - 1 / lam_) < 0.05
+assert np.allclose(fig_["beta"], [0.4312, 0.3919], atol=6e-5) and np.allclose(b_dir, [0.4312, 0.3919], atol=6e-5) and np.isclose(fig_["phi"], 0.222, atol=6e-4)   # B8 as quoted
 
 # %%
 if __name__ == "__main__":

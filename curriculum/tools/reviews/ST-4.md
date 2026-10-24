@@ -37,3 +37,23 @@ Status line is at the bottom. Items are numbered in order found; each has file, 
 10. **project.py Part 6 `roc_curve` — LOW (portability).** `np.trapezoid` exists only in NumPy ≥ 2.0; older installs have `np.trapz`. Fix: one-line fallback.
 
 11. **notes.md / project.py length — LOW.** notes.md is ≈8,250 words (guide 3,500–7,000) and project.py 665 lines (guide 150–400). Driven by the brief's topic list and 12-hour weight; previous module reviews took the same position. Not fixed by design.
+
+## Phase 2 resolutions
+
+Before each change the problem was re-derived or recomputed (scratch script /tmp/claude-0/st4_check.py; the ridge boundary x = +3.5 confirmed by an independent BFGS maximization of the penalized log-likelihood).
+
+1. FIXED: notes §3.4 now reads "boundary at x = −β₀/β₁ = 3.922/1.121 = 3.5"; solutions B3(c) now reads "the boundary x = −β₀/β₁ = 2.9302/0.8372 = 3.5 sits midway between x = 3 and x = 4". project.py already asserted β₀/β₁ = −3.5 and the ridge values; it now also asserts (−3.9221, 1.1206) in 5 passes and the first pass (−2.9302, 0.8372).
+2. FIXED: 45 tight asserts added across Parts 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, the exercise checks, Your turn (C1, C2, C3) and the B8 reference, each at the precision quoted in notes.md/solutions.md (0.6 × the last quoted digit, or rtol 1–6 % for values quoted to 2–3 significant figures). Three loose asserts were replaced by tight ones (c = 1.701; probit/logit 0.998/1.701/1.705). `se_obs` was pulled out of a print into a variable so C1(c)'s observed-information standard errors can be asserted.
+3. FIXED: "the gradient is u − λI₀β ... (u − λI₀β); add and subtract λI₀β".
+4. FIXED: "∂p/∂x_j = β_j p(1−p), so |∂p/∂x_j| ≤ |β_j|/4".
+5. FIXED: "Newton's method (LA-14 (3.23)) ... local convergence is quadratic (the rate is proved in ML-2; the trace below shows it)".
+6. FIXED: "ST-1 Theorem 3.28".
+7. FIXED: "w_i from (3.6) and z_i from (3.10)".
+8. FIXED: Part 10 → "(notes 3.8, Example 4.6)", Part 11 → "(notes 3.5-3.6)", Part 12 → "(notes 3.6)", comment → "-1/(2 mu^2)".
+9. FIXED: A5(b) now names the pass-1 overshoot (1.39 → 1.61, the undamped-Newton remark of §3.4) and says the listed errors are those after passes 2 to 6; project.py asserts both.
+10. FIXED: `roc_curve` falls back to `np.trapz` when `np.trapezoid` is absent.
+11. NOT FIXED: notes ≈8,250 words and project.py 710 lines (after the added asserts) are forced by the brief's topic and project lists for a 12-hour module; cutting would remove brief-required content.
+
+Re-ran `MPLBACKEND=Agg timeout 300 python3 project.py` after all fixes: exit 0 in 28 s, every printed value byte-identical to the pre-fix run, all asserts pass. Edits: 5 in notes.md, 2 in solutions.md, 1 in exercises.md, 53 lines changed in project.py.
+
+STATUS: review complete; 11 findings (0 HIGH, 2 MED, 9 LOW); 10 fixed, 1 not fixed (item 11, notes/project length, by design); project.py exits 0.

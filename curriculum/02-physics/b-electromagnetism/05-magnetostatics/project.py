@@ -386,7 +386,7 @@ assert np.allclose(A_num, A_th, rtol=2e-3, atol=1e-6 * np.abs(A_th).max())
 A_out = vector_potential([[0, 2 * Rm, 0]], *SHELL)[0]
 A_dip = C4 * np.cross([0, 0, 4 / 3 * np.pi * Rm ** 4 * sig * om], [0, 2 * Rm, 0]) / (2 * Rm) ** 3
 assert np.allclose(A_out, A_dip, rtol=2e-3, atol=1e-6 * np.abs(A_dip).max())
-E_surf = sig / 8.8541878128e-12
+E_surf = sig / EPS0
 print(f"[5] spinning shell sigma = 1e-6 C/m^2, omega = 100 rad/s: B_in = {2/3*MU0*Msh*1e12:.3f} pT (E at the surface sigma/eps0 = {E_surf:.3e} V/m); A_y(0.3R) = {A_num[0,1]:.4e} vs {A_th[0,1]:.4e} T m")
 
 # uniformly magnetized cylinder = solenoid with nI = M (Example 4.7c): R = 5 mm, L = 20 mm
