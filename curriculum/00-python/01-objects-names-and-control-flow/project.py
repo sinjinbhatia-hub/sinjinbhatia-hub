@@ -5,10 +5,9 @@
 # the floor rule (3.3), the grid of doubles (3.4), `0.1 + 0.2` as a tie (Example 4.3),
 # cancellation in the quadratic formula (3.5), Fast2Sum and Kahan summation (3.6),
 # bisection, Newton and Horner (3.12), and a formatted report (Example 4.4).
-# Standard library only, except the final NumPy cell. No figures in this module.
-#
-# Run headless: `MPLBACKEND=Agg python3 project.py`. Build first, then compare: write your
-# own epsilon loop, kahan_sum, bisect and horner before reading the cells below.
+# Standard library plus NumPy for three comparisons; no figures in this module.
+# Style: PEP 8 with a 100-character line limit. Run: `MPLBACKEND=Agg python3 project.py`.
+# Build first, then compare: write your own epsilon loop, kahan_sum, bisect and horner.
 
 # %%
 import copy
@@ -434,7 +433,9 @@ assert (len(s), s[0], s[-1], s[7:], s[:5], s[::-1]) == (13, "H", "n", "Python", 
 assert s.upper() == "HELLO, PYTHON" and s == "Hello, Python"
 assert list(range(8, 3, -2)) == [8, 6, 4] and len(range(3, 8)) == 5
 
-a = [1, 2]; b = a; c = list(a)                       # Example 4.2
+a = [1, 2]                                           # Example 4.2
+b = a
+c = list(a)
 assert a is b and a is not c and a == c and a[0] is c[0]
 a.append(3)
 assert (a, b, c) == ([1, 2, 3], [1, 2, 3], [1, 2])
