@@ -111,7 +111,7 @@ $$\hat{\boldsymbol\beta}_2=(\tilde X_2^\top\tilde X_2)^{-1}\tilde X_2^\top\tilde
 4. $M_1$ is symmetric and idempotent, so $X_2^\top M_1X_2=\tilde X_2^\top\tilde X_2$ and $X_2^\top M_1\mathbf y=\tilde X_2^\top\tilde{\mathbf y}=\tilde X_2^\top\mathbf y$. That is (3.9).
 5. For (b), multiply $\mathbf y=X_1\hat{\boldsymbol\beta}_1+X_2\hat{\boldsymbol\beta}_2+\mathbf e$ by $M_1$. Since $M_1X_1=0$ and $M_1\mathbf e=\mathbf e$ ($\mathbf e\perp C(X_1)$), we get $\tilde{\mathbf y}=\tilde X_2\hat{\boldsymbol\beta}_2+\mathbf e$. ∎
 
-■ **What just happened.** The coefficient on a predictor is the simple-regression slope of the *part of $\mathbf y$ the other columns cannot explain* on the *part of the predictor the other columns cannot explain*. That is the whole content of "holding the others fixed": it is a statement about projections in the data you have, not about what would happen if you changed $x_j$. One practical trap: the residualized regression has the right coefficients and residuals but its software output has the wrong degrees of freedom ($n-q$ instead of $n-p$), so its standard errors are slightly off. Example 4.2 computes both routes.
+■ **What just happened.** The coefficient on a predictor is the simple-regression slope of the *part of $\mathbf y$ the other columns cannot explain* on the *part of the predictor the other columns cannot explain*. That is the whole content of "holding the others fixed": it is a statement about projections in the data you have, not about what would happen if you changed $x_j$. One practical trap: the residualized regression has the right coefficients and residuals but its software output has the wrong degrees of freedom ($n-p_2$ instead of $n-p$, where $p_2$ is the number of columns of $X_2$; in Example 4.2 that is $7$ instead of $4$), so its standard errors are slightly off. Example 4.2 computes both routes.
 
 ### 3.4 Gauss–Markov
 
@@ -257,13 +257,13 @@ $$\mathbb E\|\mathbf y^*-\hat{\mathbf y}\|^2=n\sigma^2+\|(I-H)\boldsymbol\mu\|^2
 $$\mathbb E\|\mathbf y^*-\hat{\mathbf y}\|^2-\mathbb E[\mathrm{RSS}]=2p\sigma^2.\tag{3.34}$$
 Adding the penalty back gives **Mallows' $C_p$**,
 $$C_p=\mathrm{RSS}+2p\hat\sigma^2,\qquad\mathbb E[\mathrm{RSS}+2p\sigma^2]=\mathbb E\|\mathbf y^*-\hat{\mathbf y}\|^2,\tag{3.35}$$
-with $\hat\sigma^2$ from the largest model. For a polynomial fit with a nonpolynomial truth ($n=30$, $\sigma=0.5$, $f(x)=\sin(5x+1)$), the project confirms (3.33) and (3.35) by Monte Carlo to within 3% at every degree; the expected prediction error is lowest at degree 6 (9.32) and rises by $\sigma^2=0.25$ per extra parameter after that.
+with $\hat\sigma^2$ from the largest model. For a polynomial fit with a nonpolynomial truth ($n=30$, $\sigma=0.5$, $f(x)=\sin(5x+1)$), the project confirms (3.33) and (3.35) by Monte Carlo to within 3% at every degree; the expected prediction error is lowest at degree 6 (9.32); once the bias term has died out (degree 8 on) it rises by $\sigma^2=0.25$ per extra parameter.
 
 **AIC and BIC.** For Gaussian regression, up to constants common to all models,
 $$\mathrm{AIC}=n\log(\mathrm{RSS}/n)+2p,\qquad\mathrm{BIC}=n\log(\mathrm{RSS}/n)+p\log n.\tag{3.36}$$
 *Sketch of AIC.* The goal is the expected out-of-sample log-likelihood of the fitted model, which (ST-1 Theorem 3.28) is minus the expected KL divergence from the truth up to a constant. The in-sample log-likelihood at the MLE is optimistic, and by the quadratic-approximation argument behind Wilks (ST-2 Theorem 3.9) the optimism is about $k$ for $k$ fitted parameters. So $-2\ell(\hat\theta)+2k$ estimates twice the expected out-of-sample negative log-likelihood. For Gaussian regression it behaves like $C_p/\hat\sigma^2$. BIC comes from a Laplace approximation to the marginal likelihood (ST-5) and penalizes by $\log n$, which exceeds 2 once $n\ge8$. They answer different questions: AIC targets prediction and keeps some extra terms; BIC targets the true finite model, if one exists, and is consistent. When $p/n$ is not small, AIC's penalty is too light: with $n=20$ and 17 candidate columns it picks an average degree of 13.8 out of a maximum of 16 (the corrected AICc, $\mathrm{AIC}+2p(p+1)/(n-p-1)$, is named for this). As $n$ grows to 1280 the mean selected degrees are 7.97 (AIC), 6.65 (BIC) and 7.99 (LOO): more data supports a more complex model.
 
-**Cross-validation.** (3.25) gives leave-one-out CV with one fit, for any linear smoother whose fit is $A^{-1}X^\top\mathbf y$ with $A$ symmetric positive definite, including ridge (§3.9). $K$-fold needs refits; ML-1 develops it properly, including the optimism of the *winning* model's CV score. The project asserts the shortcut against brute-force refitting.
+**Cross-validation.** (3.25) gives leave-one-out CV with one fit, and not only for OLS: the proof of Theorem 3.8 goes through verbatim for any fit of the form $\hat{\boldsymbol\beta}=A^{-1}X^\top\mathbf y$ with $A=X^\top X+\Lambda$, $\Lambda$ a fixed symmetric matrix that makes $A$ positive definite, because deleting row $i$ then still subtracts exactly $\mathbf x_i\mathbf x_i^\top$ from $A$ (the step the proof needs). Ridge (§3.9) is $\Lambda=\lambda I$. $K$-fold needs refits; ML-1 develops it properly, including the optimism of the *winning* model's CV score. The project asserts the shortcut against brute-force refitting.
 
 **Theorem 3.12 (Omitted-variable bias).** Let the truth be $\mathbf y=X_1\boldsymbol\beta_1+X_2\boldsymbol\beta_2+\boldsymbol\varepsilon$ under (A2)–(A3) and regress $\mathbf y$ on $X_1$ alone. Then
 $$\mathbb E\hat{\boldsymbol\beta}_1^{\rm short}=\boldsymbol\beta_1+\Gamma\boldsymbol\beta_2,\qquad\Gamma=(X_1^\top X_1)^{-1}X_1^\top X_2.\tag{3.37}$$
@@ -271,7 +271,7 @@ $$\mathbb E\hat{\boldsymbol\beta}_1^{\rm short}=\boldsymbol\beta_1+\Gamma\boldsy
 
 **Stepwise selection and the post-selection swamp.** Forward, backward and stepwise procedures add or drop columns by $p$-values or AIC. Each step picks the best of many candidates, and the final table then reports $t$ statistics, $p$-values and an $F$ test *as if that model had been chosen in advance*. They are wrong: they condition on a selection event they ignore (the winner's curse of ST-2 §3.9–3.10). The project makes the point with pure noise: $n=100$, 50 candidate predictors, $y$ independent of all of them, forward selection by AIC. It keeps 10.8 predictors on average, reaches $R^2=0.34$, and 52% of the kept coefficients have $p<0.05$ (nominal: 0, 0, 5%). Remedies exist (sample splitting, selective inference) and this module only points at them: if you select, do not read the selected model's $p$-values.
 
-**More predictors than observations ($p>n$).** Then $\operatorname{rank}X\le n<p$, $X^\top X$ is singular, and (3.4) has a $(p-n)$-dimensional affine family of exact solutions with $\mathrm{RSS}=0$. The **minimum-norm** solution is $\hat{\boldsymbol\beta}^+=X^+\mathbf y=\sum_{i\le r}(\mathbf u_i^\top\mathbf y/\sigma_i)\mathbf v_i$ (LA-9 Theorem 3.10), equal to $X^\top(XX^\top)^{-1}\mathbf y$ when $\operatorname{rank}X=n$. It is the $\lambda\to0^+$ limit of ridge (§3.9). It interpolates, so $\hat\sigma^2$ and every $t$ and $F$ test are undefined ($n-p<0$): this regime belongs to regularization.
+**More predictors than observations ($p>n$).** Then $\operatorname{rank}X\le n<p$, $X^\top X$ is singular, and (3.4) has a $(p-\operatorname{rank}X)$-dimensional affine family of solutions; in the usual case $\operatorname{rank}X=n$ every one of them interpolates the data ($\mathrm{RSS}=0$). The **minimum-norm** solution is $\hat{\boldsymbol\beta}^+=X^+\mathbf y=\sum_{i\le r}(\mathbf u_i^\top\mathbf y/\sigma_i)\mathbf v_i$ (LA-9 Theorem 3.10), equal to $X^\top(XX^\top)^{-1}\mathbf y$ when $\operatorname{rank}X=n$. It is the $\lambda\to0^+$ limit of ridge (§3.9). It interpolates, so $\hat\sigma^2$ and every $t$ and $F$ test are undefined ($n-p<0$): this regime belongs to regularization.
 
 ### 3.9 Ridge regression
 
@@ -290,7 +290,7 @@ $$\mathrm{df}(\lambda)=\operatorname{tr}\big[X(X^\top X+\lambda I)^{-1}X^\top\bi
 
 1. Gradient: $-2X^\top(\mathbf y-X\mathbf b)+2\lambda\mathbf b=\mathbf 0$, i.e. $(X^\top X+\lambda I)\mathbf b=X^\top\mathbf y$. The Hessian $2(X^\top X+\lambda I)$ has eigenvalues $\ge2\lambda>0$, so the minimizer exists, is unique and is (3.39).
 2. $X^\top X+\lambda I=V(\Sigma^2+\lambda I)V^\top$ and $X^\top\mathbf y=V\Sigma U^\top\mathbf y$, so $\hat{\boldsymbol\beta}_\lambda=V(\Sigma^2+\lambda I)^{-1}\Sigma U^\top\mathbf y$. That is (3.40).
-3. $X\hat{\boldsymbol\beta}_\lambda=U\Sigma(\Sigma^2+\lambda I)^{-1}\Sigma U^\top\mathbf y=U\operatorname{diag}(f_i)U^\top\mathbf y$, whose trace map is $\sum f_i$. ∎
+3. $X\hat{\boldsymbol\beta}_\lambda=U\Sigma(\Sigma^2+\lambda I)^{-1}\Sigma U^\top\mathbf y=U\operatorname{diag}(f_i)U^\top\mathbf y$, whose trace is $\sum f_i$. ∎
 
 ■ **What just happened.** Compare (3.40) with LA-9's pseudoinverse (3.11): OLS multiplies the $i$th coordinate $\mathbf u_i^\top\mathbf y$ by $1/\sigma_i$; ridge multiplies by $\sigma_i/(\sigma_i^2+\lambda)$, which is the same thing times the shrinkage factor $f_i\in(0,1)$. Directions with $\sigma_i^2\gg\lambda$ are untouched; directions with $\sigma_i^2\ll\lambda$ are almost deleted. A small singular value is an *uninformative* direction (§3.7), and ridge declines to chase it. Two more views: ridge is ordinary least squares on the augmented data $\binom{X}{\sqrt\lambda I},\binom{\mathbf y}{\mathbf 0}$ (the squared residual of the augmented problem is exactly (3.38)), which is also how to compute it stably by QR; and the dual form $\hat{\boldsymbol\beta}_\lambda=X^\top(XX^\top+\lambda I)^{-1}\mathbf y$ (the kernel-ridge form ML-4 uses) shows it works with $p>n$.
 
@@ -304,7 +304,7 @@ For an orthonormal design (all $\sigma_i=1$) (3.42) is $(p\sigma^2+\lambda^2\|\b
 
 **Ridge as a Bayesian mode (ST-5 preview).** Let $\boldsymbol\beta\sim\mathcal N(\mathbf 0,\tau^2I)$ and $\mathbf y\mid\boldsymbol\beta\sim\mathcal N(X\boldsymbol\beta,\sigma^2I)$. The log posterior is $-\frac1{2\sigma^2}\big[\|\mathbf y-X\boldsymbol\beta\|^2+(\sigma^2/\tau^2)\|\boldsymbol\beta\|^2\big]+\text{const}$: ridge with $\lambda=\sigma^2/\tau^2$. The posterior is Gaussian with covariance $\sigma^2(X^\top X+\lambda I)^{-1}$, so mean and mode coincide.
 
-**Choosing $\lambda$.** By cross-validation. The derivation of Theorem 3.8 used only that $\hat{\boldsymbol\beta}=A^{-1}X^\top\mathbf y$ with $A$ symmetric positive definite; take $A=X^\top X+\lambda I$ and $h_{ii}$ the diagonal of $H_\lambda=X A^{-1}X^\top$, and (3.25) holds verbatim. The project verifies it against brute force. Generalized CV replaces each $h_{ii}$ by $\mathrm{df}(\lambda)/n$.
+**Choosing $\lambda$.** By cross-validation. The derivation of Theorem 3.8 used only that $\hat{\boldsymbol\beta}=A^{-1}X^\top\mathbf y$ and that deleting row $i$ replaces $A$ by $A-\mathbf x_i\mathbf x_i^\top$; both hold for $A=X^\top X+\lambda I$, because the penalty does not depend on which rows are present. With $h_{ii}$ the diagonal of $H_\lambda=X A^{-1}X^\top$, (3.25) holds verbatim. The project verifies it against brute force. Generalized CV replaces each $h_{ii}$ by $\mathrm{df}(\lambda)/n$.
 
 ### 3.10 The lasso
 
@@ -363,7 +363,7 @@ Data $x=(1,2,3,4,5)$, $y=(2,4,5,4,5)$. Then $\bar x=3$, $\bar y=4$, $S_{xx}=4+1+
 
 $R^2=3.6/6=0.6$ (=$r^2$), $R^2_{\rm adj}=1-0.8/1.5=0.4667$, $\hat\sigma^2=0.8$. Standard errors: $\mathrm{se}(\hat\beta_1)=\sqrt{0.8/10}=0.2828$ and $\mathrm{se}(\hat\beta_0)=\sqrt{0.8(1/5+9/10)}=0.9381$. Then $t=0.6/0.2828=2.1213$ on 3 df, two-sided $p=0.124$; $F=4.5=t^2$ ✓. With $t_{3,0.975}=3.1824$ the 95% interval for the slope is $0.6\pm0.9001=(-0.300,\,1.500)$, which contains 0, consistent with $p>0.05$. Leverages $h_{ii}=1/5+(x_i-3)^2/10=(0.6,0.3,0.2,0.3,0.6)$, summing to $p=2$ ✓.
 
-Intervals at two new $x_0$, with $w=t_{3,0.975}\hat\sigma=2.8463$:
+Intervals at two new $x_0$, with $w=t_{3,0.975}\hat\sigma=2.8465$:
 
 | $x_0$ | $\hat y_0$ | $h_0$ | CI half-width (3.16) | PI half-width (3.17) |
 |---|---|---|---|---|
@@ -412,7 +412,7 @@ Ridge trades a bias of $-0.99\alpha_3$ in the weak direction for removing a vari
 
 ### Example 4.7: Lasso on an orthonormal design
 
-Let $X^\top X=I$ with $\mathbf z=X^\top\mathbf y=(3,\,-1.5,\,0.4,\,-0.2,\,2.2)$ and $\lambda=1$. By (3.44): $S_1(\mathbf z)=(2,\,-0.5,\,0,\,0,\,1.2)$ — the two smallest coefficients are zeroed and the others lose exactly 1 in magnitude. Ridge at $\lambda=1$ gives $\mathbf z/2=(1.5,\,-0.75,\,0.2,\,-0.1,\,1.1)$: all five nonzero. Check (3.45): the residual is $\mathbf r=X(\mathbf z-\hat{\mathbf b})+\mathbf r_\perp$, so $\mathbf x_j^\top\mathbf r=z_j-\hat b_j$, which is $\pm1=\lambda\operatorname{sign}\hat b_j$ for the three active predictors, and equals $0.4,\,-0.2$ for the two inactive ones, with $|{\cdot}|\le\lambda$ ✓. The project's coordinate descent returns exactly this vector, and agrees to $10^{-8}$ with an independent L-BFGS-B solve of the split problem on a harder $n=30$, $p=6$ design.
+Let $X^\top X=I$ with $\mathbf z=X^\top\mathbf y=(3,\,-1.5,\,0.4,\,-0.2,\,2.2)$ and $\lambda=1$. By (3.44): $S_1(\mathbf z)=(2,\,-0.5,\,0,\,0,\,1.2)$ — the two smallest coefficients are zeroed and the others lose exactly 1 in magnitude. Ridge at $\lambda=1$ gives $\mathbf z/2=(1.5,\,-0.75,\,0.2,\,-0.1,\,1.1)$: all five nonzero. Check (3.45): the residual is $\mathbf r=X(\mathbf z-\hat{\mathbf b})+\mathbf r_\perp$, so $\mathbf x_j^\top\mathbf r=z_j-\hat b_j$, which is $\pm1=\lambda\operatorname{sign}\hat b_j$ for the three active predictors, and equals $0.4,\,-0.2$ for the two inactive ones, with $|{\cdot}|\le\lambda$ ✓. The project's coordinate descent returns exactly this vector, and agrees to better than $10^{-7}$ with an independent L-BFGS-B solve of the split problem on a harder $n=30$, $p=6$ design.
 
 ## 5. Why it matters and where it connects
 

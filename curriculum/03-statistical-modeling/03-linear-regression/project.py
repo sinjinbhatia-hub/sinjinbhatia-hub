@@ -28,7 +28,7 @@ close = lambda a, b, tol=5e-4: bool(np.all(np.abs(np.asarray(a) - np.asarray(b))
 
 
 def hat_diag(X, lam=0.0):
-    """h_ii of H = X (X'X + lam I)^{-1} X' (notes (3.5); lam > 0 is ridge, (3.39))."""
+    """h_ii of H = X (X'X + lam I)^{-1} X' (notes (3.21); lam > 0 gives the ridge smoother H_lambda of (3.41))."""
     return np.einsum("ij,ji->i", X, np.linalg.solve(X.T @ X + lam * np.eye(X.shape[1]), X.T))
 
 
@@ -95,6 +95,7 @@ assert close([f41["lo"][1], f41["hi"][1]], [-0.3001, 1.5001]) and close(f41["h"]
 for x0, ch, ph in [(3.0, 1.2730, 3.1181), (5.0, 2.2049, 3.6005)]:  # CI for the mean vs PI for a new y, (3.16)-(3.17)
     v = np.array([1.0, x0]); h0 = v @ f41["A"] @ v; w = f41["tc"] * np.sqrt(f41["s2"])
     assert close([w * np.sqrt(h0), w * np.sqrt(1 + h0)], [ch, ph]) and close([v @ f41["b"], h0], [4.0 if x0 == 3 else 5.2, 0.2 if x0 == 3 else 0.6])
+assert close(f41["tc"] * np.sqrt(f41["s2"]), 2.8465, 5e-5)  # w = t_{3,.975} sigma-hat in the Example 4.1 interval table
 print("Example 4.1: b =", f41["b"], " RSS =", round(f41["rss"], 6), " t = %.4f  p = %.4f  CI = (%.3f, %.3f)" % (f41["t"][1], f41["p"][1], f41["lo"][1], f41["hi"][1]))
 
 # Example 4.2: Frisch-Waugh-Lovell with an intercept and three predictors, both routes.
@@ -107,7 +108,7 @@ assert close(b42, [0.9948, 0.2529, 0.7944, 0.3883], 5e-5) and close(b_fwl, b42[3
 assert close(xt, [0.3727, -0.5206, 0.5674, -0.3258, 0.7622, -1.1311, -1.0431, 1.3184], 5e-5)
 assert close([xt @ yt, xt @ xt, res_full @ res_full], [2.1449, 5.5243, 0.12579], 5e-5) and close(yt - b_fwl * xt, res_full, 1e-12)
 assert close(np.linalg.inv(X42.T @ X42)[3, 3], 1 / (xt @ xt), 1e-12)  # Var(b_j) = sigma^2/||x~_j||^2 (3.31)
-se3 = np.sqrt(res_full @ res_full / 4 / (xt @ xt)); naive = ols_qr(np.c_[np.ones(8), x3], y42)[1]  # df = n - p = 4, not n - 3
+se3 = np.sqrt(res_full @ res_full / 4 / (xt @ xt)); naive = ols_qr(np.c_[np.ones(8), x3], y42)[1]  # se uses df = n - p = 4; the residualized one-column regression would report n - 1 = 7
 assert close(naive, 1.737) and close([se3, b42[3] / se3], [0.0755, 5.146])
 print("Example 4.2: full b =", b42, " FWL slope = %.5f; y on x3 alone: %.3f; se = %.4f, t = %.3f" % (b_fwl, naive, se3, b42[3] / se3))
 
@@ -130,7 +131,7 @@ cov_beta = (np.abs(B - beta[:, None]) <= tq * np.sqrt(s2[None, :] * np.diag(V)[:
 cov_pred = (np.abs(ynew - x0 @ B) <= tq * np.sqrt(s2 * (1 + h0))).mean()
 cov_mean = (np.abs(x0 @ beta - x0 @ B) <= tq * np.sqrt(s2 * h0)).mean()
 print("Part 3  coverage of beta_j intervals:", cov_beta, " mean-response CI: %.4f  prediction interval: %.4f" % (cov_mean, cov_pred))
-assert np.all(np.abs(cov_beta - 0.95) < 0.005) and abs(cov_pred - 0.95) < 0.005 and abs(cov_mean - 0.95) < 0.005
+assert np.all(np.abs(cov_beta - 0.95) < 0.004) and abs(cov_pred - 0.95) < 0.004 and abs(cov_mean - 0.95) < 0.004  # notes 7: all within 0.004
 assert (np.abs(ynew - x0 @ B) <= tq * np.sqrt(s2 * h0)).mean() < 0.5  # a CI half-width used as a PI covers far too little
 Y0 = sig * rng.standard_normal((n, R)); R2 = 1 - ((Y0 - H @ Y0) ** 2).sum(0) / ((Y0 - Y0.mean(0)) ** 2).sum(0)  # all slopes zero
 adj = 1 - (1 - R2) * (n - 1) / (n - p)
@@ -205,6 +206,7 @@ true_var = (sd**2 * w1**2).sum(); Wt = 1 / sd**2
 Bw = np.linalg.solve(Xh.T @ (Wt[:, None] * Xh), Xh.T * Wt) @ Yh; var_wls = np.linalg.inv(Xh.T @ (Wt[:, None] * Xh))[1, 1]  # WLS (3.30)
 print("Part 5  slope coverage:", cov, " mean naive var %.4f vs true %.4f; Var WLS %.4f" % (v_naive.mean(), true_var, var_wls))
 assert cov["naive"] < 0.92 and abs(cov["HC3"] - 0.95) < 0.015 and cov["HC0"] > cov["naive"] and var_wls < true_var / 5
+assert close([cov["naive"], cov["HC0"], cov["HC3"]], [0.894, 0.934, 0.943], 1e-3) and close([v_naive.mean(), true_var, var_wls], [0.092, 0.134, 0.0117], 5e-4)  # quoted in notes 3.6
 assert abs(Bw[1].var() / var_wls - 1) < 0.08 and abs(Bh[1].mean() - 0.5) < 0.01 and abs(Bh[1].var() / true_var - 1) < 0.08  # both unbiased
 fig, ax = plt.subplots(1, 2, figsize=(9, 3.6)); ax[0].scatter(Xh @ Bh[:, 0], Eh[:, 0], s=12); ax[0].axhline(0, c="k", lw=.5); ax[0].set(title="residuals vs fitted: the fan", xlabel="fitted", ylabel="e_i")
 ax[1].hist(np.sqrt(v_naive), 40, alpha=.6, label="naive se"); ax[1].hist(np.sqrt(v_hc3), 40, alpha=.6, label="HC3 se"); ax[1].axvline(np.sqrt(true_var), c="k", ls="--", label="true sd of slope"); ax[1].legend(fontsize=7); ax[1].set(title="slope standard errors, 4000 datasets")
@@ -263,6 +265,7 @@ epe = n7 * sig7**2 + bias2 + pp * sig7**2                                       
 assert np.allclose(rss_mc, bias2 + (n7 - pp) * sig7**2, rtol=0.03, atol=0.02) and np.allclose(epe_mc, epe, rtol=0.03)
 assert np.allclose(rss_mc + 2 * pp * sig7**2, epe, rtol=0.03)                       # optimism 2 p sigma^2 (3.34), C_p unbiased (3.35)
 print("Part 7  expected prediction error by degree:", epe.round(2), " best degree", epe.argmin(), "(n = 30)")
+assert epe.argmin() == 6 and close(epe.min(), 9.32, 5e-3) and np.allclose(np.diff(epe)[8:], sig7**2, atol=1e-3)  # notes 3.8: best degree 6 (9.32); +sigma^2 per parameter once the bias is gone
 yq = Y7[:, 0]; d_ = 4; Xd = leg(x7, d_ + 1)                                          # LOO shortcut = brute force
 brute = np.array([yq[i] - leg(x7[i:i + 1], d_ + 1) @ ols_qr(np.delete(Xd, i, 0), np.delete(yq, i)) for i in range(n7)]).ravel()
 assert np.allclose(brute, nested_fits(x7, yq, dmax)[2][:, d_])
@@ -277,6 +280,7 @@ for nn in ns:                                                                   
 print("Part 7  mean selected degree vs n =", ns, "\n        ", {k: np.round(v, 2) for k, v in sel.items()})
 assert sel["LOO"][-1] > sel["LOO"][1] + 0.5 and sel["BIC"][-1] > sel["BIC"][1] + 0.5 and all(b <= a + 1e-9 for a, b in zip(sel["AIC"], sel["BIC"]))
 assert sel["AIC"][0] > 12 > sel["LOO"][0]   # p close to n: AIC's penalty 2p is too light and it overfits wildly; LOO does not
+assert close(sel["AIC"][0], 13.8, 0.005) and close([sel[k][-1] for k in ("AIC", "BIC", "LOO")], [7.97, 6.65, 7.99], 0.005)  # quoted in notes 3.8
 fig, ax = plt.subplots(1, 2, figsize=(10, 3.8)); dd = range(dmax + 1)
 ax[0].plot(dd, bias2 / n7, label="bias^2 / n"); ax[0].plot(dd, pp * sig7**2 / n7, label="p sigma^2 / n (variance)"); ax[0].plot(dd, epe / n7 - sig7**2, "k", label="reducible error")
 ax[0].plot(dd, rss_mc / n7, "--", label="training MSE"); ax[0].set(yscale="log", xlabel="degree", title="bias-variance, n = 30"); ax[0].legend(fontsize=7)
@@ -302,6 +306,7 @@ for _ in range(200):
     if ch: ft = ols_fit(np.c_[np.ones(100), Xn[:, ch]], yn); fr.append((ft["p"][1:] < 0.05).mean()); r2s.append(ft["R2"])
 print("Part 7  forward-AIC on pure noise: mean model size %.1f, R^2 %.2f, share of selected coefficients with p < 0.05: %.2f" % (np.mean(sizes), np.mean(r2s), np.mean(fr)))
 assert np.mean(sizes) > 5 and np.mean(fr) > 0.4 and np.mean(r2s) > 0.2   # nominal: 0, 0.05, 0
+assert close(np.mean(sizes), 10.8, 0.05) and close(np.mean(r2s), 0.34, 0.005) and close(np.mean(fr), 0.52, 0.005)  # quoted in notes 3.8, 7, 8 and exercise C1
 
 # %% [markdown]
 # ## Part 8: ridge (notes 3.9, Example 4.6)
@@ -322,7 +327,7 @@ mse_ridge = lambda l: np.sum((sg**2 * s**2 + l**2 * alpha**2) / (s**2 + l) ** 2)
 assert close([mse_ridge(0.0), mse_ridge(1.0)], [101.01, 1.5], 5e-3)
 assert mse_ridge(1e-3) < mse_ridge(0.0) and np.isclose((mse_ridge(1e-9) - mse_ridge(0.0)) / 1e-9, -2 * np.sum(1 / s**4), rtol=1e-3)  # MSE'(0) < 0
 Bt = np.linalg.solve(Xr.T @ Xr + lam * np.eye(3), Xr.T @ ((Xr @ (Vt.T @ alpha))[:, None] + rng.standard_normal((30, 4000))))
-mse_mc = np.mean(np.sum((Bt - (Vt.T @ alpha)[:, None]) ** 2, 0)); assert abs(mse_mc / 1.5 - 1) < 0.05
+mse_mc = np.mean(np.sum((Bt - (Vt.T @ alpha)[:, None]) ** 2, 0)); assert abs(mse_mc / 1.5 - 1) < 0.05 and close(mse_mc, 1.509, 6e-4)  # Example 4.6: MC 1.509
 print("Example 4.6  factors", fac.round(6), " df =", fac.sum(), " MSE(OLS)=%.2f  MSE(ridge, lam=1)=%.4f (MC %.3f)" % (mse_ridge(0.0), mse_ridge(1.0), mse_mc))
 pb, bb = 5, np.array([1.0, 0.5, 0.5, 0.2, 0.1]); l_star = pb * 0.25 / (bb @ bb); mse_o = lambda l: (pb * 0.25 + l**2 * (bb @ bb)) / (1 + l) ** 2  # orthonormal design
 assert close(mse_o(l_star), pb * 0.25 / (1 + l_star), 1e-12) and mse_o(l_star) < mse_o(0.0) and abs(optimize.minimize_scalar(mse_o, bounds=(0, 10), method="bounded").x - l_star) < 1e-4
@@ -338,6 +343,7 @@ assert np.allclose(np.mean(brute**2), loo[i0])        # the LOO shortcut is exac
 l_cv = lams[loo.argmin()]; al = Vt @ bt; mse_curve = np.array([np.sum((9 * s**2 + l**2 * al**2) / (s**2 + l) ** 2) for l in lams])  # sigma^2 = 9
 assert mse_curve.min() < 0.7 * np.sum(9 / s**2) and 0 < mse_curve.argmin() < len(lams) - 1
 mse_cv = np.interp(np.log(l_cv), np.log(lams), mse_curve); assert mse_cv < np.sum(9 / s**2)
+assert close([np.sum(9 / s**2), mse_curve.min()], [12.68, 7.15], 5e-3)  # notes 7: ridge MSE falls from 12.68 to 7.15
 print("Part 8  OLS MSE %.2f; ridge min MSE %.2f at lambda %.2f; LOO-CV picks lambda %.2f (MSE there %.2f)" % (np.sum(9 / s**2), mse_curve.min(), lams[mse_curve.argmin()], l_cv, mse_cv))
 Xw = rng.standard_normal((10, 25)); yw = rng.standard_normal(10); b_mn = np.linalg.pinv(Xw) @ yw    # p > n: lambda -> 0 is the minimum-norm solution
 assert np.allclose(Xw.T @ np.linalg.solve(Xw @ Xw.T + 1e-9 * np.eye(10), yw), b_mn, atol=1e-6) and np.allclose(Xw @ b_mn, yw)
@@ -378,7 +384,7 @@ Xs6 = rng.standard_normal((n, P)); Xs6[:, 1] = Xs6[:, 0] + 0.3 * rng.standard_no
 def obj(v): bv = v[:P] - v[P:]; r_ = ys6 - Xs6 @ bv; return 0.5 * r_ @ r_ + lam6 * v.sum(), np.r_[-Xs6.T @ r_ + lam6, Xs6.T @ r_ + lam6]
 ref = optimize.minimize(obj, np.zeros(2 * P), jac=True, bounds=[(0, None)] * (2 * P), method="L-BFGS-B", options=dict(ftol=1e-15, gtol=1e-11, maxiter=10_000))
 b_ref = ref.x[:P] - ref.x[P:]; b_cd = lasso_cd(Xs6, ys6, lam6); g = Xs6.T @ (ys6 - Xs6 @ b_cd); lmax = np.abs(Xs6.T @ ys6).max()
-assert np.allclose(b_cd, b_ref, atol=1e-5) and np.allclose(g[b_cd != 0], lam6 * np.sign(b_cd[b_cd != 0]), atol=1e-6) and np.all(np.abs(g[b_cd == 0]) <= lam6 + 1e-9)  # KKT (3.45)
+assert np.allclose(b_cd, b_ref, atol=1e-7) and np.allclose(g[b_cd != 0], lam6 * np.sign(b_cd[b_cd != 0]), atol=1e-6) and np.all(np.abs(g[b_cd == 0]) <= lam6 + 1e-9)  # KKT (3.45)
 assert not lasso_cd(Xs6, ys6, lmax * 1.0001).any() and (lasso_cd(Xs6, ys6, lmax * 0.99) != 0).sum() == 1
 print("Part 9  CD vs L-BFGS-B reference: max diff %.1e; KKT holds; lambda_max = %.3f; nonzeros at lam=8: %d" % (np.abs(b_cd - b_ref).max(), lmax, (b_cd != 0).sum()))
 
@@ -405,6 +411,7 @@ supp, true = set(np.flatnonzero(b_l)), set(np.flatnonzero(bs))
 print("Part 9  CV-lasso: lambda = %.2f, support size %d, true support recovered: %s, false positives %d; ||b - beta||: lasso %.2f, OLS %.2f" % (
     lams9[ib], len(supp), true <= supp, len(supp - true), np.linalg.norm(b_l - bs), np.linalg.norm(b_ols - bs)))
 assert true <= supp and np.linalg.norm(b_l - bs) < 0.5 * np.linalg.norm(b_ols - bs)
+assert len(supp) == 27 and len(supp - true) == 22 and close([np.linalg.norm(b_l - bs), np.linalg.norm(b_ols - bs)], [0.40, 1.20], 5e-3)  # notes 3.10, 8
 fig, ax = plt.subplots(1, 2, figsize=(10, 3.8)); zz = np.linspace(-3, 3, 200)
 ax[0].semilogx(lams9, pth, lw=1); ax[0].axvline(lams9[ib], c="k", ls=":"); ax[0].set(xlabel="lambda", ylabel="coefficient", title="lasso path, p = 50 (dotted: CV)")
 ax[1].plot(zz, zz, "k:", label="OLS"); ax[1].plot(zz, soft(zz, 1), label="lasso (soft)"); ax[1].plot(zz, zz / 2, label="ridge"); ax[1].legend(); ax[1].set(xlabel="z", title="orthonormal design, lambda = 1")
@@ -423,7 +430,7 @@ def compare(kind, reps=12):                           # ridge vs lasso, lambda c
         out["ridge"].append(np.linalg.norm(br[int(np.argmin([np.sum((yv - Xv @ b_) ** 2) for b_ in br]))] - bt))
         bl_ = lasso_path(Xt, yt_, np.geomspace(np.abs(Xt.T @ yt_).max(), 1e-2 * np.abs(Xt.T @ yt_).max(), 20))
         bhat = bl_[int(np.argmin(((yv[:, None] - Xv @ bl_.T) ** 2).sum(0)))]
-        out["lasso"].append(np.linalg.norm(bhat - bt)); out["missed"].append(np.sum((bhat == 0) & (bs != 0))); out["false+"].append(np.sum((bhat != 0) & (bs == 0)))
+        out["lasso"].append(np.linalg.norm(bhat - bt)); out["missed"].append(np.sum((bhat == 0) & (bt != 0))); out["false+"].append(np.sum((bhat != 0) & (bt == 0)))
     return {k: float(np.mean(v)) for k, v in out.items()}
 
 
@@ -431,6 +438,7 @@ res = {k: compare(k) for k in ("sparse", "dense", "sparse-correlated", "dense-co
 print("Part 9  ||b - beta|| (mean of 12 runs) and lasso support errors:")
 for k, d in res.items(): print("        %-18s" % k, {m: round(v, 2) for m, v in d.items()})
 assert res["sparse"]["lasso"] < 0.7 * res["sparse"]["ridge"] and res["dense"]["ridge"] < res["dense"]["lasso"]
+assert close([res[k][m] for k in ("sparse", "dense", "sparse-correlated") for m in ("ridge", "lasso")], [1.68, 0.81, 1.54, 1.63, 3.40, 1.86], 5e-3)  # notes 3.10
 
 # %% [markdown]
 # ## Part 10: numbers used in exercises and solutions (every figure in exercises.md and solutions.md is asserted here)
@@ -509,6 +517,7 @@ assert np.isclose((Mg @ Xg[:, 3]) @ (Mg @ yg) / ((Mg @ Xg[:, 3]) @ (Mg @ Xg[:, 3
 sl0, sl1 = ols_qr(Xg[gg == 0][:, :2], yg[gg == 0])[1], ols_qr(Xg[gg == 1][:, :2], yg[gg == 1])[1]
 assert np.isclose(bg[1], sl0) and np.isclose(bg[1] + bg[3], sl1)                               # interaction = difference of within-group slopes
 print("B8  interaction coefficient %.4f = slope(g=1) - slope(g=0) = %.4f - %.4f = %.4f (truth 0.8)" % (bg[3], sl1, sl0, sl1 - sl0))
+assert close([bg[3], sl1, sl0], [0.7848, 1.2895, 0.5047], 5e-5)  # solutions B8
 n, Rr = 50, 20_000                                    # Reference solution 2: omitted-variable bias, E[b_short] = b_1 + gamma b_2 (3.37)
 xa_ = rng.standard_normal(n); xb_ = 0.6 * xa_ + 0.8 * rng.standard_normal(n); xb_ -= xb_.mean(); xa_ -= xa_.mean()
 Xfull = np.c_[np.ones(n), xa_, xb_]; bt = np.array([1.0, 2.0, 1.5]); Yo = (Xfull @ bt)[:, None] + rng.standard_normal((n, Rr))
@@ -546,6 +555,8 @@ for rule in ("aic", "bic", "pval"):
     C1[rule] = (np.mean(sz), np.mean(r2), np.mean(sg), np.mean(sg_split))
     print("C1  %-4s size %.2f  R^2 %.3f  share p<0.05 %.3f  | select-then-test on separate halves: share p<0.05 %.3f" % ((rule,) + C1[rule]))
 assert C1["bic"][0] < 3.5 < C1["aic"][0] and all(v[2] > 0.45 for v in C1.values()) and all(abs(v[3] - 0.05) < 0.03 for v in C1.values())
+for rule, ref in (("aic", (10.64, 0.327, 0.500, 0.050)), ("bic", (2.08, 0.146, 1.000, 0.066)), ("pval", (2.79, 0.155, 0.993, 0.044))):
+    assert close(C1[rule][0], ref[0], 0.005) and close(C1[rule][1:], ref[1:], 6e-4), rule  # solutions C1 table
 print("C1  P(at least one of 50 null predictors has p < 0.05) = 1 - 0.95^50 = %.4f" % (1 - 0.95**50)); assert close(1 - 0.95**50, 0.9231, 5e-5)
 thr = [np.sqrt(97 * (np.exp(2 / 100) - 1)), np.sqrt(97 * (100 ** (1 / 100) - 1)), stats.t.ppf(0.975, 97)]; print("C1  entry thresholds on |t| (AIC, BIC, p<0.05):", np.round(thr, 3))
 assert close(np.square(thr[0]), 1.96, 5e-3) and close(thr, [1.40, 2.14, 1.98], 6e-3)
