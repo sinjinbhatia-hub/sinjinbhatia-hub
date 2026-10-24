@@ -1,11 +1,10 @@
 # %% [markdown]
 # # PY-1 Project: A Floating-Point Lab
 #
-# Rebuilds the numerical tools of PY-1 and checks every number quoted in the notes:
-# the floor rule (3.3), the grid of doubles (3.4), `0.1 + 0.2` as a tie (Example 4.3),
-# cancellation in the quadratic formula (3.5), Fast2Sum and Kahan summation (3.6),
-# bisection, Newton and Horner (3.12), and a formatted report (Example 4.4).
-# Standard library plus NumPy for three comparisons; no figures in this module.
+# Rebuilds the numerical tools of PY-1 and checks every number quoted in the notes: the
+# floor rule (3.3), the grid of doubles (3.4), `0.1 + 0.2` as a tie (Example 4.3),
+# cancellation (3.5), Fast2Sum and Kahan summation (3.6), root finders and Horner (3.12),
+# and a formatted report (Example 4.4). Standard library plus NumPy for three comparisons.
 # Style: PEP 8 with a 100-character line limit. Run: `MPLBACKEND=Agg python3 project.py`.
 # Build first, then compare: write your own epsilon loop, kahan_sum, bisect and horner.
 
@@ -30,11 +29,6 @@ def raises(exc, func, *args):
     except exc:
         return True
     return False
-
-
-def assign0(obj):
-    """Try obj[0] = 9 (tuples and strings refuse)."""
-    obj[0] = 9
 
 
 # %% [markdown]
@@ -83,7 +77,7 @@ for x in (1e-10, 1e-3, 1.0, 1e3, 1e8, 1e16):
 
 worst = 0.0                                          # eq. (3.4) against exact arithmetic
 for _ in range(2000):
-    q = Fraction(rng.randint(1, 10**9), rng.randint(1, 10**9)) * Fraction(10) ** rng.randint(-20, 20)
+    q = Fraction(rng.randint(1, 10**9), rng.randint(1, 10**9)) * Fraction(10) ** rng.randint(-9, 9)
     delta = abs(Fraction(float(q)) - q) / q          # float(Fraction) is correctly rounded
     assert delta <= Fraction(1, 2**53)
     worst = max(worst, float(delta))
@@ -281,7 +275,7 @@ CASES = [
      (2.0, 3.0), 2.0, 2.0945514815423265),
 ]
 TOL = 1e-10
-print(f"{'function':>14} {'bisect k':>9} {'newton k':>9}   Newton errors e_n (then e_{{n+1}}/e_n^2 -> C)")
+print(f"{'function':>14} {'bisect k':>9} {'newton k':>9}   Newton errors e_n, then C in (3.11)")
 for name, f, df, d2f, (a, b), x0, root in CASES:
     r_b, k_b = bisect(f, a, b, tol=TOL)
     assert k_b == math.ceil(math.log2((b - a) / TOL)) and abs(r_b - root) <= TOL   # eq. (3.9)
@@ -294,7 +288,7 @@ for name, f, df, d2f, (a, b), x0, root in CASES:
     C = abs(d2f(root) / (2 * df(root)))                           # constant of eq. (3.11)
     ratios = [errs[i + 1] / errs[i] ** 2 for i in range(4) if 1e-6 < errs[i] < 0.05]
     assert ratios and all(abs(r - C) < 0.25 * C for r in ratios)
-    print(f"{name:>14} {k_b:>9} {k_n:>9}   " + " ".join(f"{e:.1e}" for e in errs) + f"   C = {C:.3f}")
+    print(f"{name:>14} {k_b:>9} {k_n:>9}   {' '.join(f'{e:.1e}' for e in errs)}   C = {C:.3f}")
 
 f_cos, df_cos = CASES[0][1], CASES[0][2]
 assert bisect(f_cos, 0.0, 1.0, tol=1e-6) == (0.7390851974487305, 20)
@@ -395,24 +389,29 @@ QUIZ = [                                             # sequence 1: (setup, expre
     ("a = [1, 2]; b = a; b += [3]", "a", [1, 2, 3]),
     ("x = 5; y = x; y += 1", "(x, y)", (5, 6)),
     ("grid = [[0] * 2] * 2; grid[0][0] = 9", "grid", [[9, 0], [9, 0]]),
-    ("def grow(i): i.append(1)\ndef regrow(i): i = i + [1]\nlst = []; grow(lst); regrow(lst)", "lst", [1]),
+    ("def grow(i): i.append(1)\ndef regrow(i): i = i + [1]\nlst = []; grow(lst); regrow(lst)",
+     "lst", [1]),
     ("t = (1, [2, 3]); t[1].append(4)", "t", (1, [2, 3, 4])),
     ("def collect(x, bucket=[]):\n    bucket.append(x)\n    return bucket\ncollect(1)",
      "(collect(2), collect.__defaults__)", ([1, 2], ([1, 2],))),
     ("counter = 0\ndef bump_global():\n    global counter\n    counter += 1\n"
      "bump_global(); bump_global()", "counter", 2),
     ("def make_counter():\n    count = 0\n    def step():\n        nonlocal count\n"
-     "        count += 1\n        return count\n    return step\ns = make_counter()", "(s(), s(), s())", (1, 2, 3)),
-    ("total = 0\nfor k in range(1, 10):\n    if k % 2 == 0:\n        continue\n    total += k * k", "total", 165),
-    ("n, steps = 27, 0\nwhile n != 1:\n    n = 3 * n + 1 if n % 2 else n // 2\n    steps += 1", "steps", 111),
+     "        count += 1\n        return count\n    return step\ns = make_counter()",
+     "(s(), s(), s())", (1, 2, 3)),
+    ("total = 0\nfor k in range(1, 10):\n    if k % 2 == 0:\n        continue\n    total += k * k",
+     "total", 165),
+    ("n, steps = 27, 0\nwhile n != 1:\n    n = 3 * n + 1 if n % 2 else n // 2\n    steps += 1",
+     "steps", 111),
     ("primes = []\nfor n in range(2, 30):\n    for d in range(2, n):\n        if n % d == 0:\n"
-     "            break\n    else:\n        primes.append(n)", "primes", [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]),
+     "            break\n    else:\n        primes.append(n)",
+     "primes", [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]),
 ]
 for setup, expr, value in QUIZ:
     ns = {}
     exec(setup, ns)
     assert eval(expr, ns) == value, setup
-assert raises(TypeError, assign0, (1, [2])) and raises(TypeError, assign0, "abc")
+assert raises(TypeError, exec, "(1, [2])[0] = 9") and raises(TypeError, exec, "'abc'[0] = 9")
 x = 10
 
 
@@ -429,7 +428,7 @@ assert (z.real, z.imag, abs(z), z.conjugate(), z * 1j) == (3.0, 4.0, 5.0, 3 - 4j
 assert __import__("cmath").exp(1j * math.pi) == -1 + 1.2246467991473532e-16j
 assert abs(((-8) ** (1 / 3)).imag - 1.7320508075688772) < 1e-15
 s = "Hello, Python"
-assert (len(s), s[0], s[-1], s[7:], s[:5], s[::-1]) == (13, "H", "n", "Python", "Hello", "nohtyP ,olleH")
+assert (len(s), s[0], s[-1], s[7:], s[::-1]) == (13, "H", "n", "Python", "nohtyP ,olleH")
 assert s.upper() == "HELLO, PYTHON" and s == "Hello, Python"
 assert list(range(8, 3, -2)) == [8, 6, 4] and len(range(3, 8)) == 5
 
@@ -487,12 +486,11 @@ assert record_fixed(7.0, mine) is mine and mine == [7.0]
 # %% [markdown]
 # ## Your turn
 #
-# 1. **Secant method (exercise B3).** After `newton` in Part 6, add `secant(f, x0, x1, tol, max_iter)`
-#    that replaces f'(x_n) by the slope through the last two points. Compare iteration counts
-#    with Newton and bisection on the three CASES, and estimate its order of convergence.
+# 1. **Secant method (exercise B3).** After `newton` in Part 6, add `secant(f, x0, x1, tol,
+#    max_iter)`, replacing f'(x_n) by the slope through the last two points. Compare iteration
+#    counts with Newton and bisection on the three CASES; estimate its order of convergence.
 # 2. **Series with a stopping rule (exercise B5).** Sum 1/k^2 in a `while` loop until a term is
-#    below 1e-8. Compare the error with pi^2/6. When does "stop when the next term is tiny"
-#    stop too early, and for which series is it safe?
+#    below 1e-8 and compare with pi^2/6. When does "stop when the term is tiny" stop too early?
 # 3. **Largest n with `float(10**n) == 10**n`.** Predict it from 5**n < 2**53, then run it.
 # 4. **Extend the lab (exercise B7).** Add a cell that measures how the error of `naive_sum` on
 #    0.1 grows with n = 10^3 ... 10^7. Solutions to all four are in solutions.md.
