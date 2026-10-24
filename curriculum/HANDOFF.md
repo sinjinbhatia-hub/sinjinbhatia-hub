@@ -1,16 +1,18 @@
 # Handoff — where the build stands and how to continue
 
-Last updated 2026-10-20 03:45 UTC, after round 7. The branch is `claude/brave-knuth-64723m`; everything below is committed and pushed. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
+Last updated 2026-10-24 01:10 UTC, after round 8. The branch is `claude/brave-knuth-64723m`; everything below is committed and pushed. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
 
-## Status (34 of 80 modules done)
+## Status (37 of 80 math modules done; Python course 4 of 10 written)
 
 "Done" means all four files exist (`notes.md`, `exercises.md`, `solutions.md`, `project.py`), an independent reviewer re-derived the math and recomputed the numbers, the fixes were applied, and the script passes headless. Review notes for each module are in `tools/reviews/<code>.md`.
 
 | State | Modules |
 |---|---|
-| **Done** (34) | F1–F6 · LA-1–14 · CM-1–8 · EM-1–4 · ST-1, ST-2 |
-| **Written, awaiting review** (4) | ST-3, ST-4, ST-5, EM-5 (written by Sonnet; scripts pass; math not yet independently checked) |
-| **Not started** (42) | EM-6, EM-7, EM-8 · SM-1–7 · QM-1–9 · ST-6–9 · ML-1–10 · QC-1–9 |
+| **Done** (37) | F1–F6 · LA-1–14 · CM-1–8 · EM-1–5 · ST-1–4 |
+| **Written, awaiting review** (1 + 4) | ST-5 · PY-1, PY-2, PY-3, PY-4 (written by Sonnet; scripts pass; not yet independently checked) |
+| **Not started** (41 + 6) | EM-6, EM-7, EM-8 · SM-1–7 · QM-1–9 · ST-6–9 · ML-1–10 · QC-1–9 · PY-5–10 |
+
+**Priority (user's request, 2026-10-23): finish the Python course (`00-python/`, briefs `research/briefs/PY-*.md`) first.** Its briefs end with a REVIEW FOCUS section the reviewer applies (run every code block; a wrong stated output is high severity). The PY writer addendum is at the end of `research/WRITER-BRIEF.md`.
 
 Until a module is in the Done row, treat its derivations and numbers as unverified.
 
@@ -42,9 +44,10 @@ There is no usage signal readable from inside the session. The limit kills every
 
 ## Build order (prerequisites first)
 
-1. Verify ST-3, ST-4, ST-5, EM-5. Write EM-6, EM-7.
-2. Verify EM-6, EM-7. Write EM-8, ST-6, ST-7.
-3. Verify those. Write ST-8, ST-9, QM-1.
+1. Verify PY-1–4 (Fable). Write PY-5–8 (Sonnet).
+2. Verify PY-5–8, ST-5. Write PY-9, PY-10, EM-6.
+3. Verify PY-9, PY-10, EM-6. Write EM-7, EM-8, ST-6, ST-7.
+3b. Verify those. Write ST-8, ST-9, QM-1.
 4. QM-2 through QM-9 (needs EM done; QM-6 reuses EM-3's Legendre machinery).
 5. SM-1 through SM-7 (SM-5 needs QM-5).
 6. ML-1 through ML-10 (needs ST-1–5).

@@ -803,7 +803,9 @@ class CountingDict(dict):
 
 
 class CountingUserDict(UserDict):
-    writes = 0
+    def __init__(self, *args, **kwargs):
+        self.writes = 0
+        super().__init__(*args, **kwargs)
 
     def __setitem__(self, key, value):
         self.writes += 1
