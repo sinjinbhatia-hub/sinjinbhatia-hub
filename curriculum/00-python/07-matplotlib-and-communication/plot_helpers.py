@@ -37,6 +37,7 @@ from matplotlib.lines import Line2D
 from matplotlib.ticker import FuncFormatter, MultipleLocator, NullFormatter
 
 __all__ = [
+    "FIGDIR",
     "HOUSE_STYLE",
     "OKABE_ITO",
     "add_slope_guide",
@@ -255,14 +256,19 @@ def label_end(ax: Axes, line: Line2D, text: str, dx: float = 4.0) -> None:
     )
 
 
-def rgba_at(ax: Axes, x: float, y: float) -> np.ndarray:
-    """Rendered RGBA (floats in [0, 1]) of the pixel under data point ``(x, y)``.
+def rgba_at(ax: Axes, x: float | np.ndarray, y: float | np.ndarray) -> np.ndarray:
+    """Rendered RGBA (floats in [0, 1]) of the pixel under data point(s) ``(x, y)``.
 
-    Draws the figure on its Agg canvas first. Display coordinates start at the bottom
-    left, the pixel buffer at the top left, hence the ``H - 1 - floor(py)``.
+    ``x`` and ``y`` may be scalars (returns shape ``(4,)``) or equal-length arrays (shape
+    ``(n, 4)``); the figure is drawn once per call, so pass arrays when testing many
+    points. Display coordinates start at the bottom left, the pixel buffer at the top
+    left, hence the ``H - 1 - floor(py)``.
     """
     fig = ax.figure
     fig.canvas.draw()
-    px, py = ax.transData.transform((x, y))
+    scalar = np.ndim(x) == 0 and np.ndim(y) == 0
+    pts = np.column_stack(np.broadcast_arrays(np.atleast_1d(x), np.atleast_1d(y)))
+    disp = ax.transData.transform(pts)
     buf = np.asarray(fig.canvas.buffer_rgba())
-    return buf[buf.shape[0] - 1 - int(np.floor(py)), int(np.floor(px))] / 255.0
+    out = buf[buf.shape[0] - 1 - np.floor(disp[:, 1]).astype(int), np.floor(disp[:, 0]).astype(int)] / 255.0
+    return out[0] if scalar else out

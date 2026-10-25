@@ -34,11 +34,11 @@ LINES = [
 
 @pytest.mark.parametrize("n", [1, 2, 7])
 @pytest.mark.parametrize("f, a, b, exact", LINES)
-def test_trapezoid_exact_on_lines(f, a, b, exact, n):
+def test_trapezoid_exact_on_lines(f: Fn, a: float, b: float, exact: float, n: int) -> None:
     assert ig.trapezoid(f, a, b, n) == pytest.approx(exact, rel=1e-12, abs=1e-12)
 
 
-def test_trapezoid_error_order():
+def test_trapezoid_error_order() -> None:
     order = observed_order(ig.trapezoid, math.sin, 0.0, math.pi, 2.0, (16, 32, 64, 128))
     assert order == pytest.approx(2.0, abs=0.1)
 
@@ -46,9 +46,9 @@ def test_trapezoid_error_order():
 @pytest.mark.parametrize(
     "n, error", [(0, ValueError), (-3, ValueError), (2.5, TypeError), ("4", TypeError)]
 )
-def test_trapezoid_rejects_bad_n(n, error):
+def test_trapezoid_rejects_bad_n(n: object, error: type[Exception]) -> None:
     with pytest.raises(error):
-        ig.trapezoid(math.sin, 0.0, 1.0, n)
+        ig.trapezoid(math.sin, 0.0, 1.0, n)  # type: ignore[arg-type]  # a wrong type is the point
 
 
 # --- Simpson: tests written second ----------------------------------------------------------
@@ -62,11 +62,11 @@ CUBICS = [
 
 @pytest.mark.parametrize("n", [2, 4, 10])
 @pytest.mark.parametrize("f, a, b, exact", CUBICS)
-def test_simpson_exact_on_cubics(f, a, b, exact, n):
+def test_simpson_exact_on_cubics(f: Fn, a: float, b: float, exact: float, n: int) -> None:
     assert ig.simpson(f, a, b, n) == pytest.approx(exact, rel=1e-12, abs=1e-12)
 
 
-def test_simpson_is_richardson_of_two_trapezoids():
+def test_simpson_is_richardson_of_two_trapezoids() -> None:
     # S_{2m} = (4 T_{2m} - T_m) / 3 on the same nodes (notes, section 3.10).
     for m in (2, 5, 12):
         s = ig.simpson(math.exp, 0.0, 1.0, 2 * m)
@@ -74,7 +74,7 @@ def test_simpson_is_richardson_of_two_trapezoids():
         assert s == pytest.approx(t, rel=1e-13)
 
 
-def test_simpson_error_order():
+def test_simpson_error_order() -> None:
     order = observed_order(ig.simpson, math.sin, 0.0, math.pi, 2.0, (8, 16, 32, 64))
     assert order == pytest.approx(4.0, abs=0.2)
 
@@ -90,26 +90,26 @@ CASES = [
 
 
 @pytest.mark.parametrize("f, a, b, exact", CASES)
-def test_simpson_known_integrals(f, a, b, exact):
+def test_simpson_known_integrals(f: Fn, a: float, b: float, exact: float) -> None:
     # Bound (b-a) h^4 M4 / 180 at n = 64 is about 5e-8 relative at worst (sin); rel=1e-6 is 20x.
     assert ig.simpson(f, a, b, 64) == pytest.approx(exact, rel=1e-6)
 
 
 @pytest.mark.parametrize("n", [1, 3, 7])
-def test_simpson_rejects_odd_n(n):
+def test_simpson_rejects_odd_n(n: int) -> None:
     with pytest.raises(ValueError, match="even"):
         ig.simpson(math.sin, 0.0, 1.0, n)
 
 
 @pytest.mark.parametrize("n, error", [(0, ValueError), (-2, ValueError), (2.0, TypeError)])
-def test_simpson_rejects_bad_n(n, error):
+def test_simpson_rejects_bad_n(n: object, error: type[Exception]) -> None:
     with pytest.raises(error):
-        ig.simpson(math.sin, 0.0, 1.0, n)
+        ig.simpson(math.sin, 0.0, 1.0, n)  # type: ignore[arg-type]  # a wrong type is the point
 
 
 # --- regression: added after the planted bug was found ------------------------------------
 @pytest.mark.parametrize("k", range(5))
-def test_simpson_weights_are_1_4_2_4_1(k):
+def test_simpson_weights_are_1_4_2_4_1(k: int) -> None:
     """Pin the weight of every node: f is 1 at node k, 0 elsewhere (n = 4 on [0, 1])."""
     nodes = [i / 4 for i in range(5)]  # dyadic, so the grid points are exact floats
     weights = [1, 4, 2, 4, 1]
@@ -127,7 +127,7 @@ def rng() -> np.random.Generator:
 
 
 @pytest.mark.parametrize("rule", [ig.trapezoid, ig.simpson], ids=["trapezoid", "simpson"])
-def test_linearity_reversal_and_additivity(rule, rng):
+def test_linearity_reversal_and_additivity(rule: Rule, rng: np.random.Generator) -> None:
     f, g = math.sin, lambda x: x * x + 1.0
     for _ in range(25):
         al, be = (float(v) for v in rng.normal(size=2))
@@ -155,7 +155,7 @@ def counting(f: Fn) -> tuple[Fn, list[int]]:
     return wrapped, calls
 
 
-def test_adaptive_matches_scipy_quad_on_a_peak():
+def test_adaptive_matches_scipy_quad_on_a_peak() -> None:
     from scipy.integrate import quad
 
     def peak(x: float) -> float:
@@ -165,13 +165,13 @@ def test_adaptive_matches_scipy_quad_on_a_peak():
     assert abs(ig.adaptive_simpson(peak, 0.0, 1.0, tol=1e-10) - reference) < 1e-8
 
 
-def test_adaptive_accepts_a_cubic_without_splitting():
+def test_adaptive_accepts_a_cubic_without_splitting() -> None:
     f, calls = counting(lambda x: x**3 - x)
     assert ig.adaptive_simpson(f, 0.0, 2.0) == pytest.approx(2.0, rel=1e-12)
     assert calls[0] == 5  # 3 evaluations for the whole interval, 2 for the half-panels
 
 
-def test_adaptive_gives_up_with_a_convergence_error():
+def test_adaptive_gives_up_with_a_convergence_error() -> None:
     with pytest.raises(ig.ConvergenceError) as info:
         ig.adaptive_simpson(math.sin, 0.0, 50.0, tol=1e-14, max_depth=3)
     err = info.value
@@ -180,6 +180,6 @@ def test_adaptive_gives_up_with_a_convergence_error():
 
 
 @pytest.mark.parametrize("tol", [0.0, -1e-6, float("nan")])
-def test_adaptive_rejects_bad_tol(tol):
+def test_adaptive_rejects_bad_tol(tol: float) -> None:
     with pytest.raises(ValueError, match="tol"):
         ig.adaptive_simpson(math.sin, 0.0, 1.0, tol=tol)

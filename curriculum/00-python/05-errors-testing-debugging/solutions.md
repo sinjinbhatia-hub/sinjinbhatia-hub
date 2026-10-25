@@ -143,7 +143,7 @@ test_clamp.py::test_clamp_to_unit_interval[tiny] PASSED                         
 test_clamp.py::test_clamp_rejects_empty_interval PASSED                                      [ 87%]
 test_clamp.py::test_degenerate_interval_is_allowed PASSED                                    [100%]
 
-======================================== 8 passed in 0.03s =========================================
+======================================== 8 passed in 0.02s =========================================
 ```
 
 `min(max(x, lo), hi)` is correct when `lo <= hi`; the check comes first so an empty interval cannot return a number that looks plausible. The `parametrize` ids make a failure name its row; `match` is a regular expression searched in the message. The degenerate interval `lo == hi` is a boundary case worth its own test.
@@ -234,7 +234,7 @@ E   ModuleNotFoundError: No module named 'midpoint_rule'
 ERROR test_midpoint.py
 $ python3 -m pytest -q
 .................                                                                            [100%]
-17 passed in 0.12s
+17 passed in 0.08s
 $ python3 -m pytest -q --tb=no -rf -p plant_mid | grep FAILED | sed 's/.*:://; s/ - .*//; s/\[[^e].*//' | sort | uniq -c
       3 test_error_is_minus_half_the_trapezoid_error
       9 test_exact_on_lines
@@ -554,7 +554,7 @@ def test_failure_is_an_exception_not_an_error_record(caplog):
 ```console
 $ python3 -m pytest -q
 ....                                                                                         [100%]
-4 passed in 0.01s
+4 passed in 0.02s
 ```
 
 `caplog.at_level(logging.DEBUG, logger="newton_log")` lowers that logger's threshold for the block. The count of `DEBUG` records equals the count of calls to `f` because `f` is evaluated once per iteration. Without `at_level`, the default `WARNING` threshold filters `DEBUG` and `INFO`, so a healthy run leaves `caplog.records` empty, which is the property that makes the logging free for library users. The failing run raises `ConvergenceError` and logs nothing at `ERROR`: the exception is the report.
@@ -964,11 +964,11 @@ assert 0.0 <= crossover <= 0.5
 $ python3 exc_cost.py
 Python 3.13.16, x86_64; microseconds per lookup
 miss rate  try/except   if k in d    d.get(k)
-       0%       0.055       0.085       0.070
-      10%       0.067       0.080       0.066
-      50%       0.113       0.060       0.059
-      90%       0.128       0.033       0.040
-try/except stops being the fastest at a miss rate of about 8% (straight-line fits)
+       0%       0.056       0.087       0.076
+      10%       0.069       0.081       0.071
+      50%       0.111       0.062       0.060
+      90%       0.131       0.035       0.043
+try/except stops being the fastest at a miss rate of about 11% (straight-line fits)
 ```
 
 In this run `try/except` is the fastest while misses are rare (a hit costs one lookup, with no function call and no second `in` test), its cost climbs steadily with the miss rate, and the last line gives the miss rate at which it stops being the fastest. `if k in d` and `d.get(k)` hardly depend on the miss rate (misses are even a little cheaper, since they skip the addition). *What it says:* raising and catching an exception costs several lookups' worth of time, so when misses are common, ask with `in` or `.get`. *What it does not say:* that exceptions are slow in general. The cost matters only in a hot loop with a high failure rate; a 2-microsecond handler on a rare error is invisible. EAFP is chosen for correctness (no gap between check and use, §3.5) and clarity before speed, and the right question is the one in §3.5: is a miss normal (use `.get`) or a mistake (use `try`)? Measure before optimizing: the crossover moves with the Python version and the machine, and the numbers above come from one run.
@@ -1079,8 +1079,8 @@ $ python3 -m pytest -q
 ..............                                                                               [100%]
 14 passed in 0.02s
 $ python3 measure.py
-trapezoid checked / plain time = 0.985
-simpson   checked / plain time = 1.002
+trapezoid checked / plain time = 0.999
+simpson   checked / plain time = 0.998
 min_depth  |error|      requested tol = 1e-3
         0  2.47e-02
         1  2.47e-02

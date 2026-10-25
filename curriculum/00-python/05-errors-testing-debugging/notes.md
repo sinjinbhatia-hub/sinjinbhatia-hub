@@ -6,7 +6,7 @@
 
 ## 0. Where this sits
 
-PY-1 to PY-4 taught you to predict what Python does. This module teaches your code to say so when it cannot do what you asked, and gives you the means to check that it does what you think. You need PY-4's classes (exceptions are classes, PY-4 §3.10; `Vec` of PY-4 §3.3 is annotated in §3.11, and its `Evaluable` protocol is checked for real) and PY-3's decorators and generators (`@contextmanager`). It makes possible every project from PY-6 on (each ships a `test_*.py`), LA-2's LU project, CM-1's conservation-law tests, and ML-2's gradient checks.
+PY-1 to PY-4 taught you to predict what Python does. This module teaches your code to say so when it cannot do what you asked, and gives you the means to check that it does what you think. You need PY-4's classes (exceptions are classes, PY-4 §3.10; `Vec` of PY-4 §3.3 is annotated in §3.11, and its `Evaluable` protocol is checked for real) and PY-3's decorators with PY-2's generators (`@contextmanager`). It makes possible every project from PY-6 on (each ships a `test_*.py`), LA-2's LU project, CM-1's conservation-law tests, and ML-2's gradient checks.
 
 ## 1. The problem that forced this idea
 
@@ -312,7 +312,7 @@ EAFP on the missing file: None
 2. **When the world can change between check and use** (files, sockets, threads), LBYL is wrong, not merely slow: `exists()` then `read_text()` leaves a gap. Do the operation and catch the *specific* exception (`FileNotFoundError`, not `OSError`, not `Exception`).
 3. **When the check is cheap and you cannot recover locally**, check first: `integrators._panels` tests `n % 2` before any work.
 
-**Exceptions that are not errors.** A `for` loop is `iter`, `next`, and a catch of `StopIteration` (PY-2 §3.4). Build one:
+**Exceptions that are not errors.** A `for` loop is `iter`, `next`, and a catch of `StopIteration` (PY-2 §3.7). Build one:
 
 ```python
 def my_for(iterable, body):
@@ -669,7 +669,7 @@ test_basic.py::test_a
 test_basic.py::testing_helper
 test_basic.py::TestC::test_c
 
-3 tests collected in 0.00s
+3 tests collected in 0.01s
 $ python3 -m pytest -q; echo "exit status $?"
 no tests ran in 0.00s
 exit status 5
@@ -711,11 +711,11 @@ LINES = [
 
 @pytest.mark.parametrize("n", [1, 2, 7])
 @pytest.mark.parametrize("f, a, b, exact", LINES)
-def test_trapezoid_exact_on_lines(f, a, b, exact, n):
+def test_trapezoid_exact_on_lines(f: Fn, a: float, b: float, exact: float, n: int) -> None:
     assert ig.trapezoid(f, a, b, n) == pytest.approx(exact, rel=1e-12, abs=1e-12)
 
 
-def test_trapezoid_error_order():
+def test_trapezoid_error_order() -> None:
     order = observed_order(ig.trapezoid, math.sin, 0.0, math.pi, 2.0, (16, 32, 64, 128))
     assert order == pytest.approx(2.0, abs=0.1)
 
@@ -723,9 +723,9 @@ def test_trapezoid_error_order():
 @pytest.mark.parametrize(
     "n, error", [(0, ValueError), (-3, ValueError), (2.5, TypeError), ("4", TypeError)]
 )
-def test_trapezoid_rejects_bad_n(n, error):
+def test_trapezoid_rejects_bad_n(n: object, error: type[Exception]) -> None:
     with pytest.raises(error):
-        ig.trapezoid(math.sin, 0.0, 1.0, n)
+        ig.trapezoid(math.sin, 0.0, 1.0, n)  # type: ignore[arg-type]  # a wrong type is the point
 ```
 
 *Red.* No module exists, so collection fails:
@@ -735,7 +735,7 @@ $ python3 -m pytest -q --tb=line | grep -E "^E|error"
 E   ModuleNotFoundError: No module named 'integrators'
 ERROR test_integrators.py
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-1 error in 0.17s
+1 error in 0.16s
 ```
 
 *Green, naively.* The textbook formula:
@@ -752,7 +752,7 @@ $ python3 -m pytest -q --tb=no -rf
 ===================================== short test summary info ======================================
 FAILED test_integrators.py::test_trapezoid_rejects_bad_n[0-ValueError] - ZeroDivisionError: float...
 FAILED test_integrators.py::test_trapezoid_rejects_bad_n[-3-ValueError] - IndexError: list index ...
-2 failed, 12 passed in 0.08s
+2 failed, 12 passed in 0.12s
 ```
 
 Twelve of 14 pass; the failures are informative: `n = 0` gave `ZeroDivisionError` and `n = -3` an `IndexError` from deep inside, where the contract says `ValueError` (`2.5` and `"4"` raised `TypeError` by luck). *Refactor*: validate in one helper that Simpson shares.
@@ -776,14 +776,14 @@ def trapezoid(f: Integrand, a: float, b: float, n: int) -> float:
 ```console
 $ python3 -m pytest -q
 ..............                                                                               [100%]
-14 passed in 0.07s
+14 passed in 0.10s
 ```
 
 *Simpson, red then green.* With the Simpson tests added, 26 fail (no `simpson`); then:
 
 ```console
 $ python3 -m pytest -q --tb=no | tail -1
-26 failed, 14 passed in 0.11s
+26 failed, 14 passed in 0.17s
 ```
 ```python
 def simpson(f: Integrand, a: float, b: float, n: int) -> float:
@@ -798,7 +798,7 @@ def simpson(f: Integrand, a: float, b: float, n: int) -> float:
 ```console
 $ python3 -m pytest -q
 ........................................                                                     [100%]
-40 passed in 0.11s
+40 passed in 0.13s
 ```
 
 Two lines carry the story. `ys[1:stop:2]` collects the odd-index samples $y_1, y_3, \dots, y_{n-1}$ (weight 4); `stop = -1` ends the slice before $y_n$. `ys[2:-1:2]` collects the even interior samples (weight 2). **The planted bug**: `PLANT_OFF_BY_ONE = True` makes `stop = -2`, which drops the last odd sample $y_{n-1}$: the `ys[1:-2:2]` of §1. (The switch exists only for this module.)
@@ -859,7 +859,7 @@ $ python3 -m pytest -q -s
 .
   [teardown] test finished
 
-1 passed in 0.02s
+1 passed in 0.01s
 ```
 
 **Organization:** tests beside the code for a small project, a `tests/` directory for a package, shared fixtures in `conftest.py`. **Subsets:** `-k expr` selects by name (Example 4.4), `-x` stops at the first failure, `-q`/`-v` set verbosity, `--lf` re-runs last failures, `file.py::test_name[id]` runs one case.
@@ -1053,7 +1053,7 @@ test_integrators.py::test_simpson_known_integrals[gauss-x] PASSED               
 test_integrators.py::test_simpson_known_integrals[cos] PASSED                                [ 83%]
 test_integrators.py::test_simpson_known_integrals[log] PASSED                                [100%]
 
-================================= 6 passed, 47 deselected in 0.12s =================================
+================================= 6 passed, 47 deselected in 0.13s =================================
 ```
 
 Each row is its own test with its own id; a failure names the row. `rel=1e-6` came from (3.2) at $n = 64$: the worst relative bound of the six is $5.1\times10^{-8}$ ($\sin$), so $10^{-6}$ is 20 times the worst case. `project.py` computes all six bounds with SymPy.
@@ -1114,7 +1114,7 @@ INFO    integrators: adaptive_simpson on [0, 3.14159]: tol=0.0001, 17 evaluation
 value = 1.99999975
 ```
 
-`INFO` tells you the cost: 17 evaluations, deepest level 2. `DEBUG` tells you where: $[0, \pi]$ failed its test at depth 0 ($|\delta| = 0.0898$ against $15\,\text{tol} = 1.5\times10^{-3}$), each half failed at depth 1 (against $15\,\text{tol}/2$), and the four quarters passed. Same library, two views, no edits. `project.py` writes a `DEBUG` run to `figures/run.log` and asserts line counts by level.
+`INFO` tells you the cost: 17 evaluations, deepest level 2. `DEBUG` tells you where: $[0, \pi]$ failed its test at depth 0 ($|\delta| = 0.0898$ against $15\,\text{tol} = 1.5\times10^{-3}$), each half failed at depth 1 (against $15\,\text{tol}/2$), and the four quarters passed. Same library, two views, no edits. `project.py` Part 6 asserts these lines and the line counts by level of the simulation's `figures/run.log`.
 
 ## 5. Why it matters and where it connects
 
@@ -1163,7 +1163,7 @@ See [exercises.md](exercises.md). A1–A6 are predict-the-output, bug-fix and sh
 - **Okken, *Python Testing with pytest*, 2nd ed., ch. 1–5.** The book-length version of §3.10 (test functions, fixtures, built-in fixtures, parametrization); better on fixture scope and on organizing a growing suite.
 - **The pytest documentation ("Get started", "How to use fixtures", "How to parametrize fixtures and test functions").** The authority on every flag.
 - **Python Tutorial §8, "Errors and Exceptions"; the language reference ("The try statement", "The with statement").** The exact statements behind §3.2 and §3.7.
-- **Slatkin, *Effective Python*, the robustness, testing and typing items the roadmap lists** (numbering differs between editions). Short numbered rules; a good review checklist.
+- **Slatkin, *Effective Python*, ch. 10 as the roadmap lists it, and its typing and testing items** (numbering differs between editions). Short numbered rules; a good review checklist.
 - **The `logging` HOWTO and the `pdb` documentation.** The best short treatment of loggers, handlers and propagation; every pdb command.
 - **The mypy cheat sheet and the `typing` documentation.** Annotation spellings by example.
 - **Software Carpentry, "Programming with Python" (errors, defensive programming, debugging).** A gentler pass over the same ideas.

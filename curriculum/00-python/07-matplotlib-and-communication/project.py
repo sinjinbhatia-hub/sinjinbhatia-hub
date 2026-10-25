@@ -36,7 +36,6 @@ import plot_helpers as ph
 HERE = Path(__file__).resolve().parent
 FIG = HERE / "figures"
 FIG.mkdir(exist_ok=True)
-rng = np.random.default_rng(0)
 ph.use_house_style()
 
 # %% [markdown]
@@ -75,8 +74,8 @@ markers = [  # (number, key text, marker position in figure fractions)
     (5, "title (a Text)", (tb[2] + 0.03, (tb[1] + tb[3]) / 2)),
     (6, "xlabel (a Text)", (xb[2] + 0.03, (xb[1] + xb[3]) / 2)),
     (7, "ylabel (a Text)", ((yb[0] + yb[2]) / 2, yb[3] + 0.03)),
-    (8, "tick label (a Text)", ((tlb[0] + tlb[2]) / 2, tlb[1] - 0.03)),
-    (9, "Spine: a frame line", (ab[0] + 0.28 * (ab[2] - ab[0]), ab[1])),
+    (8, "tick label (a Text)", (tlb[2] + 0.02, (tlb[1] + tlb[3]) / 2)),
+    (9, "Spine: a frame line", (ab[2] - 0.01, ab[1])),
     (10, "XAxis and YAxis: own the ticks and labels", (ab[0] - 0.09, ab[1] - 0.07)),
 ]
 for k, text, (mx, my) in markers:
@@ -260,7 +259,7 @@ ph.savefig(fig, "phase_portrait")
 
 # %%
 true = stats.gamma(4, scale=1.5)
-sample = true.rvs(1500, random_state=rng)
+sample = true.rvs(1500, random_state=np.random.default_rng(0))
 mu, sd = stats.norm.fit(sample)
 kde = stats.gaussian_kde(sample)
 xs = np.linspace(-6, 24, 1500)
@@ -289,13 +288,14 @@ print(f"        total-variation distance to the true density: Gaussian fit {tv_g
 # standard deviation sqrt(pi (4 - pi) / n): slope -1/2 on log-log axes.
 
 # %%
+rng5 = np.random.default_rng(5)
 R = 400
 n_list = np.unique(np.logspace(2, 4.5, 8).astype(int))
 
 
 def pi_hat(n: int) -> float:
     """4 * (fraction of n uniform darts in the unit square that land inside the quarter disk)."""
-    xy = rng.random((n, 2))
+    xy = rng5.random((n, 2))
     return 4.0 * np.mean(np.sum(xy**2, axis=1) < 1)
 
 
@@ -319,12 +319,11 @@ assert abs(slope_mc + 0.5) < 0.05
 assert np.all(np.abs(mean_est - np.pi) < 4 * sd_est / np.sqrt(R))                # means within 4 SE of pi
 
 # What the bar means: one run of n = 1000 darts, per-dart values v_i = 4 * 1[inside].
-dart = 4.0 * (np.sum(rng.random((1000, 2)) ** 2, axis=1) < 1)
+dart = 4.0 * (np.sum(rng5.random((1000, 2)) ** 2, axis=1) < 1)
 sd1, se1 = dart.std(ddof=1), dart.std(ddof=1) / np.sqrt(1000)
 ci1 = stats.t.ppf(0.975, 999) * se1
-sd_runs = est[list(n_list).index(1178 if 1178 in n_list else n_list[3])].std(ddof=1)
 print(f"Part 5: one run, n=1000: SD of a dart {sd1:.3f}, SE of the mean {se1:.4f}, 95% CI half-width {ci1:.4f}; "
-      f"SD across runs at n={n_list[3]}: {sd_runs:.4f}")
+      f"SD across 400 runs at n={n_list[3]}: {sd_est[3]:.4f} (SE predicted for that n: {sd_theory[3]:.4f})")
 assert math.isclose(se1, sd1 / math.sqrt(1000)) and ci1 > 1.95 * se1
 
 # %% [markdown]
@@ -359,13 +358,14 @@ def draw_potential(ax, how: str):
 
 # The one pixel test, on clean figures (contour lines would paint over the pixels we sample):
 # the rendered colour at a grid point must be the colour map applied to V at that point.
-pts = [(int(i), int(j)) for i, j in zip(rng.integers(5, 56, 25), rng.integers(5, 76, 25))]
+rng6 = np.random.default_rng(6)
+rows, cols = rng6.integers(5, 56, 25), rng6.integers(5, 76, 25)          # 25 random grid points (row i is y[i], column j is x[j])
 worst = {}
 for how in ("imshow", "pcolormesh", "flipped"):
     fig, ax = plt.subplots(figsize=(7, 5))
     draw_potential(ax, how)
     ax.set(xlim=(x[0], x[-1]), ylim=(y[0], y[-1]))
-    worst[how] = max(np.abs(ph.rgba_at(ax, x[j], y[i]) - cmap(norm(V[i, j]))).max() for i, j in pts)
+    worst[how] = np.abs(ph.rgba_at(ax, x[cols], y[rows]) - cmap(norm(V[rows, cols]))).max()
     plt.close(fig)
 assert worst["imshow"] < 1e-2 and worst["pcolormesh"] < 1e-2, worst
 assert worst["flipped"] > 0.1                                                  # the flipped image fails the test
@@ -405,8 +405,8 @@ for label, ext in [("edges", (-2.25, 2.25, -1.75, 1.75)), ("centres", (-2, 2, -1
     ax.imshow(Vc, origin="lower", extent=ext, cmap=cmap, norm=Normalize(-4, 4))
     ax.grid(False)
     ax.set(xlim=(-2.25, 2.25), ylim=(-1.75, 1.75))
-    bad = sum(np.abs(ph.rgba_at(ax, xc[j], yc[i]) - cmap(Normalize(-4, 4)(Vc[i, j]))).max() > 1e-2
-              for i in range(7) for j in range(9))
+    ii, jj = np.divmod(np.arange(63), 9)                                  # every (row, column) pair
+    bad = int(np.sum(np.abs(ph.rgba_at(ax, xc[jj], yc[ii]) - cmap(Normalize(-4, 4)(Vc[ii, jj]))).max(axis=1) > 1e-2))
     plt.close(fig)
     print(f"Part 6: coarse 9x7 grid, extent through {label}: {bad} of 63 pixel-centre tests fail")
     assert (bad == 0) == (label == "edges")
