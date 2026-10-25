@@ -23,7 +23,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib import animation
-from matplotlib.colors import Normalize
+import matplotlib.image as mimg
+from matplotlib.colors import LogNorm, Normalize
 from matplotlib.ticker import NullFormatter
 from scipy import stats
 from scipy.integrate import solve_ivp
@@ -64,11 +65,11 @@ assert ax.xaxis.label.get_text() == "time $t$ (rad)" and len(ax.lines) == 1 and 
 print("Part 1: ax children are", sorted(kinds))
 
 # %% [markdown]
-# ## Part 2: The convergence plot (notes Examples 4.2, Builds 1 and 2)
+# ## Part 2: The convergence plot (notes Example 4.2, Builds 1 and 2)
 #
-# Trapezoid and Simpson on the integral of sin over [0, pi] (exact value 2) for ten step
-# sizes. Leading errors (Euler-Maclaurin; PY-5 section 3.10): T - I ~ (h^2/12)(f'(b) - f'(a))
-# = -h^2/6 and S - I ~ (h^4/180)(f'''(b) - f'''(a)) = h^4/90 for f = sin.
+# Trapezoid and Simpson for the integral of sin over [0, pi] (exact value 2), ten step sizes.
+# Leading errors (PY-5 section 3.10): T - I ~ (h^2/12)(f'(b) - f'(a)) = -h^2/6 and
+# S - I ~ (h^4/180)(f'''(b) - f'''(a)) = h^4/90 for f = sin.
 
 
 # %%
@@ -98,8 +99,8 @@ if (sib / "integrators.py").exists():
     import integrators as ig
 
     for n in ns:
-        assert math.isclose(ig.trapezoid(math.sin, 0.0, math.pi, int(n)), trapezoid(np.sin, 0, np.pi, n), rel_tol=1e-12)
-        assert math.isclose(ig.simpson(math.sin, 0.0, math.pi, int(n)), simpson(np.sin, 0, np.pi, n), rel_tol=1e-12)
+        for mine, theirs in ((trapezoid, ig.trapezoid), (simpson, ig.simpson)):
+            assert math.isclose(theirs(math.sin, 0.0, math.pi, int(n)), mine(np.sin, 0, np.pi, n), rel_tol=1e-12)
     sys.path.remove(str(sib))
     print("Part 2: matches PY-5 integrators.py at all ten n")
 
@@ -108,11 +109,10 @@ p_t = ph.plot_convergence(ax, h, err_t, 2, label="trapezoid")
 p_s = ph.plot_convergence(ax, h, err_s, 4, label="Simpson")
 ax.legend(loc="lower right")
 ph.savefig(fig, "convergence")
-print(f"Part 2: fitted slopes: trapezoid {p_t:.3f}, Simpson {p_s:.3f}")
 assert abs(p_t - 2) < 0.1 and abs(p_s - 4) < 0.1
-# leading constants: err / (h^2/6) and err / (h^4/90) tend to 1 as h -> 0
-assert abs(err_t[-1] / (h[-1] ** 2 / 6) - 1) < 1e-4 and abs(err_s[-1] / (h[-1] ** 4 / 90) - 1) < 2e-3
-print(f"        err/(h^2/6) at n=96: {err_t[-1] / (h[-1] ** 2 / 6):.5f}; err/(h^4/90): {err_s[-1] / (h[-1] ** 4 / 90):.5f}")
+c_t, c_s = err_t[-1] / (h[-1] ** 2 / 6), err_s[-1] / (h[-1] ** 4 / 90)           # leading constants: both tend to 1 as h -> 0
+assert abs(c_t - 1) < 1e-4 and abs(c_s - 1) < 2e-3
+print(f"Part 2: fitted slopes: trapezoid {p_t:.3f}, Simpson {p_s:.3f}; err/(h^2/6) at n=96: {c_t:.5f}, err/(h^4/90): {c_s:.5f}")
 
 
 # %% [markdown]
@@ -135,12 +135,12 @@ frac = err_s[-1] / err_t.max()
 print(f"Part 2: Simpson at n=96 is {frac:.1e} of the trapezoid axis height: {frac * 400:.1e} pixels on a 400 px axis")
 
 fig, axs = plt.subplots(1, 3, figsize=(11, 3.4))
-for ax, (title, setup) in zip(axs, [("linear", lambda a: None), ("semilogy", lambda a: a.set_yscale("log")),
-                                    ("log-log", lambda a: (a.set_xscale("log"), a.set_yscale("log")))]):
+for ax, title in zip(axs, scales):
     ax.plot(h, err_t, "o-", label="trapezoid")
     ax.plot(h, err_s, "s-", label="Simpson")
-    setup(ax)
     ax.set(title=title, xlabel="step size $h$", ylabel="absolute error")
+axs[1].set_yscale("log")
+axs[2].set(xscale="log", yscale="log")
 axs[2].xaxis.set_minor_formatter(NullFormatter())  # a short log axis labels its minor ticks and they collide
 axs[0].legend()
 ph.savefig(fig, "three_scales")
@@ -163,11 +163,9 @@ print("Part 2: CSV (csv + loadtxt) and JSON round trips are exact")
 # %% [markdown]
 # ## Part 3: Pendulum phase portrait (notes Example 4.7, Build 3; CM-1 preview)
 #
-# $\ddot\theta = -\sin\theta$ in time units $\sqrt{L/g}$. With $\omega = \dot\theta$ the state is
-# $(\theta, \omega)$ and $E = \tfrac12\omega^2 + (1 - \cos\theta)$ is conserved. The separatrix is
-# $E = 2$, i.e. $\omega = \pm 2\cos(\theta/2)$. Quiver arrows are normalised *on the page*:
-# the on-page direction of $(\dot\theta, \dot\omega)$ is $(\dot\theta/\Delta\theta, \dot\omega/\Delta\omega)$
-# when the axes have unlike units.
+# theta'' = -sin(theta), state (theta, omega); E = omega^2/2 + 1 - cos(theta) is conserved and the
+# separatrix is E = 2, i.e. omega = +-2 cos(theta/2). Quiver arrows are normalised *on the page*:
+# the page direction of (theta', omega') is (theta'/dtheta, omega'/domega) when axes have unlike units.
 
 
 # %%
@@ -210,16 +208,13 @@ tgrid = np.linspace(-TH_LIM, TH_LIM, 400)
 for sign in (1, -1):
     ax2.plot(tgrid, sign * 2 * np.cos(tgrid / 2), "k--", lw=0.8)
 ax2.text(0.02, 0.93, "separatrix $E=2$", transform=ax2.transAxes, fontsize=8)
-label_at = {"small swing": ((0.0, 0.0), (0, 0)), "large swing": ((2.5, 0.0), (6, -16)), "rotation": ((0.0, 2.3), (-4, 8))}
+offsets = {"small swing": (0, 14), "large swing": (6, -16), "rotation": (-4, 8)}
 for (name, (th_t, w_t)), c in zip(traj.items(), ph.OKABE_ITO[1:]):
     ax2.plot(th_t, w_t, color=c, lw=2)
-    (px_, py_), off = label_at[name]
-    if name != "small swing":
-        ax2.annotate(name, xy=(px_, py_), xytext=off, textcoords="offset points", color=c, fontsize=8,
-                     ha="left" if name == "large swing" else "right", bbox={"fc": "white", "ec": "none", "pad": 0.5, "alpha": 0.8})
-ax2.annotate("small swing", xy=(0.0, traj["small swing"][1].max()), xytext=(0, 14), textcoords="offset points",
-             color=ph.OKABE_ITO[1], fontsize=8, ha="center", bbox={"fc": "white", "ec": "none", "pad": 0.5, "alpha": 0.8},
-             arrowprops={"arrowstyle": "-", "color": ph.OKABE_ITO[1], "lw": 0.8})
+    xy = (0.0, w_t.max()) if name == "small swing" else (th_t[0], w_t[0])       # label each trajectory in place
+    ax2.annotate(name, xy=xy, xytext=offsets[name], textcoords="offset points", color=c, fontsize=8,
+                 ha="right" if name == "rotation" else "left" if name == "large swing" else "center",
+                 bbox={"fc": "white", "ec": "none", "pad": 0.5, "alpha": 0.8})
 for a in (ax1, ax2):
     a.set(xlim=(-TH_LIM, TH_LIM), ylim=(-W_LIM, W_LIM), xlabel="angle $\\theta$ (rad)")
     ph.pi_ticks(a, "x", np.pi)
@@ -275,7 +270,7 @@ def pi_hat(n: int) -> float:
 est = np.array([[pi_hat(n) for _ in range(R)] for n in n_list])      # shape (len(n_list), R)
 mean_est, sd_est = est.mean(axis=1), est.std(axis=1, ddof=1)
 sd_theory = np.sqrt(np.pi * (4 - np.pi) / n_list)
-slope_mc, icpt_mc, se_mc = ph.loglog_fit(n_list, sd_est)
+slope_mc = ph.loglog_fit(n_list, sd_est)[0]
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.8))
 ax1.errorbar(n_list, mean_est, yerr=sd_est, fmt="o-", capsize=3, label="mean $\\pm$ 1 SD of 400 runs")
 ax1.axhline(np.pi, color="k", lw=0.8, ls=":")
@@ -523,13 +518,15 @@ gif = FIG / "pendulum.gif"
 if animation.writers.is_available("pillow"):
     anim = animation.FuncAnimation(fig, update, frames=n_frames, interval=50, blit=False)
     anim.save(gif, writer=animation.PillowWriter(fps=20), dpi=70)
-    head = gif.read_bytes()[:6]
-    assert head in (b"GIF87a", b"GIF89a") and gif.stat().st_size > 5_000
+    assert gif.read_bytes()[:6] in (b"GIF87a", b"GIF89a") and gif.stat().st_size > 5_000
     print(f"Part 9: wrote {gif.name} ({gif.stat().st_size / 1e3:.0f} kB, {n_frames} frames)")
-else:                                                        # fallback: a strip of six frames
-    fig_s, axs_s = plt.subplots(1, 6, figsize=(12, 2.2))
-    print("Part 9: no Pillow writer; saved a frame strip instead")
-    plt.close(fig_s)
+else:  # no writer: a strip of six frames, drawn from the same update() logic
+    strip, axs_s = plt.subplots(1, 6, figsize=(12, 2.4), sharey=True)
+    for a, i in zip(axs_s, np.linspace(0, n_frames - 1, 6).astype(int)):
+        a.plot([0, math.sin(theta_f[i])], [0, -math.cos(theta_f[i])], "-o", color="0.2")
+        a.set(xlim=(-1.2, 1.2), ylim=(-1.2, 0.3), aspect="equal", title=f"t = {t_frames[i]:.1f}", xlabel="$x$ (units of $L$)")
+    axs_s[0].set_ylabel("$y$ (units of $L$)")
+    print("Part 9: no Pillow writer; saved", ph.savefig(strip, "pendulum_strip").name)
 plt.close(fig)
 
 # %% [markdown]
@@ -556,22 +553,65 @@ z = (means[1] - means[0]) / math.hypot(*se)
 print(f"         difference / its standard error = {z:.2f}")
 
 # %% [markdown]
+# ## Part 11: Numbers quoted in section 3 of the notes
+#
+# A log axis and a `LogNorm` are one map (3.1, 3.2); zeros vanish from log axes; SD, SE and the
+# CI differ (3.9); a line's slope on the page depends on the axes' shape; PNG size is figsize x dpi.
+
+# %%
+fig, ax = plt.subplots()
+ax.set(xlim=(0, 10), ylim=(1, 1000), yscale="log")
+fig.canvas.draw()
+frac = ax.transAxes.inverted().transform(ax.transData.transform([(5, 10), (5, 100)]))[:, 1]
+assert np.allclose(frac, [1 / 3, 2 / 3]) and math.isclose(float(LogNorm(1, 1000)(10)), 1 / 3)
+plt.close(fig)
+
+yb = np.array([1e-1, 1e-2, 0.0, -1e-3, 1e-4])                       # two points <= 0 on a log axis
+fig, ax = plt.subplots()
+(ln,) = ax.semilogy(np.arange(5), yb, "o-")
+fig.canvas.draw()
+disp_y = ax.transData.transform(ln.get_xydata())[:, 1]
+assert np.all(disp_y[[2, 3]] < -1e4) and np.all(disp_y[[0, 1, 4]] > 0)         # off the canvas, no warning
+plt.close(fig)
+
+rng3 = np.random.default_rng(3)
+for n in (5, 50, 500):                                                # SD describes the data; SE and CI shrink like 1/sqrt(n)
+    sample_n = rng3.normal(10, 2, n)
+    sd_n = sample_n.std(ddof=1)
+    se_n = sd_n / np.sqrt(n)
+    half = stats.t.ppf(0.975, n - 1) * se_n
+    assert math.isclose(se_n, stats.sem(sample_n)) and half > 1.96 * se_n
+    print(f"Part 11: n={n:3d}  mean {sample_n.mean():5.2f}  SD {sd_n:5.2f}  SE {se_n:5.2f}  95% CI half-width {half:5.2f}")
+
+angles = []
+for w, hgt in [(4, 4), (8, 2), (2, 8)]:                               # axes of w x h inches, both data ranges 0 to 10
+    fig = plt.figure(figsize=(w + 1, hgt + 1), layout="none")
+    ax = fig.add_axes((0.5 / (w + 1), 0.5 / (hgt + 1), w / (w + 1), hgt / (hgt + 1)))
+    ax.set(xlim=(0, 10), ylim=(0, 10))
+    (x0, y0), (x1, y1) = ax.transData.transform([(0, 0), (10, 10)])
+    angles.append(np.degrees(np.arctan2(y1 - y0, x1 - x0)))
+    plt.close(fig)
+assert np.allclose(angles, [45.0, np.degrees(np.arctan(2 / 8)), np.degrees(np.arctan(8 / 2))])
+print("Part 11: the line y = x is drawn at", np.round(angles, 1), "degrees in 4x4, 8x2, 2x8 inch axes")
+
+fig, ax = plt.subplots(figsize=(4, 3))
+ax.scatter(*np.random.default_rng(2).normal(size=(2, 2000)), s=2)
+path = ph.savefig(fig, "size_check", tight=False)
+assert mimg.imread(path).shape == (450, 600, 4)                        # figsize x dpi = (3 x 150, 4 x 150)
+
+# %% [markdown]
 # ## Your turn
 #
-# 1. **Slide and paper versions.** Re-draw the convergence plot twice: for a slide
-#    (`figsize=(10, 5.6)`, `font.size` 16, at most five ticks per axis via `MaxNLocator`) and for
-#    a paper (`figsize=(3.4, 2.6)`, one column, saved as `fmt="pdf"` with `pdf.fonttype` 42).
-#    Assert the figure sizes and that the PDF starts with `%PDF`.
-# 2. **Inset.** Add `ax.inset_axes((0.55, 0.1, 0.4, 0.4))` to the Part 6 potential showing
-#    the region within 0.3 of the +q charge, and check with `rgba_at` that its pixels agree
-#    with the main panel's.
-# 3. **Mislead, then fix.** Make a figure that supports a false claim using only axis limits,
-#    aspect ratio or a second y-axis. State the false claim in the title of a script comment,
-#    then redraw it so the data cannot support it.
-# 4. **PY-6 random walk.** Reuse the Part 6 ensemble from PY-6 (10^4 walkers, 10^3 steps),
-#    plot the MSD on log-log axes with `ph.add_slope_guide(ax, 1, ...)` and fit the slope.
-# 5. **Direct labels.** Replace each legend in this script by `ph.label_end`. Which figures get
-#    clearer and which need the legend after all?
+# 1. **Slide and paper versions.** Redraw the convergence plot for a slide (`figsize=(10, 5.6)`,
+#    `font.size` 16, at most five ticks per axis via `MaxNLocator`) and for a paper (`figsize=(3.4, 2.6)`,
+#    saved with `fmt="pdf"` and `pdf.fonttype` 42). Assert the sizes and that the PDF starts with `%PDF`.
+# 2. **Inset.** Add `ax.inset_axes((0.55, 0.1, 0.4, 0.4))` to the Part 6 potential, zoomed on the
+#    region within 0.3 of the +q charge, and check with `rgba_at` that its pixels match the main panel's.
+# 3. **Mislead, then fix.** Make a figure that supports a false claim using only axis limits, aspect
+#    ratio or a second y-axis; state the claim in a comment; redraw it so the data cannot support it.
+# 4. **PY-6 random walk.** Take the PY-6 ensemble (10^4 walkers, 10^3 steps), plot the MSD on
+#    log-log axes with `ph.add_slope_guide(ax, 1, ...)` and fit the slope.
+# 5. **Direct labels.** Replace each legend here by `ph.label_end`. Which figures need the legend after all?
 
 # %%
 if __name__ == "__main__":
