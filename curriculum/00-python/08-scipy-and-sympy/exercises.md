@@ -1,6 +1,6 @@
 # PY-8 Exercises
 
-Conventions as in the notes: `import sympy as sp`, `from scipy import optimize, integrate, linalg, sparse, special, fft`, `rng = np.random.default_rng(seed)`, and every `solve_ivp` call carries explicit `rtol` and `atol`. Put your answers in a file next to `project.py`; importing `project` re-runs its checks (about 30 s), so copy the helpers you need. **Write each prediction down before you run anything**, and turn every "check" into an `assert`.
+Conventions as in the notes: `import sympy as sp`, `from scipy import optimize, integrate, linalg, sparse, special, fft, signal`, `rng = np.random.default_rng(seed)`, and every `solve_ivp` call carries explicit `rtol` and `atol`. Put your answers in a file next to `project.py`; importing `project` re-runs its checks (about 30 s), so copy the helpers you need. **Write each prediction down before you run anything**, and turn every "check" into an `assert`.
 
 ## A. Warm-up (do all; 5–10 minutes each)
 

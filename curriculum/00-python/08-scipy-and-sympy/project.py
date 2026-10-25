@@ -103,12 +103,12 @@ T_EX = period(TH0)
 wrong = 4 * np.sqrt(L / G) * special.ellipk(np.sin(TH0 / 2))                 # modulus instead of parameter
 assert abs(wrong / T_EX - 1) > 0.05, "passing k instead of m must be visibly wrong"
 
-N_PER = 20
+N_PER = 100
 te = np.linspace(0, N_PER * T_EX, 2001)
 sol = require(integrate.solve_ivp(pend_rhs, (0, N_PER * T_EX), [TH0, 0.0], method="DOP853", rtol=1e-10, atol=1e-12, t_eval=te))
 e_t = spec_energy(sol.y)
 drift = np.abs(e_t / e_t[0] - 1)
-print(f"energy drift over {N_PER} periods at rtol=1e-10: {drift.max():.2e}")
+print(f"energy drift over {N_PER} periods at rtol=1e-10: {drift.max():.2e} (nfev {sol.nfev})")
 assert drift.max() < 1e-8
 
 
@@ -120,10 +120,10 @@ def crossing(t, y):
 crossing.direction = -1                                                     # ... moving downward
 
 
-ev = require(integrate.solve_ivp(pend_rhs, (0, N_PER * T_EX), [TH0, 0.0], method="DOP853", rtol=1e-10, atol=1e-12, events=crossing))
+ev = require(integrate.solve_ivp(pend_rhs, (0, 20 * T_EX), [TH0, 0.0], method="DOP853", rtol=1e-10, atol=1e-12, events=crossing))
 T_ev = np.diff(ev.t_events[0])
 print(f"period from {len(T_ev)} events: {T_ev.mean():.9f}, exact (3.6): {T_EX:.9f}, relative error {abs(T_ev.mean() / T_EX - 1):.1e}")
-assert len(T_ev) >= N_PER - 2 and abs(T_ev.mean() / T_EX - 1) < 1e-6
+assert len(T_ev) == 19 and abs(T_ev.mean() / T_EX - 1) < 1e-6
 
 T_SMALL = 2 * np.pi * np.sqrt(L / G)
 th_small = 0.01                                                             # small-angle limit (3.7)
@@ -169,7 +169,7 @@ def rk4(f, y0, t_end, n_steps):
 
 N100 = 100
 t100 = np.linspace(0, N100 * T_EX, 2001)
-RTOLS = np.array([1e-3, 1e-5, 1e-7, 1e-9, 1e-11])
+RTOLS = np.array([1e-3, 1e-4, 1e-6, 1e-8, 1e-10, 1e-12])
 sweep = {}
 for method in ("RK45", "DOP853"):
     for rtol in RTOLS:
@@ -183,7 +183,7 @@ for method in ("RK45", "DOP853"):
     slopes[method] = np.polyfit(np.log10(RTOLS[1:]), np.log10(d[1:]), 1)[0]    # skip rtol=1e-3, outside the linear regime
     print(f"{method}: log-log slope of drift against rtol = {slopes[method]:.2f}")
     assert 0.8 < slopes[method] < 1.2
-assert sweep["DOP853", 1e-11][0] < sweep["RK45", 1e-11][0]                   # DOP853 is cheaper at tight tolerance
+assert sweep["DOP853", 1e-12][0] < sweep["RK45", 1e-12][0]                   # DOP853 is cheaper at tight tolerance
 
 yr = rk4(pend_rhs, [TH0, 0.0], N100 * T_EX, N100 * 50)
 e_rk = spec_energy(yr)
@@ -265,6 +265,7 @@ def double_pendulum():
     el = [sp.diff(lag.diff(q.diff(t)), t) - lag.diff(q) for q in qs]
     accs = [q.diff(t, 2) for q in qs]
     solved = sp.solve(el, accs, dict=True)[0]
+    print("operations in the two accelerations:", [sp.count_ops(solved[a]) for a in accs])
     a1, a2, w1, w2 = sp.symbols("a1 a2 w1 w2", real=True)
     state = lambda ex: ex.subs({q1.diff(t): w1, q2.diff(t): w2}).subs({q1: a1, q2: a2})
     args = (a1, a2, w1, w2, M1, M2, l1, l2, gs)
@@ -491,9 +492,18 @@ assert linalg.null_space(rank1).shape == (2, 1) and linalg.orth(rank1).shape == 
 # ## Part 8: quad, interpolate, special, stats, fft (notes 3.8, 3.11, 3.12, Example 4.4)
 
 # %%
+fix = lambda x: np.cos(x) - x                                                # notes 3.1: PY-1's fixed-point problem
+counts = {}
+for method, kw in {"bisect": dict(bracket=[0, 1]), "brentq": dict(bracket=[0, 1]), "newton": dict(x0=1.0, fprime=lambda x: -np.sin(x) - 1)}.items():
+    r = require(optimize.root_scalar(fix, method=method, xtol=1e-12, rtol=1e-12, **kw))
+    counts[method] = (r.iterations, r.function_calls)
+    assert abs(r.root - 0.7390851332151607) < 1e-11
+print("root_scalar (iterations, function calls):", counts)
+assert counts["bisect"][0] == 40 and counts["brentq"] == (7, 8) and counts["newton"][0] == 4
 kink = lambda x: abs(x - 0.3)
 v0, _, i0 = integrate.quad(kink, 0, 1, full_output=True)[:3]
 v1, _, i1 = integrate.quad(kink, 0, 1, points=[0.3], full_output=True)[:3]
+print(f"quad on |x - 0.3|: neval {i0['neval']} without points, {i1['neval']} with points=[0.3]")
 assert abs(v0 - 0.29) < 1e-12 and abs(v1 - 0.29) < 1e-12 and i1["neval"] < i0["neval"]
 spike = lambda x: np.exp(-(((x - 0.3) / 1e-3) ** 2))
 exact_spike = 1e-3 * np.sqrt(np.pi)
