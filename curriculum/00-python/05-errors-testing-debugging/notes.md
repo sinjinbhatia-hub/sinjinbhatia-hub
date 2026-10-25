@@ -346,7 +346,7 @@ got c
 RuntimeError: generator raised StopIteration
 ```
 
-A stray `StopIteration` inside a generator could silently end it early, so Python converts it to `RuntimeError` (PEP 479), as the last line shows; end a generator with `return`. For a default on an empty iterator, `next(it, default)` avoids the exception.
+A stray `StopIteration` inside a generator could silently end it early, so Python converts it to `RuntimeError` (PEP 479); end a generator with `return`. For a default on an empty iterator, `next(it, default)` avoids the exception.
 
 ### 3.6 `assert` and `warnings`
 
@@ -391,7 +391,7 @@ NumPy's warnings are the ones you will meet most: `np.log(0.0)` warns (`RuntimeW
 
 ### 3.7 Context managers: cleanup that cannot be forgotten
 
-`with EXPR as v: BODY` is approximately (the language reference, "The with statement", has the exact form):
+`with EXPR as v: BODY` is approximately (the language reference has the exact form):
 
 ```text
 mgr = EXPR;  v = type(mgr).__enter__(mgr)
@@ -500,7 +500,7 @@ err=5.551e-17 len(tol)=5
 | `w` / `u` / `d` | stack (newest last) / up to the caller / back down |
 | `q` | quit |
 
-▶ **Build it yourself (4): a pdb session on a planted bug.** `next_step` picks a new step size and has a branch that returns nothing. Before reading the sessions, say what `h` must be at the failing line and how you could find who set it.
+▶ **Build it yourself (4): a pdb session on a planted bug.** `next_step` picks a new step size and has a branch that returns nothing. Before reading the session, say what `h` must be at the failing line and how you could find who set it.
 
 ```python
 def estimate_error(h):
@@ -534,49 +534,49 @@ Traceback (most recent call last):
 TypeError: unsupported operand type(s) for +=: 'float' and 'NoneType'
 ```
 
-One session does both jobs: post-mortem first, then a restart with a conditional breakpoint.
+One session does both jobs: post-mortem first, then a restart with a conditional breakpoint. The `#` comments are mine; pdb never saw them.
 
 ```console
 $ python3 -m pdb adapt.py
 > adapt.py(1)<module>()
 -> def estimate_error(h):
-(Pdb) c
+(Pdb) c    # run to the crash: post-mortem stops in the failing frame
 [the program's traceback, as above]
 Uncaught exception. Entering post mortem debugging
 Running 'cont' or 'step' will restart the program
 > adapt.py(17)run()
 -> t += h
-(Pdb) p h
+(Pdb) p h    # the symptom: h is None
 None
-(Pdb) p (err, tol, tol / 10)
+(Pdb) p (err, tol, tol / 10)    # err lies between tol/10 and tol, the case no branch handles
 (0.0003750000000000001, 0.001, 0.0001)
-(Pdb) restart
+(Pdb) restart    # run the program again from the top
 Restarting adapt.py with arguments:
 
 > adapt.py(1)<module>()
 -> def estimate_error(h):
-(Pdb) b 16, k == 1
+(Pdb) b 16, k == 1    # stop at line 16 on the second pass of the loop only
 Breakpoint 1 at adapt.py:16
 (Pdb) c
 > adapt.py(16)run()
 -> h = next_step(h, err, tol)
-(Pdb) p h, err
+(Pdb) p h, err    # the arguments about to be passed to next_step
 (0.05, 0.0003750000000000001)
-(Pdb) s
+(Pdb) s    # step into next_step
 --Call--
 > adapt.py(5)next_step()
 -> def next_step(h, err, tol):
-(Pdb) n
+(Pdb) n    # now at the if
 > adapt.py(6)next_step()
 -> if err > tol:
-(Pdb) n
+(Pdb) n    # the if was false; now at the elif
 > adapt.py(8)next_step()
 -> elif err < tol / 10:
-(Pdb) n
+(Pdb) n    # the elif was false too; the function falls off its end
 --Return--
 > adapt.py(8)next_step()->None
 -> elif err < tol / 10:
-(Pdb) w
+(Pdb) w    # the stack, newest last; the first two entries are pdb's own
   bdb.py(680)run()
 -> exec(cmd, globals, locals)
   <string>(1)<module>()
@@ -586,13 +586,13 @@ Breakpoint 1 at adapt.py:16
 -> h = next_step(h, err, tol)
 > adapt.py(8)next_step()->None
 -> elif err < tol / 10:
-(Pdb) u
+(Pdb) u    # up to the caller
 > adapt.py(16)run()
 -> h = next_step(h, err, tol)
 (Pdb) q
 ```
 
-`c` ran to the exception and pdb stopped in `run`, line 17 (post-mortem). `p h` prints `None`: symptom confirmed, cause elsewhere. `p (err, tol, tol / 10)` shows $3.75\times10^{-4}$ between $10^{-4}$ and $10^{-3}$, the one case `next_step` never handles. `restart` reruns the program; `b 16, k == 1` stops at line 16 on the second pass only, and `p h, err` shows the arguments about to be passed. `s` enters `next_step` (`--Call--`); the first `n` reaches the `if`, the second runs it (false) and reaches the `elif`, the third runs that (false), falls off the end, and prints `--Return--` with `next_step()->None`. In `w` the first two entries (`bdb.py`, `<string>`) are pdb's own; yours are `<module>`, `run`, `next_step`, and `u` moves up to the caller.
+Post-mortem found the symptom and the case that triggers it ($3.75\times10^{-4}$ lies between $10^{-4}$ and $10^{-3}$, which no branch handles); the restart watched the culprit return. The money line is `--Return--` with `next_step()->None`: the debugger's own words for "this function returned nothing". In `w`, `bdb.py` and `<string>` are pdb's machinery; yours are `<module>`, `run`, `next_step`.
 
 ■ **What just happened.** An `if`/`elif` with no `else` returns `None` on the missing branch, and the `TypeError` appeared a line later. The fix is `else: return h`. Five commands (`n`, `s`, `c`, `p`, `w`/`u`) replace twenty prints; the habit that matters is asking where a value *came from*.
 
@@ -735,7 +735,7 @@ $ python3 -m pytest -q --tb=line | grep -E "^E|error"
 E   ModuleNotFoundError: No module named 'integrators'
 ERROR test_integrators.py
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-1 error in 0.15s
+1 error in 0.17s
 ```
 
 *Green, naively.* The textbook formula:
@@ -776,14 +776,14 @@ def trapezoid(f: Integrand, a: float, b: float, n: int) -> float:
 ```console
 $ python3 -m pytest -q
 ..............                                                                               [100%]
-14 passed in 0.08s
+14 passed in 0.07s
 ```
 
 *Simpson, red then green.* With the Simpson tests added, 26 fail (no `simpson`); then:
 
 ```console
 $ python3 -m pytest -q --tb=no | tail -1
-26 failed, 14 passed in 0.15s
+26 failed, 14 passed in 0.11s
 ```
 ```python
 def simpson(f: Integrand, a: float, b: float, n: int) -> float:
@@ -798,7 +798,7 @@ def simpson(f: Integrand, a: float, b: float, n: int) -> float:
 ```console
 $ python3 -m pytest -q
 ........................................                                                     [100%]
-40 passed in 0.10s
+40 passed in 0.11s
 ```
 
 Two lines carry the story. `ys[1:stop:2]` collects the odd-index samples $y_1, y_3, \dots, y_{n-1}$ (weight 4); `stop = -1` ends the slice before $y_n$. `ys[2:-1:2]` collects the even interior samples (weight 2). **The planted bug**: `PLANT_OFF_BY_ONE = True` makes `stop = -2`, which drops the last odd sample $y_{n-1}$: the `ys[1:-2:2]` of §1. (The switch exists only for this module.)
@@ -831,7 +831,7 @@ E     Obtained: 0.0
 E     Expected: 0.3333333333333333 ± 1.0e-12
 ===================================== short test summary info ======================================
 FAILED test_integrators.py::test_simpson_weights_are_1_4_2_4_1[3] - assert 0.0 == 0.3333333333333...
-1 failed in 0.11s
+1 failed in 0.12s
 ```
 
 ■ **What just happened.** The bugged rule fails 22 of 53 test cases, in six test functions, and *no* trapezoid test. The plainest: the constant 1 on $[0, 1]$ with $n = 2$ integrates to $\frac13$, because the weight-4 sample was dropped. The most informative is `test_simpson_weights_are_1_4_2_4_1[3]`, the **regression test** (a test per bug fixed) written *after* the bug was understood: it feeds a function that is 1 at node $k$ and 0 elsewhere, so the answer *is* node $k$'s weight, and for $k = 3$ (index $n-1$) it returns $0.0$ instead of $\frac{4h}{3}$. And `test_linearity_reversal_and_additivity` found the bug with no known integral: two half-intervals of 4 panels must equal one of 8, but the bug drops a different sample in each. The tolerance trap: at $n = 100$ the buggy rule returns 1.998684, so `abs(value - 2) < 1e-2` *passes* it, while its relative error, $6.6\times10^{-4}$, fails a test at $10^{-7}$ (the correct rule's error there is about $5\times10^{-9}$).
@@ -859,14 +859,14 @@ $ python3 -m pytest -q -s
 .
   [teardown] test finished
 
-1 passed in 0.01s
+1 passed in 0.02s
 ```
 
 **Organization:** tests beside the code for a small project, a `tests/` directory for a package, shared fixtures in `conftest.py`. **Subsets:** `-k expr` selects by name (Example 4.4), `-x` stops at the first failure, `-q`/`-v` set verbosity, `--lf` re-runs last failures, `file.py::test_name[id]` runs one case.
 
 **What to test.** *Behavior you promise*: boundaries (`n = 1`, `n = 2`), known closed forms ($\int_0^\pi\sin = 2$), **invariants** (linearity, swapping the limits flips the sign, splitting the interval, equation (3.3)), every **error path**, and a regression test per fixed bug. *Not implementation details* such as a private helper's name: those tests break when you improve the code and prove nothing.
 
-**Property-based testing** is the idea behind the invariant test: draw many random inputs (25 from a seeded generator here) and check a property that must hold for all. The library `hypothesis` does this at scale and adds *shrinking* (it searches for the smallest failing input). Not required here; Your turn has you write the idea by hand.
+**Property-based testing** is the idea behind the invariant test: draw many random inputs (25 from a seeded generator here) and check a property that must hold for all. The library `hypothesis` does this at scale and adds *shrinking* (it searches for the smallest failing input); exercise C1 builds a small version.
 
 ### 3.11 Type hints
 
@@ -1083,7 +1083,7 @@ Traceback (most recent call last):
 integrators.ConvergenceError: derivative is zero (iterations=1, residual=2)
 ```
 
-Read a chain from the bottom: the final exception is what the caller sees (`ConvergenceError: derivative is zero (iterations=1, residual=2)`); the block above it, separated by "the direct cause of the following exception", is what broke inside. Without `from`, the separator reads "During handling of the above exception, another exception occurred", which says the handler itself failed: a different bug.
+Read a chain from the bottom: the final exception is what the caller sees; the block above it, separated by "the direct cause of the following exception", is what broke inside. Without `from`, the separator reads "During handling of the above exception, another exception occurred", which says the handler itself failed: a different bug.
 
 ### Example 4.6: A logging transcript, INFO versus DEBUG
 
@@ -1119,7 +1119,7 @@ value = 1.99999975
 ## 5. Why it matters and where it connects
 
 - **PY-6 onward.** NumPy code is tested with `np.testing.assert_allclose` against a slow pure-Python version, as PY-4's `Matrix` was against `numpy.linalg.solve`; `np.errstate` (§3.6) makes NumPy fail loudly. **PY-10** builds packaging and continuous integration on §3.10's layout and exit codes.
-- **LA-2, LA-13.** The LU project is checked by comparing $LU$ with $A$ and the solve with `numpy.linalg.solve`, `rtol` tied to the condition number: a tolerance is a claim about conditioning as much as about your code.
+- **LA-2, LA-13.** The LU project is checked by comparing $LU$ with $A$ and the solve with `numpy.linalg.solve`, `rtol` tied to the condition number: a tolerance is a claim about conditioning too.
 - **CM-1.** Energy conservation is an integrator's test oracle; the $(1+h^2)^k$ growth of (3.1) is Euler's failure on the oscillator (CM-1 §3.11 measures it and fixes it with symplectic Euler; CM-8 §3.11 explains why that works).
 - **ML-2, LA-14.** A *gradient check* (an analytic gradient against PY-4 §3.7's dual-number derivative, with `approx`) tests every optimizer you write.
 
@@ -1129,7 +1129,7 @@ See [exercises.md](exercises.md). A1–A6 are predict-the-output, bug-fix and sh
 
 ## 7. Coding project
 
-`project.py` imports `integrators`, runs `test_integrators.py`, and asserts the module's claims: (1) the suite, through `pytest.main`, exits 0 (a fallback runner if pytest is missing); (2) convergence orders as log-log slopes, $2.0\pm0.1$ and $4.0\pm0.2$ (`figures/convergence.png`); (3) the planted bug is caught by exactly the six test functions of §3.10; (4) the exception hierarchy, `raise ... from`, EAFP timings; (5) context managers; (6) logging to `figures/run.log`, and the Euler numbers of §3.9; (7) type hints on every public function, mypy `--strict` if installed, the two errors of §3.11; (8) adaptive Simpson on $e^{-100(x-0.5)^2}$ against `scipy.integrate.quad` to $10^{-8}$, and the coarse-`tol` failure of §8.
+`project.py` imports `integrators`, runs `test_integrators.py`, and asserts the notes' claims: (1) the suite, through `pytest.main`, exits 0 (a fallback runner if pytest is missing); (2) convergence orders as log-log slopes, $2.0\pm0.1$ and $4.0\pm0.2$ (`figures/convergence.png`); (3) the planted bug is caught by exactly the six test functions of §3.10; (4) the exception hierarchy, `raise ... from`, EAFP timings; (5) context managers; (6) logging to `figures/run.log`, and the Euler numbers of §3.9; (7) type hints on every public function, mypy `--strict` if installed, the two errors of §3.11; (8) adaptive Simpson on $e^{-100(x-0.5)^2}$ against `scipy.integrate.quad` to $10^{-8}$, and the coarse-`tol` failure of §8.
 
 **Build it yourself:** before opening the file, write the tests for a *new* rule (B1, midpoint) first and watch them fail. Then Your turn: a regression test for a bug you have hit; a property-based test for `sorted` with random lists; make the integrators raise on NaN; put a `breakpoint()` in the adaptive recursion and inspect the depth.
 

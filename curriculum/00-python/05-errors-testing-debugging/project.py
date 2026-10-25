@@ -50,7 +50,10 @@ SIX = {"test_simpson_exact_on_cubics", "test_simpson_is_richardson_of_two_trapez
        "test_linearity_reversal_and_additivity"}
 
 
-def raises(exc: type[BaseException], fn: Callable[..., object], *args: object) -> BaseException:
+E = typing.TypeVar("E", bound=BaseException)
+
+
+def raises(exc: type[E], fn: Callable[..., object], *args: object) -> E:
     """Call fn(*args), require it to raise exc (a hand-made `pytest.raises`), return the exception."""
     try:
         fn(*args)
@@ -68,22 +71,19 @@ def raises(exc: type[BaseException], fn: Callable[..., object], *args: object) -
 HAVE_PYTEST = importlib.util.find_spec("pytest") is not None
 
 
-def run_suite() -> tuple[int, list[str], int]:
-    """Run test_integrators.py in-process; return (exit code, failed node ids, number passed)."""
+def run_suite() -> tuple[int, list[str], list[str]]:
+    """Run test_integrators.py in-process; return (exit code, failed node ids, passed node ids)."""
     import pytest
 
     class Collect:
         failed: list[str] = []
-        passed = 0
+        passed: list[str] = []
 
         def pytest_runtest_logreport(self, report: "pytest.TestReport") -> None:
             if report.when == "call":
-                if report.failed:
-                    self.failed.append(report.nodeid)
-                else:
-                    Collect.passed += 1
+                (Collect.failed if report.failed else Collect.passed).append(report.nodeid)
 
-    Collect.failed, Collect.passed = [], 0
+    Collect.failed, Collect.passed = [], []
     sys.modules.pop("test_integrators", None)  # import it afresh on every run
     args = ["-q", "--tb=no", "-rN", "-p", "no:cacheprovider", str(HERE / "test_integrators.py")]
     code = pytest.main(args, plugins=[Collect()])
@@ -91,9 +91,14 @@ def run_suite() -> tuple[int, list[str], int]:
 
 
 if HAVE_PYTEST:
-    code, failed, N_TESTS = run_suite()
+    code, failed, passed_ids = run_suite()
+    N_TESTS = len(passed_ids)
     assert code == 0 and not failed, f"suite failed: {failed}"
     print(f"Part 1: suite passed ({N_TESTS} test cases)")
+    group = lambda *prefixes: sum(i.split("::")[1].startswith(prefixes) for i in passed_ids)  # noqa: E731
+    assert N_TESTS == 53 and group("test_trapezoid") == 14  # the 14 cases of §3.10's first green step
+    assert group("test_simpson_exact", "test_simpson_is_richardson", "test_simpson_error", "test_simpson_known",
+                 "test_simpson_rejects") == 26  # the 26 Simpson cases that were red before simpson existed
 else:  # minimal stand-in: the core contracts, called directly
     N_TESTS = 53
     assert abs(ig.simpson(lambda t: t**3, 0.0, 2.0, 2) - 4.0) < 1e-12
@@ -121,6 +126,7 @@ assert sp.simplify(h * h**2 / 2 - sp.integrate(x**2, (x, 0, h)) - h**3 / 6) == 0
 bound_n8 = math.pi * (math.pi / 8) ** 4 / 180  # (b-a) h^4 max|f''''| / 180 with max|sin''''| = 1
 err_n8 = ig.simpson(math.sin, A, B, 8) - EXACT
 assert abs(bound_n8 - 4.15e-4) < 5e-6 and abs(err_n8 - 2.69e-4) < 5e-6 and err_n8 < bound_n8
+assert abs(err_n8 / 2 - 1.3e-4) < 1e-5 and abs(bound_n8 / 2 - 2.1e-4) < 1e-5  # the relative figures of Example 4.3
 assert bound_n8 / 2 < 2.2e-4 and f"{ig.simpson(math.sin, A, B, 8):.16f}" == "2.0002691699483877"
 assert ig.trapezoid(lambda t: 0.1, 0.0, 3.0, 7) == 0.30000000000000004 != 0.3
 for m in (2, 5, 12):  # equation (3.3): S_2m = (4 T_2m - T_m) / 3
@@ -163,7 +169,7 @@ try:
     bug_err = np.array([abs(ig.simpson(math.sin, A, B, n) - EXACT) for n in NS])
     rel_48 = abs(ig.simpson(math.sin, A, B, 48) - 2.0) / 2.0
     value_100 = ig.simpson(math.sin, A, B, 100)
-    code_bug, failed_bug, passed_bug = run_suite() if HAVE_PYTEST else (1, [], 0)
+    code_bug, failed_bug, passed_bug = run_suite() if HAVE_PYTEST else (1, [], [])
 finally:
     ig.PLANT_OFF_BY_ONE = False
 
@@ -175,7 +181,7 @@ assert abs((ig.simpson(math.sin, A, B, 100) - 2.0) / 2.0 - 5.4e-9) < 1e-9  # the
 if HAVE_PYTEST:
     names = {nid.split("::")[1].split("[")[0] for nid in failed_bug}
     print(f"Part 3: planted bug fails {len(failed_bug)} of {N_TESTS} cases, in {len(names)} test functions")
-    assert code_bug != 0 and len(failed_bug) == 22 and passed_bug == N_TESTS - 22
+    assert code_bug != 0 and len(failed_bug) == 22 and len(passed_bug) == N_TESTS - 22 == 31
     assert names == SIX and not any(nm.startswith(("test_trapezoid", "test_adaptive", "test_simpson_rejects"))
                                     for nm in names)
     assert [n for n in failed_bug if "weights" in n] == ["test_integrators.py::test_simpson_weights_are_1_4_2_4_1[3]"]
@@ -278,6 +284,27 @@ assert attempt(5) == ["try", "return inside try"]
 raises(TypeError, attempt, "a")
 
 
+def next_step(h_: float, err_: float, tol_: float) -> float | None:
+    if err_ > tol_:
+        return h_ / 2
+    elif err_ < tol_ / 10:
+        return h_ * 2
+    return None  # the missing branch of §3.8: falling off the end returns None, silently
+
+
+def run_steps(h_: float, tol_: float, steps: int) -> float:
+    t = 0.0
+    for _ in range(steps):
+        h_ = next_step(h_, 3.0 * h_**3, tol_)  # type: ignore[assignment]
+        t += h_  # type: ignore[operator]
+    return t
+
+
+err_second = 3.0 * 0.05**3  # the second pass of §3.8's pdb session: h = 0.05
+assert abs(err_second - 3.75e-4) < 1e-9 and 1e-4 < err_second < 1e-3 and next_step(0.05, err_second, 1e-3) is None
+assert "NoneType" in str(raises(TypeError, run_steps, 0.1, 1e-3, 6))
+
+
 def gen() -> Iterator[int]:
     yield 1
     raise StopIteration
@@ -343,9 +370,8 @@ class Timer:
         self.start = time.perf_counter()
         return self
 
-    def __exit__(self, exc_type: object, exc: object, tb: object) -> bool:
-        self.elapsed = time.perf_counter() - self.start
-        return False
+    def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
+        self.elapsed = time.perf_counter() - self.start  # returns None: an exception is not suppressed
 
 
 @contextmanager
@@ -392,8 +418,9 @@ try:
         raise RuntimeError("body failed")
 except RuntimeError:
     assert kept is not None and not kept.exists()
+empty: dict[str, int] = {}
 with Suppress(KeyError):
-    {}["missing"]
+    empty["missing"]
 print("Part 5: Timer, timer(), temp_directory() and a suppressing __exit__ behave as in §3.7")
 
 # %% [markdown]
@@ -489,10 +516,10 @@ assert "17 evaluations, deepest level 2" in sin_lines[-1]
 
 # %%
 def double(v: int) -> int:
-    return v * 2
+    return v * 2  # hints are not enforced at run time: double("ab") works
 
 
-assert double("ab") == "abab"  # type: ignore[arg-type]  (hints are not enforced at run time)
+assert double("ab") == "abab"  # type: ignore[arg-type]
 for fn in (ig.trapezoid, ig.simpson, ig.adaptive_simpson, ig.ConvergenceError.__init__):
     sig = inspect.signature(fn)
     assert all(p.annotation is not inspect.Parameter.empty for nm, p in sig.parameters.items() if nm != "self"), fn
@@ -599,14 +626,14 @@ err = raises(ig.ConvergenceError, ig.adaptive_simpson, math.sin, 0.0, 50.0, 1e-1
 assert err.iterations == 3 and err.residual > 1e-14 and isinstance(err, ig.SolverError)
 
 tols = [10.0**-k for k in range(2, 11)]
-errs = [abs(ig.adaptive_simpson(peak, 0.0, 1.0, tol=tl) - ref) for tl in tols]
-assert errs[1] > 10 * tols[1]  # tol = 1e-3: the actual error is far above the request
+adaptive_errs = [abs(ig.adaptive_simpson(peak, 0.0, 1.0, tol=tl) - ref) for tl in tols]
+assert adaptive_errs[1] > 10 * tols[1]  # tol = 1e-3: the actual error is far above the request
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 3.5))
 grid_x = np.linspace(0, 1, 400)
 ax1.plot(grid_x, [peak(t) for t in grid_x], label="integrand")
 ax1.plot(visited, np.full(len(visited), -0.04), "|", color="C3", label=f"{len(visited)} adaptive samples")
 ax1.set_title("adaptive_simpson puts samples where it must")
-ax2.loglog(tols, errs, "o-", label="actual error")
+ax2.loglog(tols, adaptive_errs, "o-", label="actual error")
 ax2.loglog(tols, tols, "k--", label="requested tol")
 ax2.invert_xaxis()
 ax2.set(xlabel="tol", ylabel="|error|", title="tol is an estimate (fooled at 1e-2, 1e-3)")

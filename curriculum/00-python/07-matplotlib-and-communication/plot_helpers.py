@@ -98,17 +98,18 @@ def savefig(
     fmt: str = "png",
     dpi: int = 150,
     transparent: bool = False,
+    tight: bool = True,
     close: bool = True,
 ) -> Path:
     """Save ``fig`` as ``<outdir>/<name>.<fmt>`` (default ``figures/`` beside this file).
 
-    Creates the folder, trims the margins (``bbox_inches="tight"``), closes the figure
-    unless ``close=False``, and returns the path.
+    Creates the folder, trims the margins (``bbox_inches="tight"``; ``tight=False`` keeps the
+    exact canvas), closes the figure unless ``close=False``, and returns the path.
     """
     folder = Path(outdir) if outdir is not None else FIGDIR
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / f"{name}.{fmt}"
-    fig.savefig(path, dpi=dpi, bbox_inches="tight", transparent=transparent)
+    fig.savefig(path, dpi=dpi, bbox_inches="tight" if tight else None, transparent=transparent)
     if close:
         plt.close(fig)
     return path
