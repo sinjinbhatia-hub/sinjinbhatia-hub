@@ -47,52 +47,51 @@ so it must be a tuple") and the code (three changes where the exercise asks for 
 `tags: list = field(default_factory=list, compare=False)` hashes fine (verified: `hash(V(1, 2))` works). The exercise asks for
 "two changes"; the solution makes three and justifies the third with the wrong reason. | give the two-change version
 (`frozen=True`, `compare=False`) as the answer with the correct explanation, keep the tuple as a recommendation ("immutable all
-the way down, and `default=()` needs no factory"), assert both versions hash | OPEN
+the way down, and `default=()` needs no factory"), assert both versions hash | FIXED
 
 **2** | project.py Part 3, the §1-table loop (`0.1 < ratio < 10` forward, `0.01 < ratio < 100` central for all four h) | medium |
 Weaker than the notes claim. The entries at h = 1e-2 and 1e-5 are truncation-dominated and deterministic to three digits
 (1/2|f''|h = 3.43e-3 and 3.43e-6; 1/6|f'''|h^2 = 1.17e-5; central at 1e-5 is 5.19e-12 and also reproduced); only the 1e-8 and
 1e-11 rows are rounding noise. A factor-10/100 window would pass a table that is wrong in every digit. | assert the h = 1e-2 and
-1e-5 rows (forward) and the h = 1e-2 row (central) to 1% relative; keep the loose window for the noise rows, with a comment |
-OPEN
+1e-5 rows (forward) and the h = 1e-2 row (central) to 1% relative; keep the loose window for the noise rows, with a comment | FIXED
 
 **3** | notes.md §3.7, ■ after Theorem 3.1 ("Where F is not differentiable (`abs` at 0, a branch), you get the derivative of the
 branch taken") | low | Implies the module's `Dual` handles `abs` and comparisons. It defines neither `__abs__` nor `__lt__`, so
 `abs(Dual(0.0, 1.0))` and `if x > 0` raise `TypeError` (verified) rather than silently differentiating a branch. | say so: an AD
 system that defines them returns the derivative of the branch taken; this `Dual` raises `TypeError`, which is the safer
-half-working behaviour of §8 | OPEN
+half-working behaviour of §8 | FIXED
 
 **4** | notes.md §3.3 ("Step 4 adds it, with division, length, dot and cross products") | low | There is no step 4; the
-build-it-yourself blocks are (1a)-(1d) and the next block is unlabeled | "The next block adds it" | OPEN
+build-it-yourself blocks are (1a)-(1d) and the next block is unlabeled | "The next block adds it" | FIXED
 
 **5** | project.py Part 2 (`for p, q, r_, s in rng.integers(-50, 51, size=(1000, 4)): if q == 0 or s == 0: continue`) | low |
 Skips pairs with a zero denominator, so 978 of the promised 1000 random pairs are checked (notes §3.6/§7 and the brief say
-1000) | draw denominators from 1..50 with a random sign so all 1000 pairs are checked | OPEN
+1000) | draw denominators from 1..50 with a random sign so all 1000 pairs are checked | FIXED
 
 **6** | project.py Part 5 (header "dataclasses, inheritance, protocols ... (notes §3.9-§3.11)") | low | Nothing in Part 5
 checks §3.10's protocol/ABC claims: `typing.Protocol` is not imported, `Reading.__array__`, the `Sequence` mixins
 (`index`, `count`, `in`, `reversed`), the abstract-instantiation `TypeError`, and `isinstance(Polynomial, Evaluable)` are all
-unasserted although the notes print them | add those asserts to Part 5 | OPEN
+unasserted although the notes print them | add those asserts to Part 5 | FIXED
 
 **7** | notes.md §3.8 `Matrix.lu` and project.py `Matrix.lu` (inner loop `for j in range(k, n)`) | low | The eliminated entry
 U[i][k] is computed as U[i][k] - (U[i][k]/U[k][k])*U[k][k], which leaves rounding residue (1.1e-16 measured) below the
 diagonal, so the returned U is not exactly upper triangular as LA-2 defines it (Example 4.5 is exact only because its entries
-are binary fractions) | start the inner loop at k + 1 and set U[i][k] = 0.0 explicitly, in both files | OPEN
+are binary fractions) | start the inner loop at k + 1 and set U[i][k] = 0.0 explicitly, in both files | FIXED
 
 **8** | solutions.md A3 prose ("the trace shows rule 2 of §3.3: the first call is `0 + v`") | low | The first trace line
 (`0 + v`) is rule 1 (left operand declines, reflected method runs); rule 2 (subclass asked first) is the second trace line |
-reword to name both rules in order | OPEN
+reword to name both rules in order | FIXED
 
 **9** | exercises.md A5 ("evaluate with `Dual(2, 1)` by hand: (a) ...; (b) g(x) = x^3 (1/x) at x = 3") | low | (b) is seeded
-with `Dual(3, 1)`, not `Dual(2, 1)` | "with the seed `Dual(x, 1)`: (a) ... at x = 2; (b) ... at x = 3" | OPEN
+with `Dual(3, 1)`, not `Dual(2, 1)` | "with the seed `Dual(x, 1)`: (a) ... at x = 2; (b) ... at x = 3" | FIXED
 
 **10** | solutions.md B7 prose (central model `E(h) ~ 1/6|f'''|h^2 + eps|f|/h`) | low | The exercise's own assumption is a
 rounding error of about eps|f| in the difference of two function values; the central quotient divides by 2h, so the term is
 eps|f|/(2h). The factor 2 moves h* by 2^(1/3) = 1.26 and E* by a similar factor, below the model's accuracy, but the text
-should say it is taking the crude bound | add one parenthetical sentence; numbers unchanged | OPEN
+should say it is taking the crude bound | add one parenthetical sentence; numbers unchanged | FIXED
 
 **11** | solutions.md C1 | low | The exercise asks for a check "against two forward `Dual` passes and SymPy"; the solution checks
-against the Dual passes and the hand formula (y + cos x, x), not SymPy | add a two-line SymPy gradient check and re-run | OPEN
+against the Dual passes and the hand formula (y + cos x, x), not SymPy | add a two-line SymPy gradient check and re-run | FIXED
 
 **12** | notes.md §3.1 (0), §3.2 (1a), §3.4 (1c), §3.5 (1d), §3.7 (3), §3.8 (4), §3.9 (5) | low (template) | These ▶ Build it
 yourself prompts have no ■ What just happened; the PY addendum says a ▶ that asks for a prediction is followed by a ■ that
@@ -104,11 +103,23 @@ word ceiling (9,406 before the review; 9,498 after, ceiling 9,500), so every add
 
 **13** | solutions.md A2 `FixedMoney`, C1 `Var`, C2 `Counted` | low (REVIEW FOCUS: missing `__repr__`) | Classes offered as
 model answers with no `__repr__`, against the module's own rule of thumb (§3.11 "write `__repr__` first") | add one-line
-`__repr__`s; outputs unchanged | OPEN
+`__repr__`s; outputs unchanged | FIXED
 
 **14** | solutions.md preamble | trivial | C1 and C3 print timings that differ by machine (263 vs 279, 3762x vs 3293x here);
-the preamble says only "the outputs shown are the real ones" | add "timings vary by machine; trust the ratios and slopes" |
-OPEN
+the preamble says only "the outputs shown are the real ones" | add "timings vary by machine; trust the ratios and slopes" | FIXED
 
 **15** | solutions.md B2 last paragraph ("Neither has `<`") | trivial | The exercise asks which comparison operators the
-built-in lacks: all four of `<`, `<=`, `>`, `>=` | say so | OPEN
+built-in lacks: all four of `<`, `<=`, `>`, `>=` | say so | FIXED
+
+## Verification after fixes
+
+`MPLBACKEND=Agg python3 project.py` exits 0 in 2.4 s (Part 2 now checks all 1000 pairs; Part 3 holds the deterministic rows of
+the §1 table to 1%; Part 5 asserts the `Sequence` mixins, the abstract-instantiation `TypeError`, the `Evaluable` protocol and
+`Reading.__array__`; `lu()` returns an exactly upper-triangular U, measured 0.0 below the diagonal). Harness re-run: all 35 notes
+blocks reproduce (Example 4.1 ids excepted) and all 16 solutions blocks reproduce (C1/C3 timings excepted); the edited A6
+(two-change `FrozenVersion` plus `TupleVersion`), A2/C1/C2 (`__repr__`s) and C1 (SymPy gradient) blocks pass their asserts.
+notes.md: 9,499 words (ceiling 9,500); 13 ▶, 11 ■ (every ▶ that asks for a prediction is followed by a ■). Files touched:
+notes.md, exercises.md, solutions.md, project.py in the module folder, and this file.
+
+STATUS: 15 findings (0 high, 2 medium, 13 low/trivial); 15 fixed, item 12 narrowed on re-verification ((1c), (1d) left as is);
+project.py passes; nothing outstanding.
