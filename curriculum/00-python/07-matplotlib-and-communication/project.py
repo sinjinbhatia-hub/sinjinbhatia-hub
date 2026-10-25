@@ -109,6 +109,12 @@ p_t = ph.plot_convergence(ax, h, err_t, 2, label="trapezoid")
 p_s = ph.plot_convergence(ax, h, err_s, 4, label="Simpson")
 ax.legend(loc="lower right")
 ph.savefig(fig, "convergence")
+fig, ax = plt.subplots()                                       # add_slope_guide(ax, order) with the default corner
+ax.loglog(h, err_t, "o")
+ph.add_slope_guide(ax, 2)
+xg, yg = ax.lines[1].get_xydata()[[0, 2]].T
+assert math.isclose(math.log10(yg[1] / yg[0]) / math.log10(xg[1] / xg[0]), 2.0)   # the hypotenuse has slope 2
+plt.close(fig)
 assert abs(p_t - 2) < 0.1 and abs(p_s - 4) < 0.1
 c_t, c_s = err_t[-1] / (h[-1] ** 2 / 6), err_s[-1] / (h[-1] ** 4 / 90)           # leading constants: both tend to 1 as h -> 0
 assert abs(c_t - 1) < 1e-4 and abs(c_s - 1) < 2e-3

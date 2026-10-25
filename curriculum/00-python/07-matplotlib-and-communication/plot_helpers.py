@@ -12,7 +12,7 @@ savefig(fig, name, ...)
 loglog_fit(x, y)
     Least-squares line in log10-log10 space: slope, intercept, slope standard error.
 add_slope_guide(ax, order, x0, y0, decades)
-    A slope triangle on log-log axes, labelled with the order.
+    A slope triangle on log-log axes, labelled with the order (corner optional).
 plot_convergence(ax, h, err, order, ...)
     Data, fitted line, reference-slope triangle and slope annotation in one call.
 pi_ticks(ax, axis, base)
@@ -131,8 +131,8 @@ def loglog_fit(x: np.ndarray, y: np.ndarray) -> tuple[float, float, float]:
 def add_slope_guide(
     ax: Axes,
     order: float,
-    x0: float,
-    y0: float,
+    x0: float | None = None,
+    y0: float | None = None,
     decades: float = 0.5,
     *,
     color: str = "0.3",
@@ -141,10 +141,16 @@ def add_slope_guide(
 
     The horizontal leg spans ``decades`` decades of x and is labelled ``1``; the vertical
     leg rises (or falls, for negative ``order``) ``order * decades`` decades and is
-    labelled with ``order``. A line of slope ``order`` is parallel to the hypotenuse.
+    labelled with ``order``. A line of slope ``order`` is parallel to the hypotenuse. With
+    no corner given, the triangle goes 55% of the way along the current x-limits and 12%
+    (45% for a falling guide) of the way up the current y-limits, in log coordinates.
     """
     if ax.get_xscale() != "log" or ax.get_yscale() != "log":
         raise ValueError("add_slope_guide needs log-log axes (use ax.loglog or set both scales)")
+    if x0 is None or y0 is None:
+        (xa, xb), (ya, yb) = np.log10(ax.get_xlim()), np.log10(ax.get_ylim())
+        x0 = 10 ** (xa + 0.55 * (xb - xa)) if x0 is None else x0
+        y0 = 10 ** (ya + (0.12 if order >= 0 else 0.45) * (yb - ya)) if y0 is None else y0
     x1 = x0 * 10**decades
     y1 = y0 * 10 ** (order * decades)
     ax.plot([x0, x1, x1, x0], [y0, y0, y1, y0], "-", color=color, lw=0.9, solid_joinstyle="miter")
