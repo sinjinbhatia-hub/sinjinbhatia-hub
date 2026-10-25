@@ -118,10 +118,10 @@ print(add([1, 2, 3]))
 
 ```text
 Traceback (most recent call last):
-  File "/tmp/py1/a4.py", line 10, in <module>
+  File "/tmp/py1/a4.py", line 11, in <module>
     print(add([1, 2, 3]))
           ~~~^^^^^^^^^^^
-  File "/tmp/py1/a4.py", line 6, in add
+  File "/tmp/py1/a4.py", line 7, in add
     total += v
     ^^^^^
 UnboundLocalError: cannot access local variable 'total' where it is not associated with a value
@@ -246,7 +246,8 @@ print("distinct rows:", len({id(r) for r in rows_bad}), "vs", len({id(r) for r i
 assert len({id(r) for r in rows_bad}) == 1 and len({id(r) for r in rows_good}) == 3
 
 m = [[1, 2], [3, 4]]
-for name, c in (("m itself", m), ("list(m)", list(m)), ("m[:]", m[:]), ("deepcopy", copy.deepcopy(m))):
+copies = (("m itself", m), ("list(m)", list(m)), ("m[:]", m[:]), ("deepcopy", copy.deepcopy(m)))
+for name, c in copies:
     print(f"{name:>9}:", describe_sharing(m, c))
 assert describe_sharing(m, m)["same_object"]
 assert describe_sharing(m, list(m)) == {"same_object": False, "equal": True, "shared": [0, 1]}
@@ -284,7 +285,8 @@ def my_isclose(a, b, rel_tol=1e-9, abs_tol=0.0):
 inf, nan = float("inf"), float("nan")
 assert my_isclose(inf, inf) and not my_isclose(inf, 1e308) and not my_isclose(inf, -inf)
 assert not my_isclose(nan, nan) and not my_isclose(nan, 1.0)
-assert my_isclose(0.0, -0.0) and not my_isclose(1e-20, 0.0) and my_isclose(1e-20, 0.0, abs_tol=1e-12)
+assert my_isclose(0.0, -0.0) and not my_isclose(1e-20, 0.0)
+assert my_isclose(1e-20, 0.0, abs_tol=1e-12)
 
 rng = random.Random(0)
 mismatches = 0
@@ -352,7 +354,7 @@ for _ in range(6):
 errs = [abs(x - root) for x in xs]
 print("errors:", " ".join(f"{e:.1e}" for e in errs))
 ps = [math.log(errs[i + 1] / errs[i]) / math.log(errs[i] / errs[i - 1])
-      for i in range(3, len(errs) - 1) if errs[i + 1] > 1e-12]     # skip the transient and the floor
+      for i in range(3, len(errs) - 1) if errs[i + 1] > 1e-12]   # skip transient and floor
 print("order estimates:", " ".join(f"{p:.2f}" for p in ps), f"(mean {sum(ps) / len(ps):.2f})")
 assert 1.4 < sum(ps) / len(ps) < 1.9, ps
 ```
@@ -430,7 +432,7 @@ while 1 / max(n, 1) >= 1e-6:
     n += 1
     total += 1 / n**2
 err_c = abs(total - math.pi**2 / 6)
-print(f"(c) tail-bound rule: {n} terms, error {err_c:.2e}")
+print(f"(c) tail-bound rule: {n} terms, error {err_c:.6e}")
 assert err_c < 1e-6
 
 # (d) e^-20 from its own series loses everything; the reciprocal of e^20 does not
@@ -447,25 +449,27 @@ direct = exp_series(-20.0)
 recip = 1 / exp_series(20.0)
 exact = math.exp(-20.0)
 print(f"(d) series at -20: {direct:.6e}; 1/series at +20: {recip:.6e}; math.exp: {exact:.6e}")
-print(f"    relative errors: {abs(direct - exact) / exact:.1e} and {abs(recip - exact) / exact:.1e}")
-assert abs(direct - exact) / exact > 1e-3 and abs(recip - exact) / exact < 1e-14
+e_direct, e_recip = abs(direct - exact) / exact, abs(recip - exact) / exact
+print(f"    relative errors: {e_direct:.1e} and {e_recip:.1e}")
+assert e_direct > 1e-3 and e_recip < 1e-14
 ```
 
 ```text
 (a) e: 15 terms, error 8.15e-13
 (b) pi^2/6: 10000 terms, error 1.00e-04
-(c) tail-bound rule: 1000001 terms, error 1.00e-06
+(c) tail-bound rule: 1000001 terms, error 9.999985e-07
 (d) series at -20: 6.147562e-09; 1/series at +20: 2.061154e-09; math.exp: 2.061154e-09
     relative errors: 2.0e+00 and 4.0e-16
 ```
 
-(a) works because the tail after a term is about the next term times $1/(k+1)$, so "term below `1e-12`" means "error about `1e-12`". (b) fails because the terms of $1/k^2$ shrink slowly: after $N$ terms the tail is about $1/N$, which is $N$ times the last term. Stopping when the term is $10^{-8}$ ($N = 10^4$) leaves an error near $10^{-4}$. A term-size rule certifies the error only when the tail is bounded by a small multiple of the next term (geometric-type decay). (c) uses the bound $\sum_{k>N}1/k^2 < 1/N$ to stop on a quantity that really bounds the error. (d) is §3.5 in disguise: at $x = -20$ the terms reach $4\times10^7$ in magnitude and alternate in sign, each carrying an absolute rounding error near $4\times10^7 \times 10^{-16} \approx 4\times10^{-9}$, more than the answer ($2\times10^{-9}$). Summing the positive series for $e^{20}$ and taking the reciprocal avoids the subtraction.
+(a) works because the terms shrink by a factor $1/(k+1)$ at each step, so the tail from the first omitted term onward is about that term itself (here $1/15! = 7.7\times10^{-13}$ and the error is $8.2\times10^{-13}$): "next term below `1e-12`" means "error about `1e-12`". (b) fails because the terms of $1/k^2$ shrink slowly: after $N$ terms the tail is about $1/N$, which is $N$ times the last term. Stopping when the term is $10^{-8}$ ($N = 10^4$) leaves an error near $10^{-4}$. A term-size rule certifies the error only when the tail is bounded by a small multiple of the next term (geometric-type decay). (c) uses the bound $\sum_{k>N}1/k^2 < 1/N$ to stop on a quantity that really bounds the error. (d) is §3.5 in disguise: at $x = -20$ the terms reach $4\times10^7$ in magnitude and alternate in sign, each carrying an absolute rounding error near $4\times10^7 \times 10^{-16} \approx 4\times10^{-9}$, more than the answer ($2\times10^{-9}$). Summing the positive series for $e^{20}$ and taking the reciprocal avoids the subtraction.
 
 ### B6. A report with computed column widths
 
 ```python
 # file: b6.py
-data = [("copper", 8.96, 0.02), ("iron", 7.874, 0.004), ("aluminium", 2.70, 0.01), ("lead", 11.34, 0.05)]
+data = [("copper", 8.96, 0.02), ("iron", 7.874, 0.004), ("aluminium", 2.70, 0.01),
+        ("lead", 11.34, 0.05)]
 
 
 def report(rows):
@@ -639,7 +643,7 @@ print(configure_or(timeout=0, retries=0, name=""), configure(timeout=0, retries=
 
 (a) `timeout=0` is a legitimate "do not wait"; `retries=0` is "never retry"; `name=""` may be a deliberate empty label (an empty list passed for a collection is also valid input). The idiom turns each into the default, silently, and the call site gives no hint. (b) For immutable defaults put them in the signature: `configure(timeout=30, ...)`. If callers may pass `None` explicitly, test `is None`. For mutable defaults use the `None` sentinel (Example 4.6).
 
-(c) *Rule for review:* accept `x or default` only when every falsy value of `x` is meaningless as an input, so replacing it loses nothing, and say so in the docstring. A reasonable case is `label = user_label or "untitled"`, where an empty label and a missing label should both display as "untitled". Reject it whenever `0`, `0.0`, `""`, `[]` or `False` could be a real request: counts, timeouts, offsets, thresholds, flags. The cost of the longer `is None` test is two lines; the cost of the bug is a wrong value that no exception reports.
+(c) *Rule for review:* accept `x or default` only when every falsy value of `x` is meaningless as an input, so replacing it loses nothing, and say so in the docstring. A reasonable case is `label = user_label or "untitled"`, where an empty label and a missing label should both display as "untitled". Reject it whenever `0`, `0.0`, `""`, `[]` or `False` could be a real request: counts, timeouts, offsets, thresholds, flags. The cost of the longer `is None` test is two lines; the cost of the bug is a wrong value that no exception reports. The test to apply while reviewing is one question: what should happen if the caller passes zero, or an empty value, on purpose? If the answer is anything but "treat it as the default", the idiom is wrong there.
 
 ### C3. Does summation order matter?
 
@@ -702,7 +706,8 @@ for label, terms in series.items():
         print(f"  {name:>14}: error {err:.2e}")
 
 low = min(accumulate(sorted(series["alternating 1/k"])))     # lowest running total, sorted by value
-print(f"alternating, sorted(terms): lowest running total {low:.3f}, grid spacing there {math.ulp(low):.2e}")
+print(f"alternating, sorted(terms): lowest running total {low:.3f}, "
+      f"grid spacing there {math.ulp(low):.2e}")
 assert -6.9 < low < -6.8
 r = results["1/k^2"]
 assert r["kahan"] < 1e-15 and r["forward"] > 1e-14

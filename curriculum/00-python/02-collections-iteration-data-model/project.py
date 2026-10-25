@@ -180,7 +180,7 @@ for k, sl in slopes.items():
     print(f"  {k:28s} slope {sl:5.2f}   time at n=10^6: {times[k][-1] * 1e9:12.0f} ns")
 assert 0.8 < slopes["list: -1 in c"] < 1.25                      # O(n)
 assert -0.15 < slopes["set: -1 in c"] < 0.35                     # O(1); cache misses add a little at 10^6
-assert 0.7 < slopes["list: insert(0)+pop(0)"] < 1.3              # O(n)
+assert 0.7 < slopes["list: insert(0)+pop(0)"] < 1.5              # O(n); the 10^3 list is cache-resident, which inflates the fit (notes §3.1)
 assert abs(slopes["deque: appendleft+popleft"]) < 0.3 and abs(slopes["linked: prepend"]) < 0.3
 assert times["list: -1 in c"][-1] > 100 * times["set: -1 in c"][-1]
 
@@ -494,7 +494,7 @@ def peak_kib(fn, *args):
 
 (res_s, kib_s), (res_e, kib_e) = peak_kib(streaming, big), peak_kib(eager, big)
 assert res_s == res_e == (100_000, 1000 * sum(range(900, 1000))) == (100_000, 94_950_000)  # each residue occurs 1000 times
-assert kib_e > 100 * kib_s
+assert kib_e > 1000 * kib_s  # notes Example 4.5: about 22 KiB against about 87,000 KiB
 print(f"Part 7: 10^6 lines -> {res_s}; peak memory streaming {kib_s:,.0f} KiB vs eager {kib_e:,.0f} KiB")
 
 # 4.6 JSON round trip
@@ -534,8 +534,8 @@ print(f"        regimes over the 36-point grid: {dict(regimes)}")
 def freq_lists(words):                 # deliberately naive: a linear search per word
     seen, counts = [], []
     for w in words:
-        for i in range(len(seen)):
-            if seen[i] == w:
+        for i, s in enumerate(seen):
+            if s == w:
                 counts[i] += 1
                 break
         else:
@@ -566,7 +566,7 @@ for fn in (freq_lists, freq_dict, freq_counter):
     timings[fn.__name__] = time.perf_counter() - t0
 assert results["freq_lists"] == results["freq_dict"] == dict(results["freq_counter"])
 assert sum(results["freq_dict"].values()) == 40_000
-assert timings["freq_lists"] > 3 * timings["freq_dict"]
+assert timings["freq_lists"] > 10 * timings["freq_dict"]  # notes §3.4 quote 0.1340 s against 0.0034 s (about 40x)
 n_lines = [len(inspect.getsource(f).strip().splitlines()) for f in (freq_lists, freq_dict, freq_counter)]
 assert n_lines == [11, 5, 2]
 print("Part 8: seconds -> " + ", ".join(f"{k}: {v:.4f}" for k, v in timings.items()) + f"; lines {n_lines}")
@@ -628,6 +628,10 @@ def group_anagrams(words):
 
 assert group_anagrams(["listen", "silent", "enlist", "google", "gogole", "cat", "act", "tac", "dog"]) == [
     ["listen", "silent", "enlist"], ["google", "gogole"], ["cat", "act", "tac"], ["dog"]]
+
+# Lazy grid: the same 36 (m, c, k) points as Part 7, one tuple at a time, counting the under-damped ones.
+n_under = sum(1 for m, c, k in itertools.product(masses, dampers, springs) if c < 2 * math.sqrt(k * m))
+assert n_under == regimes["under"] == 26
 
 primes = (2, 3, 5, 7, 11)
 pairs_loop = []  # loop: all (i, j) with i < j <= 6 and i + j prime

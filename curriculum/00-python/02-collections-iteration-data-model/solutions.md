@@ -458,7 +458,7 @@ for (n1, d1, s1), (n2, d2, s2) in zip(out, out[1:]):
    and
    `"deque queue: append+popleft": (lambda n: deque(range(n)), lambda c: (c.append(0), c.popleft()), lambda n: 100),`
 2. After the existing asserts add
-   `assert 0.7 < slopes["list queue: append+pop(0)"] < 1.3 and abs(slopes["deque queue: append+popleft"]) < 0.3`
+   `assert 0.7 < slopes["list queue: append+pop(0)"] < 1.5 and abs(slopes["deque queue: append+popleft"]) < 0.3`
 3. Change `plt.subplots(1, 2, figsize=(10, 4))` to `plt.subplots(1, 3, figsize=(14, 4))`, make the second panel's keys `list(EXPERIMENTS)[2:5]`, and add a third tuple `(axes[2], "FIFO queue", list(EXPERIMENTS)[5:])` to the panel loop.
 
 The block below (run it from this module's folder) applies those three edits to a copy of `project.py` and runs the copy, so you can see that they work and what the new slopes are.
@@ -478,7 +478,7 @@ edits = [
      '    "deque queue: append+popleft": (lambda n: deque(range(n)), lambda c: (c.append(0), c.popleft()), lambda n: 100),\n}'),
     ('assert times["list: -1 in c"][-1] > 100 * times["set: -1 in c"][-1]\n',
      'assert times["list: -1 in c"][-1] > 100 * times["set: -1 in c"][-1]\n'
-     'assert 0.7 < slopes["list queue: append+pop(0)"] < 1.3 and abs(slopes["deque queue: append+popleft"]) < 0.3\n'),
+     'assert 0.7 < slopes["list queue: append+pop(0)"] < 1.5 and abs(slopes["deque queue: append+popleft"]) < 0.3\n'),
     ('plt.subplots(1, 2, figsize=(10, 4))', 'plt.subplots(1, 3, figsize=(14, 4))'),
     ('"Insert at the front, then remove it", list(EXPERIMENTS)[2:])):',
      '"Insert at the front, then remove it", list(EXPERIMENTS)[2:5]),\n'
@@ -501,9 +501,9 @@ with tempfile.TemporaryDirectory() as tmp:
 All checks passed.
 ```
 
-The list queue's slope is near 1 because `pop(0)` shifts every remaining arrow; the deque's is near 0. This is the reason `collections.deque` exists.
+The list queue's slope is near 1 because `pop(0)` shifts every remaining arrow; the deque's is near 0. (Fitted over $n = 10^3 \dots 10^6$ the list exponent often lands between 1.1 and 1.4, for the cache reason given in §3.1, which is why the bound is 1.5 rather than 1.3.) This is the reason `collections.deque` exists.
 
-**B8.** Work for `freq_lists` is about (number of words) × (average position of a hit) ≈ $n V/2$, so time should grow like $V$ (slope 1); `freq_dict` does one hash lookup per word, so slope 0. Measured slopes land a little under the prediction for the list version at small $V$, where the fixed per-word interpreter overhead is comparable to the search, and a little above 0 for the dict because a larger dict has more cache misses.
+**B8.** Work for `freq_lists` is about (number of words) × (average position of a hit) ≈ $n V/2$, so time should grow like $V$ (slope 1); `freq_dict` does one hash lookup per word, so slope 0. Measured slopes land near 1 for the list version (a little under it when $V$ is small, where the fixed per-word interpreter overhead is comparable to the search) and near 0 for the dict; the dict's slope comes out slightly negative or slightly positive from run to run ($-0.05$ below, $+0.07$ on a rerun), which is timing noise on a cost that does not depend on $V$.
 
 ```python
 import math
@@ -515,8 +515,8 @@ import time
 def freq_lists(words):
     seen, counts = [], []
     for w in words:
-        for i in range(len(seen)):
-            if seen[i] == w:
+        for i, s in enumerate(seen):
+            if s == w:
                 counts[i] += 1
                 break
         else:

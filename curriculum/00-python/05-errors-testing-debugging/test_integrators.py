@@ -11,11 +11,12 @@ import pytest
 
 import integrators as ig
 
+Fn = Callable[[float], float]
 Rule = Callable[..., float]
 
 
 def observed_order(
-    rule: Rule, f: ig.Integrand, a: float, b: float, exact: float, ns: tuple[int, ...]
+    rule: Rule, f: Fn, a: float, b: float, exact: float, ns: tuple[int, ...]
 ) -> float:
     """Slope of log(error) against log(h): the order of the rule, measured."""
     hs = [(b - a) / n for n in ns]
@@ -95,7 +96,7 @@ CASES = [
 
 @pytest.mark.parametrize("f, a, b, exact", CASES)
 def test_simpson_known_integrals(f, a, b, exact):
-    # Error bound (b-a) h^4 M4 / 180 is below 1e-7 for n = 64 on all six: rel=1e-6 leaves margin.
+    # Bound (b-a) h^4 M4 / 180 at n = 64 is about 5e-8 relative at worst (sin); rel=1e-6 is 20x.
     assert ig.simpson(f, a, b, 64) == pytest.approx(exact, rel=1e-6)
 
 
@@ -149,7 +150,7 @@ def test_linearity_reversal_and_additivity(rule, rng):
 
 
 # --- adaptive Simpson and the exception hierarchy -------------------------------------------
-def counting(f: ig.Integrand) -> tuple[ig.Integrand, list[int]]:
+def counting(f: Fn) -> tuple[Fn, list[int]]:
     calls = [0]
 
     def wrapped(x: float) -> float:

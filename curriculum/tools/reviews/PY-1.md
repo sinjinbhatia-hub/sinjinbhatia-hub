@@ -21,16 +21,22 @@ reprint's appendix is Priest's separate note). §10 also says Goldberg "§1-2" h
 theorem of §3.6", which it does not. Fix: cite "Goldberg 1991, Theorem 8" without "appendix";
 in §10 point §1–2 at the rounding material and Theorem 8 (in "The Details") at the Kahan bound.
 
+**FIXED — notes.md §3.6 now cites "Goldberg 1991, Theorem 8"; §10 points §1–2 at rounding and Theorem 8 ("The Details") at the Kahan bound.**
+
 ### M2 — notes.md §0 (line 9), §3.5 step 3 (line 440), §5 (line 1156) · MEDIUM · cross-reference
 LA-13's cancellation bound is its eq. (3.3); its (3.4) is the *condition number of subtraction*
 κ_sub = (|x|+|y|)/|x−y|. LA-13 §3.2 is the scalar bound (same as PY-1's), not "cancellation for
 matrices"; the condition number of a linear system is LA-13 §3.3, eq. (3.7). Fix the three
 references to name those objects.
 
+**FIXED — §0, §3.5 step 3 and §5 now name LA-13 (3.3) as the bound, (3.4) as the condition number of subtraction, §3.3 eq. (3.7) as κ(A) for a linear system (checked against LA-13 notes.md).**
+
 ### M3 — solutions.md B5 explanation (line ~462) · MEDIUM · wrong reasoning
 "(a) works because the tail after a term is about the next term times 1/(k+1)" is wrong: the tail
 from the first omitted term onward is about that term itself (later terms shrink by 1/(k+1),
 1/((k+1)(k+2)), ...). Measured: first omitted term 1/15! = 7.65e-13, error 8.15e-13. Fix wording.
+
+**FIXED — B5(a) explanation rewritten: tail ≈ first omitted term (1/15! = 7.7e-13 vs measured error 8.2e-13).**
 
 ### M4 — notes.md Example 4.1 (lines 945–958) and solutions.md A4 (lines ~133–140) · MEDIUM · stated output
 The traceback line numbers (25/21/15/4 and 10/6) are those of a file saved *without* the
@@ -38,47 +44,71 @@ The traceback line numbers (25/21/15/4 and 10/6) are those of a file saved *with
 which gives 26/22/16/5 and 11/7 (verified on 3.13). Fix: paste the tracebacks produced with the
 comment line kept.
 
+**FIXED — both tracebacks regenerated on 3.13 with the `# file:` line kept (26/22/16/5 and 11/7); Example 4.1 text now says the numbers assume that line is kept. Verified by running from a /tmp/py1-equivalent path.**
+
 ### L1 — notes.md §3.4 (line 280) · LOW · precision
 "a fraction pattern `1001 1001 ...` that repeats and is cut off after 52 bits": the stored field is
 rounded, not truncated (last stored nibble is `1010`, project asserts `"1001"*12 + "1010"`), and
 that rounding-up is exactly why the stored 0.1 is *above* 0.1. Fix wording.
 
+**FIXED — wording now says the field is rounded to 52 bits, last group `1010`, which is why the stored 0.1 is above 0.1 (project asserts the pattern).**
+
 ### L2 — notes.md §3.6 (line 532) · LOW · overstatement
 "The method fails if a term can exceed the running total": Goldberg's bound still holds; what is
 lost is the compensation for that step (Neumaier's variant keeps it). Soften.
+
+**FIXED — "compensation is lost in any step where the term exceeds the running total".**
 
 ### L3 — notes.md §3.6 (line 532) · LOW · claim vs project
 "np.sum ... error growing like log n (PY-6; the project measures it)": the project compares
 np.sum at one n = 10^7 only; it does not measure growth. Fix wording.
 
+**FIXED — "the project compares it with the others at n = 10^7".**
+
 ### L4 — notes.md §3.8 (line 591) · LOW · completeness
 Format mini-language summary omits `#` though the example uses `{255:#x}`. Add `[#]`.
+
+**FIXED — `[#]` added to the mini-language with a one-clause explanation.**
 
 ### L5 — notes.md Example 4.4 (line 1074) · LOW · wording
 "24 integer digits, of which about 9 mean anything": the 9 are the digits of the defined constant;
 digits 10–17 are still the correctly rounded double, only the tail is the binary artefact. Reword.
 
+**FIXED — Example 4.4 commentary reworded.**
+
 ### L6 — notes.md §7 (lines 1166–1172) · LOW · consistency
 The project list omits project Part 1 (the floor rule on all sign combinations). Add it.
+
+**FIXED — §7 item 1 now includes the floor-rule check (project Part 1).**
 
 ### L7 — notes.md §3.5/§3.6/§3.12 · LOW · presentation
 Build-it-yourself sequences are numbered 1, 2, 3, 6, 4, 5 in reading order (brief's numbering kept);
 sequences 3 and 6 have no title. Renumber 6→4, 4→5, 5→6 and title them. No other file refers to
 sequences 4–6 (checked with grep).
 
+**FIXED — sequences now 1–6 in reading order (3 and 4 titled). No other file referenced 4–6.**
+
 ### L8 — solutions.md header (line 3) · LOW · consistency
 Says code lines "may run to 100 columns"; six code lines are 101–108 columns (b1, b2, b3, b5, b6,
 c3). Reflow those lines; re-run the blocks.
 
+**FIXED — six lines reflowed; max code line in solutions.md is now 100; all affected blocks re-run, outputs unchanged.**
+
 ### L9 — solutions.md C2(c) · LOW · spec
 Exercise asks for 100–150 words; the paragraph has 92. Add a sentence.
+
+**FIXED — C2(c) now 131 words.**
 
 ### L10 — solutions.md B5(c) · LOW · presentation
 Prints "error 1.00e-06" (`.2e`) for a value that is 9.99998e-07 and asserted `< 1e-6`; a reader sees
 the bound apparently violated. Print more digits; update the stated output.
 
+**FIXED — B5(c) prints `.6e` (9.999985e-07); stated output updated from the re-run.**
+
 ### L11 — project.py line ~431 · LOW · idiom
 `__import__("cmath").exp(...)` inline; import `cmath` at the top like the other modules.
+
+**FIXED — `import cmath` at the top of project.py.**
 
 ## Checked and found correct (no action)
 - All numeric claims: ε, u, ulp(1e3), ulp(1e6), ulp(1e8), ulp(1e16), sqrt(1e16−4), 0.1/0.2/0.3
@@ -100,3 +130,13 @@ the bound apparently violated. Print more digits; update the stated output.
   quoted values (not weaker bounds); solutions' asserts all pass.
 - History: Dekker 1971 (Fast2Sum), Kahan, Neumaier, Goldberg 1991, Batchelder PyCon 2015, PEP 8,
   3.12 sum change — all consistent with my knowledge; only the "appendix" location was wrong (M1).
+
+## Re-verification after fixes
+- `MPLBACKEND=Agg python3 project.py`: exit 0, 1.9 s, "All checks passed."; no line over 100 columns.
+- All 32 notes.md blocks (17 scripts + 15 REPL transcripts via doctest) and all 18 solutions.md
+  scripts reproduce their stated output exactly (paths normalised to /tmp/py1 for the two tracebacks).
+- notes.md word count 9,475 (PY addendum ceiling 9,500).
+- Not touched: `00-python/05-errors-testing-debugging/test_integrators.py` shows as modified in git
+  status; that edit was made by a concurrent process (another module's review), not by this one.
+
+**STATUS: 15 findings (0 high, 4 medium, 11 low); 15 fixed, 0 open; project.py exits 0; module consistent.**

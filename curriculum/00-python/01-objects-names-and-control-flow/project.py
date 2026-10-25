@@ -9,6 +9,7 @@
 # Build first, then compare: write your own epsilon loop, kahan_sum, bisect and horner.
 
 # %%
+import cmath
 import copy
 import math
 import random
@@ -425,7 +426,7 @@ assert (0 or 10, 5 or 10, 0 and 10, 5 and 10) == (10, 5, 0, 10)
 assert not any([0, 0.0, "", [], {}, None]) and all([0.1, " ", [0], "False", nan])
 z = 3 + 4j
 assert (z.real, z.imag, abs(z), z.conjugate(), z * 1j) == (3.0, 4.0, 5.0, 3 - 4j, -4 + 3j)
-assert __import__("cmath").exp(1j * math.pi) == -1 + 1.2246467991473532e-16j
+assert cmath.exp(1j * math.pi) == -1 + 1.2246467991473532e-16j
 assert abs(((-8) ** (1 / 3)).imag - 1.7320508075688772) < 1e-15
 s = "Hello, Python"
 assert (len(s), s[0], s[-1], s[7:], s[::-1]) == (13, "H", "n", "Python", "nohtyP ,olleH")

@@ -6,7 +6,7 @@
 
 ## 0. Where this sits
 
-You can already make Python do things; this module is about predicting what it will do. It needs nothing earlier. It makes possible PY-2 (collections, on the aliasing model of §3.2), PY-3 (closures, on the scope rules of §3.11), PY-5 (the traceback of §4.1 becomes exceptions), PY-6 (views and copies are §3.2 for arrays) and LA-13 §3.2 (cancellation for matrices; §3.5 here is the scalar case).
+You can already make Python do things; this module is about predicting what it will do. It needs nothing earlier. It makes possible PY-2 (collections, on the aliasing model of §3.2), PY-3 (closures, on the scope rules of §3.11), PY-5 (the traceback of §4.1 becomes exceptions), PY-6 (views and copies are §3.2 for arrays) and LA-13 §3.2–3.3 (the cancellation bound of §3.5 here, then the condition number of a linear system).
 
 ## 1. The problem that forced this idea
 
@@ -277,7 +277,7 @@ $$x = (-1)^s\left(1 + \frac{F}{2^{52}}\right) 2^{E-1023}. \tag{3.2}$$
 
 The "1 +" is an implicit leading bit (53 significant bits, 52 stored). $E = 0$ encodes zero and the *subnormals* (no implicit 1; they fill the gap down to $5\times10^{-324}$); $E = 2047$ encodes `inf` ($F = 0$) and `nan` ($F \ne 0$).
 
-For example `1.0` has $E = 1023$ and $F = 0$; halving a number subtracts one from $E$. `0.1` has $E = 1019$ (that is, $2^{-4}$) and a fraction pattern `1001 1001 ...` that repeats and is cut off after 52 bits, which matters below. Exercise A5 has you print these fields with `struct.pack`; the project decodes them back through (3.2) and asserts the values quoted here.
+For example `1.0` has $E = 1023$ and $F = 0$; halving a number subtracts one from $E$. `0.1` has $E = 1019$ (that is, $2^{-4}$) and a fraction pattern `1001 1001 ...` that repeats forever and is *rounded* to 52 bits: the last stored group is `1010`, rounded up from `1001...`, which is why the stored value is slightly above $0.1$ (below). Exercise A5 has you print these fields with `struct.pack`; the project decodes them back through (3.2) and asserts the values quoted here.
 
 **Build-it-yourself sequence 2: machine epsilon.**
 
@@ -380,7 +380,7 @@ Past the largest double ($\approx 1.8\times10^{308}$) you get `inf`; operations 
 
 The roots of $ax^2 + bx + c = 0$ are $\dfrac{-b \pm \sqrt{b^2 - 4ac}}{2a}$. Take $a = c = 1$, $b = 10^8$: the product of the roots is $c/a = 1$ and their sum is $-b$, so they are near $-10^8$ and $-10^{-8}$.
 
-**Build-it-yourself sequence 3.**
+**Build-it-yourself sequence 3: the quadratic formula.**
 
 ▶ **Try it first.** Predict how many correct digits the textbook formula gives for the small root. Hint: its numerator is $-b + \sqrt{b^2-4ac}$, the sum of $-10^8$ and a number slightly below $10^8$.
 
@@ -437,7 +437,7 @@ grid spacing there = 1.490e-08
 
    $$\frac{|(\tilde x - \tilde y) - (x-y)|}{|x-y|} \le \frac{|x| + |y|}{|x - y|}\, u. \tag{3.6}$$
 
-   The factor explodes when $x \approx y$. Here $|x| + |y| \approx 2\times10^8$ and $|x-y| \approx 2\times10^{-8}$, a factor near $10^{16} \approx 1/u$: the bound allows total loss of all digits. This is **catastrophic cancellation**: subtraction creates no new error, it promotes the old error from the last digit to the first. (LA-13 §3.2 derives the same bound as its equation (3.4) and extends it to matrices.)
+   The factor explodes when $x \approx y$. Here $|x| + |y| \approx 2\times10^8$ and $|x-y| \approx 2\times10^{-8}$, a factor near $10^{16} \approx 1/u$: the bound allows total loss of all digits. This is **catastrophic cancellation**: subtraction creates no new error, it promotes the old error from the last digit to the first. (LA-13 §3.2 derives the same bound as its equation (3.3), names the factor the *condition number of subtraction*, its (3.4), and §3.3 generalizes it to $\kappa(A) = \|A\|\,\|A^{-1}\|$ for a linear system.)
 4. **Rationalize (derivation).** For $b > 0$ the dangerous root is $x_+ = (-b + d)/(2a)$ with $d = \sqrt{b^2-4ac}$. Multiply top and bottom by $(-b - d)$. The numerator becomes $b^2 - d^2 = 4ac$, so
 
    $$x_+ = \frac{4ac}{2a(-b-d)} = \frac{2c}{-b-d}.$$
@@ -479,7 +479,7 @@ relative errors: 1.00e-16  7.91e-17
 
 Adding many floats is the same problem in slow motion: each `total + x` rounds to the grid at the size of `total`, which is coarse once `total` is large.
 
-**Build-it-yourself sequence 6.**
+**Build-it-yourself sequence 4: Kahan summation.**
 
 ▶ **Try it first.** Sum $0.1$ ten million times with a plain loop. The correct total for the stored double `0.1` is $1000000.0000000000555\ldots$, which is `1000000.0` on the grid. Predict the size of the error: about $10^{-10}$, $10^{-6}$ or $10^{-4}$?
 
@@ -529,7 +529,7 @@ kahan:          1000000.0  abs error 0.000e+00
 fsum :          1000000.0
 ```
 
-■ **What just happened.** The naive loop is off by $1.6\times10^{-4}$, a relative $10^{-10}$, about a million times worse than one rounding. Kahan's loop matches `math.fsum`, which returns the correctly rounded exact sum of the doubles. Kahan's bound is about $2u\sum|x_i|$ plus a term of order $n\,u^2\sum|x_i|$; the naive bound grows like $n\,u\sum|x_i|$ (Goldberg 1991, Theorem 8 in the appendix; stated, not proved here). The method fails if a term can exceed the running total; Neumaier's variant repairs that. **In practice** use `math.fsum`. Since Python 3.12 the built-in `sum` of floats uses Neumaier's variant, so `sum(xs)` is accurate here on 3.12+ and equals `naive_sum` on 3.11. NumPy's `np.sum` uses pairwise summation, with error growing like $\log n$ (PY-6; the project measures it).
+■ **What just happened.** The naive loop is off by $1.6\times10^{-4}$, a relative $10^{-10}$, about a million times worse than one rounding. Kahan's loop matches `math.fsum`, which returns the correctly rounded exact sum of the doubles. Kahan's bound is about $2u\sum|x_i|$ plus a term of order $n\,u^2\sum|x_i|$; the naive bound grows like $n\,u\sum|x_i|$ (Goldberg 1991, Theorem 8; stated, not proved here). The compensation is lost in any step where the term exceeds the running total (the exactness condition of (3.8) fails); Neumaier's variant repairs that. **In practice** use `math.fsum`. Since Python 3.12 the built-in `sum` of floats uses Neumaier's variant, so `sum(xs)` is accurate here on 3.12+ and equals `naive_sum` on 3.11. NumPy's `np.sum` uses pairwise summation, with error growing like $\log n$ (PY-6; the project compares it with the others at $n = 10^7$).
 
 ### 3.7 Complex numbers, booleans, and short-circuit logic
 
@@ -588,7 +588,7 @@ TypeError: 'str' object does not support item assignment
 
 Every method returns a *new* string and leaves `s` alone, because strings are immutable. The classic bug is writing `s.strip()` and expecting `s` to change. Use `"-".join(parts)` to glue many strings.
 
-**f-string formatting.** `f"{value:spec}"` uses a mini-language, `[[fill]align][sign][0][width][,][.precision][type]`: alignment `<` `>` `^`, `+` forces a sign, `0` pads with zeros, `,` groups thousands. Types: `f` fixed, `e` scientific, `g` general (that many *significant* digits, switching to exponent form when needed), `%` percent, `d` integer, `x` hex, `b` binary. `{x=}` prints the expression and its value.
+**f-string formatting.** `f"{value:spec}"` uses a mini-language, `[[fill]align][sign][#][0][width][,][.precision][type]`: alignment `<` `>` `^`, `+` forces a sign, `#` adds the `0x`/`0b` prefix, `0` pads with zeros, `,` groups thousands. Types: `f` fixed, `e` scientific, `g` general (that many *significant* digits, switching to exponent form when needed), `%` percent, `d` integer, `x` hex, `b` binary. `{x=}` prints the expression and its value.
 
 ```pycon
 >>> x = 1234.56789
@@ -763,7 +763,7 @@ print(step(), step(), step())
 
 ### 3.12 Root finding and polynomial evaluation: your first numerical algorithms
 
-**Build-it-yourself sequence 4: bisection, then Newton.**
+**Build-it-yourself sequence 5: bisection, then Newton.**
 
 ▶ **Try it first.** $f(x) = \cos x - x$ has $f(0) = 1 > 0$ and $f(1) = \cos 1 - 1 < 0$, so by the intermediate value theorem there is a root in $(0, 1)$. Sketch how to shrink the interval to width $10^{-6}$ using only evaluations of $f$, and predict how many halvings it takes.
 
@@ -857,7 +857,7 @@ Newton n=4  x=0.7390851332151607  error=0.00e+00
 
 ■ **What just happened.** Bisection gains one bit per evaluation and cannot fail once the bracket is valid. Newton squares its error each step, so correct digits roughly *double*: $1.1\times10^{-2}$, $2.8\times10^{-5}$, $1.7\times10^{-10}$, then $0$ (the double nearest the root); bisection needs 20 steps for six digits. The price is a derivative, a decent start and $f'(x_n) \ne 0$. Production solvers (`scipy.optimize.brentq`, PY-8) combine both. The `tol=1e-20` demo shows the cap earning its keep: near $\sqrt2$ the grid spacing is $2.2\times10^{-16}$, so the bracket cannot shrink below it and the cap, not the tolerance, ends the loop.
 
-**Build-it-yourself sequence 5: Horner's rule.**
+**Build-it-yourself sequence 6: Horner's rule.**
 
 ▶ **Try it first.** Evaluate $p(x) = 2x^3 - 6x^2 + 2x - 1$ at $x = 3$. Then factor $x$ out of the first terms, then out of the first two groups, until no powers remain. Count your multiplications.
 
@@ -943,22 +943,22 @@ if __name__ == "__main__":
 
 ```text
 Traceback (most recent call last):
-  File "/tmp/py1/report.py", line 25, in <module>
+  File "/tmp/py1/report.py", line 26, in <module>
     main()
     ~~~~^^
-  File "/tmp/py1/report.py", line 21, in main
+  File "/tmp/py1/report.py", line 22, in main
     print(summarize(data))
           ~~~~~~~~~^^^^^^
-  File "/tmp/py1/report.py", line 15, in summarize
+  File "/tmp/py1/report.py", line 16, in summarize
     means.append(mean(parse(line)))
                       ~~~~~^^^^^^
-  File "/tmp/py1/report.py", line 4, in parse
+  File "/tmp/py1/report.py", line 5, in parse
     values.append(float(token))
                   ~~~~~^^^^^^^
 ValueError: could not convert string to float: '.'
 ```
 
-Four frames: `<module>`, `main`, `summarize`, `parse`. (Python 3.11+ draws marks under the failing expression; their exact shape varies by version, and your paths differ.) Read from the bottom:
+Four frames: `<module>`, `main`, `summarize`, `parse`. (Python 3.11+ draws marks under the failing expression; their exact shape varies by version, your paths differ, and the line numbers assume you kept the `# file:` line.) Read from the bottom:
 
 1. **What:** `ValueError: could not convert string to float: '.'`.
 2. **Where:** `values.append(float(token))` in `parse`. That line is fine for a token like `"2.0"`; the surprise is a lone `.`, which is no field of `"1.0,2.0,3.0"`.
@@ -1071,7 +1071,7 @@ Planck, J s                                         0.0000   6.6261e-34   6.6260
 machine epsilon                                     0.0000   2.2204e-16   2.22045e-16
 ```
 
-Fixed notation suits $\pi$ and fails on the tiny constants: Planck's constant prints as `0.0000`. For Avogadro it prints 24 integer digits, of which about 9 mean anything; the rest are the exact decimal expansion of the nearest double. Scientific keeps four digits at every scale; `g` keeps six *significant* digits and picks the notation per value. `<20` left-aligns; the numeric columns right-align.
+Fixed notation suits $\pi$ and fails on the tiny constants: Planck's constant prints as `0.0000`. For Avogadro it prints 24 integer digits: the first 9 are the defined constant, the next 7 or so are still the correctly rounded double, and the tail is the exact decimal expansion of that double, binary noise dressed as digits. Scientific keeps four digits at every scale; `g` keeps six *significant* digits and picks the notation per value. `<20` left-aligns; the numeric columns right-align.
 
 ### Example 4.5: Bisection on $\cos x = x$, with the iteration table
 
@@ -1153,7 +1153,7 @@ By R4, `def record` ran once and stored one list in `record.__defaults__`; every
 - **PY-5:** the traceback of §4.1 is an exception propagating up the frames of §2; PY-5 adds `try`/`except` and `pdb`.
 - **PY-6:** a NumPy slice is a view, aliasing by design: `b = a[:2]; b[0] = 9` changes `a`, unlike a list slice. `np.finfo(float).eps` is the `epsilon` of §3.4; `np.sum` is the pairwise sum of §3.6.
 - **PY-8:** `scipy.optimize.brentq` and `newton` are the production root finders; `math.fsum` is the exact `kahan_sum`.
-- **LA-13 §3.2:** the factor (3.6) becomes the condition number of a linear system.
+- **LA-13:** the factor in (3.6) is the condition number of subtraction, LA-13 (3.4); LA-13 §3.3 replaces it by $\kappa(A) = \|A\|\,\|A^{-1}\|$, eq. (3.7), for $Ax = b$.
 
 ## 6. Exercises
 
@@ -1163,7 +1163,7 @@ See [exercises.md](exercises.md). A1–A6 predict outputs and fix small bugs. B1
 
 `project.py` is a floating-point lab (standard library, plus NumPy for three comparisons):
 
-1. **Epsilon and the grid:** the halving loop; an `ulp` table; (3.2), (3.3), (3.4) checked against exact `Fraction` arithmetic.
+1. **Integers and the grid:** the floor rule (3.1) on every sign combination; the halving loop; an `ulp` table; (3.2), (3.3), (3.4) checked against exact `Fraction` arithmetic.
 2. **`0.1 + 0.2`:** the `Decimal`, `hex` and tie-break facts of Example 4.3; `isclose`, `inf`, `nan`.
 3. **Quadratic formula:** naive against stable (3.7) for $b = 10^2, \ldots, 10^{10}$, errors against a `Decimal` reference (stable $< 10^{-15}$, naive $> 10^{-8}$ at $b = 10^8$); the bound (3.6).
 4. **Summation:** Fast2Sum (3.8) on random pairs; naive, Kahan, `fsum` and NumPy on $10^7$ terms of $0.1$.
@@ -1201,5 +1201,5 @@ See [exercises.md](exercises.md). A1–A6 predict outputs and fix small bugs. B1
 - **Ned Batchelder, "Facts and myths about Python names and values"** (PyCon 2015 talk and essay). The best 30 minutes on §2 and §3.2; it has the pictures that ASCII cannot carry.
 - **Downey, *Think Python* 3e, ch. 1-8** (free online). Gentler and slower on variables, conditionals, functions and loops; extra practice for §3.9-3.10.
 - **The official Python Tutorial, §3-4** (docs.python.org/3/tutorial). The short authoritative statement of syntax for numbers, strings, `if`, `for`, `range`, `def`.
-- **Goldberg, "What every computer scientist should know about floating-point arithmetic," §1-2.** Reference: the rounding material behind §3.4, and the Kahan theorem of §3.6.
+- **Goldberg, "What every computer scientist should know about floating-point arithmetic," §1-2.** Reference: the rounding material behind §3.4; the Kahan bound quoted in §3.6 is Theorem 8, in the paper's "The Details" section.
 - **MIT 6.100A, lectures 1-4** (OCW). A live-coding version of the first half of this module.

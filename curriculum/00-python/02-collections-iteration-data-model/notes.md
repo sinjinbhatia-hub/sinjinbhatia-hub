@@ -2,7 +2,7 @@
 
 **Time:** ~9 hours · **Prerequisites:** PY-1 · **Unlocks:** PY-3, PY-6, PY-9
 
-> **Conventions in this module.** Python 3.11+; every output below was produced by a real run under Python 3.13. `>>>` blocks are interactive transcripts; other blocks are scripts followed by their real output. $n$ is the number of elements in a container. "$O(1)$" and "$O(n)$" describe the cost of one operation as $n$ grows; for dicts and sets "$O(1)$" means *average case* (§3.4 says when that fails), and for `list.append` it means *amortized*. Timings come from one machine in one run: trust the growth and the ratios, not the nanoseconds. Containers are named by their literal syntax: list `[]`, tuple `()`, dict `{k: v}`, set `{x}`. Standard library only; NumPy appears only in the last cell of `project.py`.
+> **Conventions in this module.** Python 3.11+; every output below was produced by a real run under Python 3.13. `>>>` blocks are interactive transcripts; other blocks are scripts followed by their real output. $n$ is the number of elements in a container. "$O(1)$" and "$O(n)$" describe the cost of one operation as $n$ grows; for dicts and sets "$O(1)$" means *average case* (§3.4 says when that fails), and for `list.append` it means *amortized*. Timings come from one machine in one run: trust the growth and the ratios, not the nanoseconds. Containers are named by their literal syntax: list `[]`, tuple `()`, dict `{k: v}`, set `{x}`. Standard library only; NumPy appears only in Part 9 of `project.py`.
 
 ## 0. Where this sits
 
@@ -23,9 +23,9 @@ readings = [(rng.choice(names), rng.random()) for _ in range(10_000)]
 
 comparisons, seen, sums, counts = 0, [], [], []       # version 1: parallel lists, linear search
 for name, value in readings:
-    for i in range(len(seen)):
+    for i, s in enumerate(seen):
         comparisons += 1
-        if seen[i] == name:
+        if s == name:
             sums[i] += value
             counts[i] += 1
             break
@@ -251,6 +251,8 @@ for n in (10**3, 10**4, 10**5, 10**6):
 
 The list column grows in proportion to $n$ (the arrows really are being shifted); the deque and linked columns stay flat. A deque is a linked list of fixed-size blocks, which is why both ends are cheap. `project.py` Part 2 fits the slopes on a log-log plot. In real code reach for `deque`; build linked lists to understand why.
 
+One caution about reading such a fit. The list's exponent often comes out between 1.1 and 1.4 rather than 1.00: the $10^3$-element list (8 KB of arrows) sits in the fastest cache and the $10^6$-element one (8 MB) does not, so the cost of shifting one arrow is not constant across four decades, and the first point drags the slope up. "Slope near 1" means "grows linearly"; `project.py` asserts the list exponents in $(0.7, 1.5)$ and the deque and linked-list exponents within $0.3$ of zero.
+
 ### 3.2 Tuples
 
 A tuple is an immutable sequence: its length and its references cannot change. It is the right type for a fixed record, a dict key, and "return several values". **Packing** builds a tuple (`point = 3, 4`) and **unpacking** takes one apart (`x, y = point`). The right-hand side is evaluated completely before any name on the left is bound, which is why the swap idiom `a, b = b, a` works. A starred name collects the rest:
@@ -384,7 +386,7 @@ hash(1), hash(1.0), hash(True), hash(-1), hash(-2)
 
 1. `hash(key)` computes an integer fingerprint from the key's *value*. Small ints hash to themselves; strings hash by their characters, with a per-process random salt (so the numbers differ between runs, deliberately).
 2. **The contract:** if `a == b` then `hash(a) == hash(b)`. The converse is not required. Two unequal keys with the same hash (or the same slot) are a **collision**.
-3. The table has $m$ slots, a power of two. The first slot comes from the low bits of the hash. Empty: the key is absent. Occupied: same hash and an equal key means found; otherwise probe another slot, chosen by a fixed rule that depends on the hash, and repeat. (CPython calls this *open addressing*.)
+3. The table has $m$ slots, a power of two. The first slot comes from the low bits of the hash. Empty: the key is absent. Occupied: same hash and an equal key means found; otherwise probe another slot, chosen by a fixed rule that depends on the hash, and repeat. (The scheme is called *open addressing*; CPython's dicts and sets use it.)
 4. Insertion uses the first empty slot on that same probe path. When the table is about two-thirds full CPython builds a bigger one and re-inserts everything, which keeps the expected number of probes bounded independent of $n$: **average $O(1)$**.
 5. The guarantee is only *average*. Many keys with the same hash make every lookup a scan, $O(n)$; per-process random string hashes defend against adversaries who would try.
 6. **Why keys must be immutable.** The slot was chosen from the hash at insertion time. If the key's value, and so its hash, changes later, the entry sits where the new hash never looks.
@@ -437,8 +439,8 @@ from collections import Counter
 def freq_lists(words):                 # deliberately naive: a linear search per word
     seen, counts = [], []
     for w in words:
-        for i in range(len(seen)):
-            if seen[i] == w:
+        for i, s in enumerate(seen):
+            if s == w:
                 counts[i] += 1
                 break
         else:
@@ -1029,7 +1031,7 @@ print([list(g) for _, g in spent])                                          # gr
 [[], [], [], [], [], []]
 ```
 
-`defaultdict` makes one $O(n)$ pass, needs no sort, and keeps keys in first-seen order, but it holds everything. `groupby` needs sorted input ($O(n \log n)$), and in exchange it streams. Unsorted input gives six groups with `a` and `b` repeated; and each inner group is a view into the same underlying stream, so materializing `list(groupby(...))` first leaves every group empty. Consume a group before asking for the next.
+`defaultdict` makes one $O(n)$ pass, needs no sort, and keeps keys in first-seen order, but it holds everything. `groupby` needs sorted input ($O(n \log n)$ if you must sort it yourself), and in exchange it streams when the data already arrive sorted, as from a sorted file. Unsorted input gives six groups with `a` and `b` repeated; and each inner group is a view into the same underlying stream, so materializing `list(groupby(...))` first leaves every group empty. Consume a group before asking for the next.
 
 ### Example 4.5: A pipeline over a million lines, without holding the file
 
