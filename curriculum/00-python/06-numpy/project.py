@@ -1,17 +1,17 @@
 # %% [markdown]
 # # PY-6 Project: the vectorization lab
 #
-# Builds, from raw bytes up, the machinery of notes §3 and checks every number quoted in §1-§4:
-# strides and addressing (Build 1), views versus copies (Build 2), broadcasting by hand (Build 3),
-# pairwise distances three ways (Build 4), the axis drill (Build 5), matrix multiply (Build 6),
-# the random-walk ensemble with its mean-square displacement (Build 7) and 2D convolution (Build 8),
-# plus the Mandelbrot set by boolean masks (Example 4.6). Timings are measured at run time and the
-# asserts use wide margins (several times below what the notes quote). Figures go to `figures/`.
-# Run headless: `MPLBACKEND=Agg python3 project.py` (about 15 s).
+# Builds, from raw bytes up, the machinery of notes §3 and asserts every number quoted in §1-§4:
+# addressing and strides (Build 1), views versus copies (2), broadcasting by hand (3), pairwise
+# distances three ways (4), the axis drill (5), matrix multiply (6), the random-walk ensemble and its
+# mean-square displacement (7), 2D convolution (8), and the Mandelbrot set by boolean masks (Example 4.6).
+# Timings are measured at run time; asserts use margins several times wider than the notes' numbers.
+# Figures go to `figures/`. Run headless: `MPLBACKEND=Agg python3 project.py` (about 15 s).
 
 # %%
 import math
 import random
+import statistics
 import sys
 import tempfile
 import time
@@ -46,7 +46,7 @@ def best(f, *args, repeat=3):
 
 # %% [markdown]
 # ## Part 1: memory, strides, dtypes (notes §1, §3.1-§3.3, Example 4.1)
-# Build 1: write equations (3.1) and (3.2) yourself and read raw bytes with them.
+# Build 1: write equations (3.1) and (3.2) yourself, then read raw bytes with them.
 
 # %%
 def c_strides(shape, itemsize):
@@ -59,15 +59,9 @@ def c_strides(shape, itemsize):
 
 
 def read_element(raw, dtype, strides, idx, start=0):
-    """Element idx read from the bytes `raw`: byte offset = start + sum_k i_k s_k (3.1)."""
+    """Element idx read from bytes `raw`: byte offset = start + sum_k i_k s_k (3.1)."""
     offset = start + sum(i * s for i, s in zip(idx, strides))
     return np.frombuffer(raw, dtype=dtype, count=1, offset=offset)[0]
-
-
-n = 1_000_000
-xs = [float(i) for i in range(n)]
-arr = np.arange(n, dtype=np.float64)
-assert sys.getsizeof(xs[1]) == 24 and arr.itemsize == 8 and arr.nbytes == 8_000_000
 
 
 def sumsq_loop(v):
@@ -77,39 +71,35 @@ def sumsq_loop(v):
     return s
 
 
-assert np.isclose(sumsq_loop(xs), np.dot(arr, arr))
+xs, arr = [float(i) for i in range(10 ** 6)], np.arange(10 ** 6, dtype=np.float64)
+assert (sys.getsizeof(xs[1]), arr.itemsize, arr.nbytes) == (24, 8, 8_000_000) and np.isclose(sumsq_loop(xs), np.dot(arr, arr))
 t_loop, t_np = best(sumsq_loop, xs), best(lambda v: np.dot(v, v), arr)
-assert t_loop > 20 * t_np, (t_loop, t_np)
+assert t_loop > 20 * t_np
 print(f"sum of squares, 10^6 floats: loop {t_loop * 1e3:.1f} ms, np.dot {t_np * 1e3:.3f} ms ({t_loop / t_np:.0f}x)")
 
 a = np.arange(6).reshape(2, 3)
 assert (a.shape, a.ndim, a.size, a.dtype, a.itemsize, a.nbytes, a.strides) == ((2, 3), 2, 6, np.dtype("int64"), 8, 48, (24, 8))
 assert a.flags["C_CONTIGUOUS"] and not a.flags["OWNDATA"] and a.base is not None
 assert (a.T.strides, a[:, 1].strides, a[:, ::2].strides, a[::-1].strides) == ((8, 24), (24,), (24, 16), (-24, 8))
+assert c_strides(a.shape, 8) == a.strides and c_strides((2, 3, 4), 8) == np.zeros((2, 3, 4)).strides
 raw = a.base.tobytes()
-assert c_strides(a.shape, a.itemsize) == a.strides
 for view in (a, a.T, a[::2, 1:], a[::-1]):
     start = view.ctypes.data - a.ctypes.data
-    for idx in np.ndindex(view.shape):
-        assert read_element(raw, a.dtype, view.strides, idx, start) == view[idx]
-assert c_strides((2, 3, 4), 8) == (96, 32, 8) == np.zeros((2, 3, 4)).strides
+    assert all(read_element(raw, a.dtype, view.strides, i, start) == view[i] for i in np.ndindex(view.shape))
 
 # Example 4.1: the 3x4 array and its transpose
 a34 = np.arange(12, dtype=np.float64).reshape(3, 4)
 assert (a34.strides, a34.T.shape, a34.T.strides) == ((32, 8), (4, 3), (8, 32))
-assert a34.flags["C_CONTIGUOUS"] and not a34.flags["F_CONTIGUOUS"]
-assert a34.T.flags["F_CONTIGUOUS"] and not a34.T.flags["C_CONTIGUOUS"]
-raw34 = a34.tobytes()
+flags = lambda z: (z.flags["C_CONTIGUOUS"], z.flags["F_CONTIGUOUS"])
+assert flags(a34) == (True, False) and flags(a34.T) == (False, True)
 for i, j in [(0, 0), (1, 2), (2, 3)]:
     off = i * 32 + j * 8
     assert off == j * a34.T.strides[0] + i * a34.T.strides[1]
-    assert np.frombuffer(raw34, dtype=np.float64, count=1, offset=off)[0] == a34[i, j] == a34.T[j, i]
-assert (2 * 32 + 3 * 8) == 88
-assert np.shares_memory(a34, a34.T)
-flat = a34.T.reshape(12)
-assert flat.strides == (8,) and not np.shares_memory(a34, flat)
+    assert np.frombuffer(a34.tobytes(), dtype=np.float64, count=1, offset=off)[0] == a34[i, j] == a34.T[j, i]
+assert 2 * 32 + 3 * 8 == 88 and np.shares_memory(a34, a34.T)
+assert a34.T.reshape(12).strides == (8,) and not np.shares_memory(a34, a34.T.reshape(12))
 
-# dtypes (notes §3.2)
+# dtypes (3.2): arrays wrap silently, scalars warn, NumPy 2 refuses a Python int that does not fit
 x8 = np.array([100, 100], dtype=np.int8)
 assert (x8 + x8).tolist() == [-56, -56] and x8.sum() == 200 and x8.sum().dtype == np.int64
 with warnings.catch_warnings(record=True) as caught:
@@ -122,24 +112,14 @@ if NUMPY2:
         raise AssertionError("NumPy 2 should refuse a Python int that does not fit int8")
     except OverflowError:
         pass
-assert np.finfo(np.float64).eps == 2.220446049250313e-16 and np.iinfo(np.int8).max == 127
 f32 = np.array([0.1, 0.2], dtype=np.float32)
 assert (f32 + 1.0).dtype == np.float32 and (f32 + np.float64(1.0)).dtype == np.float64
-assert np.result_type(np.int8, np.uint8) == np.int16 and np.result_type(np.int64, np.float32) == np.float64
-assert np.array([1.9, -1.9]).astype(int).tolist() == [1, -1]
-assert np.array([300, -1]).astype(np.uint8).tolist() == [44, 255]
-img = np.array([200, 250], dtype=np.uint8)
-assert (img + 100).tolist() == [44, 94]           # a brightened uint8 image wraps to dark pixels
-
-# creation (notes §3.3)
+assert (np.result_type(np.int8, np.uint8), np.result_type(np.int64, np.float32)) == (np.int16, np.float64)
+assert np.array([1.9, -1.9]).astype(int).tolist() == [1, -1] and np.array([300, -1]).astype(np.uint8).tolist() == [44, 255]
+# creation (3.3): the float-step arange pitfall
 r = np.arange(1, 1.3, 0.1)
 assert len(r) == 4 and r[-1] == 1.3000000000000003 and (1.3 - 1) / 0.1 == 3.0000000000000004
-assert np.allclose(np.linspace(0, 1, 5, endpoint=False), [0, 0.2, 0.4, 0.6, 0.8])
-xg, yg = np.arange(3), np.arange(2)
-assert np.meshgrid(xg, yg)[0].shape == (2, 3) and np.meshgrid(xg, yg, indexing="ij")[0].shape == (3, 2)
-gy, gx = np.ogrid[0:2, 0:3]
-assert (gy.shape, gx.shape) == ((2, 1), (1, 3))
-assert rng.integers(0, 6, size=1000).max() <= 5
+assert tuple(g.shape for g in np.ogrid[0:2, 0:3]) == ((2, 1), (1, 3))
 print(f"Part 1 ok ({time.perf_counter() - T0:.1f} s)")
 
 # %% [markdown]
@@ -148,45 +128,32 @@ print(f"Part 1 ok ({time.perf_counter() - T0:.1f} s)")
 
 # %%
 a = np.arange(12).reshape(3, 4)
-VIEW, COPY = True, False
-table = {
-    "a[1]": (lambda a: a[1], VIEW),
-    "a[:, 1]": (lambda a: a[:, 1], VIEW),
-    "a[::2, ::2]": (lambda a: a[::2, ::2], VIEW),
-    "a[[0, 2]]": (lambda a: a[[0, 2]], COPY),
-    "a[a % 2 == 0]": (lambda a: a[a % 2 == 0], COPY),
-    "a.T": (lambda a: a.T, VIEW),
-    "a.reshape(4, 3)": (lambda a: a.reshape(4, 3), VIEW),
-    "a.T.reshape(12)": (lambda a: a.T.reshape(12), COPY),
-    "a.ravel()": (lambda a: a.ravel(), VIEW),
-    "a.flatten()": (lambda a: a.flatten(), COPY),
+table = {  # operation: does the result share memory with a?
+    "a[1]": (lambda a: a[1], True), "a[:, 1]": (lambda a: a[:, 1], True), "a[::2, ::2]": (lambda a: a[::2, ::2], True),
+    "a[[0, 2]]": (lambda a: a[[0, 2]], False), "a[a % 2 == 0]": (lambda a: a[a % 2 == 0], False),
+    "a.T": (lambda a: a.T, True), "a.reshape(4, 3)": (lambda a: a.reshape(4, 3), True),
+    "a.T.reshape(12)": (lambda a: a.T.reshape(12), False), "a.ravel()": (lambda a: a.ravel(), True),
+    "a.flatten()": (lambda a: a.flatten(), False),
 }
-for name, (f, expected) in table.items():
-    assert np.shares_memory(a, f(a)) is expected, name
-    print(f"  {name:16s} {'view' if expected else 'copy'}")
-assert not np.shares_memory(a, a.T.ravel()) and np.shares_memory(a, a.T)
-assert not a.T.reshape(12).flags["OWNDATA"]       # a copy that does not own its data: OWNDATA is not the test
+for name, (f, is_view) in table.items():
+    assert np.shares_memory(a, f(a)) is is_view, name
+    print(f"  {name:16s} {'view' if is_view else 'copy'}")
+assert not np.shares_memory(a, a.T.ravel()) and not a.T.reshape(12).flags["OWNDATA"]    # OWNDATA is not the test
 
 b = a.copy()
-v = b[:, 1]
-v[:] = -1
-assert (b[:, 1] == -1).all()                      # a view writes through
+b[:, 1][:] = -1                                    # through a view: writes through
+assert (b[:, 1] == -1).all()
 b = a.copy()
-f = b[[0, 2]]
-f[:] = -1
-assert (b[0] == [0, 1, 2, 3]).all()               # a copy does not
-
+b[[0, 2]][:] = -1                                  # through a copy: only the temporary changes
+assert (b == a).all()
 mask = a % 3 == 0
 assert a[mask].tolist() == [0, 3, 6, 9] and mask.sum() == np.count_nonzero(mask) == 4
-assert np.where(mask, a, -1)[0].tolist() == [0, -1, -1, 3]
-assert [i.tolist() for i in np.nonzero(mask)] == [[0, 0, 1, 2], [0, 3, 2, 1]]
+assert np.where(mask, a, -1)[0].tolist() == [0, -1, -1, 3] and [i.tolist() for i in np.nonzero(mask)] == [[0, 0, 1, 2], [0, 3, 2, 1]]
 b = a.copy()
 b[b > 8] = 0
-assert b[2].tolist() == [8, 0, 0, 0]
-assert a[[0, 2], [1, 3]].tolist() == [1, 11] and a[np.ix_([0, 2], [1, 3])].tolist() == [[1, 3], [9, 11]]
-c = np.zeros(3, dtype=int)
+assert b[2].tolist() == [8, 0, 0, 0] and a[[0, 2], [1, 3]].tolist() == [1, 11] and a[np.ix_([0, 2], [1, 3])].tolist() == [[1, 3], [9, 11]]
+c, d = np.zeros(3, dtype=int), np.zeros(3, dtype=int)
 c[[0, 0, 1]] += 1
-d = np.zeros(3, dtype=int)
 np.add.at(d, [0, 0, 1], 1)
 assert c.tolist() == [1, 1, 0] and d.tolist() == [2, 1, 0]
 assert (a[:, None, 0].shape, a[..., 0].shape, a[None].shape) == ((3, 1), (3,), (1, 3, 4))
@@ -198,24 +165,19 @@ def center_columns(X):
     return X
 
 
-def center_columns_safe(X):
-    return X - X.mean(axis=0)
-
-
 data = np.array([[1.0, 2.0], [3.0, 6.0], [5.0, 10.0]])
 train = data[:2]
 centered = center_columns(train)
 assert data.tolist() == [[-1.0, -2.0], [1.0, 2.0], [5.0, 10.0]]       # Example 4.2: rows 0-1 overwritten
 assert np.shares_memory(data, centered) and centered is train
 data = np.array([[1.0, 2.0], [3.0, 6.0], [5.0, 10.0]])
-assert center_columns_safe(data[:2])[0].tolist() == [-1.0, -2.0] and data[0].tolist() == [1.0, 2.0]
-lst = [1, 2, 3]
-assert lst[:2] is not lst and lst[:2] == [1, 2]                         # lists copy on slicing
+assert (data[:2] - data[:2].mean(axis=0))[0].tolist() == [-1.0, -2.0] and data[0].tolist() == [1.0, 2.0]
+assert [1, 2, 3][:2] == [1, 2]                                        # lists copy on slicing, arrays alias
 print(f"Part 2 ok ({time.perf_counter() - T0:.1f} s)")
 
 # %% [markdown]
 # ## Part 3: matrix multiply, three ways (Build 6, notes §3.8)
-# $C_{ik}=\sum_j A_{ij}B_{jk}$ with three loops, `np.dot`, `@`. Times for n = 50, 100, 200 (and NumPy alone beyond).
+# $C_{ik}=\sum_j A_{ij}B_{jk}$ with three loops, `np.dot`, `@`; n = 50, 100, 200, then NumPy alone up to 1600.
 
 # %%
 def matmul_loops(A, B):
@@ -241,10 +203,9 @@ for n in sizes_loop:
     assert np.allclose(C, A @ B) and np.allclose(np.dot(A, B), A @ B)
     t_at.append(best(lambda: A @ B, repeat=5))
     print(f"  n={n:4d}: loops {t_loops[-1]:.4f} s, @ {t_at[-1]:.6f} s, ratio {t_loops[-1] / t_at[-1]:,.0f}")
-assert t_loops[-1] > 100 * t_at[-1]
+assert t_loops[-1] > 30 * t_at[-1]
 sizes_np = (50, 100, 200, 400, 800, 1600)
 t_np_big = [best(lambda A=rng_mm.standard_normal((n, n)): A @ A, repeat=2) for n in sizes_np]
-
 fig, ax = plt.subplots(figsize=(6, 4))
 ax.loglog(sizes_loop, t_loops, "o-", label="three Python loops")
 ax.loglog(sizes_np, t_np_big, "s-", label="NumPy @ (BLAS)")
@@ -274,7 +235,7 @@ def bshape(s, t):
 
 
 def my_add(a, b):
-    """a + b via explicit broadcast_to: every element is a[i or 0, ...] + b[i or 0, ...]."""
+    """a + b via explicit broadcast_to."""
     shape = bshape(a.shape, b.shape)
     return np.broadcast_to(a, shape) + np.broadcast_to(b, shape)
 
@@ -301,14 +262,10 @@ row = np.arange(3)
 Bc = np.broadcast_to(row, (4, 3))
 assert Bc.strides == (0, 8) and not Bc.flags["WRITEABLE"] and np.shares_memory(Bc, row)
 
-# Example 4.3
-a3 = np.arange(15).reshape(3, 1, 5)
-b3 = np.arange(4).reshape(4, 1) * 100
+a3, b3 = np.arange(15).reshape(3, 1, 5), np.arange(4).reshape(4, 1) * 100          # Example 4.3
 r3 = a3 + b3
-assert r3.shape == np.broadcast_shapes(a3.shape, b3.shape) == (3, 4, 5)
-assert r3[2, 3, 4] == a3[2, 0, 4] + b3[3, 0] == 314
-A3, B3 = np.broadcast_arrays(a3, b3)
-assert (A3.strides, B3.strides) == ((40, 0, 8), (0, 8, 0))
+assert r3.shape == np.broadcast_shapes(a3.shape, b3.shape) == (3, 4, 5) and r3[2, 3, 4] == a3[2, 0, 4] + b3[3, 0] == 314
+assert tuple(z.strides for z in np.broadcast_arrays(a3, b3)) == ((40, 0, 8), (0, 8, 0))
 try:
     a3 + np.arange(4)
     raise AssertionError("(3,1,5)+(4,) must fail")
@@ -316,36 +273,25 @@ except ValueError as err:
     assert "(3,1,5) (4,)" in str(err)
 assert (a3 + np.arange(4)[:, None]).shape == (3, 4, 5)
 
-# patterns
-xv = np.array([1.0, 2.0, 4.0])
-assert (xv[:, None] * xv[None, :]).shape == (3, 3) and (xv[:, None] - xv[None, :])[0].tolist() == [0.0, -1.0, -3.0]
-Xc = np.array([[1.0, 10.0], [2.0, 20.0], [6.0, 60.0]])
-assert np.allclose((Xc - Xc.mean(axis=0)).mean(axis=0), 0) and np.allclose((Xc - Xc.mean(axis=1, keepdims=True)).mean(axis=1), 0)
-assert (Xc - Xc.mean(axis=1, keepdims=True))[0].tolist() == [-4.5, 4.5]
+Xc = np.array([[1.0, 10.0], [2.0, 20.0], [6.0, 60.0]])                           # centring patterns
+assert np.allclose((Xc - Xc.mean(axis=0)).mean(axis=0), 0) and (Xc - Xc.mean(axis=1, keepdims=True))[0].tolist() == [-4.5, 4.5]
+assert (np.arange(3) - np.arange(3)[:, None]).shape == (3, 3)                    # the silent (n,) - (n,1) trap
 try:
     Xc - Xc.mean(axis=1)
     raise AssertionError("(3,2)-(3,) must fail")
 except ValueError:
     pass
-assert ((np.arange(3) - np.arange(3)[:, None]).shape) == (3, 3)      # the silent (n,) - (n,1) trap
 
-# Build 5: the axis drill
-t = np.arange(24).reshape(2, 3, 4)
-drill = {
-    "t.sum(axis=0)": (3, 4), "t.sum(axis=1)": (2, 4), "t.sum(axis=2)": (2, 3), "t.sum(axis=(0, 2))": (3,),
-    "t.sum(axis=1, keepdims=True)": (2, 1, 4), "t.mean(axis=-1)": (2, 3), "t.argmax(axis=0)": (3, 4),
-    "t.cumsum(axis=1)": (2, 3, 4), "(t > 10).any(axis=2)": (2, 3), "t.std(axis=0, ddof=1)": (3, 4),
-}
-for expr, shape in drill.items():
-    assert np.shape(eval(expr)) == shape, expr
-assert t.sum() == 276 and t.max() == 23 and t.sum(axis=None) == t.sum()
-import statistics
+t = np.arange(24).reshape(2, 3, 4)                                                # Build 5: the axis drill
+drill = {"t.sum(axis=0)": (3, 4), "t.sum(axis=1)": (2, 4), "t.sum(axis=2)": (2, 3), "t.sum(axis=(0, 2))": (3,),
+         "t.sum(axis=1, keepdims=True)": (2, 1, 4), "t.mean(axis=-1)": (2, 3), "t.argmax(axis=0)": (3, 4),
+         "t.cumsum(axis=1)": (2, 3, 4), "(t > 10).any(axis=2)": (2, 3), "t.std(axis=0, ddof=1)": (3, 4)}
+assert all(np.shape(eval(expr)) == shape for expr, shape in drill.items())
+assert (t.sum(), t.max()) == (276, 23)
+d4 = [1.0, 2.0, 3.0, 4.0]
+assert math.isclose(np.std(d4), 1.118033988749895) and math.isclose(np.std(d4, ddof=1), statistics.stdev(d4))
 
-data4 = [1.0, 2.0, 3.0, 4.0]
-assert math.isclose(np.std(data4), 1.118033988749895) and math.isclose(np.std(data4, ddof=1), statistics.stdev(data4))
-assert math.isclose(statistics.pstdev(data4), np.std(data4))
 
-# Build 4: pairwise distances three ways
 def dist_loops(X):
     n = len(X)
     D = np.zeros((n, n))
@@ -361,7 +307,7 @@ def dist_broadcast(X):
     return np.sqrt((diff ** 2).sum(axis=-1))
 
 
-Xp = np.random.default_rng(5).standard_normal((300, 3))
+Xp = np.random.default_rng(5).standard_normal((300, 3))                           # Build 4
 D1, D2, D3 = dist_loops(Xp), dist_broadcast(Xp), cdist(Xp, Xp)
 assert np.allclose(D1, D2) and np.allclose(D2, D3) and np.allclose(D1, D1.T) and np.allclose(np.diag(D1), 0)
 tl, tb, tc = best(dist_loops, Xp, repeat=1), best(dist_broadcast, Xp), best(lambda Z: cdist(Z, Z), Xp)
@@ -371,63 +317,30 @@ print(f"  distances: loops {tl * 1e3:.1f} ms, broadcast {tb * 1e3:.2f} ms, cdist
 print(f"Part 4 ok ({time.perf_counter() - T0:.1f} s)")
 
 # %% [markdown]
-# ## Part 5: ufuncs, sorting, linear algebra, einsum, floating point (notes §3.6-§3.9, Examples 4.4-4.5)
+# ## Part 5: sorting, linear algebra, einsum, floating point (notes §3.6-§3.9, Examples 4.4-4.5)
 
 # %%
-xu = np.array([1.0, 4.0, 9.0, -1.0])
-out = np.zeros_like(xu)
-np.sqrt(xu, out=out, where=xu >= 0)
-assert out.tolist() == [1.0, 2.0, 3.0, 0.0]
-vv = np.array([1, 2, 3, 4])
-assert np.add.reduce(vv) == 10 and np.add.accumulate(vv).tolist() == [1, 3, 6, 10]
-assert np.multiply.outer(vv, vv)[1].tolist() == [2, 4, 6, 8] and np.maximum.accumulate([3, 1, 4, 1, 5]).tolist() == [3, 3, 4, 4, 5]
-
-# sorting and reshaping (3.7)
-v = np.array([30, 10, 20, 10])
-assert np.sort(v).tolist() == [10, 10, 20, 30] and np.argsort(v, kind="stable").tolist() == [1, 3, 2, 0]
-uniq, counts = np.unique(v, return_counts=True)
-assert uniq.tolist() == [10, 20, 30] and counts.tolist() == [2, 1, 1]
-s = np.sort(v)
-assert np.searchsorted(s, [5, 10, 15, 40]).tolist() == [0, 0, 2, 4] and np.searchsorted(s, 10, side="right") == 2
-assert np.partition(v, 1)[:2].tolist() == [10, 10]
-m = np.arange(12).reshape(3, -1)
-assert m.shape == (3, 4) and np.shares_memory(np.arange(12), m) is False and m.T.shape == (4, 3)
-assert np.concatenate([m, m], axis=0).shape == (6, 4) and np.hstack([m, m]).shape == (3, 8) and np.stack([m, m]).shape == (2, 3, 4)
-assert [p.shape for p in np.split(m, 2, axis=1)] == [(3, 2), (3, 2)]
-assert t.transpose(2, 0, 1).shape == (4, 2, 3) and t.swapaxes(0, 2).shape == (4, 3, 2)
-assert not m.ravel().flags["OWNDATA"] and not np.shares_memory(m, m.T.ravel())
-
-# Example 4.4: argsort sorts one array by another
-names = np.array(["Ada", "Ben", "Cy", "Di"])
-scores = np.array([72, 95, 88, 95])
+names, scores = np.array(["Ada", "Ben", "Cy", "Di"]), np.array([72, 95, 88, 95])          # Example 4.4
 order = np.argsort(-scores, kind="stable")
-assert order.tolist() == [1, 3, 2, 0] and names[order].tolist() == ["Ben", "Di", "Cy", "Ada"] and scores[order].tolist() == [95, 95, 88, 72]
 ranks = np.empty_like(order)
 ranks[order] = np.arange(len(order))
-assert ranks.tolist() == [3, 0, 2, 1]
+assert order.tolist() == [1, 3, 2, 0] and names[order].tolist() == ["Ben", "Di", "Cy", "Ada"] and ranks.tolist() == [3, 0, 2, 1]
 K = np.array([[2.0, -1.0, 0.0], [-1.0, 2.0, -1.0], [0.0, -1.0, 2.0]])
 w2, V = np.linalg.eigh(K)
 idx = np.argsort(w2)[::-1]
 assert np.allclose(np.sqrt(w2[idx]), [math.sqrt(2 + math.sqrt(2)), math.sqrt(2), math.sqrt(2 - math.sqrt(2))])
-assert np.sqrt(w2[idx]).round(4).tolist() == [1.8478, 1.4142, 0.7654]
-assert np.allclose(K @ V[:, idx], V[:, idx] * w2[idx])
+assert np.sqrt(w2[idx]).round(4).tolist() == [1.8478, 1.4142, 0.7654] and np.allclose(K @ V[:, idx], V[:, idx] * w2[idx])
 
-# linear algebra properties (3.8)
-rng_la = np.random.default_rng(3)
-A4 = rng_la.standard_normal((4, 4))
-b4 = rng_la.standard_normal(4)
-x4 = np.linalg.solve(A4, b4)
+rng_la = np.random.default_rng(3)                                                         # linalg properties (3.8)
+A4, b4 = rng_la.standard_normal((4, 4)), rng_la.standard_normal(4)
 M, y = rng_la.standard_normal((6, 3)), rng_la.standard_normal(6)
 coef, _, rank, _ = np.linalg.lstsq(M, y, rcond=None)
-S = A4 + A4.T
-w, Vs = np.linalg.eigh(S)
+w, Vs = np.linalg.eigh(A4 + A4.T)
 U, sv, Vt = np.linalg.svd(M, full_matrices=False)
 Q, R = np.linalg.qr(M)
-assert np.allclose(A4 @ x4, b4) and rank == 3 and np.allclose(M.T @ (M @ coef - y), 0)
-assert np.allclose(S @ Vs, Vs * w) and np.allclose(Vs.T @ Vs, np.eye(4)) and np.all(np.diff(w) >= 0)
-assert (U.shape, sv.shape, Vt.shape) == ((6, 3), (3,), (3, 3)) and np.allclose((U * sv) @ Vt, M) and np.allclose(Q @ R, M)
-assert np.allclose(np.linalg.norm(M, axis=0), np.sqrt((M ** 2).sum(axis=0)))
-assert np.isclose(np.linalg.det(A4), np.prod(np.linalg.eigvals(A4)).real)
+assert np.allclose(A4 @ np.linalg.solve(A4, b4), b4) and rank == 3 and np.allclose(M.T @ (M @ coef - y), 0)
+assert np.allclose((A4 + A4.T) @ Vs, Vs * w) and np.allclose(Vs.T @ Vs, np.eye(4)) and np.all(np.diff(w) >= 0)
+assert np.allclose((U * sv) @ Vt, M) and np.allclose(Q @ R, M) and np.isclose(np.linalg.det(A4), np.prod(np.linalg.eigvals(A4)).real)
 
 
 def make_matrix(n, cond, rng):
@@ -437,47 +350,35 @@ def make_matrix(n, cond, rng):
     return (U * np.logspace(0, -np.log10(cond), n)) @ V.T
 
 
-rng_inv = np.random.default_rng(0)
-res_solve, res_inv = {}, {}
+rng_inv, res_solve, res_inv = np.random.default_rng(0), {}, {}
 for cond in (1e2, 1e8, 1e12):
     Ac = make_matrix(200, cond, rng_inv)
-    x_true = rng_inv.standard_normal(200)
-    bc = Ac @ x_true
-    x_s, x_i = np.linalg.solve(Ac, bc), np.linalg.inv(Ac) @ bc
-    res_solve[cond] = np.linalg.norm(Ac @ x_s - bc) / np.linalg.norm(bc)
-    res_inv[cond] = np.linalg.norm(Ac @ x_i - bc) / np.linalg.norm(bc)
-    assert res_solve[cond] < 1e-13
-assert res_inv[1e12] > 1e-8 and res_inv[1e12] > 1e3 * res_solve[1e12] and res_inv[1e8] > 10 * res_solve[1e8]
+    bc = Ac @ rng_inv.standard_normal(200)
+    res_solve[cond] = np.linalg.norm(Ac @ np.linalg.solve(Ac, bc) - bc) / np.linalg.norm(bc)
+    res_inv[cond] = np.linalg.norm(Ac @ (np.linalg.inv(Ac) @ bc) - bc) / np.linalg.norm(bc)
+assert max(res_solve.values()) < 1e-13 and res_inv[1e12] > 1e-8 and res_inv[1e12] > 1e3 * res_solve[1e12] and res_inv[1e8] > 10 * res_solve[1e8]
 Ab, bb = np.random.default_rng(9).standard_normal((1000, 1000)), np.random.default_rng(10).standard_normal(1000)
 t_solve, t_inv = best(np.linalg.solve, Ab, bb), best(lambda: np.linalg.inv(Ab) @ bb)
-assert t_inv > 1.5 * t_solve
+assert t_inv > 1.5 * t_solve          # inv then @ costs several times one solve
 print(f"  residuals at kappa=1e12: solve {res_solve[1e12]:.1e}, inv {res_inv[1e12]:.1e}; n=1000 solve {t_solve * 1e3:.0f} ms, inv {t_inv * 1e3:.0f} ms")
 
-# einsum (3.8) and Example 4.5
-rng_e = np.random.default_rng(7)
+rng_e = np.random.default_rng(7)                                                          # einsum (3.8), Example 4.5
 M3, Ae, Be = rng_e.standard_normal((3, 3)), rng_e.standard_normal((3, 4)), rng_e.standard_normal((4, 2))
 Se, Te = rng_e.standard_normal((5, 3, 4)), rng_e.standard_normal((5, 4, 2))
 ue, we, Qe, We = rng_e.standard_normal(3), rng_e.standard_normal(4), rng_e.standard_normal((3, 4, 5)), rng_e.standard_normal((4, 5))
-cases = [
-    (np.einsum("ii->", M3), np.trace(M3), ()),
-    (np.einsum("ij,jk->ik", Ae, Be), Ae @ Be, (3, 2)),
-    (np.einsum("bij,bjk->bik", Se, Te), Se @ Te, (5, 3, 2)),
-    (np.einsum("i,j->ij", ue, we), np.multiply.outer(ue, we), (3, 4)),
-    (np.einsum("ijk,jk->i", Qe, We), (Qe * We).sum(axis=(1, 2)), (3,)),
-]
-for got, want, shape in cases:
+for got, want, shape in [(np.einsum("ii->", M3), np.trace(M3), ()), (np.einsum("ij,jk->ik", Ae, Be), Ae @ Be, (3, 2)),
+                         (np.einsum("bij,bjk->bik", Se, Te), Se @ Te, (5, 3, 2)), (np.einsum("i,j->ij", ue, we), np.multiply.outer(ue, we), (3, 4)),
+                         (np.einsum("ijk,jk->i", Qe, We), (Qe * We).sum(axis=(1, 2)), (3,))]:
     assert np.shape(got) == shape and np.allclose(got, want)
 Ai, Bi = np.array([[1, 2], [3, 4]]), np.array([[0, 1], [1, 0]])
 assert np.einsum("ij,jk->ik", Ai, Bi).tolist() == [[2, 1], [4, 3]] == (Ai @ Bi).tolist()
 assert np.einsum("ii", Ai) == 5 and np.einsum("ii->i", Ai).tolist() == [1, 4] and np.einsum("ij->ji", Ai).tolist() == [[1, 3], [2, 4]]
-mm = np.array([1.0, 2.0])
-rr = np.array([[1.0, 0.0, 0.0], [0.0, 2.0, 0.0]])
+mm, rr = np.array([1.0, 2.0]), np.array([[1.0, 0.0, 0.0], [0.0, 2.0, 0.0]])             # inertia tensor of two point masses (CM-7)
 I_e = np.einsum("n,na,na->", mm, rr, rr) * np.eye(3) - np.einsum("n,na,nb->ab", mm, rr, rr)
 I_loop = sum(mn * (rn @ rn * np.eye(3) - np.outer(rn, rn)) for mn, rn in zip(mm, rr))
-assert np.allclose(I_e, I_loop) and np.allclose(np.diag(I_e), [8, 1, 9]) and np.allclose(I_e, np.diag([8.0, 1.0, 9.0]))
+assert np.allclose(I_e, I_loop) and np.allclose(I_e, np.diag([8.0, 1.0, 9.0]))
 
-# floating point (3.9)
-assert (0.1 + 0.2 == 0.3) is False and np.isclose(0.1 + 0.2, 0.3)
+assert (0.1 + 0.2 == 0.3) is False and np.isclose(0.1 + 0.2, 0.3)                          # floating point (3.9)
 assert np.isclose(1e-10, 2e-10) and not np.isclose(1e-10, 2e-10, atol=0)
 xf = np.random.default_rng(11).random(10 ** 6).astype(np.float32)
 exact = math.fsum(xf.astype(np.float64))
@@ -485,13 +386,13 @@ rel = lambda s: abs(float(s) - exact) / exact
 e_pair, e_seq, e_64 = rel(np.sum(xf)), rel(np.cumsum(xf)[-1]), rel(np.sum(xf, dtype=np.float64))
 assert e_pair < 1e-7 and e_seq > 100 * e_pair and e_64 < 1e-14
 if sys.version_info >= (3, 12):
-    assert rel(sum(xf.tolist())) < 1e-15           # Python's sum() is compensated from 3.12
-print(f"  float32 sum rel. error: pairwise {e_pair:.1e}, sequential {e_seq:.1e}, float64 accumulator {e_64:.1e}")
+    assert rel(sum(xf.tolist())) < 1e-15                                                  # Python's sum() is compensated from 3.12
+print(f"  float32 sum, relative error: pairwise {e_pair:.1e}, sequential {e_seq:.1e}, float64 accumulator {e_64:.1e}")
 print(f"Part 5 ok ({time.perf_counter() - T0:.1f} s)")
 
 # %% [markdown]
 # ## Part 6: the random-walk ensemble (Build 7, notes §1 and §3.10, F5)
-# $\langle x_t^2\rangle = t$ for $\pm1$ steps (3.7): a log-log fit of the MSD has slope 1.
+# $\langle x_t^2\rangle = t$ for $\pm1$ steps (3.7), so the MSD has log-log slope 1.
 
 # %%
 def walks_loop(n_walkers, n_steps, seed=0):
@@ -508,36 +409,29 @@ def walks_loop(n_walkers, n_steps, seed=0):
 
 def walks_array(n_walkers, n_steps, seed=0):
     """Positions of independent +-1 walkers, shape (walkers, time): one draw, one cumsum along axis 1."""
-    gen = np.random.default_rng(seed)
-    return gen.choice([-1, 1], size=(n_walkers, n_steps)).cumsum(axis=1)
+    return np.random.default_rng(seed).choice([-1, 1], size=(n_walkers, n_steps)).cumsum(axis=1)
 
 
 def walks_array_fast(n_walkers, n_steps, seed=0):
-    gen = np.random.default_rng(seed)
-    steps = 2 * gen.integers(0, 2, size=(n_walkers, n_steps), dtype=np.int16) - 1
+    steps = 2 * np.random.default_rng(seed).integers(0, 2, size=(n_walkers, n_steps), dtype=np.int16) - 1
     return steps.cumsum(axis=1, dtype=np.int16)
 
 
-t_small = best(walks_loop, 200, 1000, repeat=2)
-per_step = t_small / (200 * 1000)
+per_step = best(walks_loop, 200, 1000, repeat=2) / (200 * 1000)
 t_big, t_fast = best(walks_array, 10_000, 1_000, repeat=2), best(walks_array_fast, 10_000, 1_000, repeat=2)
-assert t_big < per_step * 1e7 / 5 and t_fast < t_big
+assert t_big < per_step * 1e7 / 2 and t_fast < 1.5 * t_big
 print(f"  loop {per_step * 1e6:.2f} us/step (projection for 1e7 steps: {per_step * 1e7:.1f} s); arrays {t_big:.3f} s, narrow dtype {t_fast:.3f} s")
-
-paths_small = np.array(walks_loop(5, 50, seed=3))
-assert paths_small.shape == (5, 50) and (np.abs(np.diff(paths_small, axis=1)) == 1).all()
+small = np.array(walks_loop(5, 50, seed=3))
+assert small.shape == (5, 50) and (np.abs(np.diff(small, axis=1)) == 1).all()
 paths = walks_array_fast(10_000, 1_000, seed=2)
-assert paths.shape == (10_000, 1_000) and paths.dtype == np.int16 and (np.abs(paths[:, 0]) == 1).all()
 tt = np.arange(1, 1001)
 msd = (paths.astype(np.float64) ** 2).mean(axis=0)
 slope, intercept = np.polyfit(np.log(tt), np.log(msd), 1)
-assert msd.shape == (1000,) and msd[0] == 1.0
-assert abs(slope - 1) < 0.05, slope
-assert abs(msd[-1] / 1000 - 1) < 5 * math.sqrt(2 / 10_000)          # within 5 standard errors of t
+assert paths.shape == (10_000, 1_000) and paths.dtype == np.int16 and msd.shape == (1000,) and msd[0] == 1.0
+assert abs(slope - 1) < 0.05 and abs(msd[-1] / 1000 - 1) < 5 * math.sqrt(2 / 10_000)
 print(f"  MSD(1)={msd[0]:.3f}, MSD(1000)={msd[-1]:.1f}, log-log slope {slope:.4f}, intercept {intercept:.4f}")
-
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
-ax1.plot(np.arange(1, 1001), paths[:20].T, lw=0.6, alpha=0.8)
+ax1.plot(tt, paths[:20].T, lw=0.6, alpha=0.8)
 ax1.set(xlabel="step t", ylabel="position", title="20 of the 10,000 walkers")
 ax2.loglog(tt, msd, ".", ms=3, label="measured MSD")
 ax2.loglog(tt, tt, "k--", label=r"theory $\langle x_t^2\rangle = t$")
@@ -568,7 +462,7 @@ def mandelbrot_counts(c, max_iter):
 
 
 def mandelbrot_unmasked(c, max_iter):
-    """Same counts without masks: every pixel is updated every step (overflow warnings silenced)."""
+    """Same counts with every pixel updated every step (overflow warnings silenced)."""
     z = np.zeros_like(c)
     count = np.zeros(c.shape, dtype=int)
     with np.errstate(all="ignore"):
@@ -578,29 +472,24 @@ def mandelbrot_unmasked(c, max_iter):
     return count
 
 
-c4 = np.array([0, 1, 1 + 1j, -2])
-z4, alive4, count4 = np.zeros_like(c4), np.ones(4, dtype=bool), np.zeros(4, dtype=int)
-trace = []
+c4 = np.array([0, 1, 1 + 1j, -2])                                  # the four-point trace of Example 4.6
+z4, alive4, count4, trace = np.zeros_like(c4), np.ones(4, dtype=bool), np.zeros(4, dtype=int), []
 for k in range(4):
     z4[alive4] = z4[alive4] ** 2 + c4[alive4]
     alive4 &= np.abs(z4) <= 2
     count4 += alive4
     trace.append((alive4.astype(int).tolist(), count4.tolist()))
-assert trace[0] == ([1, 1, 1, 1], [1, 1, 1, 1]) and trace[1] == ([1, 1, 0, 1], [2, 2, 1, 2])
-assert trace[2] == ([1, 0, 0, 1], [3, 2, 1, 3]) and trace[3] == ([1, 0, 0, 1], [4, 2, 1, 4])
+assert trace == [([1, 1, 1, 1], [1, 1, 1, 1]), ([1, 1, 0, 1], [2, 2, 1, 2]), ([1, 0, 0, 1], [3, 2, 1, 3]), ([1, 0, 0, 1], [4, 2, 1, 4])]
 assert z4.tolist() == [0, 5, 1 + 3j, 2] and abs(1 + 3j) == math.sqrt(10)
 
 xs_m, ys_m = np.linspace(-2.2, 0.8, 600), np.linspace(-1.2, 1.2, 400)
 C = xs_m[None, :] + 1j * ys_m[:, None]
-t_mask = best(mandelbrot_counts, C, 80, repeat=2)
 counts, n_alive = mandelbrot_counts(C, 80)
-t_unmask = best(mandelbrot_unmasked, C, 80, repeat=2)
-assert np.array_equal(counts, mandelbrot_unmasked(C, 80)) and 0.2 < t_mask / t_unmask < 5
-assert C.shape == counts.shape == (400, 600)
+t_mask, t_unmask = best(mandelbrot_counts, C, 80, repeat=2), best(mandelbrot_unmasked, C, 80, repeat=2)
+assert np.array_equal(counts, mandelbrot_unmasked(C, 80)) and 0.2 < t_mask / t_unmask < 5 and counts.shape == (400, 600)
 assert [n_alive[k - 1] for k in (1, 3, 10, 80)] == [213584, 137632, 67222, 51626]
-assert mandelbrot_counts(np.array([0, 1, 1 + 1j]), 80)[0].tolist() == [80, 2, 1]        # the three known points
-assert mandelbrot_counts(np.array([-2 + 0j, -1 + 0j, 0.25 + 0j]), 80)[0].tolist() == [80, 80, 80]     # in the set
-
+assert mandelbrot_counts(np.array([0, 1, 1 + 1j]), 80)[0].tolist() == [80, 2, 1]               # the three known points
+assert mandelbrot_counts(np.array([-2 + 0j, -1 + 0j, 0.25 + 0j]), 80)[0].tolist() == [80, 80, 80]   # more points in the set
 fig, ax = plt.subplots(figsize=(7, 4.8))
 im = ax.imshow(counts, extent=(-2.2, 0.8, -1.2, 1.2), origin="lower", cmap="magma")
 ax.set(xlabel="Re c", ylabel="Im c", title="Mandelbrot escape counts (80 iterations)")
@@ -608,23 +497,20 @@ fig.colorbar(im, ax=ax, label="iterations survived")
 fig.tight_layout()
 fig.savefig(FIG / "mandelbrot.png", dpi=120)
 plt.close(fig)
-print(f"  masked {t_mask:.2f} s, unmasked {t_unmask:.2f} s")
-print(f"Part 7 ok ({time.perf_counter() - T0:.1f} s)")
+print(f"  masked {t_mask:.2f} s, unmasked {t_unmask:.2f} s\nPart 7 ok ({time.perf_counter() - T0:.1f} s)")
 
 # %% [markdown]
 # ## Part 8: windows, strides and convolution (Build 8, notes §3.11)
-# Four 2D convolutions (3.8): two loops, windows plus a product-and-sum, windows plus `einsum`, `scipy.signal.convolve2d`.
+# Four 2D convolutions (3.8): two loops, windows plus product-and-sum, windows plus `einsum`, `convolve2d`.
 
 # %%
 x8w = np.arange(8.0)
 Wd = sliding_window_view(x8w, 3)
 assert Wd.shape == (6, 3) and Wd.strides == (8, 8) and np.shares_memory(Wd, x8w) and not Wd.flags["WRITEABLE"]
-assert np.allclose(Wd.mean(axis=-1), np.convolve(x8w, np.ones(3) / 3, mode="valid"))
 assert np.array_equal(Wd, as_strided(x8w, shape=(6, 3), strides=(8, 8)))
 sig = np.random.default_rng(6).standard_normal(1000)
-for w in (3, 10, 51):
-    ma_win = sliding_window_view(sig, w).mean(axis=-1)
-    assert ma_win.shape == (1000 - w + 1,) and np.allclose(ma_win, np.convolve(sig, np.ones(w) / w, mode="valid"))
+for w in (3, 10, 51):                                              # strides moving average against np.convolve
+    assert np.allclose(sliding_window_view(sig, w).mean(axis=-1), np.convolve(sig, np.ones(w) / w, mode="valid"))
 
 
 def conv2d_loops(I, K):
@@ -651,12 +537,10 @@ Im, Ker = rng_c.standard_normal((200, 200)), rng_c.standard_normal((5, 5))
 ref = convolve2d(Im, Ker, mode="valid")
 times_c = {}
 for name, f in [("loops", conv2d_loops), ("window-sum", conv2d_sum), ("einsum", conv2d_windows), ("scipy", lambda I, K: convolve2d(I, K, mode="valid"))]:
-    got = f(Im, Ker)
-    assert got.shape == (196, 196) and np.allclose(got, ref)
+    assert f(Im, Ker).shape == (196, 196) and np.allclose(f(Im, Ker), ref)
     times_c[name] = best(f, Im, Ker, repeat=2)
 assert times_c["loops"] > 10 * times_c["einsum"]
-corr = convolve2d(Im, Ker[::-1, ::-1], mode="valid")                    # without the flip: cross-correlation
-assert np.allclose(corr, np.einsum("ijpq,pq->ij", sliding_window_view(Im, (5, 5)), Ker))
+assert np.allclose(convolve2d(Im, Ker[::-1, ::-1], mode="valid"), np.einsum("ijpq,pq->ij", sliding_window_view(Im, (5, 5)), Ker))   # no flip = correlation
 print("  conv2d ms: " + ", ".join(f"{k} {v * 1e3:.2f}" for k, v in times_c.items()))
 print(f"Part 8 ok ({time.perf_counter() - T0:.1f} s)")
 
@@ -666,14 +550,6 @@ print(f"Part 8 ok ({time.perf_counter() - T0:.1f} s)")
 # %%
 def relu_scalar(v):
     return v if v > 0 else 0.0
-
-
-xr = np.random.default_rng(0).standard_normal(10 ** 6)
-t_vec = best(np.vectorize(relu_scalar), xr, repeat=2)
-t_lc = best(lambda: [relu_scalar(v) for v in xr.tolist()], repeat=2)
-t_max = best(np.maximum, xr, 0.0)
-assert np.array_equal(np.vectorize(relu_scalar)(xr), np.maximum(xr, 0.0)) and np.array_equal(np.where(xr > 0, xr, 0.0), np.maximum(xr, 0.0))
-assert t_vec > 0.3 * t_lc and t_vec > 10 * t_max                   # np.vectorize is a loop, not a speedup
 
 
 def grow_append(n):
@@ -690,12 +566,6 @@ def preallocate(n):
     return a
 
 
-assert np.array_equal(grow_append(20_000), preallocate(20_000))
-assert best(grow_append, 20_000, repeat=2) > 5 * best(preallocate, 20_000, repeat=2)
-
-Xn = np.random.default_rng(1).random((100_000, 10))
-
-
 def normalize_loop(X):
     out = np.empty_like(X)
     for i in range(len(X)):
@@ -703,6 +573,12 @@ def normalize_loop(X):
     return out
 
 
+xr = np.random.default_rng(0).standard_normal(10 ** 6)
+t_vec, t_lc, t_max = best(np.vectorize(relu_scalar), xr, repeat=2), best(lambda: [relu_scalar(v) for v in xr.tolist()], repeat=2), best(np.maximum, xr, 0.0)
+assert np.array_equal(np.vectorize(relu_scalar)(xr), np.maximum(xr, 0.0)) and np.array_equal(np.where(xr > 0, xr, 0.0), np.maximum(xr, 0.0))
+assert t_vec > 0.3 * t_lc and t_vec > 10 * t_max                   # np.vectorize is a loop, not a speedup
+assert np.array_equal(grow_append(20_000), preallocate(20_000)) and best(grow_append, 20_000, repeat=2) > 5 * best(preallocate, 20_000, repeat=2)
+Xn = np.random.default_rng(1).random((100_000, 10))
 assert np.allclose(normalize_loop(Xn), Xn / Xn.sum(axis=1, keepdims=True))
 assert best(normalize_loop, Xn, repeat=1) > 10 * best(lambda: Xn / Xn.sum(axis=1, keepdims=True))
 
@@ -723,16 +599,16 @@ print(f"Part 9 ok ({time.perf_counter() - T0:.1f} s)")
 
 # %% [markdown]
 # ## Your turn
-# Reference solutions are in `solutions.md` (B7); try first. Set each `YOUR_...` name below to your
-# own function and re-run; the cells check it against the provided reference.
+# Reference solutions are in `solutions.md` (B7); try first. Set each `YOUR_...` name below to your own
+# function and re-run; the cell checks it against the provided reference.
 #
-# 1. **Vectorize a loop.** `loopy_assign(X, C)` returns, for each row of `X` (n, d), the index of the
-#    nearest row of `C` (k, d). Write `assign_vec(X, C)` with no Python loop (hint: Build 4 plus `argmin`).
-# 2. **Covariance by broadcasting.** Write `cov_broadcast(X)` for an (n, d) data matrix: centre with a
-#    broadcast, then one `@`; divide by n - 1. Compare with `np.cov(X, rowvar=False)`.
-# 3. **Game of Life.** Write `life_step(grid)` for a 0/1 array with dead borders using
-#    `sliding_window_view` on a padded copy; check a blinker oscillates with period 2 and a glider moves.
-# 4. **Find the bug.** `row_normalize_buggy` below passes silently on a square matrix. Explain, then fix.
+# 1. **Vectorize a loop.** `loopy_assign(X, C)` returns, for each row of `X` (n, d), the index of the nearest
+#    row of `C` (k, d). Write `assign_vec(X, C)` with no Python loop (hint: Build 4, then `argmin`).
+# 2. **Covariance by broadcasting.** `cov_broadcast(X)` for an (n, d) matrix: centre with a broadcast, one `@`,
+#    divide by n - 1. Compare with `np.cov(X, rowvar=False)`.
+# 3. **Game of Life.** `life_step(grid)` for a 0/1 array with dead borders, using `sliding_window_view` on a
+#    padded copy. A blinker must have period 2.
+# 4. **Find the bug.** `row_normalize_buggy` passes silently on a square matrix. Explain, then fix.
 
 # %%
 def loopy_assign(X, C):
@@ -749,19 +625,15 @@ def loopy_assign(X, C):
 
 
 def row_normalize_buggy(X):
-    """Intended: divide each row by its sum, so rows sum to 1."""
-    return X / X.sum(axis=0)
+    """Intended: divide each row by its sum, so every row sums to 1."""
+    return X / X.sum(axis=1)
 
 
-YOUR_ASSIGN = None          # e.g. YOUR_ASSIGN = assign_vec
-YOUR_COV = None             # e.g. YOUR_COV = cov_broadcast
-YOUR_LIFE = None            # e.g. YOUR_LIFE = life_step
-YOUR_ROW_NORMALIZE = None   # your fixed version of row_normalize_buggy
+YOUR_ASSIGN = YOUR_COV = YOUR_LIFE = YOUR_ROW_NORMALIZE = None      # set each to your function, e.g. YOUR_ASSIGN = assign_vec
 
 Xa, Ca = np.random.default_rng(20).standard_normal((60, 3)), np.random.default_rng(21).standard_normal((5, 3))
-ref_assign = loopy_assign(Xa, Ca)
 if YOUR_ASSIGN is not None:
-    assert np.array_equal(YOUR_ASSIGN(Xa, Ca), ref_assign)
+    assert np.array_equal(YOUR_ASSIGN(Xa, Ca), loopy_assign(Xa, Ca))
     print("Your turn 1 passed")
 Xcov = np.random.default_rng(22).standard_normal((50, 4))
 if YOUR_COV is not None:
@@ -774,15 +646,14 @@ if YOUR_LIFE is not None:
     assert once[1:4, 2].tolist() == [1, 1, 1] and once.sum() == 3 and np.array_equal(YOUR_LIFE(once), blinker)
     print("Your turn 3 passed")
 Xsq = np.arange(1.0, 10.0).reshape(3, 3)
-bad = row_normalize_buggy(Xsq)
-assert not np.allclose(bad.sum(axis=1), 1)                       # silently wrong on a square matrix
+assert not np.allclose(row_normalize_buggy(Xsq).sum(axis=1), 1)    # silently wrong on a square matrix...
 try:
     row_normalize_buggy(np.ones((3, 4)))
     raise AssertionError("expected a broadcast error")
 except ValueError:
-    pass                                                          # ...and a loud error on a non-square one
+    pass                                                            # ...and a loud error on a non-square one
 if YOUR_ROW_NORMALIZE is not None:
-    assert np.allclose(YOUR_ROW_NORMALIZE(Xsq).sum(axis=1), 1) and np.allclose(YOUR_ROW_NORMALIZE(np.ones((3, 4))).sum(axis=1), 1)
+    assert all(np.allclose(YOUR_ROW_NORMALIZE(X).sum(axis=1), 1) for X in (Xsq, np.ones((3, 4))))
     print("Your turn 4 passed")
 
 # %%

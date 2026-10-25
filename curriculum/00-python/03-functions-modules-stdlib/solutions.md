@@ -1,6 +1,6 @@
 # PY-3 Solutions
 
-Every code block below was run, and the outputs shown are the real ones. Blocks with `assert`s passed them. Timing-based solutions assert only orderings and wide margins, so they pass on any ordinary machine but print numbers that differ from yours.
+Every code block below was run, and the outputs shown are the real ones. Blocks with `assert`s passed them. Timing-based solutions assert only orderings and wide margins, so they pass on any ordinary machine but print numbers that differ from yours. Shell sessions ran in the scratch directory `/tmp/py3` (the module folder for `numtools`), so tracebacks show that path.
 
 ## A. Warm-up
 
@@ -226,7 +226,7 @@ gcd(48, 18)
 
 `C(20) = 21891` agrees with $2F_{21} - 1 = 21891$ (`fib_iter(21)` is 10946). The trace of `gcd` shows Euclid's algorithm as a chain of calls whose arguments shrink: the last non-zero remainder is the answer.
 
-**B2.** `OrderedDict` keeps insertion order and offers `move_to_end(key)` and `popitem(last=False)`, both $O(1)$: that is "mark as most recent" and "evict the least recent" without scanning. A plain dict would need an $O(n)$ search for the oldest entry (modern dicts remember insertion order, but they cannot cheaply move an existing key to the end).
+**B2.** `OrderedDict` keeps insertion order and offers `move_to_end(key)` and `popitem(last=False)`, both $O(1)$: that is "mark as most recent" and "evict the least recent" without scanning. A plain dict can move a key to the end in $O(1)$ (`d[k] = d.pop(k)`), but its oldest entry is `next(iter(d))`, which walks over the slots left by earlier deletions and slows down as the cache churns; `OrderedDict` keeps a linked list, so both operations stay $O(1)$.
 
 ```python
 import functools
@@ -275,7 +275,7 @@ maxsize 20: mine (1976, 8024)   functools (1976, 8024)
 maxsize 50: mine (4992, 5008)   functools (4992, 5008)
 ```
 
-**B3.** The factory has three levels; the check goes in the innermost. Written without parentheses, `@bounded` calls `bounded(func)` with one argument, and Python reports a missing `hi`, which does not say what to do. Detecting a callable `lo` lets us write a better message.
+**B3.** The factory has three levels; the check goes in the innermost. Written without parentheses, `@bounded` calls `bounded(func)` with one argument. If `hi` is a required parameter, Python itself reports a missing `hi` before our code runs, which does not say what to do, and a `callable(lo)` check in the body is never reached. Giving `hi` a `None` default lets the body run, so we can detect the single callable argument and raise a message that names the fix.
 
 ```python
 import functools
@@ -283,9 +283,9 @@ import math
 
 from numtools import bisect
 
-def bounded(lo, hi):
-    if callable(lo):
-        raise TypeError("bounded needs arguments: write @bounded(lo, hi), not @bounded")
+def bounded(lo, hi=None):
+    if hi is None or callable(lo):
+        raise TypeError("bounded needs two bounds: write @bounded(lo, hi), not @bounded")
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -315,7 +315,7 @@ assert fixed_point.__name__ == "fixed_point" and 0 <= fixed_point() <= 1
 ```text
 0.739085
 ValueError: too_big returned 0.7390851332156672, outside [0.0, 0.5]
-TypeError: bounded() missing 1 required positional argument: 'hi'
+TypeError: bounded needs two bounds: write @bounded(lo, hi), not @bounded
 ```
 
 **B4.** (a) With the default limit of 1000, all three functions fail at the same depth on this build, 997 (the script itself and the measuring loop use the remaining frames; do not memorize 997, since versions differ by a few). The limit counts *Python frames*: the number of locals changes the memory per frame, not the count, and the C-implemented `lru_cache` wrapper adds no Python frame of its own. The cache is cleared before every trial; otherwise each call would find its predecessor cached and never recurse deeply (a cache does not make recursion shallower, it only avoids repeated work). (b) A plain recursion needs $n$ frames. A loop needs none. Splitting the range in half at each step needs only $\log_2 n$ frames, because the two halves are processed one after the other, not stacked.
@@ -438,7 +438,7 @@ norm of (3, 4): 5.0
 mean and variance of 1..5: 3.0 2.5
 $ python3 geom/stats.py
 Traceback (most recent call last):
-  File "geom/stats.py", line 2, in <module>
+  File "/tmp/py3/geom/stats.py", line 2, in <module>
     from .vectors import dot
 ImportError: attempted relative import with no known parent package
 $ cd geom && python3 -c "import geom"
@@ -603,7 +603,7 @@ memoize / lru_cache = 3.6   lru_cache / iterative = 6.5
 
 ## C. Challenge
 
-**C1.** With `func=None` as the first parameter and everything else keyword-only, the decorator sees one of two calls: `counted(f)` (bare use: `func` is the function) or `counted(label="x")` (with options: `func` is `None`, and we return the real decorator). A positional argument that is not callable, such as `@counted("fib")`, is neither: without a check, `counted("fib")` would try to wrap a string and fail later, inside `functools.wraps`, with a message about the string. We test `callable(func)` first. A function passed positionally, `@counted(fib)`, cannot be told from bare use: it wraps `fib` and returns the wrapper, which is then applied to the decorated function and silently misbehaves; the signature cannot prevent it, which is why the options are keyword-only.
+**C1.** With `func=None` as the first parameter and everything else keyword-only, the decorator sees one of two calls: `counted(f)` (bare use: `func` is the function) or `counted(label="x")` (with options: `func` is `None`, and we return the real decorator). A positional argument that is not callable, such as `@counted("fib")`, is neither: without a check, `counted("fib")` would try to wrap the string and fail at `f.__name__` with `AttributeError: 'str' object has no attribute '__name__'` (`functools.wraps` itself tolerates missing attributes), a message that does not name the real mistake. We test `callable(func)` first. A function passed positionally, `@counted(fib)`, cannot be told from bare use: it wraps `fib` and returns the wrapper, which is then applied to the decorated function and silently misbehaves; the signature cannot prevent it, which is why the options are keyword-only.
 
 ```python
 import functools

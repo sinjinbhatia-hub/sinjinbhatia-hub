@@ -11,7 +11,7 @@ Func = Callable[[float], float]
 
 
 def bisect(f: Func, a: float, b: float, tol: float = 1e-12, max_iter: int = 200) -> tuple[float, int]:
-    """Root of f in [a, b] by halving the bracket (PY-1 eq. 3.9); f(a) f(b) < 0 is required."""
+    """Root of f in [a, b] by halving the bracket (iteration count: PY-1 eq. 3.9); f(a) f(b) < 0 is required."""
     fa, fb = f(a), f(b)
     if fa * fb > 0:
         raise ValueError("f(a) and f(b) must have opposite signs")

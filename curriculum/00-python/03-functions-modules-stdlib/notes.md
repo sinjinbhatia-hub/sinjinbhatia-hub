@@ -2,7 +2,7 @@
 
 **Time:** ~8 hours · **Prerequisites:** PY-2 · **Unlocks:** PY-4, PY-5, PY-10
 
-> **Conventions in this module.** Python 3.11+; every output below is the real output of a run under Python 3.13. `>>>` blocks are interactive transcripts; other blocks are scripts followed by their output; `$` blocks are shell sessions (in a scratch directory, or in this module's folder when they mention `numtools`). Timings come from one run on one machine: trust ratios, not microseconds. $F_n$ is the Fibonacci sequence ($F_0 = 0$, $F_1 = 1$); $\varphi = (1+\sqrt5)/2$. Standard library only in the notes; `project.py` adds NumPy and Matplotlib. The package `numtools/` in this folder is the code deliverable (§3.8).
+> **Conventions in this module.** Python 3.11+; every output below is the real output of a run under Python 3.13. `>>>` blocks are interactive transcripts; other blocks are scripts followed by their output; `$` blocks are shell sessions (in the scratch directory `/tmp/py3`, or in this module's folder when they mention `numtools`; tracebacks print absolute paths, and the module folder's is shortened to `.../03-functions-modules-stdlib`). Timings come from one run on one machine: trust ratios, not microseconds. $F_n$ is the Fibonacci sequence ($F_0 = 0$, $F_1 = 1$); $\varphi = (1+\sqrt5)/2$. Standard library only in the notes; `project.py` adds NumPy and Matplotlib. The package `numtools/` in this folder is the code deliverable (§3.8).
 
 ## 0. Where this sits
 
@@ -551,7 +551,7 @@ fib(4)
 $$C(n) = 2F_{n+1} - 1. \tag{3.1}$$
 *Proof by induction.* $C(0) = 1 = 2F_1 - 1$ and $C(1) = 1 = 2F_2 - 1$. If the claim holds for $n - 1$ and $n - 2$, then $C(n) = (2F_n - 1) + (2F_{n-1} - 1) + 1 = 2F_{n+1} - 1$. ∎
 
-By (3.1) and $F_n \sim \varphi^n / \sqrt5$, calls grow by $\varphi \approx 1.618$ per unit of $n$, so $C(n+5)/C(n) \to \varphi^5 \approx 11.09$. With a cache the body runs once per distinct argument ($n + 1$ times) and the calls total $2n - 1$: exponential becomes linear.
+By (3.1) and $F_n \sim \varphi^n / \sqrt5$, calls grow by $\varphi \approx 1.618$ per unit of $n$, so $C(n+5)/C(n) \to \varphi^5 \approx 11.09$. With a cache the body runs once per distinct argument ($n + 1$ times) and the calls total $2n - 1$ (for $n \geq 1$): exponential becomes linear.
 
 ```python
 def fib_calls(n):
@@ -782,7 +782,7 @@ print(hello())
 ```console
 $ cd proj && python3 scripts/run.py
 Traceback (most recent call last):
-  File "proj/scripts/run.py", line 2, in <module>
+  File "/tmp/py3/proj/scripts/run.py", line 2, in <module>
     from tools.helpers import hello
 ModuleNotFoundError: No module named 'tools'
 $ cd proj && python3 -m scripts.run
@@ -826,12 +826,12 @@ $ python3 -c "import numtools; print(numtools.__all__)"
 ['bisect', 'newton', 'secant', 'poly_add', 'poly_mul', 'poly_eval', 'poly_deriv', 'timer', 'memoize', 'retry', 'compose', 'pipeline']
 $ python3 numtools/cli.py
 Traceback (most recent call last):
-  File "numtools/cli.py", line 9, in <module>
+  File ".../03-functions-modules-stdlib/numtools/cli.py", line 9, in <module>
     from . import __version__
 ImportError: attempted relative import with no known parent package
 ```
 
-The last command shows the other half of relative imports: run directly, `cli.py` is a top-level script with no package, so `from . import __version__` has nothing to be relative to. `project.py` is a script *next to* `numtools/`, so Python puts this folder first on `sys.path` when you run it; in an interactive session started elsewhere the import can fail, so `project.py` inserts its own folder explicitly.
+The last command shows the other half of relative imports: run directly, `cli.py` is a top-level script with no package, so `from . import __version__` has nothing to be relative to. `project.py` is a script *next to* `numtools/`, so Python puts this folder first on `sys.path` when you run it; in an interactive session started elsewhere the import can fail, so `project.py` inserts its own folder explicitly. After the first import, `ls numtools` also shows a `__pycache__/` folder of compiled bytecode; it is disposable and belongs in `.gitignore`.
 
 ### 3.9 The standard library tour
 

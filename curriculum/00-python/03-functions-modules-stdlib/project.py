@@ -13,6 +13,7 @@
 # timer, memoize and retry before reading numtools/decorators.py.
 
 # %%
+import ast
 import cmath
 import contextlib
 import functools
@@ -99,7 +100,7 @@ def save_line_plot(name, title, xs, series, ylabel="seconds"):
 
 # %%
 out = run_py("-c", "import numtools, sys; print(numtools.__all__); print('numtools' in sys.modules)").stdout.splitlines()
-assert eval(out[0]) == numtools.__all__ and out[1] == "True" and len(numtools.__all__) == 12
+assert ast.literal_eval(out[0]) == numtools.__all__ and out[1] == "True" and len(numtools.__all__) == 12
 assert numtools.bisect.__module__ == "numtools.roots" and run_py("-m", "numtools", "--version").stdout == "numtools 0.1\n"
 help_text = run_py("-m", "numtools", "--help").stdout                      # Example 4.6
 assert help_text.startswith("usage: python -m numtools [-h] [--version] {bisect,newton} ...\n")
