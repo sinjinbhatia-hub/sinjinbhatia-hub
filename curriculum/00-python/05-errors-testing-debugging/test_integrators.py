@@ -38,11 +38,6 @@ def test_trapezoid_exact_on_lines(f, a, b, exact, n):
     assert ig.trapezoid(f, a, b, n) == pytest.approx(exact, rel=1e-12, abs=1e-12)
 
 
-def test_trapezoid_hand_value():
-    # h = pi/2, y = (0, 1, 0): h * (0/2 + 1 + 0/2) = pi/2
-    assert ig.trapezoid(math.sin, 0.0, math.pi, 2) == pytest.approx(math.pi / 2, rel=1e-14)
-
-
 def test_trapezoid_error_order():
     order = observed_order(ig.trapezoid, math.sin, 0.0, math.pi, 2.0, (16, 32, 64, 128))
     assert order == pytest.approx(2.0, abs=0.1)

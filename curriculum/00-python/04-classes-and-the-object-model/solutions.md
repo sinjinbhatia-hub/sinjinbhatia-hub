@@ -1,6 +1,6 @@
 # PY-4 Solutions
 
-Every code block was run, and the ones with `assert`s passed them; the outputs shown are the real ones. Solutions assume the classes of the notes: put your file next to `project.py` and begin it with `import math, numbers, operator, functools, time`, `import numpy as np`, `import sympy as sp` and `from project import Vec, Rational, Dual, dmath, Matrix, Polynomial, derivative, _elementary` (importing re-runs the project's checks, about two seconds). Where a solution changes a class from `project.py` it does so on a subclass or temporarily, so that earlier solutions are unaffected; in your own file, put the new methods in the class.
+Every code block was run, and the ones with `assert`s passed them; the outputs shown are the real ones (the timings in C1 and C3 vary by machine: trust the ratios and slopes, not the milliseconds). Solutions assume the classes of the notes: put your file next to `project.py` and begin it with `import math, numbers, operator, functools, time`, `import numpy as np`, `import sympy as sp` and `from project import Vec, Rational, Dual, dmath, Matrix, Polynomial, derivative, _elementary` (importing re-runs the project's checks, about two seconds). Where a solution changes a class from `project.py` it does so on a subclass or temporarily, so that earlier solutions are unaffected; in your own file, put the new methods in the class.
 
 ## A. Warm-up
 
@@ -79,6 +79,9 @@ class FixedMoney:
 
     cents = property(lambda self: self._cents)               # read-only, so a value hash is safe
 
+    def __repr__(self):
+        return f"FixedMoney({self._cents!r})"
+
     def __eq__(self, other):
         if not isinstance(other, FixedMoney):
             return NotImplemented
@@ -140,7 +143,7 @@ TypeError: unsupported operand type(s) for +: 'int' and 'Vec'
 None
 ```
 
-The second fix works, and the trace shows rule 2 of §3.3: the first call is `0 + v`. After `v1 + v2` the left operand is a plain `Vec` and the right is a `SummableVec`, a subclass that defines `__radd__` where `Vec` has none, so the subclass is asked *first*; it declines (the left operand is not `0`) and Python falls back to `Vec.__add__`. I would ship the first fix: `start=` is explicit, whereas `__radd__` teaches `Vec` that `0 + v` is legal, which is false mathematically and only exists to please `sum`. `x += y` is `x = x.__iadd__(y)`, so a missing `return self` leaves `x` bound to `None`.
+The second fix works, and the trace shows both rules of §3.3. The first call is `0 + v`: `int.__add__` declines, so the reflected `__radd__` runs (rule 1). After `v1 + v2` the left operand is a plain `Vec` and the right is a `SummableVec`, a subclass that defines `__radd__` where `Vec` has none, so the subclass is asked *first* (rule 2); it declines (the left operand is not `0`) and Python falls back to `Vec.__add__`. I would ship the first fix: `start=` is explicit, whereas `__radd__` teaches `Vec` that `0 + v` is legal, which is false mathematically and only exists to please `sum`. `x += y` is `x = x.__iadd__(y)`, so a missing `return self` leaves `x` bound to `None`.
 
 **A4.**
 
@@ -225,7 +228,7 @@ TypeError: unsupported operand type(s) for ** or pow(): 'Dual' and 'float'
 
 `Dual.__pow__` returns `NotImplemented` for a non-`int` exponent, and `float` has no `__rpow__` that accepts a `Dual`, so both operands decline. Exercise B3 supplies the missing case.
 
-**A6.** `order=True` and `eq=True` (the default) generate the methods; `v1 < v2` compares `(1, 2, [])` with `(1, 10, [])`: $2 < 10$, so `True`. Equality compares all three fields. `hash(v1)` raises because `eq=True` without `frozen=True` sets `__hash__` to `None`. The two changes: `frozen=True`, and `tags` becomes an immutable default excluded from comparison with `compare=False`. A list field could not be hashed even in a frozen class, so it must be a tuple.
+**A6.** `order=True` and `eq=True` (the default) generate the methods; `v1 < v2` compares `(1, 2, [])` with `(1, 10, [])`: $2 < 10$, so `True`. Equality compares all three fields. `hash(v1)` raises because `eq=True` without `frozen=True` sets `__hash__` to `None`. The two changes: `frozen=True`, and `compare=False` on `tags`. The second removes the field from `__eq__`, from the order methods *and* from the generated `__hash__` (which hashes the compared fields), so even a list-valued `tags` no longer blocks hashing. A tuple default is still the better record: a frozen dataclass holding a list is frozen only at the surface (`f1.tags.append(...)` still works), and `default=()` needs no factory. Both versions are below.
 
 ```python
 from dataclasses import dataclass, field
@@ -247,15 +250,25 @@ except TypeError as err:
 
 
 @dataclass(order=True, frozen=True)
-class FrozenVersion:
+class FrozenVersion:                                            # the two changes
+    major: int
+    minor: int = 0
+    tags: list = field(default_factory=list, compare=False)
+
+
+@dataclass(order=True, frozen=True)
+class TupleVersion:                                             # the same, with an immutable default
     major: int
     minor: int = 0
     tags: tuple = field(default=(), compare=False)
 
 
-f1, f2 = FrozenVersion(1, 2, ("beta",)), FrozenVersion(1, 10)
+f1, f2 = FrozenVersion(1, 2, ["beta"]), FrozenVersion(1, 10)
 assert f1 < f2 and f1 == FrozenVersion(1, 2) and hash(f1) == hash(FrozenVersion(1, 2))
 assert sorted([f2, f1]) == [f1, f2] and len({f1, FrozenVersion(1, 2)}) == 1
+f1.tags.append("rc")                                            # frozen at the surface only
+t1 = TupleVersion(1, 2, ("beta",))
+assert t1 == TupleVersion(1, 2) and hash(t1) == hash(TupleVersion(1, 2)) and len({t1, TupleVersion(1, 2)}) == 1
 ```
 ```text
 Version(major=1, minor=2, tags=[]) True True
@@ -399,7 +412,7 @@ TypeError: '<' not supported between instances of 'Complex' and 'Complex'
 TypeError: '<' not supported between instances of 'complex' and 'complex'
 ```
 
-Neither has `<`: the complex numbers are not an ordered field, so a total order compatible with arithmetic does not exist, and `sorted` fails for both with `TypeError`. `Complex` gets this for free by not defining `__lt__`.
+Neither has `<`, `<=`, `>` or `>=`: the complex numbers are not an ordered field, so a total order compatible with arithmetic does not exist, and `sorted` fails for both with `TypeError`. `Complex` gets this for free by not defining `__lt__`.
 
 **B3.** For a real exponent, (3.3) with $f(t) = t^p$ gives $(a + b\varepsilon)^p = a^p + p\,a^{p-1}b\,\varepsilon$, valid for $a > 0$. For a dual exponent use $x^y = e^{y\ln x}$ and let `dmath.exp` and `dmath.log` apply the chain rule; then $\frac{d}{dx}x^x = x^x(\ln x + 1)$ comes out without a new rule. `__rpow__` handles `base ** dual` by the same identity, $b^x = e^{x\ln b}$. The two methods are installed temporarily on `Dual` (put them in the class in your own file).
 
@@ -635,7 +648,7 @@ assert np.allclose(r.coeffs, NP.fromroots([1, 2, 3]).coef)
 
 `p(q)` needed no code of its own: Horner evaluates `acc * x + c`, and with `x = q` the products and sums are polynomial products and sums. The same unedited `__call__` evaluated `Dual`s in §3.9. That is duck typing at work: the algorithm is written against an interface (`*` and `+`), not a type.
 
-**B7.** *Prediction.* With $\epsilon$ the machine epsilon, the rounding error of $f(x+h) - f(x)$ is about $\epsilon|f|$, so the forward error is $E(h) \approx \tfrac12|f''|h + \epsilon|f|/h$. Setting $E'(h) = 0$: $\tfrac12|f''| = \epsilon|f|/h^2$, so $h_{\text{fwd}} = \sqrt{2\epsilon|f|/|f''|}$ with $E \approx \sqrt{2\epsilon|f||f''|}$. For the central difference, $E(h) \approx \tfrac16|f'''|h^2 + \epsilon|f|/h$, so $\tfrac13|f'''|h = \epsilon|f|/h^2$ and $h_{\text{cen}} = (3\epsilon|f|/|f'''|)^{1/3}$. Take $F(x) = e^{-x}\arctan x$ at $x_0 = 1$.
+**B7.** *Prediction.* With $\epsilon$ the machine epsilon, the rounding error of $f(x+h) - f(x)$ is about $\epsilon|f|$, so the forward error is $E(h) \approx \tfrac12|f''|h + \epsilon|f|/h$. Setting $E'(h) = 0$: $\tfrac12|f''| = \epsilon|f|/h^2$, so $h_{\text{fwd}} = \sqrt{2\epsilon|f|/|f''|}$ with $E \approx \sqrt{2\epsilon|f||f''|}$. For the central difference, $E(h) \approx \tfrac16|f'''|h^2 + \epsilon|f|/h$, so $\tfrac13|f'''|h = \epsilon|f|/h^2$ and $h_{\text{cen}} = (3\epsilon|f|/|f'''|)^{1/3}$. (The central quotient divides by $2h$, so its rounding term is nearer $\epsilon|f|/(2h)$; keeping the cruder $\epsilon|f|/h$ moves $h_{\text{cen}}$ by $2^{1/3} \approx 1.26$, below what this model can resolve.) Take $F(x) = e^{-x}\arctan x$ at $x_0 = 1$.
 
 ```python
 import matplotlib
@@ -703,6 +716,9 @@ class Var:
     def __init__(self, value, parents=()):
         self.value, self.parents, self.grad = value, parents, 0.0
 
+    def __repr__(self):
+        return f"Var({self.value!r}, grad={self.grad!r})"
+
     @staticmethod
     def lift(x):
         return x if isinstance(x, Var) else Var(float(x))
@@ -756,8 +772,11 @@ out = f(vx, vy, rmath)
 out.backward()
 fx = derivative(lambda t: f(t, y0, dmath), x0)[1]                  # forward mode: one pass per input
 fy = derivative(lambda t: f(x0, t, dmath), y0)[1]
+sx, sy = sp.symbols("x y")
+gsym = [float(sp.diff(sx * sy + sp.sin(sx), s_).subs({sx: x0, sy: y0})) for s_ in (sx, sy)]     # SymPy, third opinion
 print((vx.grad, vy.grad), (fx, fy), (y0 + math.cos(x0), x0))
 assert abs(vx.grad - fx) < 1e-14 and abs(vy.grad - fy) < 1e-14 and abs(vx.grad - (y0 + math.cos(x0))) < 1e-14
+assert abs(vx.grad - gsym[0]) < 1e-14 and abs(vy.grad - gsym[1]) < 1e-14
 
 n = 1000
 xs = np.linspace(0.1, 3.0, n)
@@ -798,6 +817,9 @@ from numpy.polynomial.legendre import leggauss
 class Counted:
     def __init__(self, f):
         self.f, self.calls = f, 0
+
+    def __repr__(self):
+        return f"Counted({self.f!r}, calls={self.calls})"
 
     def __call__(self, x):
         self.calls += 1

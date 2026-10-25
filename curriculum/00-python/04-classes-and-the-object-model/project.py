@@ -18,12 +18,13 @@ import time
 import tracemalloc
 from abc import ABC, abstractmethod
 from collections import UserDict
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import FrozenInstanceError, dataclass, field, replace
 from fractions import Fraction
 from math import gcd
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Protocol, runtime_checkable
 
 import matplotlib
 
@@ -390,7 +391,8 @@ class Matrix:
                 perm[k], perm[p] = perm[p], perm[k]
             for i in range(k + 1, n):
                 L[i][k] = U[i][k] / U[k][k]                          # the multiplier
-                for j in range(k, n):
+                U[i][k] = 0.0                                        # exactly zero, no rounding residue
+                for j in range(k + 1, n):
                     U[i][j] -= L[i][k] * U[k][j]
         for i in range(n):
             L[i][i] = 1.0
@@ -537,8 +539,7 @@ def same(r, f):
 
 
 for p, q, r_, s in rng.integers(-50, 51, size=(1000, 4)):
-    if q == 0 or s == 0:
-        continue
+    q, s = int(q) or 1, int(s) or 1                   # a zero denominator becomes 1, so all 1000 pairs are checked
     A, B, FA, FB = Rational(p, q), Rational(r_, s), Fraction(int(p), int(q)), Fraction(int(r_), int(s))
     assert same(A + B, FA + FB) and same(A - B, FA - FB) and same(A * B, FA * FB)
     assert (B == 0 or same(A / B, FA / FB)) and (A < B) == (FA < FB) and (A == B) == (FA == FB)
@@ -624,10 +625,16 @@ hs = np.logspace(-1, -14, 120)
 fwd = np.array([abs((f(x0 + h) - f(x0)) / h - df_exact) for h in hs])
 cen = np.array([abs((f(x0 + h) - f(x0 - h)) / (2 * h) - df_exact) for h in hs])
 dual_err = abs(yy.b - df_exact)
-for k, e_f, e_c in zip((2, 5, 8, 11), (3.41e-3, 3.43e-6, 9.29e-9, 3.65e-6), (1.17e-5, 5.19e-12, 6.51e-9, 1.90e-6)):
-    h = 10.0 ** -k                                  # the §1 table (orders of magnitude; last digits are platform noise)
-    assert 0.1 < abs((f(x0 + h) - f(x0)) / h - df_exact) / e_f < 10
-    assert 0.01 < abs((f(x0 + h) - f(x0 - h)) / (2 * h) - df_exact) / e_c < 100
+TABLE = {2: (3.41e-3, 1.17e-5), 5: (3.43e-6, 5.19e-12), 8: (9.29e-9, 6.51e-9), 11: (3.65e-6, 1.90e-6)}   # the §1 table
+for k, (e_f, e_c) in TABLE.items():
+    h = 10.0 ** -k
+    err_f = abs((f(x0 + h) - f(x0)) / h - df_exact)
+    err_c = abs((f(x0 + h) - f(x0 - h)) / (2 * h) - df_exact)
+    # Truncation-dominated entries (forward at h = 1e-2 and 1e-5, central at 1e-2) are deterministic to three
+    # digits (1/2 |f''| h = 3.43e-3, 3.43e-6; 1/6 |f'''| h^2 = 1.17e-5) and are held to 1%; the other entries are
+    # rounding noise whose last digits are platform-dependent, so only their order of magnitude is checked.
+    assert abs(err_f / e_f - 1) < 0.01 if k in (2, 5) else 0.1 < err_f / e_f < 10
+    assert abs(err_c / e_c - 1) < 0.01 if k == 2 else 0.01 < err_c / e_c < 100
 print(f"  forward floor {fwd.min():.1e} at h={hs[fwd.argmin()]:.0e}; "
       f"central floor {cen.min():.1e} at h={hs[cen.argmin()]:.0e}; Dual {dual_err:.1e}")
 assert 1e-10 < fwd.min() < 1e-7 and 1e-9 < hs[fwd.argmin()] < 1e-6      # floor near sqrt(eps) ~ 1.5e-8
@@ -790,6 +797,37 @@ for cls, rule, ratio, first in ((Trapezoid, trapezoid, 4.0, 2.58e-2), (Simpson, 
     e = [abs(cls(n).integrate(math.sin, 0.0, math.pi) - 2.0) for n in (8, 16, 32)]
     assert all(cls(n).integrate(math.sin, 0.0, math.pi) == integrate(math.sin, 0.0, math.pi, n, rule) for n in (8, 16, 32))
     assert abs(e[0] / first - 1) < 0.01 and all(abs(e[i] / e[i + 1] / ratio - 1) < 0.05 for i in (0, 1))
+
+
+class Samples(Sequence):                          # §3.10: implement two methods, the ABC supplies five
+    def __init__(self, s):
+        self._s = list(s)
+
+    def __len__(self):
+        return len(self._s)
+
+    def __getitem__(self, i):
+        return self._s[i]
+
+
+smp = Samples([5, 7, 7, 9])
+assert (smp.index(7), smp.count(7), 9 in smp, list(reversed(smp))) == (1, 2, True, [9, 7, 7, 5])
+assert raises(TypeError, lambda: Sequence()) and isinstance(smp, Iterable) and isinstance(smp, Sequence)
+assert not isinstance(v, Sequence)                # Vec has no __getitem__, so it is Iterable but not a Sequence
+
+
+@runtime_checkable
+class Evaluable(Protocol):                        # §3.10: structural typing, names only
+    def __call__(self, x: float) -> float: ...
+
+
+class Reading:                                    # NumPy's protocol: __array__
+    def __array__(self, dtype=None, copy=None):
+        return np.array([1.0, 2.0, 3.0])
+
+
+assert isinstance(pol, Evaluable) and isinstance(math.sin, Evaluable) and not isinstance(3, Evaluable)
+assert np.sum(Reading()) == 6.0 and np.asarray(Reading()).shape == (3,)
 
 
 class CountingDict(dict):

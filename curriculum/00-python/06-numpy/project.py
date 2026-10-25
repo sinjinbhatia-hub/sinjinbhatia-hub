@@ -27,6 +27,7 @@ from numpy.lib.stride_tricks import as_strided, sliding_window_view
 from scipy.signal import convolve2d
 from scipy.spatial.distance import cdist
 
+Shape = tuple[int, ...]
 FIG = Path(__file__).resolve().parent / "figures"
 FIG.mkdir(exist_ok=True)
 rng = np.random.default_rng(0)
@@ -34,7 +35,7 @@ T0 = time.perf_counter()
 NUMPY2 = int(np.__version__.split(".")[0]) >= 2
 
 
-def best(f, *args, repeat=3):
+def best(f, *args, repeat: int = 3) -> float:
     """Smallest wall time (s) of `repeat` calls of f(*args)."""
     times = []
     for _ in range(repeat):
@@ -49,7 +50,7 @@ def best(f, *args, repeat=3):
 # Build 1: write equations (3.1) and (3.2) yourself, then read raw bytes with them.
 
 # %%
-def c_strides(shape, itemsize):
+def c_strides(shape: Shape, itemsize: int) -> Shape:
     """Strides in bytes of a C-contiguous array: s_{d-1} = itemsize, s_k = s_{k+1} n_{k+1} (3.2)."""
     strides, step = [], itemsize
     for n_k in reversed(shape):
@@ -58,13 +59,13 @@ def c_strides(shape, itemsize):
     return tuple(reversed(strides))
 
 
-def read_element(raw, dtype, strides, idx, start=0):
+def read_element(raw: bytes, dtype: np.dtype, strides: Shape, idx: Shape, start: int = 0) -> np.generic:
     """Element idx read from bytes `raw`: byte offset = start + sum_k i_k s_k (3.1)."""
     offset = start + sum(i * s for i, s in zip(idx, strides))
     return np.frombuffer(raw, dtype=dtype, count=1, offset=offset)[0]
 
 
-def sumsq_loop(v):
+def sumsq_loop(v: list[float]) -> float:
     s = 0.0
     for t in v:
         s += t * t
@@ -159,7 +160,7 @@ assert c.tolist() == [1, 1, 0] and d.tolist() == [2, 1, 0]
 assert (a[:, None, 0].shape, a[..., 0].shape, a[None].shape) == ((3, 1), (3,), (1, 3, 4))
 
 
-def center_columns(X):
+def center_columns(X: np.ndarray) -> np.ndarray:
     """Intended: X minus its column means. The bug: `-=` edits the caller's array."""
     X -= X.mean(axis=0)
     return X
@@ -180,7 +181,7 @@ print(f"Part 2 ok ({time.perf_counter() - T0:.1f} s)")
 # $C_{ik}=\sum_j A_{ij}B_{jk}$ with three loops, `np.dot`, `@`; n = 50, 100, 200, then NumPy alone up to 1600.
 
 # %%
-def matmul_loops(A, B):
+def matmul_loops(A: list[list[float]], B: list[list[float]]) -> list[list[float]]:
     """C[i][k] = sum_j A[i][j] * B[j][k] on lists of lists."""
     n, m, p = len(A), len(B), len(B[0])
     C = [[0.0] * p for _ in range(n)]
@@ -222,7 +223,7 @@ print(f"Part 3 ok ({time.perf_counter() - T0:.1f} s)")
 # ## Part 4: broadcasting by hand, the axis drill, pairwise distances (Builds 3-5, notes §3.5-§3.6)
 
 # %%
-def bshape(s, t):
+def bshape(s: Shape, t: Shape) -> Shape:
     """Broadcast shape of shapes s and t by rules 1-3 of (3.4); ValueError if incompatible."""
     n = max(len(s), len(t))
     s, t = (1,) * (n - len(s)) + tuple(s), (1,) * (n - len(t)) + tuple(t)
@@ -234,7 +235,7 @@ def bshape(s, t):
     return tuple(out)
 
 
-def my_add(a, b):
+def my_add(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """a + b via explicit broadcast_to."""
     shape = bshape(a.shape, b.shape)
     return np.broadcast_to(a, shape) + np.broadcast_to(b, shape)
@@ -292,7 +293,7 @@ d4 = [1.0, 2.0, 3.0, 4.0]
 assert math.isclose(np.std(d4), 1.118033988749895) and math.isclose(np.std(d4, ddof=1), statistics.stdev(d4))
 
 
-def dist_loops(X):
+def dist_loops(X: np.ndarray) -> np.ndarray:
     n = len(X)
     D = np.zeros((n, n))
     for i in range(n):
@@ -301,7 +302,7 @@ def dist_loops(X):
     return D
 
 
-def dist_broadcast(X):
+def dist_broadcast(X: np.ndarray) -> np.ndarray:
     """D_ij = ||x_i - x_j||_2 via an (n, n, d) difference array."""
     diff = X[:, None, :] - X[None, :, :]
     return np.sqrt((diff ** 2).sum(axis=-1))
@@ -343,7 +344,7 @@ assert np.allclose((A4 + A4.T) @ Vs, Vs * w) and np.allclose(Vs.T @ Vs, np.eye(4
 assert np.allclose((U * sv) @ Vt, M) and np.allclose(Q @ R, M) and np.isclose(np.linalg.det(A4), np.prod(np.linalg.eigvals(A4)).real)
 
 
-def make_matrix(n, cond, rng):
+def make_matrix(n: int, cond: float, rng: np.random.Generator) -> np.ndarray:
     """Random n x n matrix with singular values logspace(0, -log10(cond)): condition number cond (LA-9)."""
     U, _ = np.linalg.qr(rng.standard_normal((n, n)))
     V, _ = np.linalg.qr(rng.standard_normal((n, n)))
@@ -395,7 +396,7 @@ print(f"Part 5 ok ({time.perf_counter() - T0:.1f} s)")
 # $\langle x_t^2\rangle = t$ for $\pm1$ steps (3.7), so the MSD has log-log slope 1.
 
 # %%
-def walks_loop(n_walkers, n_steps, seed=0):
+def walks_loop(n_walkers: int, n_steps: int, seed: int = 0) -> list[list[int]]:
     r = random.Random(seed)
     paths = []
     for _ in range(n_walkers):
@@ -407,12 +408,12 @@ def walks_loop(n_walkers, n_steps, seed=0):
     return paths
 
 
-def walks_array(n_walkers, n_steps, seed=0):
+def walks_array(n_walkers: int, n_steps: int, seed: int = 0) -> np.ndarray:
     """Positions of independent +-1 walkers, shape (walkers, time): one draw, one cumsum along axis 1."""
     return np.random.default_rng(seed).choice([-1, 1], size=(n_walkers, n_steps)).cumsum(axis=1)
 
 
-def walks_array_fast(n_walkers, n_steps, seed=0):
+def walks_array_fast(n_walkers: int, n_steps: int, seed: int = 0) -> np.ndarray:
     steps = 2 * np.random.default_rng(seed).integers(0, 2, size=(n_walkers, n_steps), dtype=np.int16) - 1
     return steps.cumsum(axis=1, dtype=np.int16)
 
@@ -447,7 +448,7 @@ print(f"Part 6 ok ({time.perf_counter() - T0:.1f} s)")
 # ## Part 7: the Mandelbrot set by boolean masks (Example 4.6)
 
 # %%
-def mandelbrot_counts(c, max_iter):
+def mandelbrot_counts(c: np.ndarray, max_iter: int) -> tuple[np.ndarray, list[int]]:
     """Iterations survived (|z| <= 2) by z -> z^2 + c from z = 0, capped at max_iter; plus live pixels per step."""
     z = np.zeros_like(c)
     alive = np.ones(c.shape, dtype=bool)
@@ -461,7 +462,7 @@ def mandelbrot_counts(c, max_iter):
     return count, n_alive
 
 
-def mandelbrot_unmasked(c, max_iter):
+def mandelbrot_unmasked(c: np.ndarray, max_iter: int) -> np.ndarray:
     """Same counts with every pixel updated every step (overflow warnings silenced)."""
     z = np.zeros_like(c)
     count = np.zeros(c.shape, dtype=int)
@@ -513,7 +514,7 @@ for w in (3, 10, 51):                                              # strides mov
     assert np.allclose(sliding_window_view(sig, w).mean(axis=-1), np.convolve(sig, np.ones(w) / w, mode="valid"))
 
 
-def conv2d_loops(I, K):
+def conv2d_loops(I: np.ndarray, K: np.ndarray) -> np.ndarray:
     h, w = K.shape
     Kf = K[::-1, ::-1]
     out = np.empty((I.shape[0] - h + 1, I.shape[1] - w + 1))
@@ -523,11 +524,11 @@ def conv2d_loops(I, K):
     return out
 
 
-def conv2d_sum(I, K):
+def conv2d_sum(I: np.ndarray, K: np.ndarray) -> np.ndarray:
     return (sliding_window_view(I, K.shape) * K[::-1, ::-1]).sum(axis=(-2, -1))
 
 
-def conv2d_windows(I, K):
+def conv2d_windows(I: np.ndarray, K: np.ndarray) -> np.ndarray:
     """(I*K)_ij = sum_pq I_{i+p,j+q} K_{h-1-p,w-1-q} (3.8) with no Python loop."""
     return np.einsum("ijpq,pq->ij", sliding_window_view(I, K.shape), K[::-1, ::-1])
 
@@ -548,25 +549,25 @@ print(f"Part 8 ok ({time.perf_counter() - T0:.1f} s)")
 # ## Part 9: performance rules and I/O (notes §3.10, §3.12)
 
 # %%
-def relu_scalar(v):
+def relu_scalar(v: float) -> float:
     return v if v > 0 else 0.0
 
 
-def grow_append(n):
+def grow_append(n: int) -> np.ndarray:
     a = np.array([])
     for i in range(n):
         a = np.append(a, i)
     return a
 
 
-def preallocate(n):
+def preallocate(n: int) -> np.ndarray:
     a = np.empty(n)
     for i in range(n):
         a[i] = i
     return a
 
 
-def normalize_loop(X):
+def normalize_loop(X: np.ndarray) -> np.ndarray:
     out = np.empty_like(X)
     for i in range(len(X)):
         out[i] = X[i] / X[i].sum()
@@ -611,7 +612,7 @@ print(f"Part 9 ok ({time.perf_counter() - T0:.1f} s)")
 # 4. **Find the bug.** `row_normalize_buggy` passes silently on a square matrix. Explain, then fix.
 
 # %%
-def loopy_assign(X, C):
+def loopy_assign(X: np.ndarray, C: np.ndarray) -> np.ndarray:
     """For each row x of X, the index of the nearest row of C (squared Euclidean distance)."""
     out = []
     for x in X:
@@ -624,7 +625,7 @@ def loopy_assign(X, C):
     return np.array(out)
 
 
-def row_normalize_buggy(X):
+def row_normalize_buggy(X: np.ndarray) -> np.ndarray:
     """Intended: divide each row by its sum, so every row sums to 1."""
     return X / X.sum(axis=1)
 

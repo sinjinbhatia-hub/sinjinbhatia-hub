@@ -52,7 +52,7 @@ print({m})
 
 **A4.** (Write a class, 5–15 lines.) `Temperature` stores kelvin. Properties: `kelvin` (setter rejects negative values with `ValueError`), `celsius` (get and set, in terms of `kelvin`). A classmethod `from_fahrenheit`. A `__repr__` that round-trips. Ordering by kelvin with `functools.total_ordering`, and `__eq__`. Then decide whether `__hash__` should exist, given the setters, and defend the decision with a failing example. Assert all of it.
 
-**A5.** (`Dual` by hand.) Using only (3.1), (3.2) and (3.3), evaluate with `Dual(2, 1)` by hand: (a) $f(x) = (x^2 + 1)/x$, giving $f(2)$ and $f'(2)$; (b) $g(x) = x^3\cdot(1/x)$ at $x = 3$, and say what calculus fact the $\varepsilon$ part confirms. Check both with `derivative`. Why does `Dual(2.0, 1.0) ** 0.5` raise `TypeError`, and what does the message say?
+**A5.** (`Dual` by hand.) Using only (3.1), (3.2) and (3.3), evaluate by hand with the seed `Dual(x, 1)`: (a) $f(x) = (x^2 + 1)/x$ at $x = 2$, giving $f(2)$ and $f'(2)$; (b) $g(x) = x^3\cdot(1/x)$ at $x = 3$, and say what calculus fact the $\varepsilon$ part confirms. Check both with `derivative`. Why does `Dual(2.0, 1.0) ** 0.5` raise `TypeError`, and what does the message say?
 
 **A6.** (Dataclasses.) Predict the output, say why `hash(v1)` raises, and change the class (two changes) so that versions are hashable and `tags` do not take part in comparisons.
 

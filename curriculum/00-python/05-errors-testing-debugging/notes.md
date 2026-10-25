@@ -2,7 +2,7 @@
 
 **Time:** ~8 hours · **Prerequisites:** PY-4 · **Unlocks:** PY-6 onward (every later project is written test-first); strongly recommended before LA-2's project
 
-> **Conventions in this module.** Python 3.11+. Every output below was pasted by a script from a real run (Python 3.13, pytest 9.1, mypy 2.4, ruff). Three liberties: tracebacks omit the `~~^^^` markers (`PYTHONNODEBUGRANGES=1`) and show file names, not paths; pytest's `platform`/`rootdir`/`plugins` header lines are dropped; in pdb transcripts the commands are re-inserted after each `(Pdb)` prompt (stdin was piped) and pdb's own traceback frames are marked omitted. Failure diffs are verbatim. `$` lines are shell commands. The code under test is `integrators.py`, its tests `test_integrators.py`, both in this folder. Install with `pip install pytest mypy ruff` (`project.py` runs without the last two). A **public** function has no leading underscore. A **panel** is a subinterval of width $h = (b-a)/n$; Simpson's rule needs an even number $n$ of them.
+> **Conventions in this module.** Python 3.11+. Every output below was pasted by a script from a real run (Python 3.13, pytest 9.1, mypy 2.4, ruff). Three liberties: tracebacks omit the `~~^^^` markers (`PYTHONNODEBUGRANGES=1`) and show file names, not paths; pytest's `platform`/`rootdir`/`plugins` header lines are dropped; in pdb transcripts the commands are re-inserted after each `(Pdb)` prompt (stdin was piped) and pdb's own frames are marked omitted. Failure diffs are verbatim. `$` lines are shell commands. The code under test is `integrators.py`, its tests `test_integrators.py`, both in this folder (`pip install pytest mypy ruff`; `project.py` runs without the last two). A **public** function has no leading underscore. A **panel** is a subinterval of width $h = (b-a)/n$; Simpson's rule needs an even number $n$ of them.
 
 ## 0. Where this sits
 
@@ -40,7 +40,7 @@ Nothing was raised or printed. Every number is plausible: at $n = 48$ the answer
 
 - **Exceptions** (§3.1–3.7): the code announces its own failure instead of returning a guess.
 - **Tests** (§3.10): small programs that pin down what the code must do and fail loudly otherwise.
-- **A debugger and logging** (§3.8–3.9): ways to see what the code is doing, beyond what a traceback names.
+- **A debugger and logging** (§3.8–3.9): ways to see what the code is doing.
 - **Type hints** (§3.11): a checker that catches wrong-type mistakes before anything runs.
 
 The forcing problem: make the off-by-one above impossible to miss. By §3.10 a test fails the moment it is planted and names the missing sample.
@@ -77,20 +77,19 @@ call stack (newest at top)        what the exception does as it climbs
 
 ```python
 print(sorted(cls.__name__ for cls in BaseException.__subclasses__()))
-for cls in (ZeroDivisionError, KeyError, IndexError, FileNotFoundError, StopIteration, KeyboardInterrupt):
+for cls in (ZeroDivisionError, KeyError, FileNotFoundError, StopIteration, KeyboardInterrupt):
     print(" -> ".join(c.__name__ for c in cls.__mro__[:-1]))
 ```
 ```text
 ['BaseExceptionGroup', 'Exception', 'GeneratorExit', 'KeyboardInterrupt', 'SystemExit']
 ZeroDivisionError -> ArithmeticError -> Exception -> BaseException
 KeyError -> LookupError -> Exception -> BaseException
-IndexError -> LookupError -> Exception -> BaseException
 FileNotFoundError -> OSError -> Exception -> BaseException
 StopIteration -> Exception -> BaseException
 KeyboardInterrupt -> BaseException
 ```
 
-■ **What just happened.** `ZeroDivisionError` is an `ArithmeticError`; `KeyError` and `IndexError` share `LookupError`; `FileNotFoundError` is an `OSError`. `KeyboardInterrupt`, `SystemExit` and `GeneratorExit` sit beside `Exception`, not under it, because they mean "stop", not "failed". So `except Exception` leaves Ctrl-C working; a bare `except:` is `except BaseException` and does not.
+■ **What just happened.** `KeyError` and `IndexError` share `LookupError`; `FileNotFoundError` is an `OSError`. `KeyboardInterrupt`, `SystemExit` and `GeneratorExit` sit beside `Exception`, not under it, because they mean "stop", not "failed". So `except Exception` leaves Ctrl-C working; a bare `except:` is `except BaseException` and does not.
 
 ### 3.2 `try` / `except` / `else` / `finally`: control flow
 
@@ -119,16 +118,6 @@ try:
     attempt("a")
 except TypeError as err:
     print("x = 'a': TypeError escaped:", err)
-
-
-def swallow():
-    try:
-        raise ValueError("this error is about to vanish")
-    finally:
-        return "finally's return wins"
-
-
-print(swallow())
 ```
 ```text
   (finally runs for x = 4)
@@ -139,14 +128,13 @@ x = 0: ['try', 'except']
 x = 5: ['try', 'return inside try']
   (finally runs for x = 'a')
 x = 'a': TypeError escaped: unsupported operand type(s) for /: 'int' and 'str'
-finally's return wins
 ```
 
 1. The `try` body runs top to bottom; at the first exception the rest is skipped.
 2. A matching `except` runs, then control continues *after the whole statement*. No match: the exception keeps climbing (`x = "a"`).
-3. `else` runs only if the body finished normally (no exception, no `return`/`break`/`continue`). Exceptions raised in `else` are *not* caught by this statement's `except` clauses. So put into `try` only the line that can fail, and the handler cannot mask a bug elsewhere.
-4. `finally` runs on every way out: normal, after a handled exception, while an unhandled one climbs, and on `return`/`break`/`continue`. The return value is computed *before* `finally` runs (`x = 5`).
-5. A `return` in `finally` replaces whatever was leaving, including a climbing exception: `swallow()` returned a string and the `ValueError` vanished. Never write one.
+3. `else` runs only if the body finished normally (no exception, no `return`/`break`/`continue`), and exceptions raised in it are *not* caught by this statement's `except` clauses. So put into `try` only the line that can fail; the handler then cannot mask a bug elsewhere.
+4. `finally` runs on every way out: normal, after a handled exception, while an unhandled one climbs, and on `return`/`break`/`continue`. The return value is computed *before* it runs (`x = 5`).
+5. A `return` in `finally` replaces whatever was leaving, even a climbing exception: `try: raise ValueError` / `finally: return "x"` returns `"x"` and the error vanishes (`project.py` asserts it). Never write one.
 
 ### 3.3 Catching the right thing
 
@@ -187,8 +175,7 @@ ValueError: line 3: cannot read '3,5' as a number
 
 `except Exception: pass` turned a crash into 2.3333 where the mean of 1, 2, 3.5, 4 is 2.625: the decimal comma in `3,5` was dropped without a word, the module's forcing problem in a new costume. The repair names what it expects (`ValueError`), says which line failed, and keeps the original with `from err` (§3.4).
 
-- Catch the narrowest class naming a failure you can handle. A handler that can do nothing useful should not exist; let the exception climb.
-- A bare `except:` is never right.
+- Catch the narrowest class naming a failure you can handle. A handler that can do nothing useful should not exist; let the exception climb. A bare `except:` is never right.
 - `except Exception` has two legitimate homes: the edge of a loop or worker that must survive one bad item, and the `main()` of a script that prints one clear line and exits nonzero. Log the traceback there (`log.exception`, §3.9).
 
 ### 3.4 Raising, chaining, and your own exceptions
@@ -253,7 +240,7 @@ x^2 - 2, from 0       ConvergenceError: derivative is zero (iterations=1, residu
 x^3 - 2x + 2, from 0  ConvergenceError: no convergence (iterations=50, residual=2); cause: None
 ```
 
-■ **What just happened.** From $x_0 = 0$ the derivative is zero and `ZeroDivisionError` became a `ConvergenceError` whose `__cause__` keeps the original. The cubic from $x_0 = 0$ cycles $0 \to 1 \to 0 \to \cdots$ for 50 iterations, with no cause because nothing raised. One `except SolverError` catches both and reads `iterations` and `residual` as numbers, not by parsing a message.
+■ **What just happened.** From $x_0 = 0$ the derivative is zero and `ZeroDivisionError` became a `ConvergenceError` whose `__cause__` keeps the original. The cubic from $x_0 = 0$ cycles $0 \to 1 \to 0 \to \cdots$ for 50 iterations, with no cause because nothing raised. One `except SolverError` catches both and reads `iterations` and `residual` as numbers.
 
 ### 3.5 EAFP, LBYL, and exceptions that are not errors
 
@@ -344,7 +331,7 @@ my_for("abc", lambda ch: print("got", ch))
 
 def gen():
     yield 1
-    raise StopIteration  # a bug: a generator must just return
+    raise StopIteration  # a bug: a generator must return instead
 
 
 try:
@@ -400,36 +387,7 @@ sqrt_raise -> ValueError x must be non-negative, got -4.0
 
 **Warnings** say "this still works, but..." without stopping. `warnings.warn(msg, Category, stacklevel=2)` blames the caller's line. `DeprecationWarning` is for developers (shown by default only when triggered from `__main__`; pytest displays it), `FutureWarning` for end users, `UserWarning` is the default, `RuntimeWarning` flags suspicious numerics. A filter can promote any warning to an exception (`warnings.simplefilter("error")`, `pytest -W error`).
 
-```python
-import warnings
-
-import numpy as np
-
-
-def old_rule(x):
-    warnings.warn("old_rule is deprecated; use new_rule", DeprecationWarning, stacklevel=2)
-    return 2 * x
-
-
-print(old_rule(3))  # stacklevel=2 blames this line, not the warn() line above
-print(np.log(0.0))  # NumPy warns and carries on with -inf
-with np.errstate(divide="raise"):
-    try:
-        np.log(0.0)
-    except FloatingPointError as err:
-        print("with errstate(divide='raise'):", err)
-```
-```text
-warn_demo.py:11: DeprecationWarning: old_rule is deprecated; use new_rule
-  print(old_rule(3))  # stacklevel=2 blames this line, not the warn() line above
-6
-warn_demo.py:12: RuntimeWarning: divide by zero encountered in log
-  print(np.log(0.0))  # NumPy warns and carries on with -inf
--inf
-with errstate(divide='raise'): divide by zero encountered in log
-```
-
-NumPy's `np.log(0.0)` warned and returned `-inf`; `np.errstate(divide="raise")` made it a `FloatingPointError` (PY-6 returns to this).
+NumPy's warnings are the ones you will meet most: `np.log(0.0)` warns (`RuntimeWarning: divide by zero encountered in log`) and returns `-inf`, and inside `with np.errstate(divide="raise"):` it raises `FloatingPointError`. A `DeprecationWarning` raised with `stacklevel=2` names the *caller's* line. `project.py` Part 4 asserts all three behaviors (PY-6 returns to NumPy's).
 
 ### 3.7 Context managers: cleanup that cannot be forgotten
 
@@ -505,11 +463,11 @@ inside the block: exists = True
 after the failure: exists = False
 ```
 
-■ **What just happened.** Class and generator do the same job; the generator is shorter, the class easier to extend. The body raised and the directory was still removed; without `try/finally` around the `yield`, cleanup would have been skipped. (Library versions: `tempfile.TemporaryDirectory`, `contextlib.chdir`.)
+■ **What just happened.** Class and generator do the same job; the generator is shorter, the class easier to extend. The body raised and the directory was still removed; without `try/finally` around the `yield` it would not have been. (Library versions: `tempfile.TemporaryDirectory`, `contextlib.chdir`.)
 
 ### 3.8 Debugging
 
-**Method.** Reproduce first, with the smallest input that still fails (halve the input or the code, repeat: bisection; `git bisect` does it over history, PY-10). State one hypothesis, look at the value that confirms or kills it, fix, then pin the bug with a test. **Read the traceback bottom-up:** the last line is *what*, the frame above is *where it was noticed*, the rest is *how we got there*. The cause is often earlier than the line blamed.
+**Method.** Reproduce first, with the smallest input that still fails (halve the input or the code and repeat: bisection; `git bisect` does it over history, PY-10). State one hypothesis, look at the value that confirms or kills it, fix, then pin the bug with a test. **Read the traceback bottom-up:** the last line is *what*, the frame above it *where it was noticed*, the rest *how we got there*. The cause is often earlier than the line blamed.
 
 **`print` debugging, done right:** name, `repr`, one fact per line.
 
@@ -528,7 +486,7 @@ tol='1e-8 ' n=8 err=5.551115123125783e-17
 err=5.551e-17 len(tol)=5
 ```
 
-`tol='1e-8 '` exposes a *string with a trailing space* where a number belongs. Delete debugging prints before committing, or route them through `logging`. Explaining the problem aloud to a rubber duck works because it forces you to state your assumptions. **"It works in the notebook"**: cells run out of order and deleted cells leave their variables alive, so the script fails for lack of stale state. Restart the kernel and run all cells before you believe a notebook.
+`tol='1e-8 '` exposes a *string with a trailing space* where a number belongs. Delete debugging prints before committing, or route them through `logging`. Explaining the problem aloud to a rubber duck works because it forces you to state your assumptions. **"It works in the notebook"**: cells run out of order and deleted cells leave their variables alive, so the script fails for lack of stale state. Restart and run all cells before you trust a notebook.
 
 **pdb.** `breakpoint()` (PEP 553) calls `pdb.set_trace()`; `PYTHONBREAKPOINT=0` disables every call. `python3 -m pdb script.py` starts paused on line 1 and, if the program raises, stops in the failing frame (**post-mortem**); in a REPL `pdb.pm()` does that for the last exception; `pytest --pdb` opens it at each failing test. An empty line repeats the last command.
 
@@ -576,7 +534,7 @@ Traceback (most recent call last):
 TypeError: unsupported operand type(s) for +=: 'float' and 'NoneType'
 ```
 
-Session 1 is post-mortem: run to the crash and inspect.
+One session does both jobs: post-mortem first, then a restart with a conditional breakpoint.
 
 ```console
 $ python3 -m pdb adapt.py
@@ -592,15 +550,9 @@ Running 'cont' or 'step' will restart the program
 None
 (Pdb) p (err, tol, tol / 10)
 (0.0003750000000000001, 0.001, 0.0001)
-(Pdb) p next_step(0.05, err, tol)
-None
-(Pdb) q
-```
+(Pdb) restart
+Restarting adapt.py with arguments:
 
-`c` ran to the exception and pdb stopped in `run`, line 17. `p h` prints `None`: symptom confirmed, cause elsewhere. `p (err, tol, tol / 10)` shows $3.75\times10^{-4}$ between $10^{-4}$ and $10^{-3}$, the one case `next_step` never handles; calling `next_step(0.05, err, tol)` from the prompt gives `None`. Session 2 watches the culprit return.
-
-```console
-$ python3 -m pdb adapt.py
 > adapt.py(1)<module>()
 -> def estimate_error(h):
 (Pdb) b 16, k == 1
@@ -637,18 +589,16 @@ Breakpoint 1 at adapt.py:16
 (Pdb) u
 > adapt.py(16)run()
 -> h = next_step(h, err, tol)
-(Pdb) p k
-1
 (Pdb) q
 ```
 
-`b 16, k == 1` stops at line 16 on the second pass only; `p h, err` shows the arguments about to be passed. `s` enters `next_step` (`--Call--`); the first `n` reaches the `if`, the second runs it (false) and reaches the `elif`, the third runs that (false), falls off the end, and prints `--Return--` with `next_step()->None`. In `w` the first two entries (`bdb.py`, `<string>`) are pdb's own; yours are `<module>`, `run`, `next_step`. `u` moves up to the caller and `p k` prints `1`.
+`c` ran to the exception and pdb stopped in `run`, line 17 (post-mortem). `p h` prints `None`: symptom confirmed, cause elsewhere. `p (err, tol, tol / 10)` shows $3.75\times10^{-4}$ between $10^{-4}$ and $10^{-3}$, the one case `next_step` never handles. `restart` reruns the program; `b 16, k == 1` stops at line 16 on the second pass only, and `p h, err` shows the arguments about to be passed. `s` enters `next_step` (`--Call--`); the first `n` reaches the `if`, the second runs it (false) and reaches the `elif`, the third runs that (false), falls off the end, and prints `--Return--` with `next_step()->None`. In `w` the first two entries (`bdb.py`, `<string>`) are pdb's own; yours are `<module>`, `run`, `next_step`, and `u` moves up to the caller.
 
 ■ **What just happened.** An `if`/`elif` with no `else` returns `None` on the missing branch, and the `TypeError` appeared a line later. The fix is `else: return h`. Five commands (`n`, `s`, `c`, `p`, `w`/`u`) replace twenty prints; the habit that matters is asking where a value *came from*.
 
 ### 3.9 Logging
 
-`print` writes to stdout among your results, with no severity, timestamp, filter or destination choice. `logging` separates **what happened** (the call) from **whether and where it appears** (configuration). Levels: `DEBUG` 10, `INFO` 20, `WARNING` 30 (the default threshold), `ERROR` 40, `CRITICAL` 50.
+`print` writes to stdout among your results, with no severity, filter or destination choice. `logging` separates **what happened** (the call) from **whether and where it appears** (configuration). Levels: `DEBUG` 10, `INFO` 20, `WARNING` 30 (the default threshold), `ERROR` 40, `CRITICAL` 50.
 
 ▶ **Build it yourself (5): logging in a simulation loop.** Explicit Euler for $x'' = -x$ should conserve $E = \frac12(x^2 + v^2)$ but does not. Log every step at `DEBUG`, a summary every 4 steps at `INFO`, and a `WARNING` once $E$ has grown by 10%. Predict the lines at each level.
 
@@ -705,11 +655,11 @@ The cross terms cancel, so $E_k = (1+h^2)^k E_0$ exactly. For $h = 0.2$ the fact
 
 **Handlers in one paragraph.** A *logger* (named, hierarchical by dots: `sim.euler` is a child of `sim`) creates records, which go to its handlers and then, by `propagate`, to its ancestors' handlers. A *handler* has its own level and *formatter*. So one logger can feed a console that shows warnings and a file that keeps everything: give the parent logger `sim` a `StreamHandler` with `setLevel(logging.WARNING)` and a `FileHandler` with `setLevel(logging.DEBUG)`; a record logged on `sim.euler` reaches both. `project.py` Part 6 does exactly this and writes `figures/run.log`.
 
-**Rules.** A library does `log = logging.getLogger(__name__)` and never configures handlers (`integrators.py`; Example 4.6). The *application* calls `logging.basicConfig(...)` once, at its entry point (`force=True` replaces existing handlers). Pass arguments, not formatted strings: `log.debug("x=%s", x)` formats only if emitted. In an `except`, `log.exception("...")` logs at `ERROR` with the traceback. Do not log and re-raise: the catcher reports it and you read it twice.
+**Rules.** A library does `log = logging.getLogger(__name__)` and never configures handlers (`integrators.py`; Example 4.6). The *application* calls `logging.basicConfig(...)` once, at its entry point (`force=True` replaces existing handlers). Pass arguments, not formatted strings: `log.debug("x=%s", x)` formats only if emitted. In an `except`, `log.exception("...")` logs at `ERROR` with the traceback. Do not log and re-raise; the catcher reports it.
 
 ### 3.10 Testing with pytest
 
-**What pytest does.** It *discovers* tests by name, runs each as a function, and rewrites your `assert` statements so a failure prints the values on both sides (Example 4.3). Files: `test_*.py` or `*_test.py`; functions whose names *start with* `test`; methods of classes whose names start with `Test` (no `__init__`). Exit status: 0 all passed, 1 failures, 2 interrupted, 3 internal error, 4 usage error, 5 nothing collected.
+**What pytest does.** It *discovers* tests by name, runs each as a function, and rewrites your `assert` statements so a failure prints the values on both sides (Example 4.3). Files: `test_*.py` or `*_test.py`; functions whose names *start with* `test`; methods of classes named `Test*` (no `__init__`). Exit status: 0 all passed, 1 failures, 2 interrupted, 3 internal error, 4 usage error, 5 nothing collected.
 
 ▶ **Try it first.** `test_basic.py` holds `test_a`, `check_b`, `testing_helper`, `TestC.test_c` and `Helper.test_d`. Which are collected?
 
@@ -765,11 +715,6 @@ def test_trapezoid_exact_on_lines(f, a, b, exact, n):
     assert ig.trapezoid(f, a, b, n) == pytest.approx(exact, rel=1e-12, abs=1e-12)
 
 
-def test_trapezoid_hand_value():
-    # h = pi/2, y = (0, 1, 0): h * (0/2 + 1 + 0/2) = pi/2
-    assert ig.trapezoid(math.sin, 0.0, math.pi, 2) == pytest.approx(math.pi / 2, rel=1e-14)
-
-
 def test_trapezoid_error_order():
     order = observed_order(ig.trapezoid, math.sin, 0.0, math.pi, 2.0, (16, 32, 64, 128))
     assert order == pytest.approx(2.0, abs=0.1)
@@ -803,14 +748,14 @@ def trapezoid(f, a, b, n):
 ```
 ```console
 $ python3 -m pytest -q --tb=no -rf
-...........FF..                                                                              [100%]
+..........FF..                                                                               [100%]
 ===================================== short test summary info ======================================
 FAILED test_integrators.py::test_trapezoid_rejects_bad_n[0-ValueError] - ZeroDivisionError: float...
 FAILED test_integrators.py::test_trapezoid_rejects_bad_n[-3-ValueError] - IndexError: list index ...
-2 failed, 13 passed in 0.08s
+2 failed, 12 passed in 0.08s
 ```
 
-Thirteen of 15 pass; the failures are informative: `n = 0` gave `ZeroDivisionError` and `n = -3` an `IndexError` from deep inside, where the contract says `ValueError` (`2.5` and `"4"` raised `TypeError` by luck). *Refactor*: validate in one helper that Simpson shares.
+Twelve of 14 pass; the failures are informative: `n = 0` gave `ZeroDivisionError` and `n = -3` an `IndexError` from deep inside, where the contract says `ValueError` (`2.5` and `"4"` raised `TypeError` by luck). *Refactor*: validate in one helper that Simpson shares.
 
 ```python
 def _panels(n: int, *, even: bool = False) -> int:
@@ -830,15 +775,15 @@ def trapezoid(f: Integrand, a: float, b: float, n: int) -> float:
 ```
 ```console
 $ python3 -m pytest -q
-...............                                                                              [100%]
-15 passed in 0.08s
+..............                                                                               [100%]
+14 passed in 0.08s
 ```
 
 *Simpson, red then green.* With the Simpson tests added, 26 fail (no `simpson`); then:
 
 ```console
 $ python3 -m pytest -q --tb=no | tail -1
-26 failed, 15 passed in 0.17s
+26 failed, 14 passed in 0.15s
 ```
 ```python
 def simpson(f: Integrand, a: float, b: float, n: int) -> float:
@@ -852,8 +797,8 @@ def simpson(f: Integrand, a: float, b: float, n: int) -> float:
 ```
 ```console
 $ python3 -m pytest -q
-.........................................                                                    [100%]
-41 passed in 0.11s
+........................................                                                     [100%]
+40 passed in 0.10s
 ```
 
 Two lines carry the story. `ys[1:stop:2]` collects the odd-index samples $y_1, y_3, \dots, y_{n-1}$ (weight 4); `stop = -1` ends the slice before $y_n$. `ys[2:-1:2]` collects the even interior samples (weight 2). **The planted bug**: `PLANT_OFF_BY_ONE = True` makes `stop = -2`, which drops the last odd sample $y_{n-1}$: the `ys[1:-2:2]` of §1. (The switch exists only for this module.)
@@ -877,7 +822,7 @@ $ python3 -m pytest -q --tb=short -p plant_bug "test_integrators.py::test_simpso
 F                                                                                            [100%]
 ============================================= FAILURES =============================================
 ______________________________ test_simpson_weights_are_1_4_2_4_1[3] _______________________________
-test_integrators.py:125: in test_simpson_weights_are_1_4_2_4_1
+test_integrators.py:120: in test_simpson_weights_are_1_4_2_4_1
     assert ig.simpson(indicator, 0.0, 1.0, 4) == pytest.approx(weights[k] * 0.25 / 3, rel=1e-14)
 E   assert 0.0 == 0.3333333333333333 ± 1.0e-12
 E
@@ -886,10 +831,10 @@ E     Obtained: 0.0
 E     Expected: 0.3333333333333333 ± 1.0e-12
 ===================================== short test summary info ======================================
 FAILED test_integrators.py::test_simpson_weights_are_1_4_2_4_1[3] - assert 0.0 == 0.3333333333333...
-1 failed in 0.13s
+1 failed in 0.11s
 ```
 
-■ **What just happened.** The bugged rule fails 22 of 54 test cases, in six test functions, and *no* trapezoid test. The plainest: the constant 1 on $[0, 1]$ with $n = 2$ integrates to $\frac13$, because the weight-4 sample was dropped. The most informative is `test_simpson_weights_are_1_4_2_4_1[3]`, the **regression test** (a test per bug fixed) written *after* the bug was understood: it feeds a function that is 1 at node $k$ and 0 elsewhere, so the answer *is* node $k$'s weight, and for $k = 3$ (index $n-1$) it returns $0.0$ instead of $\frac{4h}{3}$. And `test_linearity_reversal_and_additivity` found the bug with no known integral: two half-intervals of 4 panels must equal one of 8, but the bug drops a different sample in each. The tolerance trap: at $n = 100$ the buggy rule returns 1.998684, so `abs(value - 2) < 1e-2` *passes* it, while its relative error, $6.6\times10^{-4}$, fails a test at $10^{-7}$ (the correct rule's error there is about $5\times10^{-9}$).
+■ **What just happened.** The bugged rule fails 22 of 53 test cases, in six test functions, and *no* trapezoid test. The plainest: the constant 1 on $[0, 1]$ with $n = 2$ integrates to $\frac13$, because the weight-4 sample was dropped. The most informative is `test_simpson_weights_are_1_4_2_4_1[3]`, the **regression test** (a test per bug fixed) written *after* the bug was understood: it feeds a function that is 1 at node $k$ and 0 elsewhere, so the answer *is* node $k$'s weight, and for $k = 3$ (index $n-1$) it returns $0.0$ instead of $\frac{4h}{3}$. And `test_linearity_reversal_and_additivity` found the bug with no known integral: two half-intervals of 4 panels must equal one of 8, but the bug drops a different sample in each. The tolerance trap: at $n = 100$ the buggy rule returns 1.998684, so `abs(value - 2) < 1e-2` *passes* it, while its relative error, $6.6\times10^{-4}$, fails a test at $10^{-7}$ (the correct rule's error there is about $5\times10^{-9}$).
 
 **Tolerances are claims.** `pytest.approx(expected, rel=..., abs=...)` passes if the difference is within the *larger* tolerance (given only `rel`, an absolute floor of $10^{-12}$ still applies; given only `abs`, there is no relative part). For arrays, `np.testing.assert_allclose(actual, desired, rtol=..., atol=...)` passes if $|a - d| \le \text{atol} + \text{rtol}\,|d|$. A tolerance states how accurate your *algorithm* is: derive it from the method's error formula (Example 4.3) and the problem's conditioning (LA-13), and a failure then means a bug, not bad luck.
 
@@ -919,28 +864,15 @@ $ python3 -m pytest -q -s
 
 **Organization:** tests beside the code for a small project, a `tests/` directory for a package, shared fixtures in `conftest.py`. **Subsets:** `-k expr` selects by name (Example 4.4), `-x` stops at the first failure, `-q`/`-v` set verbosity, `--lf` re-runs last failures, `file.py::test_name[id]` runs one case.
 
-**What to test.** *Behavior you promise*: boundaries (`n = 1`, `n = 2`), known closed forms ($\int_0^\pi\sin = 2$), **invariants** (linearity, swapping the limits flips the sign, splitting the interval, equation (3.3)), every **error path** (each `raise` has a test that triggers it), and a regression test per fixed bug. *Not implementation details* such as a private helper's name: those tests break when you improve the code and prove nothing.
+**What to test.** *Behavior you promise*: boundaries (`n = 1`, `n = 2`), known closed forms ($\int_0^\pi\sin = 2$), **invariants** (linearity, swapping the limits flips the sign, splitting the interval, equation (3.3)), every **error path**, and a regression test per fixed bug. *Not implementation details* such as a private helper's name: those tests break when you improve the code and prove nothing.
 
 **Property-based testing** is the idea behind the invariant test: draw many random inputs (25 from a seeded generator here) and check a property that must hold for all. The library `hypothesis` does this at scale and adds *shrinking* (it searches for the smallest failing input). Not required here; Your turn has you write the idea by hand.
 
 ### 3.11 Type hints
 
-A **type hint** annotates a parameter or return value: `def simpson(f: Integrand, a: float, b: float, n: int) -> float`. **Python does not check them.** They are metadata (`__annotations__`) for readers and for tools such as mypy and pyright, which read your source and report inconsistent uses without running it.
+A **type hint** annotates a parameter or return value: `def simpson(f: Integrand, a: float, b: float, n: int) -> float`. **Python does not check them.** They are metadata (`__annotations__`) for readers and for tools such as mypy and pyright, which read your source and report inconsistent uses without running it. After `def double(x: int) -> int: return x * 2`, the call `double("ab")` returns `'abab'`, as `project.py` Part 7 asserts.
 
-```python
-def double(x: int) -> int:
-    return x * 2
-
-
-print(double("ab"), double(2.5))  # Python does not look at the hints
-print(double.__annotations__)
-```
-```text
-abab 5.0
-{'x': <class 'int'>, 'return': <class 'int'>}
-```
-
-Vocabulary (3.11 spellings): `int`, `float`, `str`; `list[float]`, `dict[str, int]`, `tuple[int, ...]` (any length) or `tuple[float, float]` (fixed); `X | None` (older: `Optional[X]`); `Callable[[float], float]` (from `collections.abc`); read-only inputs `Sequence[float]` and `Iterable[float]`, which accept lists, tuples and generators where `list[float]` accepts only lists. An `int` is accepted where a `float` is expected. A `TypeVar` means "the same type in and out": `def first(xs: Sequence[T]) -> T` with `T = TypeVar("T")` (3.12: `def first[T](xs: Sequence[T]) -> T`). `typing.Protocol` means "anything with these methods", no inheritance.
+Vocabulary (3.11 spellings): `int`, `float`, `str`; `list[float]`, `dict[str, int]`, `tuple[int, ...]` (any length), `tuple[float, float]` (fixed); `X | None` (older: `Optional[X]`); `Callable[[float], float]` (from `collections.abc`); read-only inputs `Sequence[float]` and `Iterable[float]`, which accept lists, tuples and generators where `list[float]` accepts only lists. An `int` is accepted where a `float` is expected. A `TypeVar` means "the same type in and out": `def first(xs: Sequence[T]) -> T` with `T = TypeVar("T")`. `typing.Protocol` means "anything with these methods", no inheritance.
 
 ▶ **Build it yourself (6): hints on `Vec`, and one mypy error.** Annotate the PY-4 `Vec` (`from __future__ import annotations` lets a method name its own class; 3.14 makes that the default). Then write a script with two mistakes and predict which line mypy reports and which line Python reports.
 
@@ -1006,18 +938,17 @@ class Evaluable(Protocol):  # PY-4 section 3.10, now checked
     def __call__(self, x: float, /) -> float: ...
 
 
-def integrate(f: Evaluable, a: float, b: float, n: int = 100) -> float:
-    h = (b - a) / n
-    return h * sum(f(a + (i + 0.5) * h) for i in range(n))
+def midpoint(f: Evaluable, a: float, b: float) -> float:
+    return (b - a) * f(0.5 * (a + b))
 
 
-print(integrate(math.sin, 0.0, math.pi))
-print(integrate(math.atan2, 0.0, 1.0))  # atan2 needs two arguments
+print(midpoint(math.sin, 0.0, math.pi))
+print(midpoint(math.atan2, 0.0, 1.0))  # atan2 needs two arguments
 ```
 ```console
 $ python3 -m mypy proto.py
-proto.py:15: error: Argument 1 to "integrate" has incompatible type "Callable[[SupportsFloat | SupportsIndex, SupportsFloat | SupportsIndex], float]"; expected "Evaluable"  [arg-type]
-proto.py:15: note: "Evaluable.__call__" has type "Callable[[float], float]"
+proto.py:14: error: Argument 1 to "midpoint" has incompatible type "Callable[[SupportsFloat | SupportsIndex, SupportsFloat | SupportsIndex], float]"; expected "Evaluable"  [arg-type]
+proto.py:14: note: "Evaluable.__call__" has type "Callable[[float], float]"
 Found 1 error in 1 file (checked 1 source file)
 ```
 
@@ -1025,25 +956,13 @@ Found 1 error in 1 file (checked 1 source file)
 
 ### 3.12 Docstrings, doctests, formatting and linting
 
-Use **NumPy-style docstrings**: summary, then `Parameters`, `Returns`, `Raises`, `Examples` (see `integrators.py`). **`doctest`** runs the `>>>` lines and compares output, so examples cannot rot. `ruff format` (Black's style) rewrites code into one layout; `ruff check` flags unused imports, undefined names and bug-prone patterns. Use both from day one (`line-length = 100`). **Consistency beats preference:** with one layout a diff shows changes of meaning, not whitespace.
-
-```console
-$ python3 -m doctest -v integrators.py | tail -2
-4 passed.
-Test passed.
-```
-```console
-$ python3 -m ruff format --check --line-length 100 integrators.py test_integrators.py
-2 files already formatted
-$ python3 -m ruff check --select E,F,B,W --line-length 100 integrators.py test_integrators.py
-All checks passed!
-```
+Use **NumPy-style docstrings**: summary, then `Parameters`, `Returns`, `Raises`, `Examples` (see `integrators.py`). **`doctest`** runs the `>>>` lines and compares output, so examples cannot rot (`python3 -m doctest integrators.py` is silent on success; `project.py` asserts it). `ruff format` (Black's style) rewrites code into one layout and `ruff check` flags unused imports, undefined names and bug-prone patterns; both files of this module pass them with `--line-length 100`. **Consistency beats preference:** with one layout a diff shows changes of meaning, not whitespace.
 
 ## 4. Worked examples
 
 ### Example 4.1: An exception climbing through three frames
 
-The diagram of §2 as a program. `read_sample` fails; `mean_of` has a `finally`; `report` has nothing; the module level catches. Then the same call with nobody catching.
+The diagram of §2 as a program. `read_sample` fails; `mean_of` has a `finally`; `report` has nothing; the module level catches.
 
 ```python
 import traceback
@@ -1071,7 +990,6 @@ except ValueError as err:
     print("caught at the top:", err)
     for frame in traceback.extract_tb(err.__traceback__):
         print(f"  frame {frame.name:12s} line {frame.lineno}: {frame.line}")
-report(["1.5", "2.5", "x3"])  # the same call, nobody catching
 ```
 ```text
   mean_of: finally block runs as the exception passes through
@@ -1080,24 +998,13 @@ caught at the top: could not convert string to float: 'x3'
   frame report       line 17: print(f"mean = {mean_of(texts):.3f}")
   frame mean_of      line 10: values = [read_sample(t) for t in texts]
   frame read_sample  line 5: return float(text)
-  mean_of: finally block runs as the exception passes through
-Traceback (most recent call last):
-  File "climb.py", line 26, in <module>
-    report(["1.5", "2.5", "x3"])  # the same call, nobody catching
-  File "climb.py", line 17, in report
-    print(f"mean = {mean_of(texts):.3f}")
-  File "climb.py", line 10, in mean_of
-    values = [read_sample(t) for t in texts]
-  File "climb.py", line 5, in read_sample
-    return float(text)
-ValueError: could not convert string to float: 'x3'
 ```
 
-The traceback lists frames oldest first and the exception last: read from the bottom. The `finally` message precedes "caught at the top", as in §2: cleanup runs as the stack unwinds, then the handler. `traceback.extract_tb` gives the same four frames as data.
+The `finally` message precedes "caught at the top", as in §2: cleanup runs as the stack unwinds, then the handler. `traceback.extract_tb` lists the four frames the exception crossed, outermost first, which is the order of a printed traceback (so you read it from the bottom, as in Example 4.5 and §3.8).
 
 ### Example 4.2: EAFP versus LBYL, a dictionary and a file
 
-§3.5's program is the example; read its output as decisions. `counts.get(word, 0)`: a missing key is normal. `pick_rule("simpsons")`: a typo, so a `KeyError` becomes a `ValueError` listing the choices. `read_lbyl` checked `exists()`, the file vanished in the gap, and `FileNotFoundError` came anyway; `read_eafp` tried, caught that one exception, and returned `None`. `project.py` Part 4 times a dictionary hit and miss under `try/except`: a miss costs several times a hit, so with many misses on a hot path prefer `.get`.
+§3.5's program is the example; read its output as decisions. `counts.get` for a normal miss; `pick_rule("simpsons")` turns a typo's `KeyError` into a `ValueError` listing the choices; `read_lbyl` checked `exists()`, the file vanished in the gap, and `FileNotFoundError` came anyway, while `read_eafp` caught that one exception and returned `None`. `project.py` Part 4 times a dictionary hit and a miss under `try/except`: a miss costs several times a hit, so with many misses on a hot path prefer `.get`.
 
 ### Example 4.3: A failing pytest run with `approx`, then passing
 
@@ -1122,22 +1029,22 @@ E     Expected: 2.0 ± 2.0e-06
 ===================================== short test summary info ======================================
 FAILED test_tolerance.py::test_plain_equality - assert 0.30000000000000004 == 0.3
 FAILED test_tolerance.py::test_simpson_n8 - assert 2.0002691699483877 == 2.0 ± 2.0e-06
-2 failed in 0.03s
+2 failed in 0.02s
 $ python3 -m pytest -q
 ..                                                                                           [100%]
-2 passed in 0.02s
+2 passed in 0.01s
 ```
 
 (1) Plain `==` failed: the trapezoid rule on the constant $0.1$ with 7 panels sums to `0.30000000000000004`, and pytest printed both sides unasked. (2) `approx(2.0, rel=1e-6)` was a tolerance nobody derived. By (3.2) with $\max|f^{(4)}| = 1$ for $\sin$, Simpson at $n = 8$ is within $\frac{\pi(\pi/8)^4}{180} = 4.15\times10^{-4}$ absolute, $2.1\times10^{-4}$ relative; the measured error, $2.69\times10^{-4}$ ($1.3\times10^{-4}$ relative), sits inside, so `rel=2.2e-4` is a defensible claim and `1e-6` never was. After the two edits (the script's `sed`), both pass. `assert_allclose` prints similar diagnostics for arrays.
 
 ### Example 4.4: `parametrize` over six (function, exact integral) pairs
 
-`CASES` in `test_integrators.py`: $\sin$ on $[0, \pi]$; $e^x$ on $[0, 1]$; $1/(1+x^2)$ on $[0, 1]$ ($\pi/4$); $xe^{-x^2}$ on $[0, 1]$ ($(1 - e^{-1})/2$); $\cos$ on $[0, \pi/2]$; $\ln x$ on $[1, 2]$ ($2\ln 2 - 1$).
+`CASES` in `test_integrators.py`: $\sin$ on $[0, \pi]$ (2); $e^x$ on $[0, 1]$ ($e - 1$); $1/(1+x^2)$ on $[0, 1]$ ($\pi/4$); $xe^{-x^2}$ on $[0, 1]$ ($(1-e^{-1})/2$); $\cos$ on $[0, \pi/2]$ (1); $\ln x$ on $[1, 2]$ ($2\ln 2 - 1$).
 
 ```console
 $ python3 -m pytest -v -k known_integrals test_integrators.py
 ======================================= test session starts ========================================
-collecting ... collected 54 items / 48 deselected / 6 selected
+collecting ... collected 53 items / 47 deselected / 6 selected
 
 test_integrators.py::test_simpson_known_integrals[sin] PASSED                                [ 16%]
 test_integrators.py::test_simpson_known_integrals[exp] PASSED                                [ 33%]
@@ -1146,7 +1053,7 @@ test_integrators.py::test_simpson_known_integrals[gauss-x] PASSED               
 test_integrators.py::test_simpson_known_integrals[cos] PASSED                                [ 83%]
 test_integrators.py::test_simpson_known_integrals[log] PASSED                                [100%]
 
-================================= 6 passed, 48 deselected in 0.13s =================================
+================================= 6 passed, 47 deselected in 0.12s =================================
 ```
 
 Each row is its own test with its own id; a failure names the row. `rel=1e-6` came from (3.2) at $n = 64$: the worst relative bound of the six is $5.1\times10^{-8}$ ($\sin$), so $10^{-6}$ is 20 times the worst case. `project.py` computes all six bounds with SymPy.
@@ -1180,7 +1087,7 @@ Read a chain from the bottom: the final exception is what the caller sees (`Conv
 
 ### Example 4.6: A logging transcript, INFO versus DEBUG
 
-`adaptive_simpson` logs through `logging.getLogger("integrators")` and configures nothing; the application chooses what to see. At `INFO` it reports one line per call, at `DEBUG` every split. The integral is $\int_0^\pi\sin = 2$ with a coarse tolerance, to keep the output short.
+`adaptive_simpson` logs through `logging.getLogger("integrators")` and configures nothing; the application chooses what to see. `INFO` gives one line per call, `DEBUG` every split. Here $\int_0^\pi\sin = 2$ with a coarse tolerance, to keep the output short.
 
 ```python
 import logging
@@ -1207,14 +1114,14 @@ INFO    integrators: adaptive_simpson on [0, 3.14159]: tol=0.0001, 17 evaluation
 value = 1.99999975
 ```
 
-At `INFO` you learn the cost: 17 evaluations, deepest level 2. At `DEBUG` you see where: $[0, \pi]$ failed its test at depth 0 ($|\delta| = 0.0898$ against $15\,\text{tol} = 1.5\times10^{-3}$), each half failed at depth 1 (against $15\,\text{tol}/2$), and the four quarters passed. Same library, two views, no edits. `project.py` writes a `DEBUG` run to `figures/run.log` and asserts line counts by level.
+`INFO` tells you the cost: 17 evaluations, deepest level 2. `DEBUG` tells you where: $[0, \pi]$ failed its test at depth 0 ($|\delta| = 0.0898$ against $15\,\text{tol} = 1.5\times10^{-3}$), each half failed at depth 1 (against $15\,\text{tol}/2$), and the four quarters passed. Same library, two views, no edits. `project.py` writes a `DEBUG` run to `figures/run.log` and asserts line counts by level.
 
 ## 5. Why it matters and where it connects
 
 - **PY-6 onward.** NumPy code is tested with `np.testing.assert_allclose` against a slow pure-Python version, as PY-4's `Matrix` was against `numpy.linalg.solve`; `np.errstate` (§3.6) makes NumPy fail loudly. **PY-10** builds packaging and continuous integration on §3.10's layout and exit codes.
 - **LA-2, LA-13.** The LU project is checked by comparing $LU$ with $A$ and the solve with `numpy.linalg.solve`, `rtol` tied to the condition number: a tolerance is a claim about conditioning as much as about your code.
-- **CM-1.** Energy conservation is an integrator's test oracle. The $(1+h^2)^k$ growth of (3.1) is Euler's failure on the oscillator (CM-1 §3.11 measures it and fixes it with symplectic Euler; CM-8 §3.11 explains why that works).
-- **ML-2, LA-14.** A *gradient check* (analytic gradient against PY-4 §3.7's dual-number derivative, with `approx`) is the standard test for every optimizer you write.
+- **CM-1.** Energy conservation is an integrator's test oracle; the $(1+h^2)^k$ growth of (3.1) is Euler's failure on the oscillator (CM-1 §3.11 measures it and fixes it with symplectic Euler; CM-8 §3.11 explains why that works).
+- **ML-2, LA-14.** A *gradient check* (an analytic gradient against PY-4 §3.7's dual-number derivative, with `approx`) tests every optimizer you write.
 
 ## 6. Exercises
 
@@ -1222,17 +1129,17 @@ See [exercises.md](exercises.md). A1–A6 are predict-the-output, bug-fix and sh
 
 ## 7. Coding project
 
-`project.py` imports `integrators`, runs `test_integrators.py`, and asserts the module's claims: (1) the suite through `pytest.main` exits 0 (with a fallback runner if pytest is missing); (2) convergence orders as log-log slopes, $2.0\pm0.1$ and $4.0\pm0.2$, saved to `figures/convergence.png`; (3) the planted bug caught by exactly the six test functions of §3.10; (4) the exception hierarchy, `raise ... from`, and EAFP timings; (5) context managers; (6) logging to `figures/run.log` and the Euler numbers of §3.9; (7) type hints on every public function, mypy `--strict` if installed, and the two errors of §3.11; (8) adaptive Simpson on $e^{-100(x-0.5)^2}$ against `scipy.integrate.quad` to $10^{-8}$, and the coarse-`tol` failure of §8.
+`project.py` imports `integrators`, runs `test_integrators.py`, and asserts the module's claims: (1) the suite, through `pytest.main`, exits 0 (a fallback runner if pytest is missing); (2) convergence orders as log-log slopes, $2.0\pm0.1$ and $4.0\pm0.2$ (`figures/convergence.png`); (3) the planted bug is caught by exactly the six test functions of §3.10; (4) the exception hierarchy, `raise ... from`, EAFP timings; (5) context managers; (6) logging to `figures/run.log`, and the Euler numbers of §3.9; (7) type hints on every public function, mypy `--strict` if installed, the two errors of §3.11; (8) adaptive Simpson on $e^{-100(x-0.5)^2}$ against `scipy.integrate.quad` to $10^{-8}$, and the coarse-`tol` failure of §8.
 
 **Build it yourself:** before opening the file, write the tests for a *new* rule (B1, midpoint) first and watch them fail. Then Your turn: a regression test for a bug you have hit; a property-based test for `sorted` with random lists; make the integrators raise on NaN; put a `breakpoint()` in the adaptive recursion and inspect the depth.
 
 ## 8. Where you'll struggle
 
-- **Tests feel slow until the first one saves you.** Fourteen test cases for a six-line function feel like overkill until a one-character slice error shows up as a red line instead of a wrong paper. §3.10 is designed to be that day.
+- **Tests feel slow until the first one saves you.** Dozens of cases for a six-line function feel like overkill until a one-character slice error shows up as a red line instead of a wrong paper. §3.10 is designed to be that day.
 - **`except Exception: pass`** turns a crash into a wrong answer (§3.3). If you must catch broadly, log the traceback. A `try` of more than a few lines is a smell: the handler cannot know which line failed. And **`assert` is not validation**: `python -O` removes it.
 - **People avoid pdb for years and lose hours to print statements.** Learn five commands (`n`, `s`, `c`, `p`, `w`/`u`). The first session feels clumsy because you must decide what to look at; that is also why it is faster.
 - **Float equality in tests needs `approx`, and the tolerance is a claim about your algorithm, not a fudge.** Loosening it until the test passes deletes the test (the lazy `1e-2` of §3.10 accepted the buggy rule). Work out the error bound; pick a tolerance a few times above it.
-- **Type hints do nothing at runtime**, and students expect them to (`double("ab")` returned `"abab"`); the benefit comes from running mypy or pyright. Also `list[int]` is not accepted where `list[float]` is declared (lists are mutable, so the types are invariant); declare read-only inputs as `Sequence[float]` (B6).
+- **Type hints do nothing at runtime**, and students expect them to. The benefit comes from running mypy or pyright. Also `list[int]` is not accepted where `list[float]` is declared (lists are mutable, so the types are invariant); declare read-only inputs as `Sequence[float]` (B6).
 - **"pytest can't find my tests"** is almost always a filename or function-name rule (§3.10); run `pytest --collect-only -q` first. **A test that never failed** may not be able to: break the code on purpose and watch it go red (B7).
 - **An adaptive routine's `tol` is an estimate, not a guarantee.** `adaptive_simpson(peak, 0, 1, tol=1e-3)` on $e^{-100(x-0.5)^2}$ returns 0.152564 for a true value of 0.177245: the first samples sit on the flanks of a narrow peak, the two Simpson estimates agree, and the recursion stops. Check such routines against an independent reference (`project.py` Part 8; C3).
 
@@ -1241,7 +1148,7 @@ See [exercises.md](exercises.md). A1–A6 are predict-the-output, bug-fix and sh
 1. In which order do the `try`, `except`, `else` and `finally` bodies run for (a) no exception, (b) a matched exception, (c) an unmatched one? What happens to a climbing exception if `finally` executes `return`?
 2. Why is `except Exception` usually wrong and a bare `except:` never right? Where is `except Exception` acceptable, and what must you do inside?
 3. What does `raise B from A` record? What does the traceback say if you raise inside an `except` without `from`?
-4. Give a case where EAFP is clearly right and one where LBYL is. Why is `if path.exists(): open(path)` wrong?
+4. Give a case where EAFP is plainly right and one where LBYL is. Why is `if path.exists(): open(path)` wrong?
 5. Why must `assert` not validate arguments?
 6. In `@contextmanager`, why must cleanup sit in `try/finally` around the `yield`? What does a true return from `__exit__` do?
 7. Name the pdb command that runs a line without entering calls; that enters a call; that runs until the function returns; that moves to the caller's frame.
@@ -1253,11 +1160,11 @@ See [exercises.md](exercises.md). A1–A6 are predict-the-output, bug-fix and sh
 
 ## 10. Pair with
 
-- **Okken, *Python Testing with pytest*, 2nd ed., ch. 1–5.** The book-length version of §3.10 (test functions, fixtures, built-in fixtures, parametrization); better on fixture scope and organizing a growing suite.
-- **The pytest documentation ("Get started", "How to use fixtures", "How to parametrize fixtures and test functions").** The authority on every flag and on fixture lookup.
+- **Okken, *Python Testing with pytest*, 2nd ed., ch. 1–5.** The book-length version of §3.10 (test functions, fixtures, built-in fixtures, parametrization); better on fixture scope and on organizing a growing suite.
+- **The pytest documentation ("Get started", "How to use fixtures", "How to parametrize fixtures and test functions").** The authority on every flag.
 - **Python Tutorial §8, "Errors and Exceptions"; the language reference ("The try statement", "The with statement").** The exact statements behind §3.2 and §3.7.
 - **Slatkin, *Effective Python*, the robustness, testing and typing items the roadmap lists** (numbering differs between editions). Short numbered rules; a good review checklist.
-- **The `logging` HOWTO and the `pdb` documentation.** The HOWTO is the best short treatment of loggers, handlers and propagation; the pdb page lists every command.
+- **The `logging` HOWTO and the `pdb` documentation.** The best short treatment of loggers, handlers and propagation; every pdb command.
 - **The mypy cheat sheet and the `typing` documentation.** Annotation spellings by example.
-- **Software Carpentry, "Programming with Python" (episodes on errors, defensive programming, debugging).** A gentler pass over the same ideas.
+- **Software Carpentry, "Programming with Python" (errors, defensive programming, debugging).** A gentler pass over the same ideas.
 - **Hunt and Thomas, *The Pragmatic Programmer*, the debugging chapter (reference only).** The "reproduce, minimize, don't assume" attitude of §3.8.

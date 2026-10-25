@@ -153,7 +153,7 @@ print(send(p, "norm", 2), p["cls"] is Point)
 10.0 True
 ```
 
-`self` is whatever `send` passes first. Python does the same: `p.norm(2)` finds `norm` through `type(p)` and calls it with `p` in front, so **`obj.method(args)` is `Class.method(obj, args)`**. A *bound method* object does the insertion (Example 4.1 takes one apart); every `self` confusion is this one fact.
+■ **What just happened.** `self` is whatever `send` passes first. Python does the same: `p.norm(2)` finds `norm` through `type(p)` and calls it with `p` in front, so **`obj.method(args)` is `Class.method(obj, args)`**. A *bound method* object does the insertion (Example 4.1 takes one apart); every `self` confusion is this one fact.
 
 ### 3.2 Showing, comparing, hashing: `__repr__`, `__eq__`, `__hash__`
 
@@ -177,7 +177,7 @@ Vec(1.0, 2.0, 3.0)
 False False
 ```
 
-The last `False`: without `__eq__`, `==` is identity. First, what are `repr` and `str` for?
+■ **What just happened.** The last `False`: without `__eq__`, `==` is identity. First, what are `repr` and `str` for?
 
 ▶ **Try it first.** Predict the four lines.
 
@@ -296,7 +296,7 @@ TypeError: unsupported operand type(s) for *: 'int' and 'Vec'
 
 `numbers.Real` accepts `int`, `float`, `Fraction` and NumPy scalars: duck typing against the numeric tower, not a list of concrete types. `zip(..., strict=True)` makes a dimension mismatch a `ValueError`.
 
-The failure is rule 1: `2 * v` asks `int.__mul__(2, v)`, which declines; Python looks for `Vec.__rmul__(v, 2)`, finds none, and gives up. Scalar multiplication commutes, so the reflected method is the same function. Step 4 adds it, with division, length, dot and cross products.
+The failure is rule 1: `2 * v` asks `int.__mul__(2, v)`, which declines; Python looks for `Vec.__rmul__(v, 2)`, finds none, and gives up. Scalar multiplication commutes, so the reflected method is the same function. The next block adds it, with division, length, dot and cross products.
 
 ```python
 class Vec:
@@ -614,7 +614,7 @@ Let $\mathbb{D}$ be the expressions $a + b\varepsilon$, $a, b \in \mathbb{R}$, a
 
 ■ **What just happened.**
 
-Automatic differentiation is the product rule stored in a tuple. There is no symbolic algebra and no step size, hence no truncation error; each floating-point operation still rounds, so Example 4.4 reports an error near $10^{-16}$, not $0$. Where $F$ is not differentiable (`abs` at 0, a branch), you get the derivative of the branch taken.
+Automatic differentiation is the product rule stored in a tuple. There is no symbolic algebra and no step size, hence no truncation error; each floating-point operation still rounds, so Example 4.4 reports an error near $10^{-16}$, not $0$. Where $F$ is not differentiable (`abs` at 0, a branch), AD returns the derivative of the branch taken; our `Dual` lacks `__abs__` and `__lt__`, so such code raises `TypeError`.
 
 ▶ **Build it yourself (3): the `Dual` class.** Predict, using (3.1) and (3.2), the results of `x * x * x`, `1 / x` and `(x + 1) / (x - 1)` for `x = Dual(3.0, 1.0)`. Operators must accept plain numbers (`2 * x`, `x + 1`): the lifting decorator of `Rational` does it, promoting `n` to `Dual(n, 0)`. Equality takes only another `Dual`, so unlike `Rational` it owes no int hash.
 
@@ -694,6 +694,8 @@ print(x * x * x, 1 / x, (x + 1) / (x - 1), 2 * x - 5, x ** 3)
 ```text
 Dual(27.0, 27.0) Dual(0.3333333333333333, -0.1111111111111111) Dual(2.0, -0.5) Dual(1.0, 2.0) Dual(27.0, 27.0)
 ```
+
+■ **What just happened.** Each $\varepsilon$ part is the derivative at $3$: $3x^2$, $-1/x^2$, $-2/(x-1)^2$, $2$; `_dual_operand` promoted the ints in `2 * x - 5`.
 
 Now the functions. By (3.3) each needs only its own derivative. A factory builds the Dual-aware version of `f` from `f` and `df`; because `df` is itself Dual-aware, the chain rule keeps working however deeply `Dual`s nest, which second derivatives need ("Your turn").
 
@@ -805,7 +807,8 @@ class Matrix:
                 perm[k], perm[p] = perm[p], perm[k]
             for i in range(k + 1, n):
                 L[i][k] = U[i][k] / U[k][k]                          # the multiplier
-                for j in range(k, n):
+                U[i][k] = 0.0                                        # exactly zero, no rounding residue
+                for j in range(k + 1, n):
                     U[i][j] -= L[i][k] * U[k][j]
         for i in range(n):
             L[i][i] = 1.0
@@ -843,7 +846,7 @@ True Matrix([[11.0, 2.0], [3.0, 14.0]]) 3.0 (3, 14) 3.0
 TypeError: unhashable type: 'Matrix'
 ```
 
-Example 4.5 checks `solve` against NumPy; `project.py` Part 4 does 200 random $6\times6$ systems.
+■ **What just happened.** `__iadd__` returned `self`, so `alias` followed; `Vec`, lacking it, rebound `v` and left `w` alone. Example 4.5 checks `solve` against NumPy; `project.py` Part 4 does 200 random $6\times6$ systems.
 
 ### 3.9 `@dataclass`: the boilerplate you should not write
 
@@ -899,6 +902,8 @@ FrozenInstanceError: cannot assign to field 'value'
 ValueError: mutable default <class 'list'> for field readings is not allowed: use default_factory
 Run(name='a', readings=[Measurement(value=21.5, unit='degC', time=3.0)]) [] True
 ```
+
+■ **What just happened.** Three annotated lines generated the twenty you wrote by hand; the `ValueError` is §3.1's shared-list trap, refused early.
 
 A `Polynomial` shows `__post_init__`, `__call__` and the payoff of duck typing. Coefficients are ascending, $p(x) = c_0 + c_1x + c_2x^2 + \cdots$, evaluated by Horner's rule $c_0 + x(c_1 + x(c_2 + \cdots))$, which uses only `*` and `+`:
 
