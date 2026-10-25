@@ -77,3 +77,10 @@ a window dies after ~20–30M Fable tokens, but round 6 survived 20M Fable + 40M
 | wf_1b31082c-bf9 | write-only (Sonnet): PY-1, PY-2, PY-3, PY-4 |
 | wf_a6929edc-579 | verify (Fable): ST-3, ST-4, EM-5 |
 | wf_88f03f6d-842 | verify (Fable): ST-3 (relaunched after a request timeout) |
+
+## Ninth round (2026-10-25 04:17 UTC) — Python course continues; one round per "continue" from the user
+
+| Run ID | Modules |
+|---|---|
+| wf_b2a58208-cef | verify (Fable): PY-1, PY-2, PY-3, PY-4 |
+| wf_140648ac-5f2 | write-only (Sonnet): PY-5, PY-6, PY-7, PY-8 |
