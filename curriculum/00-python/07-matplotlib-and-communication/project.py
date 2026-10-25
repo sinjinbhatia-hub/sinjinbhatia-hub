@@ -1,14 +1,12 @@
 # %% [markdown]
-# # PY-7 Project: Seven Canonical Scientific Figures
+# # PY-7 Project: Canonical Scientific Figures
 #
-# This script builds the figures the rest of the curriculum keeps drawing and checks the
-# *data* behind each one (notes sections 3 and 4): (1) the anatomy of a figure, (2) a
-# convergence plot whose slopes are fitted, (3) the pendulum phase portrait with
-# trajectories whose energy is conserved, (4) a histogram with a fitted Gaussian and a KDE,
-# (5) Monte Carlo error bars with a 1/sqrt(n) guide, (6) a 2D potential with the one pixel
-# test of `origin`/`extent`, (7) small multiples of damped oscillators, (8) jet against
-# viridis with a lightness profile, (9) a pendulum animation, (10) a truncated axis and its
-# lie factor. Helpers live in `plot_helpers.py` (notes section 3.7).
+# Builds the figures the curriculum keeps drawing and checks the *data* behind each (notes
+# sections 3 and 4): (1) anatomy of a figure, (2) a convergence plot with fitted slopes, (3) the
+# pendulum phase portrait with conserved energy, (4) histogram, Gaussian fit and KDE, (5) Monte
+# Carlo error bars with a 1/sqrt(n) guide, (6) a 2D potential with the pixel test of `origin` and
+# `extent`, (7) small multiples of damped oscillators, (8) jet against viridis, (9) a pendulum
+# animation, (10) a truncated axis and its lie factor. Helpers: `plot_helpers.py` (notes 3.7).
 #
 # Run headless: `MPLBACKEND=Agg python3 project.py`. Figures go to ./figures/.
 
@@ -41,53 +39,28 @@ ph.use_house_style()
 # %% [markdown]
 # ## Part 1: Anatomy of a figure (notes Example 4.1)
 #
-# Everything drawn is an Artist. This figure walks its own artist tree, asks each artist
-# where it sits on the canvas (`get_window_extent`) and draws a labelled arrow to it.
+# Every artist knows its box; `annotate(xycoords=artist)` puts a numbered marker on it.
 
 # %%
-fig = plt.figure(figsize=(8.5, 5.0), layout="none")  # the house style turns constrained layout on; hand-placed axes need it off
-fig.patch.set(edgecolor="0.5", linewidth=3)
-ax = fig.add_axes((0.13, 0.22, 0.46, 0.56))
+fig, ax = plt.subplots(figsize=(8.5, 4.5))
 t = np.linspace(0, 2 * np.pi, 100)
 (curve,) = ax.plot(t, np.sin(t), label="$x = \\sin t$")
 ax.set(xlabel="time $t$ (rad)", ylabel="displacement $x$ (m)", title="title")
 ax.legend(loc="lower left")
-fig.canvas.draw()  # layout is only final after a draw
-renderer = fig.canvas.get_renderer()
-to_fig = fig.transFigure.inverted().transform
-
-
-def box(artist):
-    """(x0, y0, x1, y1) of an artist in figure fractions."""
-    b = artist.get_window_extent(renderer)
-    return (*to_fig((b.x0, b.y0)), *to_fig((b.x1, b.y1)))
-
-
-ab, lb, tb = box(ax), box(ax.get_legend()), box(ax.title)
-xb, yb, tlb = box(ax.xaxis.label), box(ax.yaxis.label), box(ax.get_xticklabels()[3])
-on_curve = to_fig(ax.transData.transform((2.4, np.sin(2.4))))
-markers = [  # (number, key text, marker position in figure fractions)
-    (1, "Figure: the canvas", (0.03, 0.96)),
-    (2, "Axes: one plot, with its own patch", (ab[2] - 0.03, ab[3] - 0.04)),
-    (3, "Line2D: the curve", tuple(on_curve)),
-    (4, "Legend", (lb[2] + 0.025, (lb[1] + lb[3]) / 2)),
-    (5, "title (a Text)", (tb[2] + 0.03, (tb[1] + tb[3]) / 2)),
-    (6, "xlabel (a Text)", (xb[2] + 0.03, (xb[1] + xb[3]) / 2)),
-    (7, "ylabel (a Text)", ((yb[0] + yb[2]) / 2, yb[3] + 0.03)),
-    (8, "tick label (a Text)", (tlb[2] + 0.02, (tlb[1] + tlb[3]) / 2)),
-    (9, "Spine: a frame line", (ab[2] - 0.01, ab[1])),
-    (10, "XAxis and YAxis: own the ticks and labels", (ab[0] - 0.09, ab[1] - 0.07)),
-]
-for k, text, (mx, my) in markers:
-    fig.text(mx, my, str(k), ha="center", va="center", fontsize=8, color="white",
-             bbox={"boxstyle": "circle,pad=0.25", "fc": "0.2", "ec": "none"})
-    fig.text(0.66, 0.93 - 0.075 * (k - 1), f"{k}  {text}", fontsize=8, va="center", color="0.2")
-ph.savefig(fig, "anatomy", tight=False)
-
+fig.canvas.draw()  # artists report their boxes only after a draw
+named = {"Axes: one plot, with its own patch": (ax.patch, (0.95, 0.9)), "Line2D: the curve": (curve, (0.38, 1.0)),
+         "Legend": (ax.get_legend(), (1.0, 0.5)), "title (a Text)": (ax.title, (1.0, 0.5)),
+         "xlabel (a Text)": (ax.xaxis.label, (1.0, 0.5)), "ylabel (a Text)": (ax.yaxis.label, (0.5, 1.0)),
+         "tick label (a Text)": (ax.get_xticklabels()[3], (1.0, 0.5)), "Spine: a frame line": (ax.spines["bottom"], (0.9, 0.5)),
+         "XAxis: ticks, tick labels, label": (ax.xaxis, (0.5, 0.0)), "Figure: the canvas": (fig.patch, (0.02, 0.97))}
+for k, (text, (artist, frac)) in enumerate(named.items(), 1):
+    ax.annotate(str(k), xy=frac, xycoords=artist, xytext=(12, 0), textcoords="offset points", ha="center", va="center", color="white",
+                fontsize=8, bbox={"boxstyle": "circle,pad=0.25", "fc": "0.2", "ec": "none"}, annotation_clip=False)
+    ax.text(1.03, 1.02 - 0.1 * k, f"{k}  {text}", transform=ax.transAxes, fontsize=8, va="center")
+ph.savefig(fig, "anatomy")
 kinds = {type(a).__name__ for a in ax.get_children()}
-assert {"Line2D", "XAxis", "YAxis", "Spine", "Legend", "Text"} <= kinds, kinds
-assert ax.xaxis.label.get_text() == "time $t$ (rad)" and ax.title.get_text() == "title"
-assert len(ax.lines) == 1 and ax.lines[0] is curve and fig.axes == [ax]
+assert {"Line2D", "XAxis", "YAxis", "Spine", "Legend", "Text", "Annotation"} <= kinds, kinds
+assert ax.xaxis.label.get_text() == "time $t$ (rad)" and len(ax.lines) == 1 and ax.lines[0] is curve and fig.axes == [ax]
 print("Part 1: ax children are", sorted(kinds))
 
 # %% [markdown]
