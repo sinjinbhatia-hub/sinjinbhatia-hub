@@ -84,3 +84,12 @@ a window dies after ~20–30M Fable tokens, but round 6 survived 20M Fable + 40M
 |---|---|
 | wf_b2a58208-cef | verify (Fable): PY-1, PY-2, PY-3, PY-4 |
 | wf_140648ac-5f2 | write-only (Sonnet): PY-5, PY-6, PY-7, PY-8 |
+
+## Tenth round (2026-10-26 19:30 UTC) — writers switched to Opus 5.5 at the user's request
+
+PY-8 was complete on disk (its writer finished the files before a server 500 killed its report), so it only needs review.
+
+| Run ID | Modules |
+|---|---|
+| wf_c66f2a36-ee5 | verify (Fable): PY-5, PY-6, PY-7 |
+| wf_51efccef-48c | write-only (Opus): PY-9 |
