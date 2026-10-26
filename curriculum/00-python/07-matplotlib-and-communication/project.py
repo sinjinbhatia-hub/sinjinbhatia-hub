@@ -68,8 +68,8 @@ print("Part 1: ax children are", sorted(kinds))
 # ## Part 2: The convergence plot (notes Example 4.2, Builds 1 and 2)
 #
 # Trapezoid and Simpson for the integral of sin over [0, pi] (exact value 2), ten step sizes.
-# Leading errors (PY-5 section 3.10): T - I ~ (h^2/12)(f'(b) - f'(a)) = -h^2/6 and
-# S - I ~ (h^4/180)(f'''(b) - f'''(a)) = h^4/90 for f = sin.
+# Leading errors (PY-5 section 3.10 eq. (3.2), with (b - a) f''(xi) read as the Riemann sum for the
+# integral of f''): T - I ~ (h^2/12)(f'(b) - f'(a)) = -h^2/6 and S - I ~ (h^4/180)(f'''(b) - f'''(a)) = h^4/90 for f = sin.
 
 
 # %%
@@ -110,14 +110,23 @@ p_s = ph.plot_convergence(ax, h, err_s, 4, label="Simpson")
 ax.legend(loc="lower right")
 ph.savefig(fig, "convergence")
 fig, ax = plt.subplots()                                       # add_slope_guide(ax, order) with the default corner
-ax.loglog(h, err_t, "o")
+(pts,) = ax.loglog(h, err_t, "o")
 ph.add_slope_guide(ax, 2)
 xg, yg = ax.lines[1].get_xydata()[[0, 2]].T
 assert math.isclose(math.log10(yg[1] / yg[0]) / math.log10(xg[1] / xg[0]), 2.0)   # the hypotenuse has slope 2
+ph.label_end(ax, pts, "trapezoid")                             # direct label: an Annotation at the line's last point, in its colour
+tag = ax.texts[-1]
+assert tag.get_text() == "trapezoid" and tag.get_color() == pts.get_color() and tuple(tag.xy) == tuple(pts.get_xydata()[-1])
+try:                                                           # notes 3.4: an error of exactly 0 must raise, not vanish from a log axis
+    ph.plot_convergence(ax, h, np.append(err_t[:-1], 0.0), 2)
+except ValueError as exc:
+    assert "err > 0" in str(exc)
+else:
+    raise AssertionError("plot_convergence accepted an error of exactly 0")
 plt.close(fig)
 assert abs(p_t - 2) < 0.1 and abs(p_s - 4) < 0.1
 c_t, c_s = err_t[-1] / (h[-1] ** 2 / 6), err_s[-1] / (h[-1] ** 4 / 90)           # leading constants: both tend to 1 as h -> 0
-assert abs(c_t - 1) < 1e-4 and abs(c_s - 1) < 2e-3
+assert abs(c_t - 1) < 2e-5 and abs(c_s - 1) < 1.3e-4                           # notes Example 4.2: within 2e-5 and 1.3e-4
 print(f"Part 2: fitted slopes: trapezoid {p_t:.3f}, Simpson {p_s:.3f}; err/(h^2/6) at n=96: {c_t:.5f}, err/(h^4/90): {c_s:.5f}")
 
 
@@ -170,8 +179,9 @@ print("Part 2: CSV (csv + loadtxt) and JSON round trips are exact")
 # ## Part 3: Pendulum phase portrait (notes Example 4.7, Build 3; CM-1 preview)
 #
 # theta'' = -sin(theta), state (theta, omega); E = omega^2/2 + 1 - cos(theta) is conserved and the
-# separatrix is E = 2, i.e. omega = +-2 cos(theta/2). Quiver arrows are normalised *on the page*:
-# the page direction of (theta', omega') is (theta'/dtheta, omega'/domega) when axes have unlike units.
+# separatrix is E = 2, i.e. omega = +-2 cos(theta/2). Quiver arrows use angles="xy": the direction is
+# computed through the data-to-display transform, so they are tangent on the page although theta and
+# omega have unlike units and the panel is not square (dividing by the axis ranges is right only if it is).
 
 
 # %%
@@ -201,15 +211,14 @@ assert np.all(traj["rotation"][1] > 0) and energy(0.0, 2.3) > 2     # above the 
 
 th_g, w_g = np.meshgrid(np.linspace(-TH_LIM, TH_LIM, 25), np.linspace(-W_LIM, W_LIM, 13))
 u, v = pendulum_field(th_g, w_g)
-du, dv = u / (2 * TH_LIM), v / (2 * W_LIM)  # direction in axes-fraction space
-norm_ = np.maximum(np.hypot(du, dv), 1e-9)  # the field vanishes at the equilibria; do not divide by 0
+norm_ = np.maximum(np.hypot(u, v), 1e-9)  # the field vanishes at the equilibria; do not divide by 0
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4), sharey=True)
-ax1.quiver(th_g, w_g, du / norm_, dv / norm_, angles="uv", pivot="mid", color="0.3")
+ax1.quiver(th_g, w_g, u / norm_, v / norm_, angles="xy", pivot="mid", color="0.3")  # unit length; page direction
 ax1.set_title("quiver: direction only")
 th_f, w_f = np.meshgrid(np.linspace(-TH_LIM, TH_LIM, 240), np.linspace(-W_LIM, W_LIM, 120))
 uf, vf = pendulum_field(th_f, w_f)
 stream = ax2.streamplot(th_f, w_f, uf, vf, color=np.hypot(uf, vf), cmap="cividis", density=1.3, linewidth=0.9)
-fig.colorbar(stream.lines, ax=ax2, label="phase speed $\\sqrt{\\dot\\theta^2 + \\dot\\omega^2}$ (rad/(L/g)$^{1/2}$)")
+fig.colorbar(stream.lines, ax=ax2, label="phase-plane speed $\\sqrt{\\dot\\theta^2 + \\dot\\omega^2}$ (time in units of $\\sqrt{L/g}$)")
 tgrid = np.linspace(-TH_LIM, TH_LIM, 400)
 for sign in (1, -1):
     ax2.plot(tgrid, sign * 2 * np.cos(tgrid / 2), "k--", lw=0.8)
@@ -226,6 +235,17 @@ for a in (ax1, ax2):
     ph.pi_ticks(a, "x", np.pi)
 ax1.set_ylabel("angular velocity $\\omega$ (rad per $\\sqrt{L/g}$)")
 ax2.set_title("streamplot and three trajectories")
+fig.canvas.draw()                                             # the axes-fraction shortcut is off unless the panel is square: measure it
+box = ax1.get_window_extent()
+pts = np.column_stack([th_g.ravel(), w_g.ravel()])
+page = ax1.transData.transform(pts + 1e-6 * np.column_stack([u.ravel(), v.ravel()])) - ax1.transData.transform(pts)
+on_page = np.degrees(np.arctan2(page[:, 1], page[:, 0]))                                  # what angles="xy" draws
+axes_frac = np.degrees(np.arctan2(v.ravel() / (2 * W_LIM), u.ravel() / (2 * TH_LIM)))     # the shortcut
+off = np.abs((on_page - axes_frac + 180) % 360 - 180)[norm_.ravel() > 1e-6]
+k = box.height / box.width                                    # tan(page angle) = k tan(shortcut angle); the gap peaks at tan = 1/sqrt(k)
+bound = np.degrees(np.arctan(1 / np.sqrt(k)) - np.arctan(np.sqrt(k)))
+assert k < 0.85 and 5 < off.max() <= bound + 1e-9
+print(f"Part 3: panel W/H = {1 / k:.2f}; axes-fraction arrows would be off by up to {off.max():.1f} deg (bound {bound:.1f})")
 ph.savefig(fig, "phase_portrait")
 
 # %% [markdown]
@@ -250,7 +270,7 @@ assert math.isclose(np.sum(counts * np.diff(edges)), 1.0, rel_tol=1e-12)     # d
 assert math.isclose(kde.factor, len(sample) ** (-1 / 5)) and math.isclose(np.trapezoid(kde(xs), xs), 1.0, abs_tol=2e-3)
 tv = lambda f: 0.5 * np.trapezoid(np.abs(f - true.pdf(xs)), xs)
 tv_gauss, tv_kde = tv(stats.norm.pdf(xs, mu, sd)), tv(kde(xs))
-assert tv_kde < tv_gauss
+assert tv_kde < tv_gauss and 0.12 < tv_gauss < 0.14 and 0.015 < tv_kde < 0.025        # notes Example 4.3: 0.132 and 0.019
 print(f"Part 4: hist area {np.sum(counts * np.diff(edges)):.6f}; Scott factor n^(-1/5) = {kde.factor:.4f}, "
       f"kernel sd = {kde.factor * sample.std(ddof=1):.3f} s")
 print(f"        total-variation distance to the true density: Gaussian fit {tv_gauss:.3f}, KDE {tv_kde:.3f}")
@@ -341,7 +361,7 @@ for how in ("imshow", "pcolormesh", "flipped"):
     ax.set(xlim=(x[0], x[-1]), ylim=(y[0], y[-1]))
     worst[how] = np.abs(ph.rgba_at(ax, x[cols], y[rows]) - cmap(norm(V[rows, cols]))).max()
     plt.close(fig)
-assert worst["imshow"] < 1e-2 and worst["pcolormesh"] < 1e-2, worst
+assert worst["imshow"] < 5e-3 and worst["pcolormesh"] < 5e-3, worst                    # within about one colour-map step, 1/255
 assert worst["flipped"] > 0.1                                                  # the flipped image fails the test
 print(f"Part 6: pixel test, worst colour error over 25 grid points: imshow {worst['imshow']:.1e}, "
       f"pcolormesh {worst['pcolormesh']:.1e}, flipped imshow {worst['flipped']:.2f}")
@@ -420,9 +440,9 @@ for ax, z in zip(axs.flat, zetas):
     ax.set_title(f"$\\zeta = {z:g}$")
     ax.set_box_aspect(1)
 for ax in axs[1]:
-    ax.set_xlabel("$x / x(0)$")
+    ax.set_xlabel("$x / x(0)$ (dimensionless)")
 for ax in axs[:, 0]:
-    ax.set_ylabel("$\\dot x\\,/\\,(\\omega_0 x(0))$")
+    ax.set_ylabel("$\\dot x\\,/\\,(\\omega_0 x(0))$ (dimensionless)")
 fig.colorbar(sc, ax=axs, shrink=0.8, label="time $\\omega_0 t$ (rad)")
 assert axs[0, 0].get_shared_x_axes().joined(axs[0, 0], axs[1, 2]) and axs[0, 0].get_shared_y_axes().joined(axs[0, 0], axs[1, 2])
 ph.savefig(fig, "small_multiples")
@@ -602,6 +622,7 @@ print("Part 11: the line y = x is drawn at", np.round(angles, 1), "degrees in 4x
 
 fig, ax = plt.subplots(figsize=(4, 3))
 ax.scatter(*np.random.default_rng(2).normal(size=(2, 2000)), s=2)
+ax.set(xlabel="$x$ (arb.)", ylabel="$y$ (arb.)")
 path = ph.savefig(fig, "size_check", tight=False)
 assert mimg.imread(path).shape == (450, 600, 4)                        # figsize x dpi = (3 x 150, 4 x 150)
 
@@ -609,7 +630,7 @@ assert mimg.imread(path).shape == (450, 600, 4)                        # figsize
 # ## Your turn
 #
 # 1. **Slide and paper versions.** Redraw the convergence plot for a slide (`figsize=(10, 5.6)`,
-#    `font.size` 16, at most five ticks per axis via `MaxNLocator`) and for a paper (`figsize=(3.4, 2.6)`,
+#    `font.size` 16, at most five tick intervals per axis via `MaxNLocator(5)`) and for a paper (`figsize=(3.4, 2.6)`,
 #    saved with `fmt="pdf"` and `pdf.fonttype` 42). Assert the sizes and that the PDF starts with `%PDF`.
 # 2. **Inset.** Add `ax.inset_axes((0.55, 0.1, 0.4, 0.4))` to the Part 6 potential, zoomed on the
 #    region within 0.3 of the +q charge, and check with `rgba_at` that its pixels match the main panel's.

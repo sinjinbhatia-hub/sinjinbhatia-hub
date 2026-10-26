@@ -210,7 +210,7 @@ print({k: round(v, 3) for k, v in slopes.items()})
 
 RK4's slope is furthest from its order (4.057 against 4). The fit uses $h$ from 0.01 to 0.25, where the next term of the error expansion ($h^5$) is still a visible fraction of the leading $h^4$ term, the same effect as Simpson's 4.018 in the notes. A fitted slope gives the order *only* where the leading term dominates: report it with its $h$ range.
 
-**B2.** The fits use the branches the exercise names; the minimum is where the two error sources cross: $\tfrac h2|f''| \approx \varepsilon|f|/h$ gives $h \approx \sqrt{2\varepsilon|f|/|f''|} \approx 1.5\times10^{-8}$ here ($|f| = |f''| = \sin 1$).
+**B2.** The fits use the branches the exercise names; the minimum is where the two error sources cross: $\tfrac h2|f''| \approx \varepsilon|f|/h$ gives $h \approx \sqrt{2\varepsilon|f|/|f''|} = \sqrt{2\varepsilon} \approx 2.1\times10^{-8}$ here ($|f| = |f''| = \sin 1$), within a factor of 2 of the grid point $10^{-8}$ where the minimum lands.
 
 ```python
 hs = 10.0 ** -np.arange(1, 17)
@@ -257,10 +257,9 @@ for name, s0 in {"inside (0.1, 0)": (0.1, 0.0), "outside (3, 3)": (3.0, 3.0)}.it
 L = (3.5, 4.0)
 xg, yg = np.meshgrid(np.linspace(-L[0], L[0], 25), np.linspace(-L[1], L[1], 15))
 u, v = yg, mu * (1 - xg**2) * yg - xg
-du, dv = u / (2 * L[0]), v / (2 * L[1])                       # page direction, as in Example 4.7
-nrm = np.maximum(np.hypot(du, dv), 1e-9)
+nrm = np.maximum(np.hypot(u, v), 1e-9)                        # unit length in data units
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4), sharey=True)
-ax1.quiver(xg, yg, du / nrm, dv / nrm, angles="uv", pivot="mid", color="0.3")
+ax1.quiver(xg, yg, u / nrm, v / nrm, angles="xy", pivot="mid", color="0.3")   # angles="xy": tangent on the page (Example 4.7)
 xf, yf = np.meshgrid(np.linspace(-L[0], L[0], 200), np.linspace(-L[1], L[1], 200))
 ax2.streamplot(xf, yf, yf, mu * (1 - xf**2) * yf - xf, color="0.65", density=1.2, linewidth=0.8)
 for (name, (xt, yt)), c in zip(trajs.items(), ph.OKABE_ITO[1:]):
@@ -279,7 +278,7 @@ outside (3, 3)   late max|x| = 2.0086
 
 Open `figures/sol_b3.png`: the trajectory from inside spirals out and the one from outside spirals in, onto the same closed curve, whose amplitude in $x$ is about 2.0 (for $\mu = 1$ it is 2.0086). Unlike the pendulum there is no conserved energy, which is why a closed curve here is an *attractor* and not one of a family.
 
-**B4.** (a) For $n = 5$ the SE is itself random and often too small, so $\pm1.96\,\mathrm{SE}$ undercovers: the exact coverage is $P(|t_4| < 1.96) = 0.879$. The $t$ interval has the 95% it claims.
+**B4.** (a) For $n = 5$ the SE is itself random and often too small, so $\pm1.96\,\mathrm{SE}$ undercovers: the exact coverage is $P(|t_4| < 1.96) = 0.878$. The $t$ interval has the 95% it claims.
 
 ```python
 rng = np.random.default_rng(4)
@@ -520,11 +519,11 @@ def isotonic(y):
     return np.concatenate([[m] * c for m, c in blocks])
 
 
-def label_lines(ax, lines, names, gap=4.0, fontsize=9):
+def label_lines(ax, lines, names, min_gap=4.0, fontsize=9):
     """Label each line at its right end; nudge labels vertically so no two overlap, keeping order."""
     fig = ax.figure
     fig.canvas.draw()
-    d = fontsize * 1.2 * fig.dpi / 72 + gap                          # label pitch in pixels
+    d = fontsize * 1.2 * fig.dpi / 72 + min_gap                      # label pitch in pixels
     ends = np.array([ax.transData.transform(ln.get_xydata()[-1]) for ln in lines])
     order = np.argsort(ends[:, 1])
     if d * len(lines) > ax.bbox.height:

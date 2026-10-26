@@ -1,16 +1,17 @@
 # Handoff — where the build stands and how to continue
 
-Last updated 2026-10-24 01:10 UTC, after round 8. The branch is `claude/brave-knuth-64723m`; everything below is committed and pushed. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
+Last updated 2026-10-26 20:30 UTC, after round 10. The branch is `claude/brave-knuth-64723m`; everything below is committed and pushed. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
 
-## Status (37 of 80 math modules done; Python course 4 of 10 written)
+## Status (37 of 80 math modules done; Python course 7 of 10 done)
 
 "Done" means all four files exist (`notes.md`, `exercises.md`, `solutions.md`, `project.py`), an independent reviewer re-derived the math and recomputed the numbers, the fixes were applied, and the script passes headless. Review notes for each module are in `tools/reviews/<code>.md`.
 
 | State | Modules |
 |---|---|
 | **Done** (37) | F1–F6 · LA-1–14 · CM-1–8 · EM-1–5 · ST-1–4 |
-| **Written, awaiting review** (1 + 4) | ST-5 · PY-1, PY-2, PY-3, PY-4 (written by Sonnet; scripts pass; not yet independently checked) |
-| **Not started** (41 + 6) | EM-6, EM-7, EM-8 · SM-1–7 · QM-1–9 · ST-6–9 · ML-1–10 · QC-1–9 · PY-5–10 |
+| **Done, Python** (7) | PY-1–7 (PY-1–7 reviewed with every code block executed; 0 high-severity findings) |
+| **Written, awaiting review** (1 + 2) | ST-5 · PY-8 (Sonnet), PY-9 (Opus) — scripts pass; not yet independently checked |
+| **Not started** (42 + 1) | EM-6, EM-7, EM-8 · SM-1–7 · QM-1–9 · ST-6–9 · ML-1–10 · QC-1–9 · PY-10 |
 
 **Priority (user's request, 2026-10-23): finish the Python course (`00-python/`, briefs `research/briefs/PY-*.md`) first.** Its briefs end with a REVIEW FOCUS section the reviewer applies (run every code block; a wrong stated output is high severity). The PY writer addendum is at the end of `research/WRITER-BRIEF.md`.
 
@@ -33,7 +34,7 @@ The build runs through the Workflow tool with `tools/build_modules_workflow.js` 
 ```
 
 - `mode` omitted: write, then review+fix. `"verify"`: review+fix an existing module. `"write"`: write only, review deferred.
-- `writerModel: "sonnet"` puts the writers on Sonnet; reviewers always use the session model (Fable). Keep this. Measured from transcripts: a from-scratch write costs 10–17M cache-read tokens on either model, a review 2–4M, and Sonnet tokens count against the usage limit at a fraction of Fable's rate.
+- `writerModel` picks the writer model (`"sonnet"` or `"opus"`); reviewers always use the session model (Fable). Measured from transcripts: a Fable review costs 2–4M cache-read tokens; an Opus write 12–17M (PY-9: 16.6M, 75 turns); a Sonnet write 22–59M raw for the Python modules (84–158 turns) but Sonnet tokens count against the usage limit at a small fraction of Fable's rate — round 9 ran 163M Sonnet tokens plus 4 Fable reviews without hitting the limit. Round sizing: with Sonnet writers, 3–4 reviews + 3–4 writes per round; with Opus writers (user's choice from round 10), 3 reviews + 1 write. All 14 Sonnet-written modules reviewed so far had 0 high-severity findings.
 - Modules without a brief file (F1, LA-1–12, LA-14) take `"brief": "none"`. Folder paths for every module are in `research/briefs/*.md` ("Folder:" line) and the course READMEs.
 - Reviewers write their findings to `tools/reviews/<code>.md` as they go. If a reviewer is killed, the next one resumes from that file.
 - `tokenCap` exists in the script but is not useful: `budget.spent()` does not track the usage limit.
@@ -44,10 +45,9 @@ There is no usage signal readable from inside the session. The limit kills every
 
 ## Build order (prerequisites first)
 
-1. Verify PY-1–4 (Fable). Write PY-5–8 (Sonnet).
-2. Verify PY-5–8, ST-5. Write PY-9, PY-10, EM-6.
-3. Verify PY-9, PY-10, EM-6. Write EM-7, EM-8, ST-6, ST-7.
-3b. Verify those. Write ST-8, ST-9, QM-1.
+1. Verify PY-8, PY-9, ST-5. Write PY-10 (finishes the Python course).
+2. Verify PY-10. Write EM-6, EM-7 (or more, depending on writer model — see below).
+3. Verify those. Write EM-8, ST-6, ST-7; then ST-8, ST-9, QM-1.
 4. QM-2 through QM-9 (needs EM done; QM-6 reuses EM-3's Legendre machinery).
 5. SM-1 through SM-7 (SM-5 needs QM-5).
 6. ML-1 through ML-10 (needs ST-1–5).

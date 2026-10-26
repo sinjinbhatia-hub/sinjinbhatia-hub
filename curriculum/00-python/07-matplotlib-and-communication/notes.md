@@ -599,7 +599,7 @@ The tree of §2 is real: the Axes holds one `Line2D`, four `Spine`s, the two Axi
 
 ### Example 4.2: The convergence plot, with slopes 2 and 4 annotated
 
-The claim: the trapezoid error is $\approx h^2/6$ and Simpson's is $\approx h^4/90$ for $\int_0^\pi\sin$. The leading terms come from the Taylor/Euler–Maclaurin argument of PY-5 §3.10, $T - I \approx \tfrac{h^2}{12}[f'(b) - f'(a)]$ and $S - I \approx \tfrac{h^4}{180}[f'''(b) - f'''(a)]$. SymPy evaluates them; the figure checks them.
+The claim: the trapezoid error is $\approx h^2/6$ and Simpson's is $\approx h^4/90$ for $\int_0^\pi\sin$. PY-5 §3.10 (its equation (3.2), a Taylor argument) gives $T - I \approx \tfrac{(b-a)h^2}{12}f''(\xi)$ and $S - I \approx \tfrac{(b-a)h^4}{180}f^{(4)}(\xi)$. That $(b-a)f''(\xi)$ is a sum of per-panel terms $\sum_i h\,f''(\xi_i)$, a Riemann sum for $\int_a^b f'' = f'(b) - f'(a)$; the same for $f^{(4)}$. So the leading terms are $T - I \approx \tfrac{h^2}{12}[f'(b) - f'(a)]$ and $S - I \approx \tfrac{h^4}{180}[f'''(b) - f'''(a)]$, the first terms of the Euler–Maclaurin expansion. SymPy evaluates them; the figure checks them.
 
 ```python
 import sympy as sp
@@ -820,7 +820,7 @@ The top panel draws bar B 75% longer than bar A for a 2.2% difference in the dat
 
 $\ddot\theta = -\sin\theta$ in time units of $\sqrt{L/g}$, state $(\theta, \omega)$, $\omega = \dot\theta$. The energy $E = \tfrac12\omega^2 + (1-\cos\theta)$ is conserved: $\dot E = \omega\dot\omega + \sin\theta\,\dot\theta = -\omega\sin\theta + \omega\sin\theta = 0$, so trajectories are level sets of $E$. The **separatrix** is the level through the unstable rest point $(\pm\pi, 0)$, $E = 1-\cos\pi = 2$; there $\tfrac12\omega^2 = 1+\cos\theta = 2\cos^2(\theta/2)$, so $\omega = \pm2\cos(\theta/2)$. Below it the pendulum swings (libration); above it, it goes round (rotation).
 
-▶ **Try it first.** For release states $(\theta_0, \omega_0) = (0.5, 0),\ (2.5, 0),\ (0, 2.3)$, predict each energy and which are librations. Build 3 in three steps: (1) `quiver` on a coarse grid; (2) `streamplot` on a fine one; (3) trajectories from `solve_ivp` on top. One subtlety in step 1: $\theta$ and $\omega$ have different units and different lengths per unit on the page, so an arrow along $(\dot\theta, \dot\omega)$ is tangent to the curves only if you use the *page* direction: normalise $(\dot\theta/\Delta\theta,\ \dot\omega/\Delta\omega)$, the components in axes fractions, and draw with `angles="uv"`.
+▶ **Try it first.** For release states $(\theta_0, \omega_0) = (0.5, 0),\ (2.5, 0),\ (0, 2.3)$, predict each energy and which are librations. Build 3 in three steps: (1) `quiver` on a coarse grid; (2) `streamplot` on a fine one; (3) trajectories from `solve_ivp` on top. One subtlety in step 1: $\theta$ and $\omega$ have different units and different lengths per unit on the page, so an arrow drawn at the data-space angle of $(\dot\theta, \dot\omega)$ (`angles="uv"`) is not tangent to the curves as drawn. `angles="xy"` makes Matplotlib point each arrow from $(\theta, \omega)$ to $(\theta + \dot\theta,\ \omega + \dot\omega)$ *through the data-to-display transform*, which is tangent whatever the panel's shape; give $(\dot\theta, \dot\omega)$ unit length first so every arrow is the same size. (Dividing the components by the axis ranges instead, "axes fractions", is tangent only on a square panel; the block measures how far off that would be here.)
 
 ```python
 TH_LIM, W_LIM = 2 * np.pi, 3.0
@@ -837,14 +837,14 @@ for name, (th0, w0) in starts.items():
     assert drift < 1e-6
 
 th_g, w_g = np.meshgrid(np.linspace(-TH_LIM, TH_LIM, 25), np.linspace(-W_LIM, W_LIM, 13))
-du, dv = (c / (2 * L) for c, L in zip(field(th_g, w_g), (TH_LIM, W_LIM)))      # direction in axes-fraction space
-n_ = np.maximum(np.hypot(du, dv), 1e-9)                         # the field vanishes at equilibria: do not divide by 0
+u, v = field(th_g, w_g)
+n_ = np.maximum(np.hypot(u, v), 1e-9)                           # the field vanishes at equilibria: do not divide by 0
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4), sharey=True)
-ax1.quiver(th_g, w_g, du / n_, dv / n_, angles="uv", pivot="mid", color="0.3")
+ax1.quiver(th_g, w_g, u / n_, v / n_, angles="xy", pivot="mid", color="0.3")   # unit length; direction computed on the page
 th_f, w_f = np.meshgrid(np.linspace(-TH_LIM, TH_LIM, 240), np.linspace(-W_LIM, W_LIM, 120))
 uf, vf = field(th_f, w_f)
 stream = ax2.streamplot(th_f, w_f, uf, vf, color=np.hypot(uf, vf), cmap="cividis", density=1.3, linewidth=0.9)
-fig.colorbar(stream.lines, ax=ax2, label="phase speed (rad per $L/g$)")
+fig.colorbar(stream.lines, ax=ax2, label="phase-plane speed $\\sqrt{\\dot\\theta^2 + \\dot\\omega^2}$ (time in units of $\\sqrt{L/g}$)")
 tg = np.linspace(-TH_LIM, TH_LIM, 400)
 for sign in (1, -1):
     ax2.plot(tg, sign * 2 * np.cos(tg / 2), "k--", lw=0.8)                  # the separatrix E = 2
@@ -854,15 +854,24 @@ for a in (ax1, ax2):
     a.set(xlim=(-TH_LIM, TH_LIM), ylim=(-W_LIM, W_LIM), xlabel="angle $\\theta$ (rad)")
     ph.pi_ticks(a, "x", np.pi)
 ax1.set_ylabel("angular velocity $\\omega$ (rad per $\\sqrt{L/g}$)")
+fig.canvas.draw()
+box = ax1.get_window_extent()
+pts = np.column_stack([th_g.ravel(), w_g.ravel()])
+page = ax1.transData.transform(pts + 1e-6 * np.column_stack([u.ravel(), v.ravel()])) - ax1.transData.transform(pts)
+on_page = np.degrees(np.arctan2(page[:, 1], page[:, 0]))                                  # what angles="xy" draws
+axes_frac = np.degrees(np.arctan2(v.ravel() / (2 * W_LIM), u.ravel() / (2 * TH_LIM)))     # the shortcut: right only on a square panel
+off = np.abs((on_page - axes_frac + 180) % 360 - 180)[n_.ravel() > 1e-6]
+print(f"panel is {box.width / box.height:.2f} times wider than tall; axes-fraction arrows would be off by up to {off.max():.1f} degrees")
 ph.savefig(fig, "phase_portrait_notes")
 ```
 ```text
 small swing E0 = 0.1224, max relative energy drift 5.3e-12
 large swing E0 = 1.8011, max relative energy drift 2.9e-12
 rotation    E0 = 2.6450, max relative energy drift 3.6e-12
+panel is 1.33 times wider than tall; axes-fraction arrows would be off by up to 8.1 degrees
 ```
 
-(`project.py` also asserts the large swing never exceeds its release angle and the rotation never reverses.) Closed loops around $(0,0)$: the small swing nearly an ellipse (the harmonic limit), the large swing squared off; saddles at $(\pm\pi, 0)$ where the separatrix crosses; the rotation *above* the separatrix, wavy but never turning back. The drift of $E$ is below $6\times10^{-12}$, far inside the $10^{-6}$ asserted, so the curves are level sets, not integrator artifacts. Streamlines come from the field alone, trajectories are integrated; where they overlay, the agreement is the check.
+The last line is the promised measurement: this panel is 1.33 times wider than tall, so arrows built from axes fractions would miss the tangent by up to about 8°; with `angles="xy"` the error is zero to rounding. (`project.py` also asserts the large swing never exceeds its release angle and the rotation never reverses.) Closed loops around $(0,0)$: the small swing nearly an ellipse (the harmonic limit), the large swing squared off; saddles at $(\pm\pi, 0)$ where the separatrix crosses; the rotation *above* the separatrix, wavy but never turning back. The drift of $E$ is below $6\times10^{-12}$, far inside the $10^{-6}$ asserted, so the curves are level sets, not integrator artifacts. Streamlines come from the field alone, trajectories are integrated; where they overlay, the agreement is the check.
 
 ## 5. Why it matters and where it connects
 
@@ -874,7 +883,7 @@ rotation    E0 = 2.6450, max relative energy drift 3.6e-12
 
 ## 6. Exercises
 
-See [exercises.md](exercises.md). A1–A6 drill the object model, scales, `imshow` placement, tick formatters, norms and a legend decision. B1–B7 are the module and all are essential: multi-series `plot_convergence`, a V-shaped error curve, a limit cycle, SD/SE/CI and KDE bandwidth, colour maps by lightness, slide and paper versions, small multiples with a shared norm. C1–C3: a misleading figure and its fix, a direct-label collision resolver, a file-size and timing study.
+See [exercises.md](exercises.md). A1–A6 drill the object model, scales, `imshow` placement, tick formatters, norms and colour-map choice. B1–B7 are the module and all are essential: multi-series `plot_convergence`, a V-shaped error curve, a limit cycle, SD/SE/CI and KDE bandwidth, colour maps by lightness, slide and paper versions, small multiples with a shared norm. C1–C3: a misleading figure and its fix, a direct-label collision resolver, a file-size and timing study.
 
 ## 7. Coding project
 
