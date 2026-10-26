@@ -167,8 +167,21 @@ exit status 1
 
 Collected: `test_x`, `TestZ::test_w` (class name starts with `Test`), and `b_test.py::test_u` (the `*_test.py` file pattern). Not collected: `check_y` (the name does not start with `test`), `Helper.test_v` (the class name does not start with `Test`). `bench.py` does not match either file pattern, so bare `pytest` would never open it, but a file *named on the command line* is collected whatever its name: `test_t` ran, failed, and the exit status is 1.
 
-**A6.**
+**A6.** The file under test, with the four calls on lines 8–11:
 
+```python
+from collections.abc import Sequence
+
+
+def scale(v: Sequence[float], k: float) -> list[float]:
+    return [k * x for x in v]
+
+
+print(scale([1, 2, 3], 2))
+print(scale((1.0, 2.0), 2.5))
+print(scale("abc", 2))
+print(scale([1, 2], "2"))
+```
 ```console
 $ python3 -m mypy a6.py
 a6.py:10: error: Argument 1 to "scale" has incompatible type "str"; expected "Sequence[float]"  [arg-type]
@@ -689,7 +702,7 @@ $ python3 fixed.py
 3.0
 ```
 
-(a) `list[int]` is not a `list[float]`: if it were, a function holding the list as `list[float]` could append `2.5` to it and the caller's `list[int]` would hold a float. Lists are mutable, so the type is *invariant*. A read-only parameter should say so with `Sequence[float]`, which is covariant. mypy's note even suggests this. (b) `first_positive` returns `float | None`, and `None + 1` is an error; the `if p is not None:` test *narrows* the type inside the block, which is the fix shown in `fixed.py`.
+(a) `list[int]` is not a `list[float]`: if it were, a function holding the list as `list[float]` could append `2.5` to it and the caller's `list[int]` would hold a float. Lists are mutable, so the type is *invariant*. A read-only parameter should say so with `Sequence[float]`, which is covariant. mypy's note even suggests this. (b) `first_positive` returns `float | None`, and `None + 1` is an error; the `if p is not None:` test *narrows* the type inside the block, which is the fix shown in `fixed.py` (`misuse.py` with the two rejected lines deleted; it passes `--strict` and prints `2.0` and `3.0`).
 
 **B7.** Run from the module folder, or append the body (from `ORIGINAL = ...` on) to `project.py` as a new part before "Your turn"; the code uses only names `project.py` already imports, and was tested both ways.
 
@@ -1074,13 +1087,52 @@ def test_error_hierarchy():
     assert issubclass(harden.NonFiniteError, ig.SolverError) and issubclass(harden.NonFiniteError, ValueError)
     assert not issubclass(harden.NonFiniteError, ig.ConvergenceError)
 ```
+```python
+"""C3: (a) the cost of the NaN/inf checks; (b) error against min_depth at a coarse tol."""
+import math
+import time
+
+from scipy.integrate import quad
+
+import harden
+import integrators as ig
+
+
+def best_of(fn, repeats=20):
+    """Shortest of `repeats` timings of fn(): the least-disturbed run."""
+    best = float("inf")
+    for _ in range(repeats):
+        t0 = time.perf_counter()
+        fn()
+        best = min(best, time.perf_counter() - t0)
+    return best
+
+
+for name, checked, plain in (("trapezoid", harden.trapezoid, ig.trapezoid), ("simpson  ", harden.simpson, ig.simpson)):
+    ratio = best_of(lambda: checked(math.exp, 0.0, 1.0, 2000)) / best_of(lambda: plain(math.exp, 0.0, 1.0, 2000))
+    print(f"{name} checked / plain time = {ratio:.3f}")
+    assert ratio < 1.1  # two isfinite calls on top of 2001 evaluations of f; a loose claim on purpose
+
+
+def peak(x: float) -> float:
+    return math.exp(-100.0 * (x - 0.5) ** 2)
+
+
+reference, _ = quad(peak, 0.0, 1.0, epsabs=1e-13, epsrel=1e-13)
+print(f"{'min_depth':>9}  |error|      requested tol = 1e-3")
+errors = []
+for min_depth in range(5):
+    errors.append(abs(harden.adaptive_simpson(peak, 0.0, 1.0, tol=1e-3, min_depth=min_depth) - reference))
+    print(f"{min_depth:9d}  {errors[-1]:.2e}")
+assert errors[0] == errors[1] > 1e-2 and errors[2] < 1e-4 and errors[4] < 1e-10
+```
 ```console
 $ python3 -m pytest -q
 ..............                                                                               [100%]
 14 passed in 0.02s
 $ python3 measure.py
-trapezoid checked / plain time = 0.999
-simpson   checked / plain time = 0.998
+trapezoid checked / plain time = 1.001
+simpson   checked / plain time = 1.042
 min_depth  |error|      requested tol = 1e-3
         0  2.47e-02
         1  2.47e-02
@@ -1089,6 +1141,6 @@ min_depth  |error|      requested tol = 1e-3
         4  8.08e-14
 ```
 
-(a) A NaN or an infinity in any sample makes the final sum non-finite, so `trapezoid` and `simpson` need only an $O(1)$ test on the result (plus the limits): the measured cost ratio is about 1.00. The price is a worse message (the error cannot say *where* the bad sample was); the adaptive routine evaluates few points, so it wraps `f` with `checked`, which names the offending $x$ and replaces the misleading `ConvergenceError` of §8. `NonFiniteError(SolverError, ValueError)` is catchable as both, like `BracketError` in B2. The tests are written first, check all three non-finite values, and include a bit-for-bit comparison that the finite path is unchanged.
+(a) A NaN or an infinity in any sample makes the final sum non-finite, so `trapezoid` and `simpson` need only an $O(1)$ test on the result (plus the limits): the measured cost ratio is within a few percent of 1 (1.00–1.06 over repeated runs on this machine; `measure.py` asserts only `< 1.1`, because a timing is a claim about one machine). The price is a worse message (the error cannot say *where* the bad sample was); the adaptive routine evaluates few points, so it wraps `f` with `checked`, which names the offending $x$ and replaces the misleading `ConvergenceError` of §8. `NonFiniteError(SolverError, ValueError)` is catchable as both, like `BracketError` in B2. The tests are written first, check all three non-finite values, and include a bit-for-bit comparison that the finite path is unchanged.
 
 (b) The failure at `tol=1e-3` is a failure of the *first estimate*, not of the recursion: the algorithm compares one Simpson estimate on the whole interval with two on its halves, and when all five nodes sit on the flat flanks of the peak or at an end of it, the two agree and the recursion stops. With `min_depth=1` the peak sits at the shared endpoint $x = 0.5$ of both halves, and each half's three nodes still miss its shape: the error is unchanged. With `min_depth=2`, the intervals $[0.25, 0.5]$ and $[0.5, 0.75]$ have their midpoints at $0.375$ and $0.625$, on the peak's flank, the two estimates now disagree, and the recursion refines; the error drops by three orders of magnitude, and at `min_depth=4` to rounding level. The moral is the one of §8: `tol` is an estimate, so give the routine a first look fine enough to see the features.

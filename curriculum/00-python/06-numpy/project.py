@@ -6,7 +6,7 @@
 # distances three ways (4), the axis drill (5), matrix multiply (6), the random-walk ensemble and its
 # mean-square displacement (7), 2D convolution (8), and the Mandelbrot set by boolean masks (Example 4.6).
 # Timings are measured at run time; asserts use margins several times wider than the notes' numbers.
-# Figures go to `figures/`. Run headless: `MPLBACKEND=Agg python3 project.py` (about 15 s).
+# Figures go to `figures/`. Run headless: `MPLBACKEND=Agg python3 project.py` (about 10 s).
 
 # %%
 import math
@@ -204,7 +204,7 @@ for n in sizes_loop:
     assert np.allclose(C, A @ B) and np.allclose(np.dot(A, B), A @ B)
     t_at.append(best(lambda: A @ B, repeat=5))
     print(f"  n={n:4d}: loops {t_loops[-1]:.4f} s, @ {t_at[-1]:.6f} s, ratio {t_loops[-1] / t_at[-1]:,.0f}")
-assert t_loops[-1] > 30 * t_at[-1]
+assert t_loops[-1] > 300 * t_at[-1]            # notes: about 4,000x at n = 200
 sizes_np = (50, 100, 200, 400, 800, 1600)
 t_np_big = [best(lambda A=rng_mm.standard_normal((n, n)): A @ A, repeat=2) for n in sizes_np]
 fig, ax = plt.subplots(figsize=(6, 4))
@@ -351,17 +351,27 @@ def make_matrix(n: int, cond: float, rng: np.random.Generator) -> np.ndarray:
     return (U * np.logspace(0, -np.log10(cond), n)) @ V.T
 
 
-rng_inv, res_solve, res_inv = np.random.default_rng(0), {}, {}
+rng_inv, res_solve, res_inv, err_solve, err_inv = np.random.default_rng(0), {}, {}, {}, {}
+EPS = np.finfo(np.float64).eps
 for cond in (1e2, 1e8, 1e12):
     Ac = make_matrix(200, cond, rng_inv)
-    bc = Ac @ rng_inv.standard_normal(200)
-    res_solve[cond] = np.linalg.norm(Ac @ np.linalg.solve(Ac, bc) - bc) / np.linalg.norm(bc)
-    res_inv[cond] = np.linalg.norm(Ac @ (np.linalg.inv(Ac) @ bc) - bc) / np.linalg.norm(bc)
-assert max(res_solve.values()) < 1e-13 and res_inv[1e12] > 1e-8 and res_inv[1e12] > 1e3 * res_solve[1e12] and res_inv[1e8] > 10 * res_solve[1e8]
+    x_true = rng_inv.standard_normal(200)
+    bc = Ac @ x_true
+    x_s, x_i = np.linalg.solve(Ac, bc), np.linalg.inv(Ac) @ bc
+    res_solve[cond] = np.linalg.norm(Ac @ x_s - bc) / np.linalg.norm(bc)
+    res_inv[cond] = np.linalg.norm(Ac @ x_i - bc) / np.linalg.norm(bc)
+    err_solve[cond] = np.linalg.norm(x_s - x_true) / np.linalg.norm(x_true)
+    err_inv[cond] = np.linalg.norm(x_i - x_true) / np.linalg.norm(x_true)
+    assert res_solve[cond] < 1e-13                      # backward stable: residual at machine precision for every kappa
+    assert err_solve[cond] < 10 * cond * EPS            # forward error about kappa * eps_mach (notes §3.8; LA-13 Theorem 3.8)
+    assert err_inv[cond] >= 0.5 * err_solve[cond]       # inv never does better
+assert res_inv[1e12] > 1e-8 and res_inv[1e12] > 1e3 * res_solve[1e12] and res_inv[1e8] > 10 * res_solve[1e8]
+assert err_inv[1e12] > 10 * err_solve[1e12]             # notes: 3e-4 against 6e-6 -- inv loses more digits, not only the residual
 Ab, bb = np.random.default_rng(9).standard_normal((1000, 1000)), np.random.default_rng(10).standard_normal(1000)
 t_solve, t_inv = best(np.linalg.solve, Ab, bb), best(lambda: np.linalg.inv(Ab) @ bb)
 assert t_inv > 1.5 * t_solve          # inv then @ costs several times one solve
-print(f"  residuals at kappa=1e12: solve {res_solve[1e12]:.1e}, inv {res_inv[1e12]:.1e}; n=1000 solve {t_solve * 1e3:.0f} ms, inv {t_inv * 1e3:.0f} ms")
+print(f"  kappa=1e12: residual solve {res_solve[1e12]:.1e}, inv {res_inv[1e12]:.1e}; error solve {err_solve[1e12]:.1e}, inv {err_inv[1e12]:.1e}; "
+      f"n=1000 solve {t_solve * 1e3:.0f} ms, inv {t_inv * 1e3:.0f} ms")
 
 rng_e = np.random.default_rng(7)                                                          # einsum (3.8), Example 4.5
 M3, Ae, Be = rng_e.standard_normal((3, 3)), rng_e.standard_normal((3, 4)), rng_e.standard_normal((4, 2))
@@ -420,7 +430,7 @@ def walks_array_fast(n_walkers: int, n_steps: int, seed: int = 0) -> np.ndarray:
 
 per_step = best(walks_loop, 200, 1000, repeat=2) / (200 * 1000)
 t_big, t_fast = best(walks_array, 10_000, 1_000, repeat=2), best(walks_array_fast, 10_000, 1_000, repeat=2)
-assert t_big < per_step * 1e7 / 2 and t_fast < 1.5 * t_big
+assert t_big < per_step * 1e7 / 2 and t_fast < t_big      # the narrow-dtype version is the faster one (notes §1)
 print(f"  loop {per_step * 1e6:.2f} us/step (projection for 1e7 steps: {per_step * 1e7:.1f} s); arrays {t_big:.3f} s, narrow dtype {t_fast:.3f} s")
 small = np.array(walks_loop(5, 50, seed=3))
 assert small.shape == (5, 50) and (np.abs(np.diff(small, axis=1)) == 1).all()

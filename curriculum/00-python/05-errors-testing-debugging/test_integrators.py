@@ -133,7 +133,10 @@ def test_linearity_reversal_and_additivity(rule: Rule, rng: np.random.Generator)
         al, be = (float(v) for v in rng.normal(size=2))
         a, c = (float(v) for v in np.sort(rng.uniform(-2, 2, size=2)))
         b = 0.5 * (a + c)
-        mix = lambda x, al=al, be=be: al * f(x) + be * g(x)  # noqa: E731
+
+        def mix(x: float, al: float = al, be: float = be) -> float:
+            return al * f(x) + be * g(x)
+
         # linearity
         expected = al * rule(f, a, c, 8) + be * rule(g, a, c, 8)
         assert rule(mix, a, c, 8) == pytest.approx(expected, rel=1e-10, abs=1e-12)

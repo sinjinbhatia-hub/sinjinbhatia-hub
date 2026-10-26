@@ -1,6 +1,6 @@
 # PY-6 Exercises
 
-Conventions as in the notes: `import numpy as np`, `rng = np.random.default_rng(seed)`. Put your answers in a file next to `project.py`; importing `project` re-runs its checks (about eight seconds), so copy the helpers you need instead. **Write your prediction down before you run anything**, and check every shape claim with an `assert` on `.shape`. "Write a function" means: write it, then test it with asserts you chose, including an edge case.
+Conventions as in the notes: `import numpy as np`, `rng = np.random.default_rng(seed)`. Put your answers in a file next to `project.py`; importing `project` re-runs its checks (about ten seconds), so copy the helpers you need instead. **Write your prediction down before you run anything**, and check every shape claim with an `assert` on `.shape`. "Write a function" means: write it, then test it with asserts you chose, including an edge case.
 
 ## A. Warm-up (do all; 5–10 minutes each)
 

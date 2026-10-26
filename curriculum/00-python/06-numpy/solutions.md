@@ -384,12 +384,12 @@ for f in (ma_windows, ma_convolve, ma_cumsum):
     print(f"{f.__name__:12s} max |error| vs float64: {np.abs(f(big, 1000) - truth).max():10.3g}   {best(f, big, 1000, repeat=1) * 1e3:8.1f} ms")
 ```
 ```text
-ma_windows   max |error| vs float64:      0.107      245.6 ms
-ma_convolve  max |error| vs float64:   4.66e-10      136.0 ms
-ma_cumsum    max |error| vs float64:    1.7e+04        4.2 ms
+ma_windows   max |error| vs float64:      0.107      207.9 ms
+ma_convolve  max |error| vs float64:   4.66e-10      109.9 ms
+ma_cumsum    max |error| vs float64:    1.7e+04        4.1 ms
 ```
 
-`ma_cumsum` loses almost everything: its running sum reaches $10^{12}$ in `float32`, where adjacent representable numbers are $2^{16}=65536$ apart, and each average is a difference of two such numbers. `ma_windows` is off by about 0.1, under two spacings of `float32` near $10^6$ (0.0625), which is as good as the stored data allows. `ma_convolve` is accurate to $10^{-10}$ because `np.ones(w) / w` is `float64` and promotes the arithmetic. The windows and convolution methods do about $w$ multiply-adds per output, the cumulative sum about two operations, which is why `ma_cumsum` is the fast one (3.9 ms against 233 ms here) and why it is only safe in `float64`, or with centred data.
+`ma_cumsum` loses almost everything: its running sum reaches $10^{12}$ in `float32`, where adjacent representable numbers are $2^{16}=65536$ apart, and each average is a difference of two such numbers. `ma_windows` is off by about 0.1: it accumulates each window's sum in `float32`, and near $10^9$ the `float32` spacing is 64, which divided by $w=1000$ is 0.064 per rounding (passing `dtype=np.float64` to `mean` reproduces the `float64` answer exactly). `ma_convolve` is accurate to $10^{-10}$ because `np.ones(w) / w` is `float64` and promotes the arithmetic. The windows and convolution methods do about $w$ multiply-adds per output, the cumulative sum about two operations, which is why `ma_cumsum` is the fast one (4.1 ms against 208 ms here) and why it is only safe in `float64`, or with centred data.
 
 **B6.**
 
@@ -502,7 +502,7 @@ plt.close(fig)
 (5000, 500, 2) MSD(500) = 505.1, slope = 1.0057, 5 standard errors = 0.071
 ```
 
-Each step has $\|\text{step}\|^2=1$ and the steps are independent with mean 0, so as in (3.7) $\langle\|\mathbf r_t\|^2\rangle=t$. For this lattice walk $\mathrm{Var}(\|\mathbf r_t\|^2)=t^2-t$, so the relative standard error of an average over $W$ walkers is $\sqrt{1-1/t}/\sqrt W$, which is the `se` used in the assert.
+Each step has $\|\text{step}\|^2=1$ and the steps are independent with mean 0, so as in (3.7) $\langle\|\mathbf r_t\|^2\rangle=t$. For the variance, expand $\|\mathbf r_t\|^2=t+2\sum_{s<r}\boldsymbol\xi_s\cdot\boldsymbol\xi_r$. Each product $\boldsymbol\xi_s\cdot\boldsymbol\xi_r$ is $+1$ or $-1$ with probability $1/4$ each and $0$ with probability $1/2$ (perpendicular steps), so it has mean 0 and variance $1/2$; two products that share a step, $(\boldsymbol\xi_s\cdot\boldsymbol\xi_r)(\boldsymbol\xi_s\cdot\boldsymbol\xi_u)$ with $r\ne u$, have expectation 0 because $\boldsymbol\xi_u$ appears alone and has mean 0, so the $\binom t2$ products are uncorrelated. Hence $\mathrm{Var}(\|\mathbf r_t\|^2)=4\binom t2\cdot\tfrac12=t^2-t$, and the relative standard error of an average over $W$ walkers is $\sqrt{t^2-t}/(t\sqrt W)=\sqrt{1-1/t}/\sqrt W$, which is the `se` used in the assert.
 
 
 ## C. Challenge
@@ -576,14 +576,14 @@ assert np.allclose(my_einsum("ij,jk->ik", P, R), P @ R)
 ```
 ```text
 Version 1 intermediate: 216 MB
-my_einsum, broadcast           97.07 ms
-my_einsum, tensordot            7.98 ms
-np.einsum                      11.83 ms
-np.einsum, optimize=True        4.90 ms
-P @ R                           7.94 ms
+my_einsum, broadcast           94.38 ms
+my_einsum, tensordot            0.63 ms
+np.einsum                       6.24 ms
+np.einsum, optimize=True        0.47 ms
+P @ R                           0.38 ms
 ```
 
-`@` wins because it reaches BLAS, which blocks for cache and uses vector instructions; `tensordot` reduces to the same `@` after reshaping, so it matches it; plain `np.einsum` loops in C but without BLAS; the broadcast version also writes an $n^3$-element intermediate (216 MB) and then sums it, so it is the slowest and the only one that can run out of memory. `einsum` is still the right tool when no named function exists (multi-index contractions, batched products with permuted axes, traces and diagonals), and `optimize=True` lets it call `tensordot` for you.
+`@` wins (0.38 ms) because it reaches BLAS, which blocks for cache and uses vector instructions; `tensordot` reduces to the same `@` after a transpose and two reshapes, so it is close (0.63 ms); plain `np.einsum` loops in C but without BLAS (6.2 ms, about 16 times slower), and `optimize=True` (0.47 ms) is `einsum` calling `tensordot` for you; the broadcast version also writes an $n^3$-element intermediate (216 MB) and then sums it, so it is the slowest (94 ms) and the only one that can run out of memory. `einsum` is still the right tool when no named function exists (multi-index contractions, batched products with permuted axes, traces and diagonals); pass `optimize=True` whenever the string contains a matrix product.
 
 **C2.** The loop's cost per element is constant; NumPy has a fixed cost per call (three calls here: `sin`, `**2`, `sum`) plus a small cost per element.
 
@@ -647,9 +647,9 @@ plt.close(fig)
 assert cross < 200 and t_sum[0] > t_loop[0] and t_loop[-1] > 3 * t_sum[-1]
 ```
 ```text
-NumPy fixed cost (N=1): 3.9 us per call; loop at N=1: 0.15 us
-asymptotic per element: loop 85 ns, numpy 11.0 ns
-crossover: NumPy is faster from N = 56
+NumPy fixed cost (N=1): 2.4 us per call; loop at N=1: 0.28 us
+asymptotic per element: loop 63 ns, numpy 9.9 ns
+crossover: NumPy is faster from N = 31
 ```
 
 For the 3-vector question, measure the cost of one small operation both ways:
@@ -663,10 +663,10 @@ print(f"3-vector dot product: tuple arithmetic {t_py * 1e9:.0f} ns, np.dot {t_np
 assert t_npd > 2 * t_py
 ```
 ```text
-3-vector dot product: tuple arithmetic 191 ns, np.dot 892 ns
+3-vector dot product: tuple arithmetic 154 ns, np.dot 599 ns
 ```
 
-Conclusion: NumPy costs about 1.6 µs per call (three calls here) and the loop about 0.16 µs per element, so the crossover is N = 31 on this machine; beyond it NumPy wins by up to the ratio of the asymptotic per-element costs (83 ns against 11 ns, a factor of about 7, because `sin` dominates both). A loop that does a 3-vector operation per step for $10^6$ steps should keep each vector as plain floats (or a tuple) and use `math`: the NumPy dot product of two 3-vectors cost 966 ns against 190 ns for the written-out arithmetic. The way to make such a simulation fast is not to call NumPy on 3 numbers a million times but to put the long axis (particles, time, walkers) inside the array and loop only over what truly cannot be vectorized (steps of an integrator, §3.10 case i): CM-1's trajectory is a `(steps, 3)` array filled by a short loop or a single `solve_ivp` call (PY-8).
+Conclusion: `np_sum` costs about 2.4 µs before it has done any work (three ufunc calls, under 1 µs each) and the loop about 0.28 µs for its first element, so the crossover is $N = 31$ on this run; beyond it NumPy wins by up to the ratio of the asymptotic per-element costs (63 ns against 9.9 ns, a factor of about 6, because `sin` dominates both). A loop that does a 3-vector operation per step for $10^6$ steps should keep each vector as plain floats (or a tuple) and use `math`: the NumPy dot product of two 3-vectors cost 599 ns against 154 ns for the written-out arithmetic. The way to make such a simulation fast is not to call NumPy on 3 numbers a million times but to put the long axis (particles, time, walkers) inside the array and loop only over what truly cannot be vectorized (steps of an integrator, §3.10 case i): CM-1's trajectory is a `(steps, 3)` array filled by a short loop or a single `solve_ivp` call (PY-8).
 
 **C3.**
 

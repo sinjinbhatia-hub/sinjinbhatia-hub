@@ -6,7 +6,7 @@
 
 ## 0. Where this sits
 
-PY-1 to PY-4 taught you to predict what Python does. This module teaches your code to say so when it cannot do what you asked, and gives you the means to check that it does what you think. You need PY-4's classes (exceptions are classes, PY-4 §3.10; `Vec` of PY-4 §3.3 is annotated in §3.11, and its `Evaluable` protocol is checked for real) and PY-3's decorators with PY-2's generators (`@contextmanager`). It makes possible every project from PY-6 on (each ships a `test_*.py`), LA-2's LU project, CM-1's conservation-law tests, and ML-2's gradient checks.
+PY-1 to PY-4 taught you to predict what Python does. This module teaches your code to say so when it cannot do what you asked, and gives you the means to check that it does what you think. You need PY-4's classes (exceptions are classes, PY-4 §3.10; `Vec` of PY-4 §3.3 is annotated in §3.11, and its `Evaluable` protocol is checked for real) and PY-3's decorators with PY-2's generators (`@contextmanager`). It makes possible every project from PY-6 on (each ships a `test_*.py`), LA-2's LU project, CM-1's conservation-law tests, and the gradient checks of LA-14 §3.8.
 
 ## 1. The problem that forced this idea
 
@@ -34,7 +34,7 @@ n =  48   integral = 1.994293   error = -5.71e-03
 n =  96   integral = 1.998572   error = -1.43e-03
 ```
 
-Nothing was raised or printed. Every number is plausible: at $n = 48$ the answer is 1.994293, 0.29% low, and the sequence converges as $n$ grows. The one clue is that the error shrinks by about 4 per doubling of $n$ where Simpson's rule gives 16 (PY-4 §3.10's table). Unless you look for it, the 0.3% travels into everything downstream.
+Nothing was raised or printed. Every number is plausible: at $n = 48$ the answer is 1.994293, 0.29% low, and the sequence converges as $n$ grows. The one clue is that the error shrinks by about 4 per doubling of $n$ where Simpson's rule gives 16 (PY-4 §3.10's table).
 
 **A numerical routine that returns a plausible wrong number is worse than one that crashes.** A crash costs minutes; a wrong number costs a week, after the simulation or paper rests on it. Python cannot help: `ys[1:-2:2]` is a legal slice. Four tools close the gap:
 
@@ -173,7 +173,7 @@ except ValueError as err:
 ValueError: line 3: cannot read '3,5' as a number
 ```
 
-`except Exception: pass` turned a crash into 2.3333 where the mean of 1, 2, 3.5, 4 is 2.625: the decimal comma in `3,5` was dropped without a word, the module's forcing problem in a new costume. The repair names what it expects (`ValueError`), says which line failed, and keeps the original with `from err` (§3.4).
+`except Exception: pass` turned a crash into 2.3333 where the mean of 1, 2, 3.5, 4 is 2.625: the decimal comma in `3,5` was dropped without a word: §1's forcing problem again. The repair names what it expects (`ValueError`), says which line failed, and keeps the original with `from err` (§3.4).
 
 - Catch the narrowest class naming a failure you can handle. A handler that can do nothing useful should not exist; let the exception climb. A bare `except:` is never right.
 - `except Exception` has two legitimate homes: the edge of a loop or worker that must survive one bad item, and the `main()` of a script that prints one clear line and exits nonzero. Log the traceback there (`log.exception`, §3.9).
@@ -184,7 +184,7 @@ ValueError: line 3: cannot read '3,5' as a number
 2. `raise New(...) from err` stores `err` as `New.__cause__`; the traceback says "the direct cause of the following exception" (Example 4.5). Raising inside an `except` *without* `from` still links the old one (`__context__`: "during handling of the above exception, another exception occurred"), which usually means the handler has a bug. `from None` hides the context.
 3. **Custom exceptions** subclass `Exception`. Give a package **one base class**, so callers can write `except SolverError`, and a subclass per failure a caller may treat differently. Use built-ins when they fit: a bad argument is a `ValueError`; a `ConvergenceError` is *not*, because the arguments were fine and the algorithm failed. Carry the data a handler needs as attributes, and pass every constructor argument to `super().__init__` so `copy` and `pickle` (which rebuild from `args`) work.
 
-▶ **Build it yourself (2): exceptions for the PY-1 root finders.** PY-1's Newton raised `RuntimeError("did not converge")`: no data, indistinguishable from any other `RuntimeError`. Write the hierarchy, then make Newton turn its `ZeroDivisionError` into a `ConvergenceError` with `raise ... from`. Predict which of the three problems succeed, which raise, and what `__cause__` is.
+▶ **Build it yourself (2): exceptions for the PY-1 root finders.** PY-1's Newton raised `RuntimeError("Newton's method did not converge")`: no data, indistinguishable from any other `RuntimeError`. Write the hierarchy, then make Newton turn its `ZeroDivisionError` into a `ConvergenceError` with `raise ... from`. Predict which of the three problems succeed, which raise, and what `__cause__` is.
 
 ```python
 class SolverError(Exception):
@@ -203,10 +203,14 @@ class ConvergenceError(SolverError):
 ```
 
 ```python
+from collections.abc import Callable
+
 from integrators import ConvergenceError
 
+Fn = Callable[[float], float]
 
-def newton(f, df, x0, tol=1e-12, max_iter=50):
+
+def newton(f: Fn, df: Fn, x0: float, tol: float = 1e-12, max_iter: int = 50) -> float:
     """Newton's method for f(x) = 0; raises ConvergenceError (never RuntimeError)."""
     x = x0
     for k in range(1, max_iter + 1):
@@ -244,7 +248,7 @@ x^3 - 2x + 2, from 0  ConvergenceError: no convergence (iterations=50, residual=
 
 ### 3.5 EAFP, LBYL, and exceptions that are not errors
 
-Python prefers **EAFP** ("easier to ask forgiveness than permission": try it, handle failure) to **LBYL** ("look before you leap": test first). Neither always wins.
+Python prefers **EAFP** ("easier to ask forgiveness than permission": try it, handle failure) to **LBYL** ("look before you leap": test first).
 
 ▶ **Try it first.** Which lines print `None`, which raise, and what does `LBYL still failed` mean?
 
@@ -409,23 +413,23 @@ else:    type(mgr).__exit__(mgr, None, None, None)
 import shutil
 import tempfile
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 
 
 class Timer:
-    def __enter__(self):
+    def __enter__(self) -> "Timer":
         self.start = time.perf_counter()
         return self
 
-    def __exit__(self, exc_type, exc, tb):
-        self.elapsed = time.perf_counter() - self.start
-        return False  # do not suppress an exception
+    def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
+        self.elapsed = time.perf_counter() - self.start  # returns None: do not suppress
 
 
 @contextmanager
-def timer():
+def timer() -> Iterator[SimpleNamespace]:
     box = SimpleNamespace(elapsed=None)
     start = time.perf_counter()
     try:
@@ -435,7 +439,7 @@ def timer():
 
 
 @contextmanager
-def temp_directory():
+def temp_directory() -> Iterator[Path]:
     path = Path(tempfile.mkdtemp(prefix="py5_"))
     try:
         yield path
@@ -467,7 +471,7 @@ after the failure: exists = False
 
 ### 3.8 Debugging
 
-**Method.** Reproduce first, with the smallest input that still fails (halve the input or the code and repeat: bisection; `git bisect` does it over history, PY-10). State one hypothesis, look at the value that confirms or kills it, fix, then pin the bug with a test. **Read the traceback bottom-up:** the last line is *what*, the frame above it *where it was noticed*, the rest *how we got there*. The cause is often earlier than the line blamed.
+**Method.** Reproduce first, with the smallest input that still fails (halve the input or the code and repeat: bisection; `git bisect` does the same over commit history; git: PY-10). State one hypothesis, look at the value that confirms or kills it, fix, then pin the bug with a test. **Read the traceback bottom-up:** the last line is *what*, the frame above it *where it was noticed*, the rest *how we got there*. The cause is often earlier than the line blamed.
 
 **`print` debugging, done right:** name, `repr`, one fact per line.
 
@@ -609,7 +613,7 @@ import sys
 log = logging.getLogger("sim")
 
 
-def simulate(h, steps):
+def simulate(h: float, steps: int) -> tuple[float, float]:
     """Explicit Euler for x'' = -x. The exact energy 0.5(x^2 + v^2) is constant; Euler's grows."""
     x, v = 1.0, 0.0
     e0 = 0.5 * (x * x + v * v)
@@ -675,7 +679,7 @@ no tests ran in 0.00s
 exit status 5
 ```
 
-`check_b` (wrong prefix) and `Helper` (wrong class prefix) are not; `testing_helper` *is*, since the prefix is `test`, not `test_`. A folder whose only file is `check_extra.py` yields "no tests ran", status 5. "Pytest doesn't see my tests" is almost always one of these rules. `python -m pytest` also puts the current directory on `sys.path`, so `import integrators` works here.
+`check_b` (wrong prefix) and `Helper` (wrong class prefix) are not; `testing_helper` *is*, since the prefix is `test`, not `test_`. A folder whose only file is `check_extra.py` yields "no tests ran", status 5. `python -m pytest` also puts the current directory on `sys.path`, so `import integrators` works here.
 
 **Build it yourself (1): test-driven development of the trapezoid and Simpson rules.** **Red** (write a test, watch it fail for the right reason), **green** (least code that passes), **refactor** (clean up, tests as a net). A test that never failed has not shown it can.
 
@@ -803,7 +807,7 @@ $ python3 -m pytest -q
 
 Two lines carry the story. `ys[1:stop:2]` collects the odd-index samples $y_1, y_3, \dots, y_{n-1}$ (weight 4); `stop = -1` ends the slice before $y_n$. `ys[2:-1:2]` collects the even interior samples (weight 2). **The planted bug**: `PLANT_OFF_BY_ONE = True` makes `stop = -2`, which drops the last odd sample $y_{n-1}$: the `ys[1:-2:2]` of §1. (The switch exists only for this module.)
 
-*Plant it.* `pytest -p plant_bug` loads a module before the tests; this one sets the flag, so no source is edited. Below: the failures grouped by test function, then the test that names the missing sample. (`project.py` Part 3 runs this in-process and asserts exactly this set.)
+*Plant it.* `pytest -p plant_bug` loads a module before the tests; this one sets the flag, so no source is edited. Below: failures grouped by test function, then the test naming the missing sample. (`project.py` Part 3 runs this in-process and asserts exactly this set.)
 
 ```python
 import integrators
@@ -1069,7 +1073,7 @@ newton(lambda x: x * x - 2, lambda x: 2 * x, 0.0)
 ```
 ```text
 Traceback (most recent call last):
-  File "rootfind.py", line 9, in newton
+  File "rootfind.py", line 13, in newton
     step = f(x) / df(x)
 ZeroDivisionError: float division by zero
 
@@ -1078,7 +1082,7 @@ The above exception was the direct cause of the following exception:
 Traceback (most recent call last):
   File "chain_demo.py", line 3, in <module>
     newton(lambda x: x * x - 2, lambda x: 2 * x, 0.0)
-  File "rootfind.py", line 11, in newton
+  File "rootfind.py", line 15, in newton
     raise ConvergenceError("derivative is zero", k, abs(f(x))) from err
 integrators.ConvergenceError: derivative is zero (iterations=1, residual=2)
 ```
@@ -1121,7 +1125,7 @@ value = 1.99999975
 - **PY-6 onward.** NumPy code is tested with `np.testing.assert_allclose` against a slow pure-Python version, as PY-4's `Matrix` was against `numpy.linalg.solve`; `np.errstate` (§3.6) makes NumPy fail loudly. **PY-10** builds packaging and continuous integration on §3.10's layout and exit codes.
 - **LA-2, LA-13.** The LU project is checked by comparing $LU$ with $A$ and the solve with `numpy.linalg.solve`, `rtol` tied to the condition number: a tolerance is a claim about conditioning too.
 - **CM-1.** Energy conservation is an integrator's test oracle; the $(1+h^2)^k$ growth of (3.1) is Euler's failure on the oscillator (CM-1 §3.11 measures it and fixes it with symplectic Euler; CM-8 §3.11 explains why that works).
-- **ML-2, LA-14.** A *gradient check* (an analytic gradient against PY-4 §3.7's dual-number derivative, with `approx`) tests every optimizer you write.
+- **LA-14, ML-7.** A *gradient check* (LA-14 §3.8: an analytic gradient against a finite difference or PY-4 §3.7's dual-number derivative, with `approx`) tests every layer and optimizer you write.
 
 ## 6. Exercises
 

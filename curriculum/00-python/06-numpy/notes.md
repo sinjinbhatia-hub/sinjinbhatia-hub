@@ -6,7 +6,7 @@
 
 ## 0. Where this sits
 
-PY-1 gave you names and objects, PY-2 the list and its copying slices, PY-4 the data model (`__getitem__` with a tuple of slices, `__matmul__`), PY-5 asserts. NumPy is where they meet: an array is an object whose slices do *not* copy, whose operators loop in C, and whose bugs you find by asserting shapes. PY-7 plots arrays, PY-8 (SciPy) is built on them, PY-9's columns are arrays, PY-10 profiles the loops you could not remove; LA-2 onward does its numerical work here, LA-12's contractions are `einsum` (§3.8), and LA-13 builds on §3.9.
+PY-1 gave you names and objects, PY-2 §3.3 the list whose slice `a[:]` is a shallow copy, PY-4 §3.4 the data model (`__getitem__` receiving the tuple that `a[i, j]` passes, `__matmul__`), PY-5 asserts. NumPy is where they meet: an array is an object whose slices do *not* copy, whose operators loop in C, and whose bugs you find by asserting shapes. PY-7 plots arrays, PY-8 (SciPy) is built on them, PY-9's columns are arrays, PY-10 profiles the loops you could not remove; LA-2 onward does its numerical work here, LA-12's contractions are `einsum` (§3.8), and LA-13 explains §3.8's `solve`-versus-`inv` numbers (its Theorems 3.8 and 3.9) and §3.9's summation errors (its §3.1 rounding model).
 
 ## 1. The problem that forced this idea
 
@@ -55,7 +55,7 @@ np.dot on the array:   0.102 ms  (235x faster)
 
 A list of floats is a list of *pointers* to separate 24-byte objects scattered through memory; each trip round the loop looks one up, checks its type, multiplies, and allocates a new float. An array is one contiguous block of raw 8-byte doubles with a recipe for reading it, and `np.dot` is a compiled loop over it that creates no Python object per element. The price: *you must stop writing the loop and express the computation as operations on whole arrays.*
 
-The forcing problem is the random-walk ensemble from F5: $10^4$ walkers, $10^3$ steps each, $10^7$ steps in all, to measure how the mean-square displacement grows. The loop version first, measured on a small piece:
+The forcing problem is a random-walk ensemble: $10^4$ walkers, $10^3$ steps each, $10^7$ steps in all, to measure how the mean-square displacement grows (F5 (3.14) says the variances of independent steps add, so it should grow like $t$; §3.10 checks). The loop version first, measured on a small piece:
 
 ```python
 import random
@@ -233,7 +233,7 @@ OverflowError: Python integer 200 out of bounds for int8
 2.220446049250313e-16 1.1920929e-07 127
 ```
 
-**■ What just happened.** Integer arrays do arithmetic modulo $2^{8}$: $200 - 256 = -56$, with no error. Scalar arithmetic at least warns; array arithmetic is silent, and silence is the danger (a `uint8` image brightened by `+ 100` wraps to dark pixels). `sum` accumulates in `int64`, so it returns 200 while `x + x` wrapped. In NumPy 2 a Python integer is "weak": it adopts the array's dtype instead of promoting it, so `x + 200` raises rather than wrapping. Floats do not wrap; they lose digits (§3.9; `eps` above is their relative spacing at 1).
+**■ What just happened.** Integer arrays do arithmetic modulo $2^{8}$: $200 - 256 = -56$, with no error. Scalar arithmetic at least warns (the `RuntimeWarning` line goes to stderr; it is shown in place above); array arithmetic is silent, and silence is the danger (a `uint8` image brightened by `+ 100` wraps to dark pixels). `sum` accumulates in `int64`, so it returns 200 while `x + x` wrapped. In NumPy 2 a Python integer is "weak": it adopts the array's dtype instead of promoting it, so `x + 200` raises rather than wrapping. Floats do not wrap; they lose digits (§3.9; `eps` above is their relative spacing at 1).
 
 The promotion rules in one block:
 
@@ -249,7 +249,7 @@ int16 float64
 [ 1 -1] [ 44 255]
 ```
 
-Two arrays (or NumPy scalars) promote to the smallest dtype holding both (`int8` with `uint8` gives `int16`; `int64` with `float32`, `float64`). A Python scalar never promotes the array: `float32 + 1.0` stays `float32`. `astype` copies, truncates floats toward zero, and wraps integers that do not fit.
+Two arrays (or NumPy scalars) promote to the smallest dtype holding both (`int8` with `uint8` gives `int16`; `int64` with `float32`, `float64`). A Python scalar is "weak": it never widens the array's precision within its kind (`float32 + 1.0` stays `float32`, `int8 + 2` stays `int8`), though a Python float still turns an integer array into `float64` (the third dtype printed). `astype` copies, truncates floats toward zero, and wraps integers that do not fit.
 
 ### 3.3 Creating arrays
 
@@ -508,7 +508,7 @@ cdist              0.19 ms
 the (n, n, d) intermediate is 2.2 MB; at n = 10,000 it would be 2.4 GB
 ```
 
-Three answers, equal to rounding. The loop pays Python overhead $n^2$ times. Broadcasting pays $O(n^2 d)$ memory instead; `cdist` stores nothing extra. When the intermediate no longer fits, chunk the work or call a purpose-built routine (Exercise B3: the Gram-matrix alternative, and where it loses digits).
+**■ What just happened.** Three answers, equal to rounding. The loop pays Python overhead $n^2$ times. Broadcasting pays $O(n^2 d)$ memory instead; `cdist` stores nothing extra. When the intermediate no longer fits, chunk the work or call a purpose-built routine (Exercise B3: the Gram-matrix alternative, and where it loses digits).
 
 
 ### 3.6 Ufuncs and reductions: the "which axis" rule
@@ -562,7 +562,7 @@ t.std(axis=0, ddof=1)          -> (3, 4)
 
 **■ What just happened.** Delete the named axis from `(2, 3, 4)` each time; `keepdims` leaves a 1; `cumsum` deletes nothing; `argmax(axis=0)` returns *positions* along the deleted axis; `axis=-1` counts from the end. When a result has the wrong shape, print `.shape` of every intermediate.
 
-**`ddof`.** `np.var` and `np.std` divide by $N - \text{ddof}$, and `ddof` defaults to **0** (the population formula). Python's `statistics.stdev` divides by $N-1$. For a sample you want the unbiased variance, `ddof=1` (ST-1 derives why):
+**`ddof`.** `np.var` and `np.std` divide by $N - \text{ddof}$, and `ddof` defaults to **0** (the population formula). Python's `statistics.stdev` divides by $N-1$. For a sample you want the unbiased variance, `ddof=1` (ST-1 derives why: $S^2$ with $n-1$ is unbiased):
 
 ```python
 import statistics
@@ -601,7 +601,7 @@ print(t.transpose(2, 0, 1).shape, t.swapaxes(0, 2).shape, m.ravel().flags["OWNDA
 
 - `np.sort(v)` returns a sorted copy, `v.sort()` sorts in place; both sort along the last axis. `np.argsort` returns the indices that would sort (Example 4.4); `kind="stable"` keeps ties in input order.
 - `np.searchsorted(s, q)` binary-searches where each $q$ would be inserted to keep sorted `s` sorted (`side="left"` before equal entries, `"right"` after). It silently returns garbage if `s` is not sorted.
-- `np.unique` returns sorted distinct values (`return_counts`, `return_inverse`). `np.partition(v, k)` puts the $k$ smallest values first in $O(N)$ time without sorting the rest.
+- `np.unique` returns sorted distinct values (`return_counts`, `return_inverse`). `np.partition(v, k)` puts the value that belongs at sorted position $k$ there, with everything smaller before it, in $O(N)$ time without sorting the rest: `np.partition(v, k)[:k + 1]` are the $k+1$ smallest, unsorted.
 - `reshape` takes one `-1` ("infer this length"). `concatenate` joins along an *existing* axis, `stack` creates a *new* one, `hstack`/`vstack` are shorthand for axis 1/0, `split` returns a list of views. `transpose(2, 0, 1)` lists the old axes in their new order. `ravel` is a view when it can be (`m.ravel()` does not own its data) and a copy when it must (`m.T.ravel()` shares nothing with `m`, the last two printed values); `flatten` always copies.
 
 
@@ -644,7 +644,7 @@ for n in (50, 100, 200):
   200     0.4408    0.000135   0.000114      3,884
 ```
 
-The flop count is $2n^3$ either way. The gap grows with $n$ because the library routine (BLAS) blocks the computation to stay in cache, uses SIMD instructions and may use several cores, while the loop pays an interpreter step per multiply. If a formula is a sum over a repeated index, it is a `@` or an `einsum`, not a loop.
+**■ What just happened.** The flop count is $2n^3$ either way. The gap grows with $n$ because the library routine (BLAS) blocks the computation to stay in cache, uses SIMD instructions and may use several cores, while the loop pays an interpreter step per multiply. If a formula is a sum over a repeated index, it is a `@` or an `einsum`, not a loop.
 
 | Task | Call | Destination |
 |---|---|---|
@@ -687,7 +687,7 @@ kappa  1e+12: residual solve 5e-16 inv 1e-05 | error solve 6e-06 inv 3e-04
 n = 1000: solve 13 ms, inv then @ 41 ms
 ```
 
-`solve` keeps the *residual* $\|A\hat x-b\|/\|b\|$ at machine precision whatever $\kappa$ is (LU with partial pivoting is backward stable, LA-13), so its error is only what the conditioning allows, about $\kappa\,\epsilon_{\text{mach}}$. `inv(A) @ b` loses the small residual and more digits, and costs about 3 times as much here. Use `inv` only when you need the inverse itself.
+`solve` keeps the *residual* $\|A\hat x-b\|/\|b\|$ at machine precision whatever $\kappa$ is (LU with partial pivoting is backward stable in practice, LA-13 Theorem 3.9), so its error is only what the conditioning allows, about $\kappa\,\epsilon_{\text{mach}}$ (forward error $\lesssim$ condition number $\times$ backward error, LA-13 Theorem 3.8). `inv(A) @ b` loses the small residual and more digits, and costs about 3 times as much here. Use `inv` only when you need the inverse itself.
 
 **`einsum`.** Einstein summation writes a tensor expression as index letters. Rules (3.6): (i) a letter appearing in several operands means "multiply along it"; (ii) a letter absent from the output is **summed over**; (iii) a letter repeated within one operand takes the diagonal; (iv) the output indices appear in the order written after `->`. Five examples against their named counterparts:
 
@@ -757,7 +757,7 @@ Pairwise summation is about 2000 times more accurate than sequential accumulatio
 
 ### 3.10 Vectorization in practice, and when a loop is fine
 
-**Build 7 (the random-walk ensemble).** §1 gave the loop version; the array version draws all steps and takes `cumsum` along axis 1 (position is the running sum of steps along time). The physics check is F5's. With $x_t=\sum_{s=1}^{t}\xi_s$ and independent steps $\xi_s=\pm1$ of mean 0 and variance 1,
+**Build 7 (the random-walk ensemble).** §1 gave the loop version; the array version draws all steps and takes `cumsum` along axis 1 (position is the running sum of steps along time). The physics check is F5 (3.14), variances of independent terms add, applied to the steps. With $x_t=\sum_{s=1}^{t}\xi_s$ and independent steps $\xi_s=\pm1$ of mean 0 and variance 1,
 
 $$\langle x_t^2\rangle=\sum_{s=1}^{t}\sum_{r=1}^{t}\langle\xi_s\xi_r\rangle=\sum_{s=1}^{t}\langle\xi_s^2\rangle=t, \tag{3.7}$$
 
@@ -776,7 +776,7 @@ print(f"log-log slope = {slope:.4f}, intercept = {intercept:.4f} (theory: 1 and 
 log-log slope = 0.9965, intercept = 0.0239 (theory: 1 and 0)
 ```
 
-`paths` is (walker, time), so averaging over walkers is `axis=0` and leaves a vector indexed by time.
+**■ What just happened.** `paths` is (walker, time), so averaging over walkers is `axis=0` and leaves a vector indexed by time. MSD(1000) = 992.8 is 0.7% below $t$, inside the 1.4% standard error, and the fitted slope is 1 to within the fit's noise.
 
 **Three more rules:**
 
@@ -874,7 +874,7 @@ windows + einsum       2.70 ms   output shape (196, 196)
 scipy convolve2d       5.26 ms   output shape (196, 196)
 ```
 
-All three agree to rounding; the windows version does the loop's arithmetic with both loops moved into `einsum`. (For large kernels SciPy switches to FFT methods, F3.)
+**■ What just happened.** All three agree to rounding; the windows version does the loop's arithmetic with both loops moved into `einsum`. (For large kernels `scipy.signal.convolve(..., method="auto")` switches to an FFT method, F3; `convolve2d` is always direct.)
 
 ### 3.12 Saving and loading
 
@@ -988,7 +988,7 @@ ranks = np.empty_like(order)
 ranks[order] = np.arange(len(order))                  # the inverse permutation: each person's rank
 print(ranks)
 
-K = np.array([[2.0, -1.0, 0.0], [-1.0, 2.0, -1.0], [0.0, -1.0, 2.0]])      # three equal masses, springs (CM-6)
+K = np.array([[2.0, -1.0, 0.0], [-1.0, 2.0, -1.0], [0.0, -1.0, 2.0]])      # CM-6 Example 4.5's chain, N = 3 equal masses, fixed ends
 w2, V = np.linalg.eigh(K)                             # omega^2 in ascending order
 idx = np.argsort(w2)[::-1]                            # fastest mode first
 print(np.sqrt(w2[idx]).round(4))
@@ -1000,7 +1000,7 @@ assert np.allclose(K @ V[:, idx], V[:, idx] * w2[idx])
 [1.8478 1.4142 0.7654]
 ```
 
-`np.argsort(-scores)` returns *which positions* would sort, not the sorted values. Indexing any same-length array with `order` applies that permutation, so one `argsort` reorders names, scores and anything else in step; `ranks[order] = arange` inverts it. In the physics half, `V[:, idx]` reorders eigenvector *columns* by the same permutation, and the assert confirms $K\mathbf v_i=\omega_i^2\mathbf v_i$ still holds. The frequencies $\sqrt{2+\sqrt2},\sqrt2,\sqrt{2-\sqrt2}$ are the chain's three normal modes.
+`np.argsort(-scores)` returns *which positions* would sort, not the sorted values. Indexing any same-length array with `order` applies that permutation, so one `argsort` reorders names, scores and anything else in step; `ranks[order] = arange` inverts it. In the physics half, `V[:, idx]` reorders eigenvector *columns* by the same permutation, and the assert confirms $K\mathbf v_i=\omega_i^2\mathbf v_i$ still holds. The frequencies $\sqrt{2+\sqrt2},\sqrt2,\sqrt{2-\sqrt2}$ are the three normal modes of CM-6 Example 4.5's chain with $N=3$ and $\omega_0=1$.
 
 ### Example 4.5: `einsum("ij,jk->ik")` and `einsum("ii")`
 
@@ -1074,8 +1074,8 @@ An unmasked version (`z = z*z + c; count += abs(z) <= 2`, warnings silenced) giv
 ## 5. Why it matters and where it connects
 
 - **PY-7** plots what you build here (`imshow` of `counts`, `loglog` of `msd`); **PY-8:** SciPy takes and returns arrays (`cdist`, `convolve2d`); **PY-9:** a pandas column is an array plus an index; **PY-10:** profiling finds the loop you could not vectorize and Numba compiles the §3.10 loops, with these timings as baseline.
-- **LA-2, LA-5, LA-7, LA-9:** `solve`, `lstsq`/`qr`, `eigh`, `svd` are the library forms of those modules' algorithms; each project checks its own against them. **LA-13:** §3.8's `solve` versus `inv` and §3.9's summation orders are the first two experiments of its stability study. **LA-12:** tensor contractions are `einsum` strings.
-- **F3:** DFT sample points are `linspace(..., endpoint=False)`. **F5:** Build 7 is the random-walk MSD. **CM-1, CM-5:** $N$ particles are an `(N, 3)` array and the pairwise-force sum is Build 4's `(N, N, 3)` broadcast (Exercise C3); **CM-6:** Example 4.4's normal modes; **CM-7:** the inertia tensor is one `einsum`.
+- **LA-2, LA-5, LA-7, LA-9:** `solve`, `lstsq`/`qr`, `eigh`, `svd` are the library forms of those modules' algorithms; each project checks its own against them. **LA-13:** §3.8's residual-versus-error table is its Theorem 3.8 (forward error $\lesssim \kappa\times$ backward error) and Theorem 3.9 (pivoted LU is backward stable in practice) seen numerically, and its §2 says never form $A^{-1}$; §3.9's summation orders are its §3.1 rounding model applied $N$ times. **LA-12:** tensor contractions are `einsum` strings.
+- **F3:** its DFT sample points $t_n = n/f_s$ are an integer `arange` times the step, which is `linspace(0, T, N, endpoint=False)`: the endpoint is excluded. **F5:** Build 7 measures (3.14) (the variance of a sum of independent steps) on a random-walk ensemble, and F5's "Your turn" 2-D walk is Exercise B7(b)'s. **CM-1 §3.2, CM-5 §3.13:** the $N$-particle system and the three-body problem put positions in an `(N, 3)` array, and the pairwise-force sum is Build 4's `(N, N, 3)` broadcast (Exercise C3); **CM-6 Example 4.5:** Example 4.4's normal modes are its $N=3$ chain; **CM-7 §3.3:** the inertia tensor is one `einsum` (LA-12 Example 4.6 already writes it that way).
 - **ML-1 onward:** a batch is a leading axis, and most deep-learning bugs are shape bugs ("90% tensor-shape bookkeeping", ROADMAP §7). **ML-8:** Build 8's convolution without the flip.
 
 ## 6. Exercises
@@ -1084,7 +1084,7 @@ See [exercises.md](exercises.md). A1–A6 are predict-the-output and bug-fix dri
 
 ## 7. Coding project
 
-`project.py` is the vectorization lab. In order it builds and asserts: (1) Example 4.1's strides, a ten-row views-versus-copies table with `np.shares_memory`, `int8` overflow, Example 4.2; (2) matmul with loops, `np.dot` and `@` for $n=50,100,200$, timed and plotted; (3) broadcasting by hand on the five pairs, Example 4.3, the axis drill; (4) pairwise distances three ways; (5) the $10^4\times10^3$ random-walk ensemble, MSD slope $1\pm0.05$, plot saved; (6) Mandelbrot by masks, counts at known points, masked equals unmasked, figure saved; (7) convolution four ways and a strides moving average against `np.convolve`; (8) `einsum` and the inertia tensor, `argsort`, summation orders, `.npy` and text round trips.
+`project.py` is the vectorization lab. Its nine parts build and assert, in order: (1) Build 1's addressing, Example 4.1's strides, `int8` overflow, the `arange` pitfall; (2) a ten-row views-versus-copies table with `np.shares_memory` and Example 4.2; (3) matmul with loops, `np.dot` and `@` for $n=50,100,200$, timed and plotted; (4) broadcasting by hand on the five pairs, Example 4.3, the axis drill, pairwise distances three ways; (5) `argsort` and the normal modes, the `linalg` properties, `solve` versus `inv` residuals and errors, `einsum` and the inertia tensor, summation orders; (6) the $10^4\times10^3$ random-walk ensemble, MSD slope $1\pm0.05$, plot saved; (7) Mandelbrot by masks, counts at known points, masked equals unmasked, figure saved; (8) a strides moving average against `np.convolve` and convolution four ways; (9) `np.vectorize`, `np.append`, row loops, and the `.npy`, `.npz` and text round trips.
 
 **Build it yourself:** before opening the file, write the triple-loop matmul, `bshape` and the masked Mandelbrot loop from the descriptions, and compare. Then "Your turn": vectorize a provided loopy nearest-centre function; a covariance matrix by broadcasting against `np.cov`; one Game of Life step with `sliding_window_view`; and find the `axis` bug in a provided function (it passes silently on square input).
 
