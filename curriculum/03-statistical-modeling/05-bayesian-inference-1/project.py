@@ -65,6 +65,7 @@ assert close(np.exp(log_ev), integrate.quad(lambda p: stats.binom.pmf(y, n, p) *
 assert all(close(stats.betabinom.pmf(k, n, 1, 1), 1 / (n + 1)) for k in range(n + 1))          # uniform prior: 1/(n+1)
 assert close(integrate.quad(lambda t: t * post.pdf(t), 0, 1)[0], a1 / (a1 + b1))               # P(next success) = mean
 assert close(beta_update(1, 1, 7, 10)[0] / sum(beta_update(1, 1, 7, 10)), 8 / 12)             # Laplace's rule (3.9)
+assert np.allclose(eq_ci, [0.3857, 0.8614], atol=5.1e-5) and np.allclose(hpd, [0.4013, 0.8737], atol=5.1e-5) and abs(np.exp(log_ev) - 0.1119) < 5.1e-5   # Example 4.1 as quoted
 print(f"Ex 4.1: Beta({a1:.0f},{b1:.0f}), mean {post.mean():.4f}, sd {post.std():.4f}, w={w:.4f}; 95% equal-tailed "
       f"({eq_ci[0]:.4f}, {eq_ci[1]:.4f}), HPD ({hpd[0]:.4f}, {hpd[1]:.4f}); evidence {np.exp(log_ev):.5f} (uniform {1 / 11:.5f})")
 
@@ -243,6 +244,8 @@ jt = stats.t(n_g, g.mean(), np.sqrt(S_g) / n_g)                            # joi
 mu_pts = g.mean() + np.array([0, .03, -.05])
 num = [integrate.quad(lambda s: s ** (-n_g - 2) * np.exp(-(S_g + n_g * (m_ - g.mean()) ** 2) / (2 * s * s)), 1e-4, 5)[0] for m_ in mu_pts]
 assert close(np.array(num) / num[0], jt.pdf(mu_pts) / jt.pdf(g.mean()), 1e-5)
+assert abs(post_n[0] - 9.7782) < 5.1e-5 and abs(post_n[3] - 0.070382) < 5.1e-7                        # Example 4.3 as quoted
+assert np.allclose(tm.interval(.95), [9.7133, 9.8430], atol=5.1e-5) and np.allclose(tp.interval(.95), [9.5536, 10.0028], atol=5.1e-5)
 print(f"Ex 4.3: reference 95% ({ref_ci[0]:.4f}, {ref_ci[1]:.4f}) = ST-2; sigma^2 ({sig2_ci[0]:.5f}, {sig2_ci[1]:.5f}), sigma ({sig2_ci[0] ** .5:.4f}, {sig2_ci[1] ** .5:.4f})")
 print(f"  NIG{prior} -> (mu_n,k_n,a_n,b_n)=({post_n[0]:.4f},{post_n[1]:.0f},{post_n[2]:.0f},{post_n[3]:.6f}); mu 95% ({tm.interval(.95)[0]:.4f}, "
       f"{tm.interval(.95)[1]:.4f}); predictive ({tp.interval(.95)[0]:.4f}, {tp.interval(.95)[1]:.4f}); joint-Jeffreys half-width "
@@ -349,6 +352,8 @@ big_mu, big_S = blr_posterior(X, yr, s2r, np.zeros(2), 1e8 * np.eye(2))      # f
 _, vflat = blr_predict(xs, big_mu, big_S, s2r)
 h = 1 / 5 + (xs[:, 1] - 3) ** 2 / 10
 assert close(vflat, s2r * (1 + h), 1e-6) and np.allclose(big_mu, [2.2, 0.6], atol=1e-5)    # = ST-3 prediction variance
+assert np.allclose(mun_r, [2.0363, 0.6437], atol=5.1e-5) and np.allclose(np.sqrt(np.diag(Sn_r)), [0.897, 0.272], atol=5.1e-4)   # Example 4.7 as quoted
+assert np.allclose(mp, [3.967, 7.186], atol=5.1e-4) and np.allclose(vp, [0.958, 2.846], atol=5.1e-4)
 print(f"Ex 4.7: posterior mean {mun_r.round(4)}, sd {np.sqrt(np.diag(Sn_r)).round(4)}; predictive mean/var at x=3: {mp[0]:.4f}/{vp[0]:.4f}, "
       f"at x=8: {mp[1]:.4f}/{vp[1]:.4f}; flat-prior var {vflat.round(4)} = 0.8(1+h), h={h.round(2)}")
 V0, a0r, b0r = 10 * np.eye(2), 2.0, 1.0
@@ -399,6 +404,7 @@ sd_l = 1 / np.sqrt(A1[0, 0])
 logev_lap = log_joint(x1[:, None], y1, bh1[None], 4.0)[0] + 0.5 * np.log(2 * np.pi) - 0.5 * np.log(A1[0, 0])      # (3.35)
 print(f"Ex 4.8: MAP {bh1[0]:.4f}, Laplace sd {sd_l:.4f}; exact mean {pm1:.4f}, sd {sd1:.4f}; log evidence Laplace {logev_lap:.4f} vs exact {np.log(ev1):.4f}")
 assert abs(logev_lap - np.log(ev1)) < 0.1 and 0.2 < pm1 - bh1[0] < 0.5 and abs(sd_l / sd1 - 1) < 0.15      # evidence good, skew missed
+assert np.allclose([bh1[0], sd_l, pm1, sd1], [1.0508, 0.7407, 1.3791, 0.8433], atol=5.1e-5) and np.allclose([logev_lap, np.log(ev1)], [-3.5190, -3.4725], atol=5.1e-5)   # Example 4.8 as quoted
 n2 = 60                                                                        # two parameters: brute-force grid vs Laplace
 x2 = rng.normal(size=n2); y2 = (rng.random(n2) < special.expit(-0.5 + 1.5 * x2)).astype(float)
 X2 = np.column_stack([np.ones(n2), x2]); s0 = 9.0
@@ -416,6 +422,9 @@ print(f"Part 9: n=60: MAP {bh.round(3)} vs grid mean {gm.round(3)}; sd Laplace {
       f"{np.sqrt(np.diag(gcov)).round(3)}; log evidence {logev_lap2:.3f} vs {logev_grid:.3f}")
 assert np.all(np.abs(bh - gm) < 0.3 * np.sqrt(np.diag(gcov))) and abs(logev_lap2 - logev_grid) < 0.15
 assert np.all(np.abs(np.sqrt(np.diag(np.linalg.inv(A))) / np.sqrt(np.diag(gcov)) - 1) < 0.08)
+assert np.allclose(bh, [0.037, 1.670], atol=5.1e-4) and np.allclose(gm, [0.046, 1.780], atol=5.1e-4)                 # Example 4.8 two-parameter numbers as quoted
+assert np.allclose(np.sqrt(np.diag(np.linalg.inv(A))), [0.307, 0.464], atol=5.1e-4) and np.allclose(np.sqrt(np.diag(gcov)), [0.314, 0.481], atol=5.1e-4)
+assert abs(logev_lap2 - (-35.847)) < 5.1e-4 and abs(logev_grid - (-35.822)) < 5.1e-4
 fig, ax = plt.subplots(figsize=(5, 4.5))
 lv = [np.exp(-.5 * c) for c in (6.2, 2.3)]
 ax.contour(GA, GB, Wg, lv, colors="C0")
@@ -450,6 +459,8 @@ for dg in range(8):
 R = np.array(rows)
 assert R[:, 1].argmax() == 2 and R[:, 3].argmax() == 2                       # evidence and BIC both peak at the true degree
 assert np.all(np.diff(R[:, 2]) >= -1e-9) and np.all(np.diff(R[:, 4]) < 0) and np.allclose(R[:, 1], R[:, 4] + R[:, 5])
+quoted = np.array([[-130.06, -126.80, -128.50, -3.26, -126.80], [-82.02, -75.81, -79.21, -6.21, -75.81], [-16.64, -7.26, -12.36, -9.36, -7.28], [-17.80, -6.82, -13.62, -10.95, -6.85], [-18.12, -4.97, -13.48, -12.64, -5.47], [-18.64, -4.87, -15.07, -13.27, -5.37], [-19.00, -4.63, -16.54, -13.66, -5.34], [-19.44, -4.48, -18.09, -14.14, -5.30]])   # Example 4.9 table: log evidence, max log-lik, -BIC/2, log Occam, fit
+assert np.allclose(R[:, 1:], quoted, atol=5.1e-3) and abs((R[2, 1] - R[3, 1]) - 1.16) < 5.1e-3 and abs(np.exp(R[2, 1] - R[3, 1]) - 3.2) < 5.1e-2
 print("Ex 4.9: degree | log evidence | max log-lik | -BIC/2 | log Occam | fit at posterior mean")
 for r_ in R:
     print(f"  d={int(r_[0])}: " + " ".join(f"{v:8.2f}" for v in r_[1:]))
@@ -508,6 +519,7 @@ p_sk, T_sk = ppc_pvalue(skewed, stats.skew)
 p_no, _ = ppc_pvalue(normal_data, stats.skew)
 print(f"Ex 4.11: lognormal data: observed skewness {stats.skew(skewed):.3f}, p_B={p_sk:.4f} (of 4000); Normal data: p_B={p_no:.3f}")
 assert p_sk == 0.0 and 0.05 < p_no < 0.95                                    # none of 4000 replicates is as skewed as the data
+assert abs(stats.skew(skewed) - 2.712) < 5.1e-4 and abs(p_no - 0.665) < 5.1e-4                     # Example 4.11 as quoted
 fig, ax = plt.subplots(figsize=(6, 3.5))
 ax.hist(T_sk, 60, alpha=.6); ax.axvline(stats.skew(skewed), c="r"); ax.set_title("replicated skewness vs observed (red)")
 save(fig, "p12_ppc.png")
@@ -549,6 +561,7 @@ assert close(np.mean(mm * (1 - mm) / 13), 1 / 72) and close((1 / 6) / 10, 1 / 60
 nA, nB, nC = rng.beta(121, 881, 400_000), rng.beta(146, 856, 400_000), rng.beta(139, 863, 400_000)   # B7 (third arm 138/1000)
 assert close([140 / 1200, 165 / 1200, 121 / 1002, 146 / 1002], [0.116667, 0.1375, 0.120758, 0.145709], 1e-4)
 print(f"B7: P(best) A,B,C = {(np.bincount(np.argmax([nA, nB, nC], 0), minlength=3) / 400_000).round(3)}; MC P(B>A) = {np.mean(nB > nA):.4f}")
+assert abs(np.mean(nB > nA) - 0.9501) < 5.1e-5 and np.allclose(np.bincount(np.argmax([nA, nB, nC], 0), minlength=3) / 400_000, [0.022, 0.659, 0.319], atol=5.1e-4)   # B7 as quoted
 zz = np.array([1.96, 2.576])                                                  # B8
 assert close(np.exp((zz ** 2 - 1) / 2) / zz, [2.11247, 6.49901], 1e-4) and close(np.exp(zz ** 2 / 2), [6.82642, 27.60199], 1e-4)
 nn_c = 100; ar = np.sqrt(nn_c) / 2                                            # C1: constant risk of the Beta(sqrt(n)/2, sqrt(n)/2) posterior mean
@@ -563,6 +576,8 @@ ll_mle = (y2 * (X2 @ bm) - np.logaddexp(0, X2 @ bm)).sum(); neg_bic2 = ll_mle - 
 Jm = (X2.T * (special.expit(X2 @ bm) * (1 - special.expit(X2 @ bm)))) @ X2 / n2
 dropped = [stats.norm.logpdf(bm, 0, 3).sum(), np.log(2 * np.pi), -0.5 * np.linalg.slogdet(Jm)[1]]
 assert abs(neg_bic2 + sum(dropped) - logev_lap2) < 0.05 and abs(neg_bic2 + sum(dropped) - logev_grid) < 0.02
+assert np.allclose(bm, [0.041, 1.711], atol=5.1e-4) and abs(ll_mle - (-31.533)) < 5.1e-4 and abs(neg_bic2 - (-35.628)) < 5.1e-4   # C3 as quoted
+assert np.allclose(dropped, [-4.198, 1.838, 2.176], atol=5.1e-4) and abs(sum(dropped) - (-0.184)) < 5.1e-4
 print(f"C3: log evidence grid {logev_grid:.3f}, Laplace {logev_lap2:.3f}, -BIC/2 {neg_bic2:.3f}, max log-lik {ll_mle:.3f}; dropped terms {np.round(dropped, 3)} sum {sum(dropped):.3f}")
 print(f"C2: BF01 = 1 at u = {u_star:.2f} (tau=1: n = {u_star:.1f}; tau=0.1: n = {u_star / 0.01:.0f})")
 

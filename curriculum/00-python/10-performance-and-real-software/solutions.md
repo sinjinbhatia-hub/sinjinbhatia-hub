@@ -1,6 +1,6 @@
 # PY-10 Solutions
 
-Every block below was run, in order, in one session from the module folder (Python 3.13.16, NumPy 2.5.3, numba 0.68.1, 4 CPUs in this shared container), and its output pasted from that run; its asserts passed. Blocks marked as scripts were saved to a file and run with `python3`, because process pools need the `__main__` guard. **Timings are the writer's measurements on this container**; yours will differ, and the ratios are what to compare. The preamble:
+Every block below was run, in order, in one session from the module folder (Python 3.13.16, NumPy 2.5.3, numba 0.68.1, 4 CPUs in this shared container), and its output pasted from that run; its asserts passed. Blocks marked as scripts were saved to a file and run from the module folder with `PYTHONPATH=nbody/src python3 file.py`, because process pools need the `__main__` guard. **Timings are the writer's measurements on this container**; yours will differ, and the ratios are what to compare. The preamble:
 
 ```python
 import math

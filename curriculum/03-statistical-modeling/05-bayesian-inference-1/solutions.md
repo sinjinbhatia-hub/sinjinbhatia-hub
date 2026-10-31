@@ -76,7 +76,7 @@ Equation numbers refer to `notes.md`. Every number below is asserted or printed 
 
 **B7.** (a) Beta(121,881), Beta(146,856), Beta(139,863).
 
-(b) `prob_B_beats_A(120,1000,145,1000)` $=\int f_A(t)\,[1-F_B(t)]\,dt=0.9502$. Monte Carlo with 400,000 paired draws gives $0.9496$ (standard error $\approx0.0003$).
+(b) `prob_B_beats_A(120,1000,145,1000)` $=\int f_A(t)\,[1-F_B(t)]\,dt=0.9502$. Monte Carlo with 400,000 paired draws gives $0.9501$ (standard error $\approx0.0003$).
 
 (c) Draw 400,000 samples from each posterior and take the arg-max per draw: $P(\text{best})\approx(0.022,\ 0.659,\ 0.319)$ for A, B, C (each $\pm0.001$). B is most likely best, but C has a one-in-three chance; the data do not separate B and C well.
 
@@ -102,8 +102,8 @@ Equation numbers refer to `notes.md`. Every number below is asserted or printed 
 
 (c) $u=n\tau^2/\sigma^2=n/100$ for $\tau=0.1$, so $n=100(49.44)\approx4944$: a narrower alternative takes more data before it loses. Extension for Part 11: `taus = np.logspace(-3, 1, 200); plt.loglog(taus, 1/bf10(0.02, 10**4, 1, taus)); plt.axvline(np.sqrt(3)/100)`. The curve starts at $1$ for tiny $\tau$ ($H_1\to H_0$), dips to $1/2.241=0.446$ at $\tau=\sqrt{z^2-1}\,\sigma/\sqrt n=0.0173$, crosses $1$ at $\tau=\sqrt{49.44}/100=0.0703$ (the same $u$ as in (a)), and then rises without bound. The data favor $H_1$ for $\tau<0.0703$ and $H_0$ above: the verdict is a function of the prior scale.
 
-**C3.** (a) With the prior variance set to $10^{12}$, Newton returns the MLE $\hat\beta=(-0.754,\ 1.294)$, with $\hat\ell=-31.242$. For $n=60$, $d=2$: $-\mathrm{BIC}/2=\hat\ell-\frac d2\log n=-31.242-4.094=-35.336$.
+**C3.** (a) With the prior variance set to $10^{12}$, Newton returns the MLE $\hat\beta=(0.041,\ 1.711)$, with $\hat\ell=-31.533$. For $n=60$, $d=2$: $-\mathrm{BIC}/2=\hat\ell-\frac d2\log n=-31.533-4.094=-35.628$.
 
-(b) The grid log evidence is $-35.597$ and the Laplace value is $-35.622$ (they differ by $0.025$). BIC is off by $0.26$ from the grid: a factor $e^{0.26}\approx1.3$ in the evidence.
+(b) The grid log evidence is $-35.822$ and the Laplace value is $-35.847$ (they differ by $0.025$). BIC is off by $0.19$ from the grid: a factor $e^{0.19}\approx1.2$ in the evidence.
 
-(c) Expanding about the MLE with Hessian $-n\hat J$: $\log p(y)\approx\hat\ell+\log p(\hat\beta)+\frac d2\log2\pi-\frac d2\log n-\frac12\log|\hat J|$ (the derivation before (3.42)). BIC keeps the first and fourth terms and drops three: the log prior density at $\hat\beta$, $\log\mathcal N(\hat\beta;0,9I)=-4.160$; $\frac d2\log2\pi=1.838$; and $-\frac12\log|\hat J|=2.067$, where $\hat J=X^\top\hat WX/n$. Their sum is $-0.255$. Then $-35.336-0.255=-35.591$, within $0.006$ of the grid value and $0.031$ of the Laplace value. So the gap is exactly the dropped constants; none grows with $n$, but each depends on the prior or on the information per observation, and in a comparison between models the difference of these terms can exceed the BIC difference itself.
+(c) Expanding about the MLE with Hessian $-n\hat J$: $\log p(y)\approx\hat\ell+\log p(\hat\beta)+\frac d2\log2\pi-\frac d2\log n-\frac12\log|\hat J|$ (the derivation before (3.42)). BIC keeps the first and fourth terms and drops three: the log prior density at $\hat\beta$, $\log\mathcal N(\hat\beta;0,9I)=-4.198$; $\frac d2\log2\pi=1.838$; and $-\frac12\log|\hat J|=2.176$, where $\hat J=X^\top\hat WX/n$. Their sum is $-0.184$. Then $-35.628-0.184=-35.812$, within $0.010$ of the grid value and $0.035$ of the Laplace value. So the gap is exactly the dropped constants; none grows with $n$, but each depends on the prior or on the information per observation, and in a comparison between models the difference of these terms can exceed the BIC difference itself.

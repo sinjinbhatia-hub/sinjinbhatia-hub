@@ -2,7 +2,7 @@
 
 **Time:** ~10 hours · **Prerequisites:** PY-8 (so PY-3's functions and modules, PY-5's tests and logging, PY-6's arrays); PY-9 optional; CM-5 helpful for the physics · **Unlocks:** the working habits of every later project; take it before ML-7 (training loops) and SM-6 (Monte Carlo)
 
-> **Conventions in this module.** Every output below came from a real run in this container (Python 3.13.16, NumPy 2.5.3, SciPy 1.18.1, numba 0.68.1, 4 CPUs, shared with other jobs); blocks run top to bottom in one session from the module folder, and the `text` block after a block is its output. **Every timing here is the writer's measurement on this container**; `project.py` re-measures and prints its own, which will differ. Only ratios transfer, and on a shared machine even they move by tens of percent. Wall time: `time.perf_counter`; microbenchmarks: `timeit`, reporting the **minimum** of repeats; where time goes: `cProfile` + `pstats`. A **speedup** is $t_{\text{baseline}}/t_{\text{version}}$, baseline named, per force evaluation at $N = 200$ unless stated. Physics: $G = 1$, total mass 1, positions `pos` as an `(N, 3)` float64 array (row $i$ is body $i$), masses `mass` shape `(N,)`, and the acceleration of body $i$ is
+> **Conventions in this module.** Every output below came from a real run in this container (Python 3.13.16, NumPy 2.5.3, SciPy 1.18.1, numba 0.68.1, 4 CPUs, shared with other jobs); blocks run top to bottom in one session from the module folder (blocks marked `file:` are scripts, run from the same folder with `PYTHONPATH=nbody/src`), and the `text` block after a block is its output. **Every timing here is the writer's measurement on this container**; `project.py` re-measures and prints its own, which will differ. Only ratios transfer, and on a shared machine even they move by tens of percent. Wall time: `time.perf_counter`; microbenchmarks: `timeit`, reporting the **minimum** of repeats; where time goes: `cProfile` + `pstats`. A **speedup** is $t_{\text{baseline}}/t_{\text{version}}$, baseline named, per force evaluation at $N = 200$ unless stated. Physics: $G = 1$, total mass 1, positions `pos` as an `(N, 3)` float64 array (row $i$ is body $i$), masses `mass` shape `(N,)`, and the acceleration of body $i$ is
 > $$\mathbf a_i = G\sum_{j\ne i} \frac{m_j(\mathbf x_j - \mathbf x_i)}{\left(|\mathbf x_j - \mathbf x_i|^2 + \varepsilon^2\right)^{3/2}}, \tag{3.1}$$
 > with Plummer softening $\varepsilon$ ($\varepsilon = 0$ is exact gravity). Pairwise differences are $d_{ij} = \mathbf x_j - \mathbf x_i$. Any code that starts processes sits under `if __name__ == "__main__":`. The package `nbody/` lives in this folder; `import nbody` works after `sys.path.insert(0, "nbody/src")` or `pip install -e nbody` (Build 8).
 
@@ -12,7 +12,7 @@ PY-3 gave you `lru_cache` (§3.6), packages (§3.8), `venv` and `pip` (§3.10) a
 
 ## 1. The problem that forced this idea
 
-You want the gravitational $N$-body problem of CM-5 §3.13 for $N = 500$ bodies and 2000 leapfrog steps, and then for many initial conditions, because one run of a chaotic system tells you almost nothing. The first version is the obvious double loop over Python lists. In the run below (Build 1) one force evaluation at $N = 500$ took 89 ms, so 2000 steps take 3 minutes; written as a loop over NumPy array elements, which is what most first versions look like, it took 315 ms, so 10 minutes. A hundred initial conditions: 5 to 17 hours. The same physics with the loop pushed into NumPy and its temporaries removed runs the 2000 steps in 7 s (Build 3), and a hundred initial conditions on four cores in about three minutes.
+You want CM-5 §3.13's gravitational three-body problem with $N = 500$ bodies instead of three, 2000 leapfrog steps, and then many initial conditions, because one run of a chaotic system tells you almost nothing. The first version is the obvious double loop over Python lists. In the run below (Build 1) one force evaluation at $N = 500$ took 89 ms, so 2000 steps take 3 minutes; written as a loop over NumPy array elements, which is what most first versions look like, it took 315 ms, so 10 minutes. A hundred initial conditions: 5 to 17 hours. The same physics with the loop pushed into NumPy and its temporaries removed runs the 2000 steps in 7 s (Build 3), and a hundred initial conditions on four cores in three to four minutes.
 
 Two things stand in the way. First, **you will optimize the wrong thing.** Asked where the slow program spends its time, most people point at the code that *looks* slow: the Python loops of the kick and drift updates. A profiler says they take 0.3% of the run (Example 4.1). So the rule here is absolute: measure, change one thing, measure again.
 
@@ -22,7 +22,7 @@ So the module has a spine: one $N$-body code, nine builds, from a profiled loop 
 
 ## 2. Intuition
 
-**Why Python is slow per operation.** In C, `a + b` on two doubles is one machine instruction on two registers. In Python, `a` and `b` are names bound to heap objects (PY-1), each with a type pointer and a reference count, and `a + b` executes the bytecode `BINARY_OP`: look up the type of `a`, find its `__add__`, check the type of `b`, unbox two doubles, add, allocate a new float for the result, adjust reference counts. Build 1 measures the consequence: a few hundred nanoseconds per pair term of eq. (3.1), some twenty bytecodes.
+**Why Python is slow per operation.** In C, `a + b` on two doubles is one machine instruction on two registers. In Python, `a` and `b` are names bound to heap objects (PY-1), each with a type pointer and a reference count, and `a + b` executes the bytecode `BINARY_OP`: look up the type of `a`, find its `__add__`, check the type of `b`, unbox two doubles, add, allocate a new float for the result, adjust reference counts. Build 1 measures the consequence: a few hundred nanoseconds per pair term of eq. (3.1), some seventy bytecodes, about twenty of them arithmetic on boxed floats.
 
 ```text
 C:       a + b  ->  one add instruction on two registers
@@ -124,7 +124,7 @@ N = 500: lists 89 ms -> 2000 steps 3.0 min; same loop over ndarray elements 315 
 ratio N=500/N=200: 6.60 (N^2 predicts 6.25)
 ```
 
-■ **What just happened.** Each pair term cost 340 ns in this run (240–340 ns in the writer's other runs): some twenty bytecodes, each a dispatch on boxed floats. Going from 200 to 500 bodies multiplied the time by 6.6, close to $N^2$'s 6.25. Indexing an ndarray element by element was 3.5 times *slower* than lists, because every `pos[j][0]` on an array builds a new array-scalar object; NumPy is fast only when you hand it whole arrays (PY-6 §3.10).
+■ **What just happened.** Each pair term cost 340 ns in this run (240–340 ns in the writer's other runs): some seventy bytecodes (`dis.dis(accel_loop)` counts them), about twenty of them subscripts and arithmetic that each dispatch on boxed floats. Going from 200 to 500 bodies multiplied the time by 6.6, close to $N^2$'s 6.25. Indexing an ndarray element by element was 3.5 times *slower* than lists, because every `pos[j][0]` on an array builds a new array-scalar object; NumPy is fast only when you hand it whole arrays (PY-6 §3.10).
 
 **`cProfile` and `pstats`.** `cProfile` records every function call and return. Run it as `python -m cProfile -o run.prof script.py`, or `cProfile.run("main()", "run.prof")`, or by enabling a `Profile` object around the code (Example 4.1); then `pstats.Stats("run.prof").sort_stats("cumulative").print_stats(10)` shows the top ten. Two columns matter:
 
@@ -170,7 +170,7 @@ A disk cache goes stale silently when code or inputs change: put the parameters 
 
 ▶ **Build 2 (vectorize).** With PY-6 Build 4's pairwise-difference broadcast, write eq. (3.1) with no Python loop. Predict every intermediate's shape and size at $N = 200$, and the speedup. What goes wrong on the diagonal $i = j$ when $\varepsilon = 0$, and how do you fix it without an `if`?
 
-The direct translation, `accel_broadcast` in the package, keeps PY-6's `(N, N, 3)` layout; Example 4.2 traces it shape by shape. The diagonal: with $\varepsilon = 0$, $r^2_{ii} = 0$ and $0/0$ is `nan`, which poisons every sum. Since $d_{ii} = \mathbf 0$, any finite weight there contributes nothing, so `np.fill_diagonal(r2, 1.0)` fixes it with no branch. That layout's inner axis has length 3, so every pass runs in loops of three elements and pays the loop overhead 40,000 times. Putting the coordinate axis **first**, `(3, N, N)`, makes every pass a run over 40,000 contiguous doubles (`accel_numpy`):
+The direct translation, `accel_broadcast` in the package, keeps PY-6's `(N, N, 3)` layout; Example 4.2 traces it shape by shape. The diagonal: with $\varepsilon = 0$, $r^2_{ii} = 0$ and $0/0$ is `nan`, which poisons every sum. Since $d_{ii} = \mathbf 0$, any finite weight there contributes nothing, so `np.fill_diagonal(r2, 1.0)` fixes it with no branch. That layout's inner axis has length 3, so the broadcasts and the reductions along it (the differences, `.sum(axis=-1)`, `w[:, :, np.newaxis] * d`) run an inner loop of three elements 40,000 times, 3 to 8 times slower than in the other layout; an elementwise pass like `d * d` costs the same in both. Putting the coordinate axis **first**, `(3, N, N)`, makes every pass a run over 40,000 contiguous doubles (`accel_numpy`):
 
 ```python
 eps = 0.05
@@ -210,7 +210,7 @@ in place (workspace)       472 us   28.6x the loop  rel. diff 6.2e-16
 N = 500, workspace: 3.56 ms per evaluation -> 2000 steps in 7.1 s
 ```
 
-Layout bought a factor of 4 over the `(N, N, 3)` broadcast; the workspace then gained 16%, about what people guess. But a temporary can cost far more than its arithmetic. Memory fresh from the operating system arrives unmapped: the first write to each 4 kB page traps into the kernel, which maps and zeroes it (a *minor page fault*). glibc's allocator takes large blocks directly from the OS (`mmap`) and returns them on `free`, with a size threshold that moves with the process's allocation history. Count the faults, and force the worst case with glibc's `MALLOC_MMAP_THRESHOLD_` (Linux only):
+■ **What just happened.** Layout bought a factor of 4 over the `(N, N, 3)` broadcast; the workspace then gained 16%, about what people guess. But a temporary can cost far more than its arithmetic. Memory fresh from the operating system arrives unmapped: the first write to each 4 kB page traps into the kernel, which maps and zeroes it (a *minor page fault*). glibc's allocator takes large blocks directly from the OS (`mmap`) and returns them on `free`, with a size threshold that moves with the process's allocation history. Count the faults, and force the worst case with glibc's `MALLOC_MMAP_THRESHOLD_` (Linux only):
 
 ```python
 import os
@@ -276,7 +276,7 @@ print(f"float64 {t32['64'] * 1e6:.0f} us, float32 {t32['32'] * 1e6:.0f} us ({t32
 float64 444 us, float32 199 us (2.23x); float32 relative force error 3.5e-07
 ```
 
-2.2 times as fast, and nine of the sixteen digits gone. `project.py` Part 3 prices it. Total momentum, conserved by Newton's third law up to rounding, drifts by $1.7\times10^{-16}$ in 500 float64 steps and $2.9\times10^{-8}$ in float32. The energy error at $t = 0.5$ falls like $\Delta t^2$ in float64 ($1.1\times10^{-6}$ at $\Delta t = 10^{-2}$, $1.1\times10^{-10}$ at $10^{-4}$) but in float32 stalls between $10^{-8}$ and $10^{-7}$, where rounding adds as much error per step as truncation removes. Fine for a picture, a network's weights (ML-7) or a Monte Carlo with statistical error $10^{-3}$; wrong for a long orbit.
+■ **What just happened.** 2.2 times as fast, and nine of the sixteen digits gone. `project.py` Part 3 prices it. Total momentum, conserved by Newton's third law up to rounding, drifts by $1.7\times10^{-16}$ in 500 float64 steps and $2.9\times10^{-8}$ in float32. The energy error at $t = 0.5$ falls like $\Delta t^2$ in float64 ($1.1\times10^{-6}$ at $\Delta t = 10^{-2}$, $1.1\times10^{-10}$ at $10^{-4}$) but in float32 stalls near $10^{-8}$ (between $5\times10^{-9}$ and $10^{-7}$), where rounding adds as much error per step as truncation removes. Fine for a picture, a network's weights (ML-7) or a Monte Carlo with statistical error $10^{-3}$; wrong for a long orbit.
 
 **Other constant-factor rules** (Exercises A4, B2 measure some):
 
@@ -287,7 +287,7 @@ float64 444 us, float32 199 us (2.23x); float32 relative force error 3.5e-07
 
 ### 3.6 The runtime: bytecode, reference counting, the GIL
 
-**Bytecode.** CPython compiles each function to bytecode for a stack machine and executes it one instruction at a time; `dis.dis(f)` shows it (Example 4.5). Since 3.11 hot instructions are *specialized* in place (PEP 659): after a few float calls, `BINARY_OP` becomes `BINARY_OP_ADD_FLOAT`, skipping the type dispatch ("What's New in Python 3.11" reports 1.25× on average over 3.10). Each instruction still allocates its result, so compiled code stays far ahead.
+**Bytecode.** CPython compiles each function to bytecode for a stack machine and executes it one instruction at a time; `dis.dis(f)` shows it (Example 4.5). Since 3.11 hot instructions are *specialized* in place (PEP 659): after a few float calls, `BINARY_OP` becomes `BINARY_OP_ADD_FLOAT`, skipping the type dispatch ("What's New in Python 3.11" reports 1.25× on average over 3.10). Each arithmetic instruction still allocates its result, so compiled code stays far ahead.
 
 **Reference counting and the garbage collector.** An object is freed the moment its reference count reaches zero, so Build 2's temporaries die at the end of each statement; reference cycles are found periodically by the cyclic **garbage collector** (`gc`). The practical point: a reference you forgot (a list of views, a cache) keeps a large array alive.
 
@@ -371,7 +371,7 @@ tiny jobs (N = 8, 5 steps): serial 4.0 ms, 4 workers 15.9 ms
 
 ■ **What just happened.** Each worker is a separate process with its own import of `nbody`; `pool.map` pickles each seed out and each result dictionary back. Four workers gave 3.6× (`project.py`'s run: 2.9×; other jobs on this machine take cores). One worker should be slightly *slower* than serial; it came out 1.17× faster, which shows the size of the noise here. For 4-ms jobs the pool lost, 15.9 ms against 4.0 ms. Results equal the serial ones because each job receives its seed explicitly; a seed drawn from a global generator inside the job would make results depend on which worker ran what.
 
-**The `__main__` guard.** Workers start one of three ways. `fork` (the Linux default up to 3.13) copies the parent. `spawn` (Windows, macOS) and `forkserver` (the Linux default from 3.14) start a fresh interpreter that **imports your main script** (as `__mp_main__`) to find your functions, so every top-level statement runs again in every worker; if one creates a pool, Python stops it:
+**The `__main__` guard.** Workers start one of three ways. `fork` (the Linux default up to 3.13) copies the parent. `spawn` (Windows, macOS) and `forkserver` (the Linux default from 3.14) start a fresh interpreter that **imports your main script** (as `__mp_main__`) to find your functions, so your top level runs again outside the parent (in every worker under `spawn`; once, in the fork server, under `forkserver`); if one creates a pool, Python stops it:
 
 ```python
 import os
@@ -451,7 +451,7 @@ Failed in nopython mode pipeline (step: nopython frontend)
 TypingError: got an unexpected keyword argument 'axis'
 ```
 
-Half a second to compile, then 3.1 times faster than the workspace. One might expect "similar" for a problem NumPy vectorizes well; it is not, because the compiled loop reads the positions once and keeps each partial sum in a register, where NumPy makes a dozen passes over 320 kB arrays. The rule: **a compiled loop beats NumPy when the vectorized form needs many passes over large temporaries, or cannot be written at all** (a step depending on the previous one, an early exit, a branch per element), as in SM-6's Metropolis sweep.
+■ **What just happened.** Half a second to compile, then 3.1 times faster than the workspace. One might expect "similar" for a problem NumPy vectorizes well; it is not, because the compiled loop reads the positions once and keeps each partial sum in a register, where NumPy makes a dozen passes over 320 kB arrays. The rule: **a compiled loop beats NumPy when the vectorized form needs many passes over large temporaries, or cannot be written at all** (a step depending on the previous one, an early exit, a branch per element), as in SM-6's Metropolis sweep.
 
 The `TypingError` is typical: correct NumPy that Numba does not support, and one useful line buried among twenty. **Start with tiny functions** and grow them. `@njit(parallel=True)` with `numba.prange` on the outer loop splits its iterations over Numba's own threads; here the loop over $i$ is independent, so that works (Exercise C3). `@njit(cache=True)` saves the compiled code to disk.
 
@@ -482,7 +482,7 @@ N =  8000:  15952 pairs, all-pairs 0.568 s, tree 8.6 ms, same pairs: True
 short-range force, tree vs brute: rel. diff 7.6e-17
 ```
 
-Quadrupling $N$ multiplied the all-pairs time by 11 and the tree time by 4. `project.py` Part 8 fits the exponents over $N = 2000$ to $32{,}000$; in the writer's run they were 1.92 for all-pairs (a little under 2: fixed per-call costs still show at small $N$) and 1.10 for the tree, and at $N = 16{,}000$ the tree was 340 times faster. No constant factor gets you that.
+■ **What just happened.** Quadrupling $N$ multiplied the all-pairs time by 11 and the tree time by 4. `project.py` Part 8 fits the exponents over $N = 2000$ to $32{,}000$; in the writer's run they were 1.92 for all-pairs (a little under 2: fixed per-call costs still show at small $N$) and 1.10 for the tree, and at $N = 16{,}000$ the tree was 340 times faster. No constant factor gets you that.
 
 ### 3.9 Real software: the package (Build 8)
 
@@ -833,11 +833,11 @@ $ python -m pytest -q
 14 passed in 0.91s
 ```
 
-Before the `.gitignore`, git offers to track eleven generated files (bytecode caches, and the `egg-info` that `pip install -e` wrote); after it, only source. Each commit leaves a working package. The experiment stays on a branch until tested; `main` moved meanwhile (the README commit), so the merge has two parents, drawn by `--graph` (otherwise git would have fast-forwarded). The merged tree passes its tests and is identical to `nbody/` here.
+Before the `.gitignore`, git offers to track eleven generated files (bytecode caches, and the `egg-info` that `pip install -e` wrote); after it, only source. Each commit leaves a working package. The experiment stays on a branch until tested; `main` moved meanwhile (the README commit), so the merge has two parents, drawn by `--graph` (otherwise git would have fast-forwarded). The merged tree passes its tests and, apart from `baseline.py` (Build 1's reference, added to the package afterwards), is identical to `nbody/` here.
 
 ## 5. Why it matters and where it connects
 
-- **CM-5, CM-8.** The physics here is CM-5's two-body problem (its Theorem 3.7, Kepler's third law, is `project.py`'s end-to-end test) and §3.13's $N$-body problem; leapfrog's energy error that oscillates but never grows, against RK4's steady growth (`project.py` Part 3), is CM-8 §3.11's symplectic integrator at work.
+- **CM-5, CM-8.** The physics here is CM-5's two-body problem (its Theorem 3.7, Kepler's third law, is `project.py`'s end-to-end test) and §3.13's three-body problem, here with $N$ bodies; leapfrog's energy error that oscillates but never grows, against RK4's steady growth (`project.py` Part 3), is CM-8 §3.11's symplectic integrator at work.
 - **ML-7.** A training loop is Builds 1–3 again: batch into arrays, preallocate, profile first; float32 is the default there because statistical noise dwarfs rounding (Build 4). Parallel data loading is Build 5.
 - **SM-6.** A Metropolis sweep cannot be vectorized (each step depends on the last): Build 6's Numba. Independent chains with explicit seeds: Build 5.
 - **Every later project.** Seeds as parameters, a config dataclass, results that record their commit, tests in `tests/`, figures regenerated into an ignored `figures/`: Build 8 is how they are all set up.
@@ -848,7 +848,7 @@ See [exercises.md](exercises.md). A1–A5 are predictions and small fixes (a tim
 
 ## 7. Coding project
 
-`project.py` drives `nbody/` through the builds and checks each stage: (1) times and profiles the baseline at $N = 200$; (2) checks the broadcast, coordinate-first and in-place forces against the loop to $10^{-12}$, times them and counts page faults; (3) checks momentum to $10^{-10}$, measures float32's momentum drift and energy floor, and compares leapfrog with RK4 over 100 orbits at equal cost; (4) verifies Kepler's third law to $10^{-4}$ and the exponent 3/2; (5) runs 8 initial conditions on 1, 2 and 4 processes, and the tiny-job slowdown; (6) times Numba, or says "not run"; (7) writes and checks the speedup table; (8) fits all-pairs against `cKDTree` exponents; (9) runs pytest and the command line, and checks the provenance record; (10)–(11) recompute the notes' memory and bytecode facts and every non-timing number in `solutions.md`. About 35 s here.
+`project.py` drives `nbody/` through the builds and checks each stage: (1) times and profiles the baseline at $N = 200$; (2) checks the broadcast, coordinate-first and in-place forces against the loop to $10^{-12}$, times them and counts page faults; (3) checks momentum to $10^{-10}$, measures float32's momentum drift and energy floor, and compares leapfrog with RK4 over 100 orbits at equal cost; (4) verifies Kepler's third law to $10^{-4}$ and the exponent 3/2; (5) runs 8 initial conditions on 1, 2 and 4 processes, and the tiny-job slowdown; (6) times Numba, or says "not run"; (7) writes and checks the speedup table; (8) fits all-pairs against `cKDTree` exponents; (9) runs pytest and the command line, and checks the provenance record; (10)–(11) recompute the notes' memory and bytecode facts and the deterministic numbers `solutions.md` quotes. About 35 s here.
 
 **Build it yourself:** write Builds 1–3 before opening `nbody/src/nbody/forces.py`, and make them pass `tests/test_forces.py`. Then "Your turn": a cutoff force and a Barnes–Hut tree against the workspace; `chunksize` variations; a `--profile` flag; a Numba port of an earlier project's hot loop.
 
@@ -857,7 +857,7 @@ See [exercises.md](exercises.md). A1–A5 are predictions and small fixes (a tim
 - **You will optimize before profiling, and speed up the 5%.** Everyone does: kick and drift *look* slow and took 0.3% (Example 4.1). No optimization without a profile in hand and a timing before and after, written down.
 - **"Python is slow" is true per operation and irrelevant once the loop is in NumPy or Numba.** Rewriting a project in C++ for one slow loop is the expensive way of not profiling.
 - **Threads will not speed up your CPU-bound Python, and you will try anyway.** Nothing crashes, it is no faster (§3.6), and `top` shows one core at 100%. Use processes, or NumPy or Numba.
-- **Forgetting the `__main__` guard.** On Linux with `fork` nothing goes wrong, so the bug ships; under `spawn` (macOS, Windows) or `forkserver` (Linux from 3.14) every worker re-runs your top level, and you get §3.6's `RuntimeError`, a `BrokenProcessPool`, and every top-level side effect once per worker.
+- **Forgetting the `__main__` guard.** On Linux with `fork` nothing goes wrong, so the bug ships; under `spawn` (macOS, Windows) or `forkserver` (Linux from 3.14) your top level is re-run outside the parent, and you get §3.6's `RuntimeError`, a `BrokenProcessPool`, and every top-level side effect once per worker.
 - **Numba's error messages are terrible.** Start with a ten-line function, get it compiling, grow it; when it fails, delete half the body until it compiles (bisection, PY-5 §3.8).
 - **float32 is a trade you must justify, not a free speedup.** It halved Build 4's time and put a floor near $10^{-7}$ under the energy error. Decide the accuracy you need, then check against a float64 run.
 - **Preallocated buffers alias.** `history.append(work(pos, mass))` stores the same view every step, so the list holds the last value $N$ times (Exercise A3). Document it, and `.copy()`.

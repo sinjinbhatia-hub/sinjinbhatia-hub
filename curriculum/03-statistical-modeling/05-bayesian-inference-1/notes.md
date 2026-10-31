@@ -249,7 +249,7 @@ This is ST-3's ridge (3.38). A tight prior (small $\tau^2$) is a large penalty.
 *Lasso.* With independent Laplace priors $p(\beta_j)=e^{-|\beta_j|/b}/(2b)$, $-\log p(\beta\mid y)=\frac1{\sigma^2}\big[\frac12\|y-X\beta\|^2+\frac{\sigma^2}b\|\beta\|_1\big]+c$, which is ST-3's (3.43) with
 $$\lambda=\sigma^2/b. \tag{3.28}$$
 
-■ **What just happened, and the catch.** The MAP *is* the penalized fit, and ST-3's ridge-versus-lasso contrast is a contrast of priors. But the mode ignores the shape of the posterior and is not invariant: Beta(9,5) has mode $2/3$ in $p$, while its density on the logit scale peaks at $p=9/14$. The lasso's exact zeros are a property of the mode: for an orthonormal design with $z=0.3$ and prior scale $b=2$ ($\lambda=\frac12$) the MAP is exactly $0$ but the posterior mean is $0.2047$; the posterior puts no point mass at zero. (Park and Casella's "Bayesian lasso" makes this point.) MAP estimates are computed with a prior but are not Bayesian in spirit.
+■ **What just happened, and the catch.** The MAP *is* the penalized fit, and ST-3's ridge-versus-lasso contrast is a contrast of priors. But the mode ignores the shape of the posterior and is not invariant: Beta(9,5) has mode $2/3$ in $p$, while its density on the logit scale peaks at $p=9/14$. The lasso's exact zeros are a property of the mode: for an orthonormal design with $\sigma^2=1$, $z=0.3$ and prior scale $b=2$ ($\lambda=\frac12$) the MAP is exactly $0$ but the posterior mean is $0.2047$; the posterior puts no point mass at zero. (Park and Casella's "Bayesian lasso" makes this point.) MAP estimates are computed with a prior but are not Bayesian in spirit.
 
 ### 3.10 Posterior predictive checks
 
@@ -313,7 +313,7 @@ For unknown $\sigma^2$ with the NIG prior, the evidence is $\log p(y)=\log\frac{
 
 **The Jeffreys–Lindley paradox.** Let $\bar x\mid\mu\sim\mathcal N(\mu,\sigma^2/n)$, $H_0:\mu=0$, $H_1:\mu\sim\mathcal N(0,\tau^2)$. Under $H_0$, $\bar x\sim\mathcal N(0,\sigma^2/n)$; under $H_1$ it is $\mathcal N(0,\sigma^2/n+\tau^2)$ (sum of independent Normals). With $z=\bar x\sqrt n/\sigma$ and $u=n\tau^2/\sigma^2$, the ratio of the two densities at $\bar x$ is
 $$\mathrm{BF}_{10}=\sqrt{\frac{\sigma^2/n}{\sigma^2/n+\tau^2}}\ \exp\Big\{\frac{\bar x^2}2\Big[\frac1{\sigma^2/n}-\frac1{\sigma^2/n+\tau^2}\Big]\Big\}=(1+u)^{-1/2}\exp\Big\{\frac{z^2}2\cdot\frac u{1+u}\Big\}. \tag{3.40}$$
-Hold $z$, and with it the two-sided $p$-value, fixed and let $n\to\infty$. Then $u\to\infty$ and $\mathrm{BF}_{10}\approx u^{-1/2}e^{z^2/2}\to0$: evidence for $H_0$ grows like $\sqrt n$ while the $p$-value stays put. With $n=10^4$, $\bar x=0.02$, $\sigma=\tau=1$: $z=2$, $p=0.0455$, $\mathrm{BF}_{10}=0.0739$, so $H_0$ is favored $13.5:1$. Why: $H_1$ spreads its bets over $|\mu|\lesssim1$, so it predicted $\bar x$ to within about $\pm1$, while $H_0$ predicted $\pm0.01$; an observation at $0.02$ is 2 standard errors from $H_0$'s prediction but sits in a region where $H_1$'s density is a hundred times thinner. Estimation under $H_1$ says something else: $\mu\mid y\sim\mathcal N(0.0200,0.0100^2)$, interval $(0.0004,0.0396)$ excludes 0. All three statements are true. The $p$-value says the data are unusual under $H_0$; the interval says $\mu$ is probably positive and tiny; the Bayes factor says a diffuse alternative predicted the data worse than the point null did.
+Hold $z$, and with it the two-sided $p$-value, fixed and let $n\to\infty$. Then $u\to\infty$ and $\mathrm{BF}_{10}\approx u^{-1/2}e^{z^2/2}\to0$: evidence for $H_0$ grows like $\sqrt n$ while the $p$-value stays put. With $n=10^4$, $\bar x=0.02$, $\sigma=\tau=1$: $z=2$, $p=0.0455$, $\mathrm{BF}_{10}=0.0739$, so $H_0$ is favored $13.5:1$. Why: $H_1$ spreads its bets over $|\mu|\lesssim1$, so it predicted $\bar x$ to within about $\pm1$, while $H_0$ predicted $\pm0.01$; an observation at $0.02$ is 2 standard errors from $H_0$'s prediction but sits in a region where $H_1$'s density is a hundred times thinner than $H_0$'s peak. Estimation under $H_1$ says something else: $\mu\mid y\sim\mathcal N(0.0200,0.0100^2)$, interval $(0.0004,0.0396)$ excludes 0. All three statements are true. The $p$-value says the data are unusual under $H_0$; the interval says $\mu$ is probably positive and tiny; the Bayes factor says a diffuse alternative predicted the data worse than the point null did.
 
 **Sensitivity is the honest problem.** $\mathrm{BF}_{10}$ depends on $\tau$ in a way posteriors do not. Maximize (3.40) over $u$: $\frac d{du}\log\mathrm{BF}_{10}=-\frac1{2(1+u)}+\frac{z^2}{2(1+u)^2}=0$ at $1+u=z^2$, so
 $$\max_\tau\mathrm{BF}_{10}=\frac1{|z|}\,e^{(z^2-1)/2}\quad(|z|>1). \tag{3.41}$$
@@ -361,11 +361,11 @@ ST-3's five points centered: $x_c=(-2,-1,0,1,2)$, $y_c=(-2,0,1,0,1)$, so $S_{xx}
 
 ### Example 4.7: Bayesian regression on five points (Part 8)
 
-ST-3 Example 4.1: $x=1,\dots,5$, $y=(2,4,5,4,5)$, design $[\mathbf 1,x]$, treat $\sigma^2=0.8$ as known, prior $\beta\sim\mathcal N(0,10I)$ ($\lambda=0.08$). From (3.30): posterior mean $(2.0363,\ 0.6437)$ (OLS: $(2.2,\ 0.6)$), sd $(0.897,\ 0.272)$. The posterior mean equals the ridge solution (3.31), the minimizer of $-\log$ posterior, and the F5 conditional formula, all asserted. Predictive (3.32) at the interpolation point $x_*=3$: mean $3.967$, variance $0.958$ (sd $0.98$). At the extrapolation point $x_*=8$: mean $7.186$, variance $2.847$ (sd $1.69$), three times larger. In the flat-prior limit the variances are $0.8(1+h_*)$ with $h_*=\frac15+\frac{(x_*-3)^2}{10}=0.2,\ 2.7$, i.e. $0.96$ and $2.96$, ST-3's prediction variance. The 50 posterior lines fan out away from $x=3$ and the $\pm2$ sd band flares. With unknown $\sigma^2$ the predictive is a $t$ (3.33), and the project checks that the closed-form evidence (3.39) equals the product of the five one-step $t$ predictives, which tests both formulas at once.
+ST-3 Example 4.1: $x=1,\dots,5$, $y=(2,4,5,4,5)$, design $[\mathbf 1,x]$, treat $\sigma^2=0.8$ as known, prior $\beta\sim\mathcal N(0,10I)$ ($\lambda=0.08$). From (3.30): posterior mean $(2.0363,\ 0.6437)$ (OLS: $(2.2,\ 0.6)$), sd $(0.897,\ 0.272)$. The posterior mean equals the ridge solution (3.31), the minimizer of $-\log$ posterior, and the F5 conditional formula, all asserted. Predictive (3.32) at the interpolation point $x_*=3$: mean $3.967$, variance $0.958$ (sd $0.98$). At the extrapolation point $x_*=8$: mean $7.186$, variance $2.846$ (sd $1.69$), three times larger. In the flat-prior limit the variances are $0.8(1+h_*)$ with $h_*=\frac15+\frac{(x_*-3)^2}{10}=0.2,\ 2.7$, i.e. $0.96$ and $2.96$, ST-3's prediction variance. The 50 posterior lines fan out away from $x=3$ and the $\pm2$ sd band flares. With unknown $\sigma^2$ the predictive is a $t$ (3.33), and the project checks that the closed-form evidence (3.39) equals the product of the five one-step $t$ predictives, which tests both formulas at once.
 
 ### Example 4.8: Laplace approximation, logistic regression (Part 9)
 
-*One parameter.* Data $x=(-2,-1,0.5,1,2,3)$, $y=(0,0,1,0,1,1)$, no intercept, prior $\beta\sim\mathcal N(0,2^2)$. Newton gives $\hat\beta=1.0508$ and $A=1/0.7407^2$, so the Laplace posterior is $\mathcal N(1.051,\ 0.741^2)$. A fine-grid posterior has mean $1.379$ and sd $0.843$: the true posterior is skewed right, and the Laplace approximation, a local fit at the peak, misses that (mode $\ne$ mean, sd $12\%$ low). The evidence (3.35) is much better: $\log p(y)=-3.519$ against $-3.4725$ exactly, a $5\%$ error in $p(y)$. *Two parameters,* $n=60$ (Part 9): MAP $(-0.742,\ 1.266)$, Laplace sd $(0.313,\ 0.416)$, against grid mean $(-0.777,\ 1.367)$, sd $(0.322,\ 0.434)$; $\log$ evidence $-35.622$ against $-35.597$. At $n=60$ it is good enough for most purposes; the six-point example shows it visibly off in the mean and spread.
+*One parameter.* Data $x=(-2,-1,0.5,1,2,3)$, $y=(0,0,1,0,1,1)$, no intercept, prior $\beta\sim\mathcal N(0,2^2)$. Newton gives $\hat\beta=1.0508$ and $A=1/0.7407^2$, so the Laplace posterior is $\mathcal N(1.051,\ 0.741^2)$. A fine-grid posterior has mean $1.379$ and sd $0.843$: the true posterior is skewed right, and the Laplace approximation, a local fit at the peak, misses that (mode $\ne$ mean, sd $12\%$ low). The evidence (3.35) is much better: $\log p(y)=-3.519$ against $-3.4725$ exactly, a $5\%$ error in $p(y)$. *Two parameters,* $n=60$ (Part 9): MAP $(0.037,\ 1.670)$, Laplace sd $(0.307,\ 0.464)$, against grid mean $(0.046,\ 1.780)$, sd $(0.314,\ 0.481)$; $\log$ evidence $-35.847$ against $-35.822$. At $n=60$ it is good enough for most purposes; the six-point example shows it visibly off in the mean and spread.
 
 ### Example 4.9: Evidence picks the degree (Part 10)
 
@@ -373,13 +373,13 @@ Thirty points from $y=0.5+x-2x^2+\mathcal N(0,0.3^2)$ on $[-1,1]$; polynomial mo
 
 | degree | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 |---|---|---|---|---|---|---|---|---|
-| max log-lik (MLE) | $-107.84$ | $-64.65$ | $-5.66$ | $-5.52$ | $-5.50$ | $-4.91$ | $-3.38$ | $-3.10$ |
-| fit at posterior mean | $-107.84$ | $-64.65$ | $-5.67$ | $-5.54$ | $-5.62$ | $-5.28$ | $-4.75$ | $-4.50$ |
-| log Occam factor | $-3.26$ | $-6.18$ | $-9.19$ | $-10.64$ | $-11.48$ | $-12.25$ | $-13.01$ | $-13.55$ |
-| log evidence (fit + Occam) | $-111.10$ | $-70.83$ | $\mathbf{-14.86}$ | $-16.18$ | $-17.10$ | $-17.53$ | $-17.76$ | $-18.05$ |
-| $-\mathrm{BIC}/2$ | $-109.54$ | $-68.05$ | $\mathbf{-10.76}$ | $-12.33$ | $-14.00$ | $-15.11$ | $-15.28$ | $-16.71$ |
+| max log-lik (MLE) | $-126.80$ | $-75.81$ | $-7.26$ | $-6.82$ | $-4.97$ | $-4.87$ | $-4.63$ | $-4.48$ |
+| fit at posterior mean | $-126.80$ | $-75.81$ | $-7.28$ | $-6.85$ | $-5.47$ | $-5.37$ | $-5.34$ | $-5.30$ |
+| log Occam factor | $-3.26$ | $-6.21$ | $-9.36$ | $-10.95$ | $-12.64$ | $-13.27$ | $-13.66$ | $-14.14$ |
+| log evidence (fit + Occam) | $-130.06$ | $-82.02$ | $\mathbf{-16.64}$ | $-17.80$ | $-18.12$ | $-18.64$ | $-19.00$ | $-19.44$ |
+| $-\mathrm{BIC}/2$ | $-128.50$ | $-79.21$ | $\mathbf{-12.36}$ | $-13.62$ | $-13.48$ | $-15.07$ | $-16.54$ | $-18.09$ |
 
-The maximized likelihood never decreases with degree (the models are nested) and the Occam factor only worsens, so the evidence peaks where extra flexibility stops paying: the true degree 2. From degree 2 to 3 the fit gains $0.13$ and the Occam factor loses $1.45$; the net is $\mathrm{BF}_{23}=e^{1.32}=3.7$. BIC (3.42) peaks at the same degree but penalizes more heavily here than this fairly diffuse prior does.
+The maximized likelihood never decreases with degree (the models are nested) and the Occam factor only worsens, so the evidence peaks where extra flexibility stops paying: the true degree 2. From degree 2 to 3 the fit gains $0.43$ and the Occam factor loses $1.59$; the net is $\mathrm{BF}_{23}=e^{1.16}=3.2$. BIC (3.42) peaks at the same degree but penalizes more heavily here than this fairly diffuse prior does.
 
 ### Example 4.10: The Jeffreys–Lindley paradox (Part 11)
 
@@ -387,7 +387,7 @@ $n=10^4$, $\bar x=0.02$, $\sigma=1$: $z=0.02\sqrt{10^4}=2$, two-sided $p=0.0455$
 
 ### Example 4.11: Posterior predictive check (Part 12)
 
-Sixty draws from a lognormal$(0,0.8^2)$ have sample skewness $1.703$. Fit a Normal (reference prior), draw 4,000 $(\mu,\sigma^2)$ from the posterior, simulate 4,000 replicated datasets of size 60, compute each skewness: none reaches $1.703$ ($p_B<1/4000$). The Normal model cannot produce data this skewed. Sixty actual Normal draws give $p_B=0.134$. The cure here is a different likelihood (lognormal, or Normal on $\log y$), not a different prior.
+Sixty draws from a lognormal$(0,0.8^2)$ have sample skewness $2.712$. Fit a Normal (reference prior), draw 4,000 $(\mu,\sigma^2)$ from the posterior, simulate 4,000 replicated datasets of size 60, compute each skewness: none reaches $2.712$ ($p_B<1/4000$). The Normal model cannot produce data this skewed. Sixty actual Normal draws give $p_B=0.665$. The cure here is a different likelihood (lognormal, or Normal on $\log y$), not a different prior.
 
 ### Example 4.12: Same data, two stopping rules (Part 13)
 
