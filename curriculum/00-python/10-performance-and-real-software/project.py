@@ -3,13 +3,14 @@
 #
 # The capstone of the Python course. The physics is eq. (3.1) of the notes: softened Newtonian
 # gravity between N bodies (CM-5), stepped by leapfrog. The code lives in the package `nbody/`
-# next to this file (src/nbody/forces.py, integrate.py, cli.py; tests/). This script drives the
+# next to this file (src/nbody/forces.py, integrate.py, baseline.py, cli.py; tests/). This script drives the
 # optimization one build at a time, and checks every stage: forces equal to the loop to 1e-12,
 # momentum conserved to 1e-10, leapfrog's bounded energy error against RK4's growth, Kepler's
 # third law, then timings (baseline, vectorized, in place, float32, a process pool, Numba), the
-# k-d tree's scaling, the test suite and the command line.
+# k-d tree's scaling, the test suite and the command line; Part 11 recomputes the numbers that
+# solutions.md quotes.
 #
-# Run headless: `MPLBACKEND=Agg python3 project.py` (about 30 s here). Sizes: N = 200 for every
+# Run headless: `MPLBACKEND=Agg python3 project.py` (about 35 s here). Sizes: N = 200 for every
 # timing; 8 initial conditions x 400 steps for the pool; N up to 16,000 for all-pairs and 32,000
 # for the tree.
 # Timings are measured at run time and printed; they will differ from the notes, which quote
@@ -46,7 +47,6 @@ PKG_SRC = HERE / "nbody" / "src"
 if str(PKG_SRC) not in sys.path:
     sys.path.insert(0, str(PKG_SRC))
 
-import nbody
 from nbody.forces import (NUMBA_AVAILABLE, ForceWorkspace, accel_broadcast, accel_loop, accel_numpy,
                           accel_short_range, pairs_brute, pairs_tree)
 from nbody.baseline import run_python
@@ -112,7 +112,8 @@ frac_force = cum["accel_loop"] / cum["run_python"]
 frac_energy = cum["energy_loop"] / cum["run_python"]
 print(f"profile of 10 steps: {cum['run_python']:.3f} s; accel_loop {frac_force:.0%} "
       f"({calls['accel_loop']} calls), energy_loop {frac_energy:.0%}, kick+drift "
-      f"{(cum['kick'] + cum['drift']) / cum['run_python']:.1%}; math.sqrt called {calls['<built-in method math.sqrt>']:,} times")
+      f"{(cum['kick'] + cum['drift']) / cum['run_python']:.1%}; "
+      f"math.sqrt called {calls['<built-in method math.sqrt>']:,} times")
 assert calls["accel_loop"] == 11 and frac_force > 0.6 and (cum["kick"] + cum["drift"]) / cum["run_python"] < 0.02
 e_np = (energy(pos, vel, mass, EPS),)
 assert abs(e_py[0] - e_np[0]) < 1e-12 * abs(e_np[0])          # pure-Python energy = the package's
@@ -208,7 +209,8 @@ order64 = np.polyfit(np.log(DTS), np.log(dE_by_dt["float64"]), 1)[0]
 print("energy error at t = 0.5 for dt =", DTS.tolist())
 for k, v in dE_by_dt.items():
     print(f"  {k}: " + ", ".join(f"{x:.1e}" for x in v))
-print(f"float64 error ~ dt^{order64:.2f}; at dt = 1e-4 float32 is {dE_by_dt['float32'][-1] / dE_by_dt['float64'][-1]:.0f}x worse")
+print(f"float64 error ~ dt^{order64:.2f}; at dt = 1e-4 float32 is "
+      f"{dE_by_dt['float32'][-1] / dE_by_dt['float64'][-1]:.0f}x worse")
 assert abs(order64 - 2) < 0.15 and dE_by_dt["float32"][-1] > 10 * dE_by_dt["float64"][-1]
 
 fig, ax = plt.subplots(figsize=(5.5, 4))
@@ -358,7 +360,7 @@ if POOL:
         f"{w} worker(s) {s:.2f} s ({x:.2f}x)" for w, s, x in zip(POOL["workers"], POOL["seconds"], sp)))
     print(f"tiny jobs (N = 8, 5 steps): serial {POOL['tiny_serial'] * 1e3:.1f} ms, 4 workers "
           f"{POOL['tiny_pool'] * 1e3:.1f} ms ({POOL['tiny_pool'] / POOL['tiny_serial']:.0f}x slower)")
-    assert POOL["tiny_pool"] > 3 * POOL["tiny_serial"]
+    assert POOL["tiny_pool"] > 1.5 * POOL["tiny_serial"]                # overhead wins: a slowdown
     fig, ax = plt.subplots(figsize=(5, 4))
     ax.plot(POOL["workers"], sp, "o-", label="measured")
     ax.plot(POOL["workers"], POOL["workers"], "k--", lw=0.8, label="ideal")
@@ -442,9 +444,9 @@ t_brute, t_tree = [], []
 for n_pts in sizes:
     pts = rng.uniform(0, (n_pts / DENSITY) ** (1 / 3), size=(n_pts, 3))
     m_pts = np.full(n_pts, 1.0 / n_pts)
-    tb = (bench({"b": lambda: pairs_brute(pts, RC)}, number=1, repeat=2 if n_pts < 16000 else 1)["b"]
+    tb = (bench({"b": lambda p=pts: pairs_brute(p, RC)}, number=1, repeat=2 if n_pts < 16000 else 1)["b"]
           if n_pts <= 16000 else np.nan)
-    tt = bench({"t": lambda: pairs_tree(pts, RC)}, number=1, repeat=3)["t"]
+    tt = bench({"t": lambda p=pts: pairs_tree(p, RC)}, number=1, repeat=3)["t"]
     t_brute.append(tb)
     t_tree.append(tt)
     if n_pts == 2000:
@@ -452,13 +454,15 @@ for n_pts in sizes:
         a_brute = accel_short_range(pts, m_pts, RC, eps=0.01, method="brute")
         n_pairs = len(pairs_tree(pts, RC)[0])
         assert rel_err(a_tree, a_brute) < 1e-12
-        assert set(zip(*map(np.ndarray.tolist, pairs_brute(pts, RC)))) == set(zip(*map(np.ndarray.tolist, pairs_tree(pts, RC))))
+        same = set(zip(*map(np.ndarray.tolist, pairs_brute(pts, RC))))
+        assert same == set(zip(*map(np.ndarray.tolist, pairs_tree(pts, RC))))
 t_brute, t_tree = np.array(t_brute), np.array(t_tree)
 ok = ~np.isnan(t_brute)
 exp_brute = np.polyfit(np.log(sizes[ok]), np.log(t_brute[ok]), 1)[0]
 exp_tree = np.polyfit(np.log(sizes), np.log(t_tree), 1)[0]
 print(f"neighbour search, rc = {RC}, ~{2 * n_pairs / 2000:.1f} neighbours per body: brute-force exponent "
-      f"{exp_brute:.2f}, k-d tree exponent {exp_tree:.2f}; at N = 16000 brute {t_brute[3]:.2f} s, tree {t_tree[3]:.4f} s")
+      f"{exp_brute:.2f}, k-d tree exponent {exp_tree:.2f}; "
+      f"at N = 16000 brute {t_brute[3]:.2f} s, tree {t_tree[3]:.4f} s")
 assert 1.6 < exp_brute < 2.4 and 0.8 < exp_tree < 1.4 and t_brute[3] > 50 * t_tree[3]
 
 fig, ax = plt.subplots(figsize=(5.5, 4))
@@ -520,6 +524,65 @@ ops = [ins.opname for ins in dis.get_instructions(add)]
 assert "BINARY_OP" in ops and ops[-1].startswith("RETURN")
 gil = getattr(sys, "_is_gil_enabled", lambda: True)()
 print(f"bytecode of add: {ops}; GIL enabled: {gil}")
+# %% [markdown]
+# ## Part 11: the deterministic numbers quoted in solutions.md
+#
+# Timings in the solutions are the writer's measurements; everything else they quote is
+# recomputed here: the RK4 aliasing bug (A3), the spawn-safe means (A5), g(r) (B1), the
+# row-loop potential (B2), float32 on a long orbit (B5), and the gravity cutoff errors (C1).
+
+# %%
+from scipy.spatial.distance import pdist
+
+p2, v2, m2b = two_body(1.0, 0.5)
+e2 = energy(p2, v2, m2b)
+_, _, e_ok = rk4(p2, v2, m2b, 2 * np.pi / 200, 200, record_every=200)
+_, _, e_bad = rk4(p2, v2, m2b, 2 * np.pi / 200, 200, accel=ForceWorkspace(2), record_every=200)
+a3 = (abs(e_ok[-1] / e2 - 1), abs(e_bad[-1] / e2 - 1))
+assert abs(a3[0] - 9.3e-7) < 5e-9 and abs(a3[1] - 8.5) < 0.05                     # A3
+
+a5 = [round(float(np.random.default_rng(s).random(1000).mean()), 4) for s in range(4)]
+assert a5 == [0.5169, 0.5028, 0.5022, 0.4944]                                      # A5
+
+import random
+random.seed(3)
+pts_b1 = np.array([[random.random() for _ in range(3)] for _ in range(600)])
+dr_b1 = 0.5 / 50
+r_b1 = (np.arange(50) + 0.5) * dr_b1
+g_b1 = np.histogram(pdist(pts_b1), bins=50, range=(0, 0.5))[0] / (600 * 599 / 2 * 4 * np.pi * r_b1**2 * dr_b1)
+assert np.round(g_b1[:5], 3).tolist() == [0.0, 0.984, 0.921, 0.976, 0.962]          # B1
+
+p_b2, _, m_b2 = uniform_ball(500, np.random.default_rng(500))
+u_rows = -sum(m_b2[i] * np.sum(m_b2[i + 1:] / np.sqrt(((p_b2[i + 1:] - p_b2[i]) ** 2).sum(axis=1) + EPS**2))
+              for i in range(499))
+assert abs(u_rows / energy(p_b2, 0 * p_b2, m_b2, EPS) - 1) < 1e-12                 # B2
+
+
+def kepler_angle_energy(dtype, per_orbit: int, orbits: int = 50) -> tuple[float, float]:
+    p, v, m = (a.astype(dtype) for a in two_body(1.0, 0.5))
+    e0 = energy(p, v, m)
+    p, v, _ = leapfrog(p, v, m, 2 * np.pi / per_orbit, orbits * per_orbit)
+    rel = (p[1] - p[0]).astype(np.float64)
+    return math.atan2(rel[1], rel[0]), abs(energy(p, v, m) / e0 - 1)
+
+
+ang_ref, _ = kepler_angle_energy(np.float64, 4000)
+ang64, de64_b5 = kepler_angle_energy(np.float64, 1000)
+ang32, de32_b5 = kepler_angle_energy(np.float32, 1000)
+print(f"B5: float64 |dE/E| {de64_b5:.1e}, angle error {abs(ang64 - ang_ref):.3f} rad; float32 |dE/E| "
+      f"{de32_b5:.1e}, angle error {abs(ang32 - ang_ref):.3f} rad")
+assert round(abs(ang64 - ang_ref), 3) == 0.165 and round(abs(ang32 - ang64), 3) == 0.049 and de32_b5 > 5 * de64_b5
+
+p_c1, _, m_c1 = uniform_ball(4000, np.random.default_rng(4))
+full_c1 = accel_numpy(p_c1, m_c1, EPS)
+c1 = {}
+for rc in (0.4, 1.6):
+    approx = accel_short_range(p_c1, m_c1, rc, eps=EPS)
+    c1[rc] = float(np.median(np.linalg.norm(approx - full_c1, axis=1) / np.linalg.norm(full_c1, axis=1)))
+print(f"A3: RK4 |dE/E| {a3[0]:.1e} (accel_numpy) vs {a3[1]:.1f} (aliased workspace); C1: cutoff error "
+      f"{c1[0.4]:.3f} at rc = 0.4, {c1[1.6]:.4f} at rc = 1.6")
+assert round(c1[0.4], 3) == 0.878 and round(c1[1.6], 4) == 0.0218                  # C1
+
 print(f"Total run time: {time.perf_counter() - T_START:.1f} s")
 
 

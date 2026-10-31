@@ -1,17 +1,17 @@
 # Handoff — where the build stands and how to continue
 
-Last updated 2026-10-26 20:30 UTC, after round 10. The branch is `claude/brave-knuth-64723m`; everything below is committed and pushed. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
+Last updated 2026-10-31 17:35 UTC, after round 11. The branch is `claude/brave-knuth-64723m`; everything below is committed and pushed. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
 
-## Status (37 of 80 math modules done; Python course 7 of 10 done)
+## Status (37 of 80 math modules done; Python course 9 of 10 done, all 10 written)
 
 "Done" means all four files exist (`notes.md`, `exercises.md`, `solutions.md`, `project.py`), an independent reviewer re-derived the math and recomputed the numbers, the fixes were applied, and the script passes headless. Review notes for each module are in `tools/reviews/<code>.md`.
 
 | State | Modules |
 |---|---|
 | **Done** (37) | F1–F6 · LA-1–14 · CM-1–8 · EM-1–5 · ST-1–4 |
-| **Done, Python** (7) | PY-1–7 (PY-1–7 reviewed with every code block executed; 0 high-severity findings) |
-| **Written, awaiting review** (1 + 2) | ST-5 · PY-8 (Sonnet), PY-9 (Opus) — scripts pass; not yet independently checked |
-| **Not started** (42 + 1) | EM-6, EM-7, EM-8 · SM-1–7 · QM-1–9 · ST-6–9 · ML-1–10 · QC-1–9 · PY-10 |
+| **Done, Python** (9) | PY-1–9 (reviewed with every code block executed; 0 high-severity findings across all nine) |
+| **Written, awaiting review** (1 + 1) | ST-5 · PY-10 (Opus; script passes in 35 s, Numba measured at 62x the loop) — not yet independently checked |
+| **Not started** (42) | EM-6, EM-7, EM-8 · SM-1–7 · QM-1–9 · ST-6–9 · ML-1–10 · QC-1–9 |
 
 **Priority (user's request, 2026-10-23): finish the Python course (`00-python/`, briefs `research/briefs/PY-*.md`) first.** Its briefs end with a REVIEW FOCUS section the reviewer applies (run every code block; a wrong stated output is high severity). The PY writer addendum is at the end of `research/WRITER-BRIEF.md`.
 
@@ -45,9 +45,9 @@ There is no usage signal readable from inside the session. The limit kills every
 
 ## Build order (prerequisites first)
 
-1. Verify PY-8, PY-9, ST-5. Write PY-10 (finishes the Python course).
-2. Verify PY-10. Write EM-6, EM-7 (or more, depending on writer model — see below).
-3. Verify those. Write EM-8, ST-6, ST-7; then ST-8, ST-9, QM-1.
+1. Verify PY-10, ST-5 (finishes the Python course). Write EM-6 (+ EM-7 if Sonnet writers).
+2. Verify those. Write EM-8, ST-6, ST-7.
+3. Verify those. Write ST-8, ST-9, QM-1; then QM-2–9, SM-1–7, ML-1–10, QC-1–9 in that order.
 4. QM-2 through QM-9 (needs EM done; QM-6 reuses EM-3's Legendre machinery).
 5. SM-1 through SM-7 (SM-5 needs QM-5).
 6. ML-1 through ML-10 (needs ST-1–5).

@@ -32,7 +32,7 @@ NumPy:   x + y  ->  ONE dispatch for the whole array, then a C loop over
                     contiguous doubles                                    (per array)
 ```
 
-The fix is never "tighter Python". It is to pay the dispatch **once per array instead of once per number** (NumPy, PY-6), to compile the loop so there is no dispatch (Numba), or to run several interpreters at once (processes).
+The fix is never "tighter Python": pay the dispatch **once per array instead of once per number** (NumPy, PY-6), compile the loop so there is no dispatch (Numba), or run several interpreters at once (processes).
 
 **Profiling is asking instead of guessing.** A profiler counts calls and time per function. Optimize something that takes 5% of the run and the best possible result is a 5% speedup.
 
@@ -46,7 +46,7 @@ processes:  [P1: GIL] [P2: GIL] [P3: GIL] [P4: GIL]                    -> four c
 
 **Algorithms beat constants.** Vectorizing makes $O(N^2)$ cheaper per pair; a tree makes it $O(N\log N)$, and no constant factor survives a better exponent.
 
-**A package is a folder with a contract.** `pyproject.toml` says what the code is called, its version and what it needs; `tests/` say what it promises; the README says how to install, run and test it; git says which version made which result. "It works on my machine" becomes "it works on any machine that runs these three commands".
+**A package is a folder with a contract.** `pyproject.toml` says what the code is and needs, `tests/` what it promises, the README how to install, run and test it, git which version made which result.
 
 You should now be able to guess the results: one to two orders of magnitude from vectorizing, more from cutting memory traffic, near-linear speedup from processes until the cores run out, a *slowdown* from processes when jobs are tiny, and running-time exponents of about 2 for all-pairs against about 1 for a tree.
 
@@ -158,8 +158,6 @@ tracemalloc: list of 10^6 floats 32.4 MB, ndarray 8.0 MB
 A Python float is a 24-byte object (type pointer, reference count, the double) plus an 8-byte pointer in the list: 32 bytes per 8 bytes of data, scattered over the heap. The array stores the 8 bytes contiguously.
 
 ### 3.4 Algorithms and data structures first
-
-Check the algorithm first; it is the only change whose payoff grows with $N$.
 
 - **Complexity.** All-pairs gravity is $O(N^2)$. Barnes–Hut (Barnes and Hut, *Nature* 324, 1986) treats each distant octree cell as one mass at its centre of mass: $O(N\log N)$ at a controlled error. For a *short-range* force a k-d tree finds the neighbours in $O(N\log N)$ (Build 7).
 - **The right data structure.** PY-2 §3.5: `x in list` is $O(n)$, `x in set` is $O(1)$, so a membership test inside a loop silently makes it $O(n^2)$. `deque` for queues, `dict` for lookups, sorted arrays with `np.searchsorted` for range queries.
@@ -530,13 +528,13 @@ INFO nbody: wrote run1.json
                "platform": "Linux-6.18.44-fc-v185-x86_64-with-glibc2.39", "git_commit": "e3c48c8"}
 ```
 
-A result file that names its commit can be reproduced. Documentation comes in three layers: `--help` (free from `argparse`), the README (install, run, test), and docstrings that state what a function computes, with the equation number.
+A result file that names its commit can be reproduced. Documentation has three layers: `--help` (free from `argparse`), the README, and docstrings that state what a function computes, with the equation number.
 
 **Reproducibility, concretely.** (1) Seeds are *parameters* passed in from the top (`simulate(seed, ...)`, `--seed`), never `default_rng(42)` buried in a function. (2) `pip freeze > requirements.txt` pins every installed version; `pyproject.toml` states *minimum* versions (libraries state ranges, applications pin). (3) Commit and versions go into every output file. (4) `logging`, not `print`, for progress (PY-5 §3.9). (5) A formatter and linter (`ruff format`, `ruff check`) end style arguments and catch undefined names; continuous integration (GitHub Actions and similar) runs `pytest` on every push.
 
 ### 3.10 Notebooks versus scripts
 
-Notebooks are good for exploring and bad as the record of a result: cells run out of order, deleted cells leave variables alive, and the JSON file diffs badly. The curriculum's compromise is the `# %%` script: a plain `.py` file that runs top to bottom from the shell and in CI, and that VS Code, Spyder or PyCharm run cell by cell; `jupytext` converts it to and from `.ipynb`. In a notebook, **"Restart kernel and run all" before you trust or share anything**, and move anything you reuse into a module the notebook imports.
+Notebooks are good for exploring and bad as the record of a result: cells run out of order, deleted cells leave variables alive, and the JSON diffs badly. The curriculum's compromise is the `# %%` script: a plain `.py` file that runs top to bottom from the shell and in CI, and that VS Code, Spyder or PyCharm run cell by cell; `jupytext` converts it to and from `.ipynb`. In a notebook, **"Restart kernel and run all" before you trust or share anything**, and move anything you reuse into a module the notebook imports.
 
 ### 3.11 Version control (Build 9)
 
@@ -846,11 +844,11 @@ Before the `.gitignore`, git offers to track eleven generated files (bytecode ca
 
 ## 6. Exercises
 
-See [exercises.md](exercises.md). A1–A5 are predictions and small fixes (a timing that lies, a profile to read, the workspace aliasing bug, preallocation, a missing `__main__` guard). B1–B6 are the module; B1 (profile and fix a slow program), B2 (memory traffic of the potential energy), B4 (a `--profile` flag with a test) and B6 (a git history for a bug fix) are essential. C1–C3: a cutoff force with error control, a chunksize model, Numba with `prange`.
+See [exercises.md](exercises.md). A1–A5 are predictions and small fixes (a timing that lies, a profile to read, the workspace aliasing bug, preallocation, a missing `__main__` guard). B1–B6 are the module; B1 (profile and fix a slow program), B2 (memory traffic of the potential energy), B4 (a `--profile` flag with a test) and B6 (a git history for a bug fix) are essential. C1–C3: whether a cutoff works for gravity, a chunksize model, Numba with `prange`.
 
 ## 7. Coding project
 
-`project.py` drives `nbody/` through the builds and checks each stage: (1) times and profiles the baseline at $N = 200$; (2) checks the broadcast, coordinate-first and in-place forces against the loop to $10^{-12}$, times them and counts page faults; (3) checks momentum to $10^{-10}$, measures float32's momentum drift and energy floor, and compares leapfrog with RK4 over 100 orbits at equal cost; (4) verifies Kepler's third law to $10^{-4}$ and the exponent 3/2; (5) runs 8 initial conditions on 1, 2 and 4 processes, and the tiny-job slowdown; (6) times Numba, or says "not run"; (7) writes and checks the speedup table; (8) fits all-pairs against `cKDTree` exponents; (9) runs pytest and the command line, and checks the provenance record. About 25 s here.
+`project.py` drives `nbody/` through the builds and checks each stage: (1) times and profiles the baseline at $N = 200$; (2) checks the broadcast, coordinate-first and in-place forces against the loop to $10^{-12}$, times them and counts page faults; (3) checks momentum to $10^{-10}$, measures float32's momentum drift and energy floor, and compares leapfrog with RK4 over 100 orbits at equal cost; (4) verifies Kepler's third law to $10^{-4}$ and the exponent 3/2; (5) runs 8 initial conditions on 1, 2 and 4 processes, and the tiny-job slowdown; (6) times Numba, or says "not run"; (7) writes and checks the speedup table; (8) fits all-pairs against `cKDTree` exponents; (9) runs pytest and the command line, and checks the provenance record; (10)–(11) recompute the notes' memory and bytecode facts and every non-timing number in `solutions.md`. About 35 s here.
 
 **Build it yourself:** write Builds 1–3 before opening `nbody/src/nbody/forces.py`, and make them pass `tests/test_forces.py`. Then "Your turn": a cutoff force and a Barnes–Hut tree against the workspace; `chunksize` variations; a `--profile` flag; a Numba port of an earlier project's hot loop.
 
@@ -858,7 +856,7 @@ See [exercises.md](exercises.md). A1–A5 are predictions and small fixes (a tim
 
 - **You will optimize before profiling, and speed up the 5%.** Everyone does: kick and drift *look* slow and took 0.3% (Example 4.1). No optimization without a profile in hand and a timing before and after, written down.
 - **"Python is slow" is true per operation and irrelevant once the loop is in NumPy or Numba.** Rewriting a project in C++ for one slow loop is the expensive way of not profiling.
-- **Threads will not speed up your CPU-bound Python, and you will try anyway.** It runs, nothing crashes, it is no faster (§3.6), and `top` shows one core at 100%. Use processes, or do the work in NumPy or Numba.
+- **Threads will not speed up your CPU-bound Python, and you will try anyway.** Nothing crashes, it is no faster (§3.6), and `top` shows one core at 100%. Use processes, or NumPy or Numba.
 - **Forgetting the `__main__` guard.** On Linux with `fork` nothing goes wrong, so the bug ships; under `spawn` (macOS, Windows) or `forkserver` (Linux from 3.14) every worker re-runs your top level, and you get §3.6's `RuntimeError`, a `BrokenProcessPool`, and every top-level side effect once per worker.
 - **Numba's error messages are terrible.** Start with a ten-line function, get it compiling, grow it; when it fails, delete half the body until it compiles (bisection, PY-5 §3.8).
 - **float32 is a trade you must justify, not a free speedup.** It halved Build 4's time and put a floor near $10^{-7}$ under the energy error. Decide the accuracy you need, then check against a float64 run.

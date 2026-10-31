@@ -20,7 +20,7 @@ print(f"first {first * 1e3:.1f} ms, mean of the next five {sum(later) / 5 * 1e3:
 
 Predict the two numbers relative to each other. Name three things wrong with this measurement, and rewrite it with `timeit.repeat` so that every repeat sorts the same unsorted data.
 
-**A2.** (Read a profile.) Running `analyse()` below under `cProfile` in this container printed the listing that follows.
+**A2.** (Read a profile.) Running `analyse()` below under `cProfile` in this container printed the listing that follows (the top rows; two rows for the profiler's own `exec` are dropped).
 
 ```python
 def load(n, rng):
