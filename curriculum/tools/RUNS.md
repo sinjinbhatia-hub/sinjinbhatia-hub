@@ -93,3 +93,10 @@ PY-8 was complete on disk (its writer finished the files before a server 500 kil
 |---|---|
 | wf_c66f2a36-ee5 | verify (Fable): PY-5, PY-6, PY-7 |
 | wf_51efccef-48c | write-only (Opus): PY-9 |
+
+## Eleventh round (2026-10-31 16:17 UTC) — finish writing the Python course
+
+| Run ID | Modules |
+|---|---|
+| wf_3eb5262f-4ac | verify (Fable): PY-8, PY-9 |
+| wf_42e5fda0-89e | write-only (Opus): PY-10 |
