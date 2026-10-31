@@ -26,3 +26,8 @@ capstone of PY-10. Units: G = 1, total mass 1; Plummer softening `eps`.
     src/nbody/integrate.py   initial conditions, energy, momentum, leapfrog, RK4, ensembles
     src/nbody/cli.py         argparse front end, TOML config, provenance
     tests/                   pytest suite
+
+## Reproduce a run
+
+Every `--out` file records the configuration, the package and library versions, and the git
+commit. To repeat a run: `git checkout <commit>`, install, and pass the recorded configuration.

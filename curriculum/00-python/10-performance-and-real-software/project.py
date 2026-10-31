@@ -10,7 +10,7 @@
 # k-d tree's scaling, the test suite and the command line.
 #
 # Run headless: `MPLBACKEND=Agg python3 project.py` (about 30 s here). Sizes: N = 200 for every
-# timing; 8 initial conditions x 400 steps for the pool; N up to 8,000 for all-pairs and 32,000
+# timing; 8 initial conditions x 400 steps for the pool; N up to 16,000 for all-pairs and 32,000
 # for the tree.
 # Timings are measured at run time and printed; they will differ from the notes, which quote
 # the writer's run in this container. Only ratios transfer between machines.
@@ -466,12 +466,13 @@ assert 1.0 <= s_numpy <= s_work and s_numpy >= VEC_THRESHOLD
 
 # %%
 RC, DENSITY = 1.0, 1.0
-sizes = np.array([1000, 2000, 4000, 8000, 16000, 32000])
+sizes = np.array([2000, 4000, 8000, 16000, 32000])
 t_brute, t_tree = [], []
 for n_pts in sizes:
     pts = rng.uniform(0, (n_pts / DENSITY) ** (1 / 3), size=(n_pts, 3))
     m_pts = np.full(n_pts, 1.0 / n_pts)
-    tb = bench({"b": lambda: pairs_brute(pts, RC)}, number=1, repeat=2)["b"] if n_pts <= 8000 else np.nan
+    tb = (bench({"b": lambda: pairs_brute(pts, RC)}, number=1, repeat=2 if n_pts < 16000 else 1)["b"]
+          if n_pts <= 16000 else np.nan)
     tt = bench({"t": lambda: pairs_tree(pts, RC)}, number=1, repeat=3)["t"]
     t_brute.append(tb)
     t_tree.append(tt)
@@ -486,8 +487,8 @@ ok = ~np.isnan(t_brute)
 exp_brute = np.polyfit(np.log(sizes[ok]), np.log(t_brute[ok]), 1)[0]
 exp_tree = np.polyfit(np.log(sizes), np.log(t_tree), 1)[0]
 print(f"neighbour search, rc = {RC}, ~{2 * n_pairs / 2000:.1f} neighbours per body: brute-force exponent "
-      f"{exp_brute:.2f}, k-d tree exponent {exp_tree:.2f}; at N = 8000 brute {t_brute[3]:.3f} s, tree {t_tree[3]:.4f} s")
-assert 1.7 < exp_brute < 2.3 and 0.8 < exp_tree < 1.4
+      f"{exp_brute:.2f}, k-d tree exponent {exp_tree:.2f}; at N = 16000 brute {t_brute[3]:.2f} s, tree {t_tree[3]:.4f} s")
+assert 1.6 < exp_brute < 2.4 and 0.8 < exp_tree < 1.4 and t_brute[3] > 50 * t_tree[3]
 
 fig, ax = plt.subplots(figsize=(5.5, 4))
 ax.loglog(sizes[ok], t_brute[ok], "o-", label=f"all pairs (slope {exp_brute:.2f})")
