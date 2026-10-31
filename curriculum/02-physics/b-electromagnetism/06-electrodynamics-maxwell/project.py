@@ -80,7 +80,7 @@ def lens(r1, r2, d):
     a1 = r1**2 * np.arccos((d**2 + r1**2 - r2**2) / (2 * d * r1)); a2 = r2**2 * np.arccos((d**2 + r2**2 - r1**2) / (2 * d * r2))
     return a1 + a2 - 0.5 * np.sqrt((-d + r1 + r2) * (d + r1 - r2) * (d - r1 + r2) * (d + r1 + r2))
 close(circ, MU0 * n_s * dIdt * lens(R_s, rc, xc), 1e-6, "off-centre Faraday loop")
-print(f"[2] off-centre circle: circulation of E = {circ*1e6:.4f} uV, mu0 n (dI/dt) x overlap area = {MU0*n_s*dIdt*lens(R_s, rc, xc)*1e6:.4f} uV")
+print(f"[2] off-centre circle: overlap area = {lens(R_s, rc, xc):.4e} m^2; circulation of E = {circ*1e6:.4f} uV, mu0 n (dI/dt) x overlap area = {MU0*n_s*dIdt*lens(R_s, rc, xc)*1e6:.4f} uV")
 x, y, z, t = sp.symbols("x y z t", real=True)
 k_, R_ = sp.symbols("k R", positive=True)              # k = mu0 n dI/dt
 E_in = sp.Matrix([k_ * y / 2, -k_ * x / 2, 0])         # E_phi = -k s/2 phi-hat
@@ -93,7 +93,7 @@ print("[2] SymPy: curl E = -dB/dt inside, 0 outside; div E = 0 both")
 
 # %% [markdown]
 # ## Part 3: Inductance and magnetic energy (notes 3.4-3.5, Example 4.3)
-# Neumann (3.14): M = (mu0/4 pi) loop-loop integral of dl1.dl2/|r1 - r2|, done with the trapezoid rule
+# Neumann (3.12): M = (mu0/4 pi) loop-loop integral of dl1.dl2/|r1 - r2|, done with the trapezoid rule
 # on the exact parametrization (spectrally accurate for smooth closed curves). Coaxial loops are
 # compared with the exact elliptic formula and the dipole approximation. A small tilted loop in a
 # solenoid: M12 = flux of the solenoid's B through the loop (elliptic ring fields), M21 = sum over the
@@ -107,7 +107,7 @@ def circle_pts(R, n, c=(0, 0, 0), u=(1, 0, 0), v=(0, 1, 0)):
     return c + R * (np.cos(p)[:, None] * u + np.sin(p)[:, None] * v), R * (-np.sin(p)[:, None] * u + np.cos(p)[:, None] * v) * 2 * np.pi / n
 
 def neumann(P1, D1, P2, D2):
-    """M = mu0/(4 pi) sum dl1.dl2 / |r1 - r2| (3.14)"""
+    """M = mu0/(4 pi) sum dl1.dl2 / |r1 - r2| (3.12)"""
     r = np.linalg.norm(P1[:, None, :] - P2[None, :, :], axis=2)
     return MU0 / (4 * np.pi) * np.sum((D1 @ D2.T) / r)
 
@@ -150,7 +150,8 @@ Ps, Ds = circle_pts(rs, 96, u=uh, v=(0, 1, 0))
 M21 = sum(neumann(*circle_pts(R_s, 96, c=(0, 0, zz)), Ps, Ds) for zz in zk)
 M_inf = MU0 * n_s * np.pi * rs**2 * np.cos(th)
 close(M12, M21, 1e-6, "M12 = M21"); close(M12, M_inf, 5e-3, "vs infinite solenoid")
-print(f"[3] Ex 4.3b: small loop (5 mm, 30 deg) in 1000-turn solenoid: M12 (flux of B_sol) = {M12:.5e} H, M21 (sum of loop integrals of A_loop) = {M21:.5e} H, infinite-solenoid formula {M_inf:.5e} H")
+fin = (Lsol / 2) / np.hypot(Lsol / 2, R_s); close(M12, M_inf * fin, 1e-4, "finite-solenoid centre factor")
+print(f"[3] Ex 4.3b: small loop (5 mm, 30 deg) in 1000-turn solenoid: M12 (flux of B_sol) = {M12:.5e} H, M21 (sum of loop integrals of A_loop) = {M21:.5e} H, infinite-solenoid formula {M_inf:.5e} H, ratio {M12/M_inf:.5f}, centre-field factor (l/2)/sqrt((l/2)^2+R^2) = {fin:.5f}")
 
 L_sol = MU0 * n_s**2 * np.pi * R_s**2 * Lsol
 Nt, ht, at, bt = 500, 0.01, 0.04, 0.06
@@ -173,7 +174,7 @@ close(S_rim * 2 * np.pi * ac * dc, Vc * Ic, 1e-12, "capacitor power")
 print(f"[4] Ex 4.4: dE/dt = {dEdt:.4e} V/(m s); B(2 cm) = {B_gap(0.02)*1e6:.3f} uT, B(a) = {B_gap(ac)*1e6:.3f} uT, wire B at 10 cm = {MU0*Ic/(2*np.pi*0.1)*1e6:.3f} uT; C = {Cc*1e12:.2f} pF, dV/dt = {Ic/Cc:.3e} V/s; at V = 100 V: S(rim) = {S_rim:.4e} W/m^2, power in = {S_rim*2*np.pi*ac*dc:.1f} W")
 
 # %% [markdown]
-# ## Part 5: Poynting's theorem: energy enters a resistor through its sides (notes 3.8, Example 4.5)
+# ## Part 5: Poynting's theorem: energy enters a resistor through its sides (notes 3.9, Example 4.5)
 # Uniform J along a cylinder; E = J/sigma (tangential E continuous at the surface); B from Ampere.
 # S = E x B / mu0 on a grid in the cross-section. The inward flux through a *square* around the wire
 # is I^2 R per length; through a square inside, it is the Joule heat inside; div S = -E.J on the grid.
@@ -203,10 +204,10 @@ ax.quiver(GX[sk, sk] * 1e3, GY[sk, sk] * 1e3, Sx[sk, sk], Sy[sk, sk], color="C3"
 ax.set_aspect("equal"); ax.set_xlabel("x (mm)"); ax.set_ylabel("y (mm)"); ax.set_title("Poynting vector of a resistor (cross-section)"); fig.tight_layout(); fig.savefig(FIG / "poynting_resistor.png", dpi=100); plt.close(fig)
 
 # %% [markdown]
-# ## Part 6: Poynting's theorem and the stress tensor, symbolically and as a midplane integral (notes 3.8-3.9, Example 4.6)
+# ## Part 6: Poynting's theorem and the stress tensor, symbolically and as a midplane integral (notes 3.9-3.10, Example 4.6)
 # Fields from arbitrary polynomial potentials satisfy div B = 0 and Faraday automatically. Define rho and
-# J by Gauss and Maxwell-Ampere. Then E.J + du/dt + div S = 0 (3.22) and rho E + J x B = div T - eps0 mu0 dS/dt
-# (3.26) must hold identically. Then F on charge 1 = -integral of T.z over the midplane (outward normal -z).
+# J by Gauss and Maxwell-Ampere. Then E.J + du/dt + div S = 0 (3.28) and rho E + J x B = div T - eps0 mu0 dS/dt
+# (Theorem 3.8, step 6) must hold identically. Then F on charge 1 = -integral of T.z over the midplane (outward normal -z).
 
 # %%
 e0, m0 = sp.symbols("epsilon_0 mu_0", positive=True)
@@ -224,7 +225,7 @@ assert sp.expand(rho_f * Ef + Jf.cross(Bf) - divT + e0 * m0 * sp.diff(S_f, t)) =
 print("[6] SymPy: Poynting's theorem and f = div T - eps0 mu0 dS/dt hold identically for random polynomial potentials")
 
 def maxwell_T(E, B):
-    """T_ij = eps0 (E_i E_j - d_ij E^2/2) + (B_i B_j - d_ij B^2/2)/mu0, for arrays (..., 3) (3.25)"""
+    """T_ij = eps0 (E_i E_j - d_ij E^2/2) + (B_i B_j - d_ij B^2/2)/mu0, for arrays (..., 3) (3.29)"""
     I3 = np.eye(3)
     return EPS0 * (np.einsum("...i,...j->...ij", E, E) - 0.5 * np.einsum("...k,...k", E, E)[..., None, None] * I3) + (np.einsum("...i,...j->...ij", B, B) - 0.5 * np.einsum("...k,...k", B, B)[..., None, None] * I3) / MU0
 
@@ -249,10 +250,10 @@ close(ev.max(), EPS0 * 1e12 / 2, 1e-12, "tension"); close(ev.min(), -EPS0 * 1e12
 print(f"[6] T for E = 1 MV/m x-hat: eigenvalues {ev} Pa (tension along the line, pressure across); B = 1 T: B^2/2mu0 = {1/(2*MU0):.4e} Pa = {1/(2*MU0)/101325:.2f} atm")
 
 # %% [markdown]
-# ## Part 7: Gauge invariance on a grid, and the Lorenz-gauge oscillating dipole (notes 3.10-3.11)
+# ## Part 7: Gauge invariance on a grid, and the Lorenz-gauge oscillating dipole (notes 3.11-3.12)
 # E = -grad V - dA/dt, B = curl A by central differences on an (x, y, z, t) grid. A gauge change with an
 # arbitrary lambda changes V and A by O(1) but E and B only by round-off, because difference operators
-# along different axes commute (the discrete version of the proof in 3.10).
+# along different axes commute (the discrete version of the proof of Theorem 3.9).
 
 # %%
 h4 = 0.05; ax1 = np.arange(-0.6, 0.6 + 1e-9, h4); tt = np.array([-h4, 0, h4])
@@ -285,7 +286,7 @@ for pt in rng.uniform(-2, 2, (3, 4)):
 print("[7] SymPy: oscillating-dipole potentials satisfy the Lorenz condition, box V = box A = 0 (r > 0), and E, B from them satisfy all four vacuum Maxwell equations")
 
 # %% [markdown]
-# ## Part 8: 1D FDTD (Yee) for E = E_y(x) y-hat, B = B_z(x) z-hat (notes 3.12, project section 7)
+# ## Part 8: 1D FDTD (Yee) for E = E_y(x) y-hat, B = B_z(x) z-hat (notes section 7)
 # Faraday: dB_z/dt = -dE_y/dx. Maxwell-Ampere with conductivity: eps dE_y/dt = -(1/mu0) dB_z/dx - sigma E_y.
 # Put E_y on integer nodes x_i at integer times t_n, B_z on half nodes x_{i+1/2} at half times t_{n+1/2}.
 # Centred differences in both space and time give the leapfrog
@@ -294,7 +295,7 @@ print("[7] SymPy: oscillating-dipole potentials satisfy the Lorenz condition, bo
 #   c_a = (1 - sigma dt/2eps)/(1 + sigma dt/2eps),  c_b = (dt/(eps mu0 dx))/(1 + sigma dt/2eps)
 # (sigma E averaged between n and n+1). Both updates are second-order accurate. Stability needs the
 # Courant number S = c dt/dx <= 1: the scheme conserves W = sum[eps E^n.E^n + B^{n-1/2}.B^{n+1/2}/mu0] dx/2
-# exactly, and W is positive definite only when S <= 1 (notes section 8).
+# exactly, and W is positive definite only when S <= 1 (notes section 7).
 
 # %%
 def yee1d(E, B, S, steps, eps_r=1.0, sig=0.0, dx=1e-3, bc="pec", probe=None, snaps=()):
@@ -405,7 +406,7 @@ _, _, _, _, snl = yee1d(El0, Bl0, Sl, 4400, sig=sgv, snaps=(1600, 4400))
 pk = {n: (xl[np.argmax(snl[n])], snl[n].max()) for n in snl}
 alpha_num = -np.log(pk[4400][1] / pk[1600][1]) / (pk[4400][0] - pk[1600][0])
 close(alpha_num, 1.0, 0.02, "lossy attenuation")
-print(f"[YT1] lossy medium sigma = {sigL:.3e} S/m: peak at x = {pk[1600][0]:.3f} m has {pk[1600][1]:.4f}, at x = {pk[4400][0]:.3f} m has {pk[4400][1]:.4f}: alpha = {alpha_num:.4f} /m (theory sigma Z0/2 = 1)")
+print(f"[YT1] lossy medium sigma = {sigL:.3e} S/m (sigma/(eps0 c/w) = {sigL/(EPS0*C/0.02):.3f}): peak at x = {pk[1600][0]:.3f} m has {pk[1600][1]:.4f}, at x = {pk[4400][0]:.3f} m has {pk[4400][1]:.4f}: alpha = {alpha_num:.4f} /m (theory sigma Z0/2 = 1)")
 
 a_d, om_d, B_d = 0.10, 3000 * 2 * np.pi / 60, 0.5
 u_ = np.linspace(0, 1, 20001)
@@ -432,18 +433,22 @@ print(f"[10] A1: R = {10/(s_al*A_al):.5f} Ohm, P = {25*10/(s_al*A_al):.4f} W, v_
 print(f"[10] A2: peak EMF = {0.05*0.02*2*np.pi*60:.4f} V, peak I = {0.05*0.02*2*np.pi*60/0.5:.4f} A")
 L3 = MU0 * 400**2 * np.pi * 0.015**2 / 0.2; B3 = MU0 * 2000 * 3
 close(B3**2 / (2 * MU0) * np.pi * 0.015**2 * 0.2, 0.5 * L3 * 9, 1e-12, "A3 energy")
-print(f"[10] A3: L = {L3:.4e} H, W = {0.5*L3*9:.4e} J, B = {B3*1e3:.4f} mT, u = {B3**2/(2*MU0):.3f} J/m^3, cB = {C*B3:.3e} V/m")
+print(f"[10] A3: volume = {np.pi*0.015**2*0.2:.4e} m^3, L = {L3:.4e} H, W = {0.5*L3*9:.4e} J, B = {B3*1e3:.4f} mT, u = {B3**2/(2*MU0):.3f} J/m^3, cB = {C*B3:.3e} V/m")
 C4 = EPS0 * np.pi * 0.03**2 / 2e-3; Id4 = C4 * 50 * 2 * np.pi * 1e3
 print(f"[10] A4: C = {C4:.4e} F, peak I_d = {Id4:.4e} A, peak J_d = {Id4/(np.pi*0.03**2):.4e} A/m^2, peak B(rim) = {MU0*Id4/(2*np.pi*0.03):.3e} T")
-print(f"[10] A6: eps0 E^2/2 at 1 MV/m = {EPS0*1e12/2:.4f} Pa; B^2/2mu0 at 1 T = {1/(2*MU0):.4e} Pa")
-print(f"[10] B1: omega = {om_d:.3f} rad/s, EMF = {0.5*om_d*B_d*a_d**2:.4f} V, rim speed = {om_d*a_d:.2f} m/s")
+Trot = maxwell_T(1e6 * np.array([1, 1, 0]) / np.sqrt(2), np.zeros(3)); ev6, V6 = np.linalg.eigh(Trot)
+assert np.allclose(Trot[:2, :2], EPS0 * 1e12 / 2 * np.array([[0, 1], [1, 0]])) and abs(abs(V6[:, 2] @ np.array([1, 1, 0])) / np.sqrt(2) - 1) < 1e-12
+assert abs(np.trace(maxwell_T(np.array([1e6, 2e6, -3e6]), np.array([0.1, 0.2, 0.3]))) + 0.5 * (EPS0 * 14e12 + 0.14 / MU0)) < 1e-6
+print(f"[10] A6: eps0 E^2/2 at 1 MV/m = {EPS0*1e12/2:.4f} Pa; B^2/2mu0 at 1 T = {1/(2*MU0):.4e} Pa; rotated E: eigenvalues {ev6} Pa, top eigenvector {V6[:,2]}")
+tq = 10 * B_d * a_d**2 / 2
+print(f"[10] B1: omega = {om_d:.3f} rad/s, EMF = {0.5*om_d*B_d*a_d**2:.4f} V, rim speed = {om_d*a_d:.2f} m/s; with I = 10 A: torque = I B a^2/2 = {tq:.4f} N m, power = {tq*om_d:.4f} W = EMF x I = {0.5*om_d*B_d*a_d**2*10:.4f} W")
 m2, l2, B2_, R2_ = 5e-3, 0.05, 1.0, 0.01
 vt = m2 * G0 * R2_ / (B2_ * l2)**2
 s2 = solve_ivp(lambda t, y: [G0 - (B2_ * l2)**2 * y[0] / (m2 * R2_)], (0, 0.1), [0.0], rtol=1e-10, atol=1e-12, dense_output=True)
 close(s2.sol(0.05)[0], vt * (1 - np.exp(-G0 * 0.05 / vt)), 1e-7, "falling loop")
 print(f"[10] B2: v_t = {vt:.5f} m/s, time constant v_t/g = {vt/G0*1e3:.3f} ms, v(50 ms) = {s2.sol(0.05)[0]:.5f} m/s, I_t = {B2_*l2*vt/R2_:.4f} A, m g v_t = {m2*G0*vt:.5e} W = I^2 R = {(B2_*l2*vt/R2_)**2*R2_:.5e} W")
 E3 = MU0 * 1000 * 0.01 * 500 / 2
-print(f"[10] B3: E(1 cm) = {E3:.4e} V/m, electron acceleration = {QE*E3/m_e:.3e} m/s^2, E(5 cm) = {MU0*1000*0.03**2*500/(2*0.05):.4e} V/m, ring EMF = {MU0*1000*500*np.pi*0.03**2:.4e} V, ring current = {MU0*1000*500*np.pi*0.03**2/0.2*1e3:.4f} mA")
+print(f"[10] B3: mu0 n dI/dt = {MU0*1000*500:.4f} T/s, E(1 cm) = {E3:.4e} V/m, electron acceleration = {QE*E3/m_e:.3e} m/s^2, E(5 cm) = {MU0*1000*0.03**2*500/(2*0.05):.4e} V/m, ring EMF = {MU0*1000*500*np.pi*0.03**2:.4e} V, ring current = {MU0*1000*500*np.pi*0.03**2/0.2*1e3:.4f} mA")
 M4 = MU0 * 0.20 / (2 * np.pi) * np.log(3)
 close(quad(lambda s: MU0 * 10 / (2 * np.pi * s) * 0.2, 0.05, 0.15)[0] / 10, M4, 1e-10, "B4 flux")
 print(f"[10] B4: M = {M4:.4e} H, peak EMF = {M4*2*np.pi*60*10*1e3:.4f} mV")
@@ -452,9 +457,30 @@ close(2 * quad(lambda s: (MU0 * 1 / (2 * np.pi * s))**2 / (2 * MU0) * 2 * np.pi 
 P5 = quad(lambda s: 100 / (s * np.log(4)) * MU0 * 2 / (2 * np.pi * s) / MU0 * 2 * np.pi * s, 0.5e-3, 2e-3)[0]
 close(P5, 200, 1e-10, "coax power")
 print(f"[10] B5: L/l = {Lc:.4e} H/m, power through annulus = {P5:.2f} W, S(a) = {100*2/(2*np.pi*(0.5e-3)**2*np.log(4)):.4e} W/m^2, S(b) = {100*2/(2*np.pi*(2e-3)**2*np.log(4)):.4e} W/m^2")
+print(f"[10] B6: current sheet K0 = 1 A/m: |E0| = Z0 K0 / 2 = {Z0/2:.2f} V/m; source power <-E.K> = Z0 K0^2/4 = {Z0/4:.2f} W/m^2 = 2 x <S> = {2*(Z0/2)**2/(2*Z0):.2f} W/m^2")
+print(f"[10] B7: solenoid of A3: outward pressure on windings B^2/2mu0 = {B3**2/(2*MU0):.3f} Pa")
 print(f"[10] B7: plates Q = 1 nC, A = 1 cm^2: E = {1e-9/(EPS0*1e-4):.4e} V/m, force = eps0 E^2 A / 2 = {EPS0*(1e-9/(EPS0*1e-4))**2*1e-4/2:.4e} N = Q^2/(2 eps0 A)")
-pc = QE * 0.5 * 0.4 * C / QE / 1e6; mec2 = m_e * C**2 / QE / 1e6
-print(f"[10] C1: betatron R = 0.5 m, B(R) = 0.4 T: pc = {pc:.2f} MeV, kinetic energy = {np.hypot(pc, mec2) - mec2:.2f} MeV, mean B inside orbit = 0.8 T, flux = {np.pi*0.25*0.8:.4f} Wb")
+pc = QE * 0.5 * 0.4 * C / QE / 1e6; mec2 = m_e * C**2 / QE / 1e6; KE1 = np.hypot(pc, mec2) - mec2; Vturn = np.pi * 0.25 * 0.8 / 4e-3
+Eg = lambda K: C * np.sqrt(1 - (mec2 / (K + mec2))**2)                                  # speed at kinetic energy K (MeV)
+K09 = mec2 * (1 / np.sqrt(1 - 0.81) - 1); t09 = quad(lambda K: np.pi / (Eg(K) * Vturn * 1e-6), 0, K09)[0]
+print(f"[10] C1: v = 0.9c at K = {K09:.3f} MeV, reached after {t09*1e6:.1f} us = {t09/4e-3*100:.2f}% of the ramp")
+print(f"[10] C1: betatron R = 0.5 m, B(R) = 0.4 T: pc = {pc:.2f} MeV, kinetic energy = {KE1:.2f} MeV, mean B inside orbit = 0.8 T, flux = {np.pi*0.25*0.8:.4f} Wb; 4 ms ramp: {Vturn:.2f} eV per turn, {KE1*1e6/Vturn:.3e} turns, path {KE1*1e6/Vturn*np.pi:.3e} m vs c x 4 ms = {C*4e-3:.3e} m")
+
+# B8: numerical group velocity of a modulated pulse, and the growth rate beyond the Courant limit
+k0 = 0.5
+for Sb in (0.25, 0.5, 0.9, 1.0):
+    xs8 = np.arange(1501) * 1e-3; xh8 = xs8[:-1] + 5e-4; dt8 = Sb * 1e-3 / C
+    env = lambda X: np.exp(-((X - 0.3) / 0.04)**2) * np.cos(k0 * (X - 0.3) / 1e-3)
+    n1, n2 = round(0.1 / (Sb * 1e-3)), round(0.7 / (Sb * 1e-3))
+    sn8 = yee1d(env(xs8), env(xh8 + C * dt8 / 2) / C, Sb, n2, snaps=(n1, n2))[4]
+    cx = [np.sum(xs8 * sn8[n]**2) / np.sum(sn8[n]**2) for n in (n1, n2)]
+    vg_meas = (cx[1] - cx[0]) / ((n2 - n1) * dt8); vg_th = C * np.cos(k0 / 2) / np.sqrt(1 - Sb**2 * np.sin(k0 / 2)**2)
+    close(vg_meas, vg_th, 2e-3, "numerical group velocity")
+    print(f"[10] B8: S = {Sb}: measured v/c = {vg_meas/C:.5f}, numerical group velocity v_g/c = {vg_th/C:.5f}")
+g400, g600 = np.abs(yee1d(E0, B0, 1.02, 400)[0]).max(), np.abs(yee1d(E0, B0, 1.02, 600)[0]).max()
+gf, gth = (g600 / g400)**(1 / 200), np.exp(2 * np.arccosh(1.02))
+close(gf, gth, 1e-2, "Courant growth factor")
+print(f"[10] B8: S = 1.02: eta = arccosh(S) = {np.arccosh(1.02):.4f}; growth per step {gf:.4f}, predicted exp(2 eta) = {gth:.4f}")
 
 # %%
 if __name__ == "__main__":
