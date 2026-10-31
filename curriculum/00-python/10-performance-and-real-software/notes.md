@@ -8,21 +8,21 @@
 
 ## 0. Where this sits
 
-PY-3 gave you `lru_cache` (§3.6), modules and packages (§3.8), `venv` and `pip` (§3.10) and an `argparse` tool (Example 4.6); PY-5 gave you pytest (§3.10) and `logging` (§3.9); PY-6 gave you broadcasting, the pairwise-distance array of its Build 4, and the rule "loop over the short axis" (§3.10). This module puts them together on one program and adds measurement, the interpreter's internals, parallelism, compilation, packaging and version control. Every later project is expected to be written this way; ML-7's training loops and SM-6's Metropolis sweeps are where the performance half pays off first.
+PY-3 gave you `lru_cache` (§3.6), packages (§3.8), `venv` and `pip` (§3.10) and an `argparse` tool (Example 4.6); PY-5 pytest (§3.10) and `logging` (§3.9); PY-6 broadcasting and the pairwise-distance array of its Build 4. This module puts them together on one program and adds measurement, the interpreter's internals, parallelism, compilation, packaging and version control. Every later project is written this way; ML-7's training loops and SM-6's Metropolis sweeps are where the performance half pays off first.
 
 ## 1. The problem that forced this idea
 
-You want the gravitational $N$-body problem of CM-5 §3.13 for $N = 500$ bodies and 2000 leapfrog steps, and then for many initial conditions, because one run of a chaotic system tells you almost nothing. The first version is the obvious double loop over Python lists. In the run below (Build 1) one force evaluation at $N = 500$ took 89 ms, so 2000 steps take 3 minutes; written as a loop over NumPy array elements, which is what most first versions look like, it took 315 ms, so 10 minutes. A hundred initial conditions: most of a day. The same physics with the loop pushed into NumPy and its temporaries removed runs the 2000 steps in 7 s (Build 3), and a hundred initial conditions on four cores in about three minutes.
+You want the gravitational $N$-body problem of CM-5 §3.13 for $N = 500$ bodies and 2000 leapfrog steps, and then for many initial conditions, because one run of a chaotic system tells you almost nothing. The first version is the obvious double loop over Python lists. In the run below (Build 1) one force evaluation at $N = 500$ took 89 ms, so 2000 steps take 3 minutes; written as a loop over NumPy array elements, which is what most first versions look like, it took 315 ms, so 10 minutes. A hundred initial conditions: 5 to 17 hours. The same physics with the loop pushed into NumPy and its temporaries removed runs the 2000 steps in 7 s (Build 3), and a hundred initial conditions on four cores in about three minutes.
 
 Two things stand in the way. First, **you will optimize the wrong thing.** Asked where the slow program spends its time, most people point at the code that *looks* slow: the Python loops of the kick and drift updates. A profiler says they take 0.3% of the run (Example 4.1). So the rule here is absolute: measure, change one thing, measure again.
 
-Second, **most scientific code cannot be rerun**, not by a referee, not by a labmate, not by its author six months later. It lives in one file that works from one directory, with the seed set inside a function, parameters edited by hand between runs, figures nobody can trace to the code that made them, and no test that would notice a change breaking the physics. Making a simulation fast and making it software are one discipline: being able to say, with evidence, what the code does.
+Second, **most scientific code cannot be rerun**, not by a referee, a labmate, or its author six months later: one file that works from one directory, the seed set inside a function, parameters edited by hand between runs, figures nobody can trace to the code that made them, no test that would notice the physics breaking. Making a simulation fast and making it software are one discipline: saying, with evidence, what the code does.
 
-So the module has a spine: one $N$-body code, nine builds. Profile it, vectorize it, remove its temporaries, try float32, run it on several processes, compile it with Numba, replace its $O(N^2)$ neighbour search with a tree, make it an installable package with tests and a command line, and put it under git.
+So the module has a spine: one $N$-body code, nine builds, from a profiled loop to a tested, installable package under git.
 
 ## 2. Intuition
 
-**Why Python is slow per operation.** In C, `a + b` on two doubles is one machine instruction on two registers. In Python, `a` and `b` are names bound to heap objects (PY-1), each with a type pointer and a reference count, and `a + b` executes the bytecode `BINARY_OP`: look up the type of `a`, find its `__add__`, check the type of `b`, unbox two doubles, add, allocate a new float for the result, adjust reference counts. Build 1 measures the consequence: about 300 ns per pair term of eq. (3.1), some twenty bytecodes.
+**Why Python is slow per operation.** In C, `a + b` on two doubles is one machine instruction on two registers. In Python, `a` and `b` are names bound to heap objects (PY-1), each with a type pointer and a reference count, and `a + b` executes the bytecode `BINARY_OP`: look up the type of `a`, find its `__add__`, check the type of `b`, unbox two doubles, add, allocate a new float for the result, adjust reference counts. Build 1 measures the consequence: a few hundred nanoseconds per pair term of eq. (3.1), some twenty bytecodes.
 
 ```text
 C:       a + b  ->  one add instruction on two registers
@@ -44,7 +44,7 @@ processes:  [P1: GIL] [P2: GIL] [P3: GIL] [P4: GIL]                    -> four c
             parent --pickle(args)--> worker --pickle(result)--> parent   (the overhead)
 ```
 
-**Algorithms beat constants.** Vectorizing makes $O(N^2)$ cheaper per pair; a tree makes it $O(N\log N)$. At large $N$ no constant factor survives a better exponent.
+**Algorithms beat constants.** Vectorizing makes $O(N^2)$ cheaper per pair; a tree makes it $O(N\log N)$, and no constant factor survives a better exponent.
 
 **A package is a folder with a contract.** `pyproject.toml` says what the code is called, its version and what it needs; `tests/` say what it promises; the README says how to install, run and test it; git says which version made which result. "It works on my machine" becomes "it works on any machine that runs these three commands".
 
@@ -124,14 +124,14 @@ N = 500: lists 89 ms -> 2000 steps 3.0 min; same loop over ndarray elements 315 
 ratio N=500/N=200: 6.60 (N^2 predicts 6.25)
 ```
 
-■ **What just happened.** Each pair term costs about 300 ns: some twenty bytecodes, each a dispatch on boxed floats. Going from 200 to 500 bodies multiplied the time by 6.6, close to $N^2$'s 6.25. Indexing an ndarray element by element was 3.5 times *slower* than lists, because every `pos[j][0]` on an array builds a new array-scalar object; NumPy is fast only when you hand it whole arrays (PY-6 §3.10).
+■ **What just happened.** Each pair term cost 340 ns in this run (240–340 ns in the writer's other runs): some twenty bytecodes, each a dispatch on boxed floats. Going from 200 to 500 bodies multiplied the time by 6.6, close to $N^2$'s 6.25. Indexing an ndarray element by element was 3.5 times *slower* than lists, because every `pos[j][0]` on an array builds a new array-scalar object; NumPy is fast only when you hand it whole arrays (PY-6 §3.10).
 
 **`cProfile` and `pstats`.** `cProfile` records every function call and return. Run it as `python -m cProfile -o run.prof script.py`, or `cProfile.run("main()", "run.prof")`, or by enabling a `Profile` object around the code (Example 4.1); then `pstats.Stats("run.prof").sort_stats("cumulative").print_stats(10)` shows the top ten. Two columns matter:
 
 - **tottime**: time spent in the function's own body, excluding the functions it called;
 - **cumtime**: time from entering the function to leaving it, including everything it called.
 
-Sort by **cumtime** to find the subtree that matters, then read **tottime** inside it to find the culprit. The profiler adds overhead per call (it inflates `math.sqrt`, called half a million times), so trust its proportions, not its absolute times. To find the *line*, the third-party `line_profiler` (`@profile`, then `kernprof -l -v script.py`) times every line.
+Sort by **cumtime** to find the subtree that matters, then read **tottime** inside it. The profiler's per-call overhead inflates functions called half a million times (`math.sqrt` here), so trust proportions, not absolute times. For the *line*, the third-party `line_profiler` (`@profile`, `kernprof -l -v script.py`) times every line.
 
 ### 3.3 Memory
 
@@ -155,13 +155,13 @@ getsizeof(list) 8,448,728 B, getsizeof(1.0) 24 B, arr.nbytes 8,000,000 B
 tracemalloc: list of 10^6 floats 32.4 MB, ndarray 8.0 MB
 ```
 
-A Python float is a 24-byte object (type pointer, reference count, the double) plus an 8-byte pointer in the list: 32 bytes per 8 bytes of data, scattered over the heap. The array stores the 8 bytes contiguously. For most array code, memory traffic rather than arithmetic is the bottleneck (Build 3).
+A Python float is a 24-byte object (type pointer, reference count, the double) plus an 8-byte pointer in the list: 32 bytes per 8 bytes of data, scattered over the heap. The array stores the 8 bytes contiguously.
 
 ### 3.4 Algorithms and data structures first
 
 Check the algorithm first; it is the only change whose payoff grows with $N$.
 
-- **Complexity.** All-pairs gravity is $O(N^2)$. The Barnes–Hut tree code (Barnes and Hut, *Nature* 324, 1986) groups distant bodies into octree cells and treats each cell as one mass at its centre of mass, for $O(N\log N)$ at a controlled error; the fast multipole method reaches $O(N)$. For a *short-range* force only neighbours within a cutoff matter, and a k-d tree finds them in $O(N\log N)$ (Build 7).
+- **Complexity.** All-pairs gravity is $O(N^2)$. Barnes–Hut (Barnes and Hut, *Nature* 324, 1986) treats each distant octree cell as one mass at its centre of mass: $O(N\log N)$ at a controlled error. For a *short-range* force a k-d tree finds the neighbours in $O(N\log N)$ (Build 7).
 - **The right data structure.** PY-2 §3.5: `x in list` is $O(n)$, `x in set` is $O(1)$, so a membership test inside a loop silently makes it $O(n^2)$. `deque` for queues, `dict` for lookups, sorted arrays with `np.searchsorted` for range queries.
 - **Early exit.** Stop when the answer is known (`any()`, `break`, a convergence test); do the cheap rejection first (compare $r^2$ with $r_c^2$ before any square root).
 - **Caching.** `functools.lru_cache` (PY-3 §3.6) memoizes a pure function of hashable arguments. For an expensive array, memoize to disk: if `path.exists()`, return `np.load(path)`; otherwise compute it, `np.save(path, result)` and return it (keep such caches in an ignored folder like `figures/`).
@@ -262,7 +262,7 @@ fresh process, MALLOC_MMAP_THRESHOLD_=131072:
   workspace: 425 us, 0 page faults per call
 ```
 
-■ **What just happened.** With every temporary fresh from the OS, `accel_numpy` paid 1181 page faults (4.8 MB) per call and ran 4.4 times slower than the workspace, which did not change. `project.py`'s process sits in between: 593 faults per call, `accel_numpy` 2.7 times slower than the workspace (in the writer's bisection, an earlier `import matplotlib` was enough to switch this on). Builds 2 and 3 are one arithmetic with three memory behaviours; the workspace's virtue is that its cost does not depend on allocator history you cannot see. Time code in the process it will run in. The price: the workspace returns a *view of its own buffer*, overwritten by the next call; `.copy()` what you keep (Exercise A3).
+■ **What just happened.** In a fresh process with the default allocator, the workspace's gain was 1.5×. With every temporary fresh from the OS, `accel_numpy` paid 1181 page faults (4.8 MB) per call and ran 4.4 times slower than the workspace, which did not change. `project.py`'s process sits in between: 593 faults per call, `accel_numpy` 2.7 times slower than the workspace (in the writer's bisection, an earlier `import matplotlib` was enough to switch this on). Builds 2 and 3 are one arithmetic with three memory behaviours; the workspace's virtue is that its cost does not depend on allocator history you cannot see. Time code in the process it will run in. The price: the workspace returns a *view of its own buffer*, overwritten by the next call; `.copy()` what you keep (Exercise A3).
 
 ▶ **Build 4 (float32).** Run the workspace with `dtype=np.float32`. Predict the speed ratio (half the bytes) and the accuracy: float32 has machine epsilon $1.2\times10^{-7}$, against $2.2\times10^{-16}$ for float64.
 
@@ -278,7 +278,7 @@ print(f"float64 {t32['64'] * 1e6:.0f} us, float32 {t32['32'] * 1e6:.0f} us ({t32
 float64 444 us, float32 199 us (2.23x); float32 relative force error 3.5e-07
 ```
 
-2.2 times as fast, and seven digits gone. `project.py` Part 3 prices it. Total momentum, conserved by Newton's third law up to rounding, drifts by $1.7\times10^{-16}$ in 500 float64 steps and $2.9\times10^{-8}$ in float32. The energy error at $t = 0.5$ falls like $\Delta t^2$ in float64 ($1.1\times10^{-6}$ at $\Delta t = 10^{-2}$, $1.1\times10^{-10}$ at $10^{-4}$) but in float32 stalls between $10^{-8}$ and $10^{-7}$, where rounding adds as much error per step as truncation removes. Fine for a picture, a network's weights (ML-7) or a Monte Carlo with statistical error $10^{-3}$; wrong for a long orbit.
+2.2 times as fast, and nine of the sixteen digits gone. `project.py` Part 3 prices it. Total momentum, conserved by Newton's third law up to rounding, drifts by $1.7\times10^{-16}$ in 500 float64 steps and $2.9\times10^{-8}$ in float32. The energy error at $t = 0.5$ falls like $\Delta t^2$ in float64 ($1.1\times10^{-6}$ at $\Delta t = 10^{-2}$, $1.1\times10^{-10}$ at $10^{-4}$) but in float32 stalls between $10^{-8}$ and $10^{-7}$, where rounding adds as much error per step as truncation removes. Fine for a picture, a network's weights (ML-7) or a Monte Carlo with statistical error $10^{-3}$; wrong for a long orbit.
 
 **Other constant-factor rules** (Exercises A4, B2 measure some):
 
@@ -291,7 +291,7 @@ float64 444 us, float32 199 us (2.23x); float32 relative force error 3.5e-07
 
 **Bytecode.** CPython compiles each function to bytecode for a stack machine and executes it one instruction at a time; `dis.dis(f)` shows it (Example 4.5). Since 3.11 hot instructions are *specialized* in place (PEP 659): after a few float calls, `BINARY_OP` becomes `BINARY_OP_ADD_FLOAT`, skipping the type dispatch ("What's New in Python 3.11" reports 1.25× on average over 3.10). Each instruction still allocates its result, so compiled code stays far ahead.
 
-**Reference counting and the garbage collector.** Every object counts the references to it and is freed the moment the count reaches zero: `del a`, or rebinding the name, frees an array at once, and Build 2's temporaries die at the end of each statement. Reference cycles never reach zero; the cyclic **garbage collector** (`gc`) finds them periodically. In numerical code the practical point is the reverse: a reference you forgot (a list of views, a cache) keeps a large array alive.
+**Reference counting and the garbage collector.** An object is freed the moment its reference count reaches zero, so Build 2's temporaries die at the end of each statement; reference cycles are found periodically by the cyclic **garbage collector** (`gc`). The practical point: a reference you forgot (a list of views, a cache) keeps a large array alive.
 
 **The GIL.** Reference counts are updated without locks, so CPython protects them with one global interpreter lock: a thread must hold it to execute bytecode. A thread releases it while blocked on I/O or `time.sleep`, and C extensions may release it while they work on raw memory, as NumPy does in many ufunc loops and in BLAS. (CPython 3.13 also ships an *experimental* free-threaded build, PEP 703; the default build keeps the GIL, and `sys._is_gil_enabled()` says which you have.) Measured:
 
@@ -371,7 +371,7 @@ if __name__ == "__main__":
 tiny jobs (N = 8, 5 steps): serial 4.0 ms, 4 workers 15.9 ms
 ```
 
-■ **What just happened.** Each worker is a separate process with its own import of `nbody`; `pool.map` pickles each seed to a worker and each result dictionary back. Four workers gave 3.6× here (`project.py`'s run: 2.9×; the other jobs on this machine take cores). One worker should be slightly *slower* than serial (same work plus start-up and pickling); it came out 1.17× faster, which tells you the size of the noise here (`project.py`: 1.03×). For 4-ms jobs the pool lost, 15.9 ms against 4.0 ms: starting four processes costs more than the work. Results equal the serial ones because each job receives its seed explicitly; a seed drawn from a global generator inside the job would make results depend on which worker ran what.
+■ **What just happened.** Each worker is a separate process with its own import of `nbody`; `pool.map` pickles each seed out and each result dictionary back. Four workers gave 3.6× (`project.py`'s run: 2.9×; other jobs on this machine take cores). One worker should be slightly *slower* than serial; it came out 1.17× faster, which shows the size of the noise here. For 4-ms jobs the pool lost, 15.9 ms against 4.0 ms. Results equal the serial ones because each job receives its seed explicitly; a seed drawn from a global generator inside the job would make results depend on which worker ran what.
 
 **The `__main__` guard.** Workers start one of three ways. `fork` (the Linux default up to 3.13) copies the parent. `spawn` (Windows, macOS) and `forkserver` (the Linux default from 3.14) start a fresh interpreter that **imports your main script** (as `__mp_main__`) to find your functions, so every top-level statement runs again in every worker; if one creates a pool, Python stops it:
 
@@ -412,13 +412,13 @@ RuntimeError:
 concurrent.futures.process.BrokenProcessPool: A process in the process pool was terminated abruptly while the future was running or pending.
 ```
 
-With the guard, workers import the script, define its functions, skip the block and wait for work. One line, mandatory; `nbody/src/nbody/__main__.py` has it. Two more facts: `pool.map(f, items, chunksize=k)` sends items in batches of $k$, amortizing the per-task cost (Example 4.4, Exercise C2); and pickling a large read-only array to every worker can cost more than the work, which is what `multiprocessing.shared_memory` is for (or let each worker load its own data from a file name or a seed).
+With the guard, workers import the script, define its functions, skip the block and wait for work: one line, mandatory (`nbody/src/nbody/__main__.py` has it). Also: `pool.map(f, items, chunksize=k)` sends items in batches of $k$ (Example 4.4); and pickling a large read-only array to every worker can cost more than the work, which is what `multiprocessing.shared_memory` is for (or let each worker load its own data from a file name or seed).
 
 ### 3.7 Compiling: Numba (Build 6)
 
 Numba compiles a function to machine code (through LLVM) the first time it is called with given argument types. `@njit` compiles only if *every* operation can be typed: numbers, NumPy arrays, tuples, loops, most of `math` and much of NumPy. Mixed-type lists, arbitrary dicts, SciPy, pandas and your own classes are out.
 
-▶ **Build 6.** Put `@njit` on the Build 1 loop, rewritten over arrays (`pos[j, 0]` instead of `pos[j][0]`). Predict the first-call time, the steady-state time, and whether it beats the workspace.
+▶ **Build 6.** Put `@njit` on the Build 1 loop, written over arrays (`pos[j, 0]`). Predict the first-call time, the steady-state time, and whether it beats the workspace.
 
 ```python
 import numba
@@ -453,17 +453,17 @@ Failed in nopython mode pipeline (step: nopython frontend)
 TypingError: got an unexpected keyword argument 'axis'
 ```
 
-Half a second to compile, then 3.1 times faster than the workspace. The brief for this module predicted "often similar for this problem"; here it was not, because the compiled loop reads the positions once and keeps each partial sum in a register, where NumPy makes a dozen passes over 320 kB arrays. The general rule: **a compiled loop beats NumPy when the vectorized form needs many passes over large temporaries, or cannot be written at all** (a step that depends on the previous one, an early exit, a branch per element). In SM-6's Metropolis sweep each spin flip depends on the last, and Numba is the way to compiled speed without writing C.
+Half a second to compile, then 3.1 times faster than the workspace. One might expect "similar" for a problem NumPy vectorizes well; it is not, because the compiled loop reads the positions once and keeps each partial sum in a register, where NumPy makes a dozen passes over 320 kB arrays. The rule: **a compiled loop beats NumPy when the vectorized form needs many passes over large temporaries, or cannot be written at all** (a step depending on the previous one, an early exit, a branch per element), as in SM-6's Metropolis sweep.
 
 The `TypingError` is typical: correct NumPy that Numba does not support, and one useful line buried among twenty. **Start with tiny functions** and grow them. `@njit(parallel=True)` with `numba.prange` on the outer loop splits its iterations over Numba's own threads; here the loop over $i$ is independent, so that works (Exercise C3). `@njit(cache=True)` saves the compiled code to disk.
 
-**Other compilers, named.** Cython compiles a typed Python superset to a C extension (SciPy and scikit-learn use it); a hand-written C/C++ extension (or `pybind11`) gives full control at the price of a build system. **When to stop:** when the profile says the hot spot is no longer yours (BLAS, I/O), or the program is fast enough for the question. A 10-s simulation does not need to run in 3 s; a week-long one does.
+**Other compilers.** Cython compiles a typed Python superset to a C extension (SciPy and scikit-learn use it); hand-written C/C++ extensions (or `pybind11`) give full control at the price of a build system. **When to stop:** when the hot spot is no longer yours (BLAS, I/O), or the program is fast enough for the question.
 
 ### 3.8 Trees for neighbours (Build 7)
 
 For a short-range force only pairs closer than a cutoff $r_c$ interact, but checking every pair is still $O(N^2)$. A **k-d tree** splits space recursively, one coordinate at a time; a query for "all points within $r_c$" descends only into cells that overlap the sphere, so at fixed density it costs $O(\log N)$ per body.
 
-▶ **Build 7.** Write `pairs_brute(pos, rc)` (blocked, so the `(rows, N)` distance array fits in memory) and `pairs_tree(pos, rc)` with `scipy.spatial.cKDTree(pos).query_pairs(rc, output_type="ndarray")`. Assert they return the same set of pairs, and predict the exponents of their running times in $N$ at fixed density.
+▶ **Build 7.** Write `pairs_brute(pos, rc)` (in row blocks, so the distance array fits in memory) and `pairs_tree(pos, rc)` with `cKDTree(pos).query_pairs(rc, output_type="ndarray")`. Assert they find the same pairs; predict their running-time exponents at fixed density.
 
 ```python
 from nbody.forces import accel_short_range, pairs_brute, pairs_tree
@@ -488,28 +488,24 @@ Quadrupling $N$ multiplied the all-pairs time by 11 and the tree time by 4. `pro
 
 ### 3.9 Real software: the package (Build 8)
 
-▶ **Build 8.** Turn the code into an installable package, `nbody`, with this layout, and make `python -m nbody --n 100 --steps 500 --seed 1` run a simulation and `pytest` run the tests. Before reading on, decide what goes in each file.
+▶ **Build 8.** Make the code an installable package, `nbody`, in which `python -m nbody --n 100 --steps 500 --seed 1` runs a simulation and `pytest` runs the tests. Decide what goes in each file before reading on:
 
 ```text
 nbody/
-├── pyproject.toml         name, version, dependencies, entry point, tool settings (Example 4.6)
-├── README.md              install, run, test, layout, how to reproduce a run
-├── .gitignore             figures/, __pycache__/, *.egg-info/, .pytest_cache/, run outputs
+├── pyproject.toml         metadata, dependencies, entry point, tool settings (Example 4.6)
+├── README.md              install, run, test, reproduce
+├── .gitignore             build products, figures, run outputs
 ├── src/nbody/
-│   ├── __init__.py        version and the public API
-│   ├── __main__.py        `python -m nbody`: calls cli.main() under the __main__ guard
+│   ├── __init__.py        version, public API
+│   ├── __main__.py        `python -m nbody`: cli.main() under the __main__ guard
 │   ├── forces.py          eq. (3.1) six ways (Builds 1-3, 6, 7)
 │   ├── integrate.py       initial conditions, energy, momentum, leapfrog, RK4, ensembles
-│   ├── baseline.py        the pure-Python first version, kept as a reference
-│   └── cli.py             argparse, the RunConfig dataclass, TOML config, provenance
-└── tests/
-    ├── test_forces.py     every fast version equals the loop; Newton's third law; tree = brute
-    └── test_integrate.py  momentum and energy conservation; same seed, same result
+│   ├── baseline.py        the pure-Python first version (Build 1)
+│   └── cli.py             argparse, RunConfig dataclass, TOML, provenance
+└── tests/                 test_forces.py, test_integrate.py
 ```
 
-**Why `src/`.** With the package next to `tests/`, a test's `import nbody` silently picks up the folder in the current directory, and tests pass even when the *installed* package is broken. The `src/` layout forces imports through the installation (or an explicit path, which `pyproject.toml` gives pytest).
-
-**Editable install.** `pip install -e .` installs the package so that `import nbody` resolves to your source folder: edits take effect without reinstalling. Always inside a virtual environment (PY-3 §3.10):
+**Why `src/`.** With the package next to `tests/`, a test's `import nbody` silently picks up the local folder, and tests pass even when the *installed* package is broken; `src/` forces imports through the installation (or an explicit path, which `pyproject.toml` gives pytest). **Editable install:** `pip install -e .` makes `import nbody` resolve to your source folder, so edits take effect without reinstalling. Always in a virtual environment (PY-3 §3.10):
 
 ```text
 $ pip install -e ".[test]"
@@ -536,7 +532,7 @@ INFO nbody: wrote run1.json
 
 A result file that names its commit can be reproduced. Documentation comes in three layers: `--help` (free from `argparse`), the README (install, run, test), and docstrings that state what a function computes, with the equation number.
 
-**Reproducibility, concretely.** (1) Seeds are *parameters* passed in from the top (`simulate(seed, ...)`, `--seed`), never `default_rng(42)` buried in a function. (2) Record the environment: `pip freeze > requirements.txt` pins every installed version; `pyproject.toml`'s `dependencies` state *minimum* versions (libraries state ranges, applications pin). (3) Write commit and versions into every output file. (4) `logging`, not `print`, for progress (PY-5 §3.9): it can be silenced, redirected and timestamped without touching the code. (5) A formatter and linter (`ruff format`, `ruff check`) end style arguments and catch unused imports and undefined names; continuous integration (GitHub Actions and similar) runs `pytest` on every push, so a broken commit is noticed in minutes.
+**Reproducibility, concretely.** (1) Seeds are *parameters* passed in from the top (`simulate(seed, ...)`, `--seed`), never `default_rng(42)` buried in a function. (2) `pip freeze > requirements.txt` pins every installed version; `pyproject.toml` states *minimum* versions (libraries state ranges, applications pin). (3) Commit and versions go into every output file. (4) `logging`, not `print`, for progress (PY-5 §3.9). (5) A formatter and linter (`ruff format`, `ruff check`) end style arguments and catch undefined names; continuous integration (GitHub Actions and similar) runs `pytest` on every push.
 
 ### 3.10 Notebooks versus scripts
 
@@ -550,11 +546,11 @@ Git records snapshots ("commits") of a folder, each with a message, an author, a
 
 **Commit** source, tests, `pyproject.toml`, README, configuration and small inputs. **Ignore** (`.gitignore`) whatever the code regenerates (figures, caches, `__pycache__`, `*.egg-info`), large data (record where it lives and its checksum instead) and secrets. **Commit messages say why**, in the imperative: "Record versions and commit in output files, so a result names its code", not "update cli.py"; the diff already says what.
 
-A **remote** is a copy elsewhere (GitHub, GitLab, a lab server): `git remote add origin URL`, then `git push` to send commits and `git pull` to fetch and merge others'. It is your backup; push at the end of every session. `git bisect` (PY-5 §3.8) finds the commit that broke something by binary search, which works only if commits are small and each one runs.
+A **remote** is a copy elsewhere (GitHub, GitLab, a lab server): `git remote add origin URL`, then `git push` sends commits and `git pull` fetches and merges others'. Push at the end of every session; it is your backup. `git bisect` (PY-5 §3.8) binary-searches the history for the commit that broke something, which works only if commits are small and each one runs.
 
-▶ **Build 9.** In a copy of the package: `git init`, ignore the build products, make three commits with messages that say why, branch to try float32, merge it back. Example 4.7 is the real session.
+▶ **Build 9.** In a copy of the package: `git init`, ignore build products, make three commits whose messages say why, branch to try float32, merge back. Example 4.7 is the real session.
 
-**"Good enough practices", condensed** (Wilson et al. 2017). Keep raw data raw and generate everything else from it by code; one project, one folder, with `src/`, `data/`, `results/` and `doc/`; decompose programs into functions, eliminate duplication, and use well-maintained libraries rather than rewriting them; give functions and files meaningful names; state dependencies explicitly; control behaviour with parameters, never by commenting code in and out; provide a small example data set that runs fast; put everything a human wrote under version control, in small commits shared often; add a README, a LICENSE and a citation file.
+**"Good enough practices", condensed** (Wilson et al. 2017). Keep raw data raw and generate everything else by code; one project per folder, with `src/`, `data/`, `results/`, `doc/`; functions, not duplication, and maintained libraries, not rewrites; meaningful names; explicit dependencies; parameters, never commented-out code, to change behaviour; a small example data set; everything a human wrote under version control, in small commits shared often; a README, a LICENSE, a citation file.
 
 ## 4. Worked examples
 
@@ -591,7 +587,7 @@ pstats.Stats(prof).strip_dirs().sort_stats("cumulative").print_stats(8)
        10    0.000    0.000    0.000    0.000 baseline.py:21(drift)
 ```
 
-Read it from the top. `run_python` is the whole run, 0.303 s (cumtime). `accel_loop`, called 11 times (once before the loop, once per step), has cumtime 0.225 s: 74% of the run, most of it in its own body (tottime 0.176 s) and the rest in `math.sqrt`, called once per pair term. `energy_loop`, called only twice but $O(N^2)$ each time, takes 0.076 s: a quarter of the run spent on a *diagnostic*, which nobody guesses before seeing it. Inside it, the `<genexpr>` row (159,200 calls) is the generator that unpacks `dx, dy, dz`, a harmless-looking line costing 7% of the run. `kick` and `drift`, the loops that look slow, take 0.001 s together. So: vectorize the force (Builds 2–3), compute the energy rarely and vectorized, and leave kick and drift alone.
+From the top: `run_python` is the whole run, 0.303 s. `accel_loop`, called 11 times, has cumtime 0.225 s, 74% of the run, mostly in its own body (tottime 0.176 s), the rest in `math.sqrt`. `energy_loop`, called twice but $O(N^2)$ each time, takes 0.076 s: a quarter of the run on a *diagnostic*, which nobody guesses. Inside it, the `<genexpr>` row (159,200 calls) is the generator unpacking `dx, dy, dz`, a harmless-looking line costing 7%. `kick` and `drift`, the loops that look slow, take 0.001 s together. So: vectorize the force (Builds 2–3), compute the energy rarely and vectorized, leave kick and drift alone.
 
 ### Example 4.2: the broadcast, shape by shape
 
@@ -644,7 +640,7 @@ ensemble of 8, 4 process(es) (per evaluation)          167.0 us     57.2x
 Numba @njit loop (after compiling)                     153.3 us     62.3x
 ```
 
-Each row is a minimum over interleaved repeats. The ensemble rows divide the wall time of 8 runs by their 8 × 401 force evaluations, so they include the integrator's bookkeeping and the pool's start-up; the serial ensemble row is the workspace plus that overhead. Read down the column: layout (3.3× → 8.0×), no temporaries (21.7×), half the bytes (46.7×), four processes (57.2×, which is 2.9× over the serial ensemble on this shared machine), a compiled loop (62.3×). The brief for this module asked for "vectorized ≥ 20×"; in `project.py`'s process the coordinate-first version reached 8.0×, because it paid 593 page faults per call there (Build 3), while in the notes session, without the faults, it reached 24.7×. Only the in-place version passes 20× in both. `project.py` asserts the ordering baseline ≤ vectorized ≤ in place and a threshold of 5× for the vectorized version, and prints the measured values.
+The ensemble rows divide the wall time of 8 runs by their 8 × 401 force evaluations, so they include the integrator's bookkeeping and the pool's start-up. Read down the column: layout (3.3× → 8.0×), no temporaries (21.7×), half the bytes (46.7×), four processes (57.2×, i.e. 2.9× over the serial ensemble on this shared machine), a compiled loop (62.3×). The brief for this module expected "vectorized ≥ 20×": the coordinate-first version reached 8.0× in `project.py`'s process, which paid 593 page faults per call (Build 3), and 24.7× in the notes session, which paid none; only the in-place version passes 20× in both. `project.py` asserts the ordering baseline ≤ vectorized ≤ in place and vectorized ≥ 5×, and prints the measured values.
 
 ### Example 4.4: a process pool where overhead wins
 
@@ -675,7 +671,7 @@ serial list comprehension:    0.53 ms
 4 processes, chunksize  2500:   16.82 ms
 ```
 
-With `chunksize=1` each task is pickled, sent through a pipe, unpickled, run and sent back: about 0.2 ms of overhead (2.2 s over 10,000 tasks) around a fraction of a microsecond of work, 4000 times slower than the list comprehension. Batching cuts the per-task cost (41 ms, then 17 ms) but cannot remove the pool's start-up. Rule of thumb: each task should take at least tens of milliseconds, and the total should dwarf the pool's start-up.
+With `chunksize=1` each task is pickled, piped, unpickled, run and sent back: about 0.2 ms of overhead (2.2 s over 10,000 tasks) around a fraction of a microsecond of work, 4000 times slower than the list comprehension. Batching cuts the per-task cost (41 ms, then 17 ms) but not the pool's start-up. Rule of thumb: each task should take tens of milliseconds or more.
 
 ### Example 4.5: what `a + b` compiles to
 
@@ -716,7 +712,7 @@ print(add(1, 2), add("a", "b"), add(np.ones(2), 1))
 3 ab [2. 2.]
 ```
 
-Three source lines, six instructions. `RESUME` marks the function's start (where tracing and optimization checks happen); `LOAD_FAST_LOAD_FAST` pushes both arguments onto the evaluation stack; `BINARY_OP 0 (+)` pops them, dispatches on their types and pushes the result; `STORE_FAST` binds it to `c`; `LOAD_FAST` and `RETURN_VALUE` return it. The same `BINARY_OP` adds ints, concatenates strings and broadcasts arrays: the decision is made at run time, every time. After a hundred calls with floats the adaptive interpreter has rewritten it to `BINARY_OP_ADD_FLOAT`, a fast path that checks "both floats?" and adds, falling back if the types change. Still one instruction per operation, each allocating its result; Numba removes the instructions altogether.
+Three source lines, six instructions. `RESUME` marks the function's start; `LOAD_FAST_LOAD_FAST` pushes both arguments onto the stack; `BINARY_OP 0 (+)` pops them, dispatches on their types and pushes the result; `STORE_FAST` binds `c`; `LOAD_FAST` and `RETURN_VALUE` return it. The same `BINARY_OP` adds ints, concatenates strings and broadcasts arrays: the decision is made at run time, every time. After a hundred float calls it has become `BINARY_OP_ADD_FLOAT`, a fast path that checks "both floats?" and falls back if not. Still one instruction per operation, each allocating its result; Numba removes the instructions.
 
 ### Example 4.6: `pyproject.toml`, field by field
 
@@ -749,16 +745,15 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 ```
 
-- `[build-system]`: the tool that builds the installable wheel, and what to install before running it (PEP 517/518). Here setuptools; `hatchling` and `flit-core` are alternatives.
-- `name`: the distribution name for `pip install` and `pip show`; the *import* name comes from the folder `src/nbody`. `version`: bump it when behaviour changes; it appears in every provenance record. `description`, `readme`, `authors`: metadata.
+- `[build-system]`: the tool that builds the wheel, and what to install before running it (PEP 517/518); setuptools here, `hatchling` or `flit-core` elsewhere.
+- `name`: the distribution name for `pip install`/`pip show`; the *import* name comes from the folder `src/nbody`. `version`: bump it when behaviour changes; it appears in every provenance record. `description`, `readme`, `authors`: metadata.
 - `requires-python = ">=3.11"`: pip refuses older Pythons up front instead of failing at `import tomllib` (new in 3.11).
-- `dependencies`: what `import nbody` needs, as *minimum* versions. A library that pins exact versions cannot coexist with others; exact pins belong in an application's `requirements.txt`.
-- `[project.optional-dependencies]`: extras, installed by `pip install -e ".[test]"` or `".[fast]"`. Numba is optional because `forces.py` works without it.
-- `[project.scripts]`: installs an `nbody` command that calls `nbody.cli.main()`; `python -m nbody` goes through `__main__.py` instead.
-- `[tool.setuptools.packages.find] where = ["src"]`: the `src/` layout.
-- `[tool.pytest.ini_options]`: tests live in `tests/`, and `src/` goes on the import path, so `pytest` works in a fresh clone before installation.
+- `dependencies`: what `import nbody` needs, as *minimum* versions; a library that pins exact versions cannot coexist with others.
+- `[project.optional-dependencies]`: extras, `pip install -e ".[test]"` or `".[fast]"`; Numba is optional because `forces.py` works without it.
+- `[project.scripts]`: installs an `nbody` command calling `nbody.cli.main()`.
+- `[tool.setuptools.packages.find]`: the `src/` layout. `[tool.pytest.ini_options]`: tests in `tests/`, `src/` on the import path, so `pytest` works in a fresh clone.
 
-The file is checked twice: `pip install -e .` succeeded with it (Build 8), and `project.py` Part 9 runs pytest under these options.
+Checked twice: `pip install -e .` succeeded with it (Build 8), and `project.py` Part 9 runs pytest under these options.
 
 ### Example 4.7: a git session on the package
 
@@ -840,7 +835,7 @@ $ python -m pytest -q
 14 passed in 0.91s
 ```
 
-Before the `.gitignore`, git offers to track eleven generated files (bytecode caches, and the `egg-info` that `pip install -e` wrote); after it, only source. Each commit on `main` leaves a working package. The experiment stays on a branch until tested; meanwhile `main` moved (the README commit), so the merge made a commit with two parents, drawn by `--graph` (had `main` not moved, git would have fast-forwarded). The merged tree passes its tests and is identical to `nbody/` in this folder.
+Before the `.gitignore`, git offers to track eleven generated files (bytecode caches, and the `egg-info` that `pip install -e` wrote); after it, only source. Each commit leaves a working package. The experiment stays on a branch until tested; `main` moved meanwhile (the README commit), so the merge has two parents, drawn by `--graph` (otherwise git would have fast-forwarded). The merged tree passes its tests and is identical to `nbody/` here.
 
 ## 5. Why it matters and where it connects
 
@@ -862,30 +857,29 @@ See [exercises.md](exercises.md). A1–A5 are predictions and small fixes (a tim
 ## 8. Where you'll struggle
 
 - **You will optimize before profiling, and speed up the 5%.** Everyone does: kick and drift *look* slow and took 0.3% (Example 4.1). No optimization without a profile in hand and a timing before and after, written down.
-- **"Python is slow" is true per operation and irrelevant once the loop is in NumPy or Numba.** Rewriting a project in C++ for one slow loop is the expensive version of not profiling.
+- **"Python is slow" is true per operation and irrelevant once the loop is in NumPy or Numba.** Rewriting a project in C++ for one slow loop is the expensive way of not profiling.
 - **Threads will not speed up your CPU-bound Python, and you will try anyway.** It runs, nothing crashes, it is no faster (§3.6), and `top` shows one core at 100%. Use processes, or do the work in NumPy or Numba.
 - **Forgetting the `__main__` guard.** On Linux with `fork` nothing goes wrong, so the bug ships; under `spawn` (macOS, Windows) or `forkserver` (Linux from 3.14) every worker re-runs your top level, and you get §3.6's `RuntimeError`, a `BrokenProcessPool`, and every top-level side effect once per worker.
 - **Numba's error messages are terrible.** Start with a ten-line function, get it compiling, grow it; when it fails, delete half the body until it compiles (bisection, PY-5 §3.8).
 - **float32 is a trade you must justify, not a free speedup.** It halved Build 4's time and put a floor near $10^{-7}$ under the energy error. Decide the accuracy you need, then check against a float64 run.
 - **Preallocated buffers alias.** `history.append(work(pos, mass))` stores the same view every step, so the list holds the last value $N$ times (Exercise A3). Document it, and `.copy()`.
-- **A package feels like ceremony for a 200-line simulation.** It is the difference between code you reuse and code you rewrite; the first `import nbody` from another project, or the first failing test after a change, repays it.
-- **Git's first week is miserable, and then you cannot work without it.** Detached HEAD, conflicts, the staging area confuse everyone once. Commit small, commit before every experiment, and when lost, `git status` says where you are.
+- **A package feels like ceremony for a 200-line simulation.** It is the difference between code you reuse and code you rewrite.
+- **Git's first week is miserable, and then you cannot work without it.** Detached HEAD, conflicts and the staging area confuse everyone once. Commit small, commit before every experiment, and when lost, run `git status`.
 - **Reproducibility means someone else can run it.** A seed hard-coded inside a function makes code deterministic, not reproducible: nobody can rerun it with another seed to see whether the result survives, or tell which code made which figure. Seeds, parameters, versions and the commit go into the output file.
 
 ## 9. Check yourself
 
-1. Why is `time.perf_counter` the right clock for timing code and `time.time` the wrong one?
-2. Why report the minimum of `timeit` repeats rather than the mean?
-3. In a `pstats` listing, a function has tottime 0.01 s and cumtime 3 s. Where is its time going?
-4. Roughly how many bytes does a list of $10^6$ Python floats occupy, and an array of them? Why?
-5. What does `np.fill_diagonal(r2, 1.0)` fix in the broadcast force, and why is the value 1.0 harmless?
-6. Why was the `(3, N, N)` layout faster than `(N, N, 3)` for the same arithmetic?
-7. Name two ways the in-place workspace can bite a caller.
-8. Which of these does a thread pool speed up in default CPython, and why: a pure-Python loop, `np.sin` on a large array, waiting on a download?
-9. What exactly goes wrong when a script that creates a process pool has no `__main__` guard and the start method is `spawn`?
-10. When does a process pool make a program slower?
-11. When would you expect Numba to beat well-vectorized NumPy, and when not?
-12. What is the difference between `dependencies` in `pyproject.toml` and the output of `pip freeze`?
+1. Why report the minimum of `timeit` repeats rather than the mean?
+2. In a `pstats` listing, a function has tottime 0.01 s and cumtime 3 s. Where is its time going?
+3. Roughly how many bytes does a list of $10^6$ Python floats occupy, and an array of them? Why?
+4. What does `np.fill_diagonal(r2, 1.0)` fix in the broadcast force, and why is 1.0 harmless?
+5. Why was the `(3, N, N)` layout faster than `(N, N, 3)` for the same arithmetic?
+6. Name two ways the in-place workspace can bite a caller.
+7. Which does a thread pool speed up in default CPython, and why: a pure-Python loop, `np.sin` on a large array, waiting on a download?
+8. What exactly goes wrong when a script that creates a process pool has no `__main__` guard and the start method is `spawn`?
+9. When does a process pool make a program slower?
+10. When would you expect Numba to beat well-vectorized NumPy?
+11. What is the difference between `dependencies` in `pyproject.toml` and the output of `pip freeze`?
 
 ## 10. Pair with
 
