@@ -98,5 +98,7 @@ PY-8 was complete on disk (its writer finished the files before a server 500 kil
 
 | Run ID | Modules |
 |---|---|
-| wf_3eb5262f-4ac | verify (Fable): PY-8, PY-9 |
-| wf_42e5fda0-89e | write-only (Opus): PY-10 |
+| wf_3eb5262f-4ac | verify (Fable): PY-8, PY-9 — killed by a user interrupt one minute in |
+| wf_42e5fda0-89e | write-only (Opus): PY-10 — same |
+| wf_abd71416-771 | verify (Fable): PY-8, PY-9 (relaunch, 16:25 UTC) |
+| wf_54810401-d54 | write-only (Opus): PY-10 (relaunch) |
