@@ -270,7 +270,7 @@ right 7 7
 outer 8 8
 ```
 
-The comparison sorts both results because pandas orders rows by key and then by left position, and my loop orders them by left position; the *set* of rows is the definition. `MergeError` is a subclass of `ValueError`, so the two checks raise the same kind of exception. The row counts follow from the nested loop: with $m_L(k)$ and $m_R(k)$ the multiplicities of key $k$,
+The comparison sorts both results because row order is not part of what a join defines: pandas keeps the left frame's order for `inner` and `left`, the right frame's for `right`, and sorts the keys for `outer`, while my loop always follows the left frame; the *multiset* of rows is the definition. `MergeError` is a subclass of `ValueError`, so the two checks raise the same kind of exception. The row counts follow from the nested loop: with $m_L(k)$ and $m_R(k)$ the multiplicities of key $k$,
 
 $$|\text{inner}|=\sum_k m_L(k)\,m_R(k),\qquad |\text{left}|=|\text{inner}|+\sum_{k:\,m_R(k)=0} m_L(k),$$
 
@@ -351,7 +351,7 @@ exact join            2 pairs, corr nan
 merge_asof, 5 min    89 pairs, corr 0.9936
 ```
 
-With jitter, two sensors almost never share a timestamp to the second: the exact join found 2 chance coincidences out of 96 pressure readings, too few for a correlation (and without jitter it would keep only the stamps on the half hour). Resampling to a common grid uses every reading and averages noise away (three temperatures and two pressures per bin), so the correlation rises; use it when the question is about the slow signal and you want a regular table for regression or plotting (`project.py` Part 7). `merge_asof` pairs each pressure reading with the nearest temperature within a tolerance, keeping individual readings and their timing; use it for event-level questions (what was the temperature when this pressure reading, alarm or sample was taken?), and choose the tolerance so that no pair is staler than the process allows. Both require sorted time, and `merge_asof` refuses unsorted keys.
+With jitter, two sensors almost never share a timestamp to the second: the exact join found 2 chance coincidences out of 96 pressure readings, too few for a correlation (and without jitter it would keep only the stamps on the half hour). Resampling to a common grid uses every reading and averages noise away (three temperatures and two pressures per bin), so the correlation rises; use it when the question is about the slow signal and you want a regular table for regression or plotting (`project.py` Part 7). `merge_asof` pairs each pressure reading with the nearest temperature within a tolerance, keeping individual readings and their timing; use it for event-level questions (what was the temperature when this pressure reading, alarm or sample was taken?), and choose the tolerance so that no pair is staler than the process allows. `resample` does not care about row order; `merge_asof` needs both tables sorted on the key and refuses unsorted ones.
 
 **B5.**
 
@@ -446,7 +446,7 @@ unit as str         5.20 MB, groupby mean 6.32 ms
 unit as category    0.10 MB, groupby mean 1.54 ms
 ```
 
-Every row-wise method builds or looks up Python objects per row; the two vectorized ones do a few passes in compiled code. `iterrows` is the worst because it builds a full `Series` per row (and would silently upcast if the columns had mixed numeric dtypes); `apply(axis=1)` does the same with less interpreter overhead; `itertuples` and the plain loop over arrays avoid the `Series` and are 20 to 50 times faster than `iterrows`, but still make a Python call per row. At $10^7$ rows every time grows about 100-fold (all are linear), so the *ratios* stay, while the absolute cost changes what is feasible: the `iterrows` version would take minutes, the vectorized ones one or two seconds. The memory saving of `category` grows with $n$ (codes are 1 byte per row against a pointer plus a string object), and the groupby speed-up stays, since the codes are already the integer labels that §3.8's NumPy version had to compute.
+Every row-wise method builds or looks up Python objects per row; the two vectorized ones do a few passes in compiled code. `iterrows` is the worst because it builds a full `Series` per row (and would silently upcast if the columns had mixed numeric dtypes); `apply(axis=1)` does the same with less interpreter overhead; `itertuples` and the plain loop over arrays avoid the `Series` and are roughly 40 and 100 times faster than `iterrows`, but still make a Python call per row. At $10^7$ rows every time grows about 100-fold (all are linear), so the *ratios* stay, while the absolute cost changes what is feasible: the `iterrows` version would take minutes, the vectorized ones one or two seconds. The memory saving of `category` grows with $n$ (codes are 1 byte per row against a pointer plus a string object), and the groupby speed-up stays, since the codes are already the integer labels that §3.8's NumPy version had to compute.
 
 ## C. Challenge
 

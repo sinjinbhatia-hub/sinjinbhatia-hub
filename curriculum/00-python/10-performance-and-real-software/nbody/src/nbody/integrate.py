@@ -103,9 +103,9 @@ def simulate(seed: int, n: int = 200, steps: int = 200, dt: float = 1e-3, eps: f
     p0 = momentum(vel, mass)
     work = ForceWorkspace(n, dtype=np.dtype(dtype).type)
     pos, vel, _ = leapfrog(pos, vel, mass, dt, steps, eps, accel=work)
-    return {"seed": seed, "n": n, "steps": steps, "dtype": dtype,
-            "energy_start": e0, "energy_end": energy(pos, vel, mass, eps),
-            "rel_energy_change": abs(energy(pos, vel, mass, eps) - e0) / abs(e0),
+    e1 = energy(pos, vel, mass, eps)
+    return {"seed": seed, "n": n, "steps": steps, "dtype": dtype, "energy_start": e0, "energy_end": e1,
+            "rel_energy_change": abs(e1 - e0) / abs(e0),
             "momentum_change": float(np.abs(momentum(vel, mass) - p0).max()),
             "half_mass_radius": float(np.median(np.linalg.norm(np.asarray(pos, np.float64), axis=1)))}
 

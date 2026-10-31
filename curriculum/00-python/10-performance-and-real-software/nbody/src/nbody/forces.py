@@ -142,13 +142,16 @@ def _pair_accel(pos: np.ndarray, mass: np.ndarray, i: np.ndarray, j: np.ndarray,
     return G * acc
 
 
-def pairs_brute(pos: np.ndarray, rc: float, block: int = 1024) -> tuple[np.ndarray, np.ndarray]:
+def pairs_brute(pos: np.ndarray, rc: float, block: int = 256) -> tuple[np.ndarray, np.ndarray]:
     """All pairs i < j with |x_i - x_j| <= rc by checking every pair, in row blocks: O(N^2) work."""
     n = len(pos)
+    x = np.ascontiguousarray(pos.T)                        # (3, N)
     ii, jj = [], []
     for start in range(0, n, block):
-        rows = pos[start:start + block]
-        r2 = ((rows[:, np.newaxis, :] - pos[np.newaxis, :, :]) ** 2).sum(axis=-1)
+        stop = min(start + block, n)
+        r2 = np.zeros((stop - start, n))
+        for k in range(3):
+            r2 += (x[k, start:stop, np.newaxis] - x[k, np.newaxis, :]) ** 2
         bi, bj = np.nonzero(r2 <= rc * rc)
         bi += start
         keep = bi < bj

@@ -9,9 +9,9 @@
 # (6) the sparse Poisson solve and Theorem 3.1 (3.10); (7) expm against solve_ivp (3.9);
 # (8) special, stats, fft, interpolate, quad, lambdify (3.2, 3.8, 3.11, 3.12).
 #
-# Run headless: `MPLBACKEND=Agg python3 project.py` (about a minute). Figures go to ./figures/.
+# Run headless: `MPLBACKEND=Agg python3 project.py` (about 30 s). Figures go to ./figures/.
 # The dense n = 10_000 solve in Part 6 needs about 1.6 GB of RAM: set DENSE_BIG = False if
-# you have less, and the script extrapolates from n = 4000 instead.
+# you have under about 4 GB free, and the script extrapolates from n = 4000 instead.
 
 # %%
 import time
@@ -302,7 +302,7 @@ runs2 = [require(integrate.solve_ivp(dp_rhs, (0, 30), y0 + d, method="DOP853", r
          for d in (0.0, np.array([1e-8, 0.0, 0.0, 0.0]))]
 E_dp = DP_ENERGY(*runs2[0].y, 1.0, 1.0, 1.0, 1.0, G)
 print(f"double pendulum energy drift over 30 s: {np.max(np.abs(E_dp / E_dp[0] - 1)):.1e}")
-assert np.max(np.abs(E_dp / E_dp[0] - 1)) < 1e-9
+assert np.max(np.abs(E_dp / E_dp[0] - 1)) < 2e-10                          # notes 3.6 quote 6.1e-11
 sep = np.linalg.norm(runs2[0].y - runs2[1].y, axis=0)
 win = (sep > 1e-7) & (sep < 1e-1)
 slope, intercept = np.polyfit(te2[win], np.log(sep[win]), 1)
@@ -500,6 +500,19 @@ for method, kw in {"bisect": dict(bracket=[0, 1]), "brentq": dict(bracket=[0, 1]
     assert abs(r.root - 0.7390851332151607) < 1e-11
 print("root_scalar (iterations, function calls):", counts)
 assert counts["bisect"][0] == 40 and counts["brentq"] == (7, 8) and counts["newton"][0] == 4
+
+X_, Y_ = sp.symbols("X Y", real=True)                                        # notes 3.7: Himmelblau call counts
+himmel = (X_**2 + Y_ - 11) ** 2 + (X_ + Y_**2 - 7) ** 2
+f_h = sp.lambdify((X_, Y_), himmel, modules="numpy")
+g_h = sp.lambdify((X_, Y_), [himmel.diff(X_), himmel.diff(Y_)], modules="numpy")
+fun_h, jac_h = (lambda p: f_h(*p)), (lambda p: np.array(g_h(*p)))
+r_nm = require(optimize.minimize(fun_h, [0.0, 0.0], method="Nelder-Mead"))
+r_fd = require(optimize.minimize(fun_h, [0.0, 0.0], method="BFGS"))
+r_gr = require(optimize.minimize(fun_h, [0.0, 0.0], method="BFGS", jac=jac_h))
+print(f"Himmelblau from (0, 0): nfev Nelder-Mead {r_nm.nfev}, BFGS finite differences {r_fd.nfev} (njev {r_fd.njev}), BFGS SymPy gradient {r_gr.nfev} (njev {r_gr.njev})")
+assert all(np.allclose(r.x, [3.0, 2.0], atol=1e-4) for r in (r_nm, r_fd, r_gr))
+assert r_fd.nfev == 3 * r_fd.njev and r_gr.nfev == r_gr.njev             # a finite-difference gradient costs 1 + n = 3 calls; an exact one none
+assert (r_nm.nfev, r_fd.nfev, r_gr.nfev) == (157, 48, 16)
 kink = lambda x: abs(x - 0.3)
 v0, _, i0 = integrate.quad(kink, 0, 1, full_output=True)[:3]
 v1, _, i1 = integrate.quad(kink, 0, 1, points=[0.3], full_output=True)[:3]
@@ -523,7 +536,7 @@ poly_ch = np.polynomial.Polynomial.fit(xc, runge(xc), 12)
 cs = interpolate.CubicSpline(xn, runge(xn))
 errs = [np.abs(f_(xx) - runge(xx)).max() for f_ in (poly_eq, poly_ch, cs)]
 print(f"Runge, n=13: equispaced polynomial {errs[0]:.3f}, Chebyshev nodes {errs[1]:.4f}, CubicSpline {errs[2]:.4f}")
-assert errs[0] > 1 and errs[1] < 0.1 and errs[2] < 0.01
+assert np.allclose(errs, [3.663, 0.0692, 0.0069], rtol=0.01)                # the n = 13 row of notes 3.11
 fig, ax = plt.subplots(figsize=(6, 3.8))
 ax.plot(xx, runge(xx), "k", label="f"); ax.plot(xx, poly_eq(xx), label="degree 12, equispaced"); ax.plot(xx, cs(xx), label="CubicSpline"); ax.plot(xn, runge(xn), "ko", ms=3)
 ax.set(ylim=(-1, 2), title="Runge's phenomenon, 13 nodes"); ax.legend(); ax.grid(alpha=0.3)

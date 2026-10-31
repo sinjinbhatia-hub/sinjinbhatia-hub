@@ -437,9 +437,10 @@ print(f"Total run time: {time.perf_counter() - T_START:.1f} s")
 # 3. **The daily summary in query form.** Rewrite Part 3's filter with clean.query(...) and compare
 #    the result with `daily` using pd.testing.assert_frame_equal. Which version would you rather
 #    debug, and why?
-# 4. **iterrows against vectorized.** Time the Fahrenheit conversion of Part 2 on 10^5 rows of raw
-#    three ways: a loop over iterrows(), apply(axis=1), and the where() expression. Report the
-#    ratios, then double the rows and check that every method scales linearly.
+# 4. **iterrows against vectorized.** Time the Fahrenheit conversion of Part 2 on raw stacked twice
+#    (pd.concat([raw, raw]), about 10^5 rows) three ways: a loop over iterrows(), apply(axis=1), and
+#    the where() expression. Report the ratios, then double the rows and check that every method
+#    scales linearly.
 
 # %%
 if __name__ == "__main__":

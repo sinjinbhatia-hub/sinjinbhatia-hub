@@ -6,6 +6,6 @@ command line in nbody.cli (`python -m nbody --help`).
 from nbody.forces import NUMBA_AVAILABLE, ForceWorkspace, accel_loop, accel_numpy
 from nbody.integrate import energy, leapfrog, momentum, rk4, run_ensemble, simulate, uniform_ball
 
-__version__ = "0.2.0"
+__version__ = "0.1.0"
 __all__ = ["NUMBA_AVAILABLE", "ForceWorkspace", "accel_loop", "accel_numpy", "energy", "leapfrog",
            "momentum", "rk4", "run_ensemble", "simulate", "uniform_ball", "__version__"]

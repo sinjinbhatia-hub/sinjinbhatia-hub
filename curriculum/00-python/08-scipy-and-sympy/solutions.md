@@ -140,7 +140,7 @@ default atol (1e-6)            c(5) = 1.213e-08 (exact 6.738e-11), relative erro
 atol = rtol * 1e-10 = 1e-16    c(5) = 6.738e-11 (exact 6.738e-11), relative error 1.6e-06, nfev 134
 ```
 
-With the default `atol=1e-6`, the scale in (3.8) is $\text{atol}+\text{rtol}\,|c|\approx10^{-6}$, a hundred times the initial value, so the solver accepts any step whose error is below $10^{-6}$ *absolute*: after three steps it reports $c(5)\approx10^{-8}$ against the true $6.7\times10^{-11}$, an error of more than 100 times the answer, with `success=True`. The smallest value we care about is $c(5)\sim10^{-10}$, so the rule `atol` $=$ `rtol` $\times$ that gives $10^{-16}$, and then the scale is dominated by `rtol` $|c|$ as intended.
+With the default `atol=1e-6`, the scale in (3.8) is $\text{atol}+\text{rtol}\,|c|\approx10^{-6}$, a hundred times the initial value, so the solver accepts any step whose error is below $10^{-6}$ *absolute*: after two steps it reports $c(5)\approx10^{-8}$ against the true $6.7\times10^{-11}$, an error of more than 100 times the answer, with `success=True`. The smallest value we care about is $c(5)\sim10^{-10}$, so the rule `atol` $=$ `rtol` $\times$ that gives $10^{-16}$, and then the scale is dominated by `rtol` $|c|$ as intended.
 
 **A5.**
 
@@ -148,7 +148,7 @@ With the default `atol=1e-6`, the scale in (3.8) is $\text{atol}+\text{rtol}\,|c
 import numpy as np
 from scipy import sparse
 
-D = sparse.diags([1, 2, 1], [-1, 0, 1], shape=(4, 4))
+D = sparse.diags([1.0, 2.0, 1.0], [-1, 0, 1], shape=(4, 4))
 v = np.ones(4)
 
 
@@ -347,7 +347,7 @@ assert diff < 1e-4 and abs(slope + gam / 2) < 1e-3 and abs(np.diff(tm).mean() / 
 (c) 5 maxima; decay slope -0.20001 (theory -0.2); mean spacing 2.01027 vs 2 pi/omega_d = 2.01017
 ```
 
-(a) `dsolve` returns $\theta(t)=e^{-t/5}\left(\tfrac{\sqrt{977}}{9770}\sin\tfrac{\sqrt{977}\,t}{10}+\tfrac1{20}\cos\tfrac{\sqrt{977}\,t}{10}\right)$, with $\omega_d=\sqrt{977}/10=\sqrt{g/L-\gamma^2/4}$. (b) The neglected force is $\theta^3/6\approx2\times10^{-5}$ at $\theta=0.05$ (and decays); the oscillator's static gain is $1/\omega_0^2\approx0.1$ and resonance can raise it by up to $Q=\omega_0/\gamma\approx8$, so a difference of order $10^{-5}$ is expected, and the run shows 2.4e-05. (c) The maxima decay as $e^{-\gamma t/2}$ and are spaced by the damped period, both to better than $10^{-3}$ relative: the linear theory is excellent at this amplitude. The event on $\omega=0$ with `direction=-1` catches exactly the maxima.
+(a) `dsolve` returns $\theta(t)=e^{-t/5}\left(\tfrac{\sqrt{977}}{9770}\sin\tfrac{\sqrt{977}\,t}{10}+\tfrac1{20}\cos\tfrac{\sqrt{977}\,t}{10}\right)$, with $\omega_d=\sqrt{977}/10=\sqrt{g/L-\gamma^2/4}$. (b) The neglected term in the acceleration is $(g/L)(\theta-\sin\theta)\approx(g/L)\,\theta^3/6\approx2\times10^{-4}\ \mathrm{rad/s^2}$ at $\theta=0.05$ (and it decays with the amplitude); divided by the stiffness $\omega_0^2=g/L$ that is a static displacement of $\theta^3/6\approx2\times10^{-5}$, and resonance can raise it by up to $Q=\omega_0/\gamma\approx8$, so a difference of order $10^{-5}$ to $10^{-4}$ is expected; the run shows 2.4e-05. (c) The maxima decay as $e^{-\gamma t/2}$ and are spaced by the damped period, both to better than $10^{-3}$ relative: the linear theory is excellent at this amplitude. The event on $\omega=0$ with `direction=-1` catches exactly the maxima.
 
 **B4.**
 

@@ -276,7 +276,7 @@ False 0 2 3.0
 
 ### 3.7 Sorting, strings, and the cost of `apply`
 
-`sort_values(["a", "b"], ascending=[False, True])` sorts by several keys (stable, so ties keep their order); `sort_index()` sorts by labels; `nlargest(k, "col")` is a partial sort. String methods live behind the `.str` accessor and run on the whole column: `strip`, `lower`, `replace`, `contains`, `startswith`, `split(..., expand=True)` (one column per piece), and `extract(regex)` with named groups becoming columns (PY-3 Example 4.5 wrote the regex by hand):
+`sort_values(["a", "b"], ascending=[False, True])` sorts by several keys (a multi-key sort is stable, so ties keep their order; the default single-key sort is quicksort and is not, so pass `kind="stable"` when the order of ties matters); `sort_index()` sorts by labels; `nlargest(k, "col")` is a partial sort. String methods live behind the `.str` accessor and run on the whole column: `strip`, `lower`, `replace`, `contains`, `startswith`, `split(..., expand=True)` (one column per piece), and `extract(regex)` with named groups becoming columns (PY-3 Example 4.5 wrote the regex by hand):
 
 ```python
 names = pd.Series([" Temp_1", "TEMP-1", "vib_2 ", "Pres_10"])
@@ -340,7 +340,7 @@ map + arithmetic          6.2 ms
 where (vectorized)        4.8 ms
 ```
 
-`apply(axis=1)` builds a Series per row; `iterrows` does the same and also runs your loop in the interpreter. Both are the slow path that *feels* natural because it reads like the row-by-row description of the task. The rule: if you are writing `lambda row:`, look for the column expression (`where`, `np.select`, `map`, `.str`, `.dt`, a merge). `apply` on a *group* (§3.8) or on a column with a function that is itself vectorized is fine.
+■ **What just happened.** In this run `iterrows` was about 200 times slower than the vectorized `where` and `apply(axis=1)` about 35 times. `apply(axis=1)` builds a Series per row; `iterrows` does the same and also runs your loop in the interpreter. Both are the slow path that *feels* natural because it reads like the row-by-row description of the task. The rule: if you are writing `lambda row:`, look for the column expression (`where`, `np.select`, `map`, `.str`, `.dt`, a merge). `apply` on a *group* (§3.8) or on a column with a function that is itself vectorized is fine.
 
 ### 3.8 Groupby (Build 1)
 
@@ -552,9 +552,9 @@ print(temp.loc["2024-03-04 08:00":"2024-03-04 08:30"].size, temp.loc["2024-03"].
 4 144
 ```
 
-`ohlc` gives the first, maximum, minimum and last value per bin. Other aggregations work as in `groupby` (`.agg`, `.size()`, `.max()`).
+■ **What just happened.** Flooring each stamp to its hour and grouping gave the same 24 bins and the same means as `resample("1h")`, because on this series no hour is empty; the two differ exactly where a bin has no readings (Example 4.6). `ohlc` gives the first, maximum, minimum and last value per bin. Other aggregations work as in `groupby` (`.agg`, `.size()`, `.max()`).
 
-**Rolling windows.** `rolling(w)` slides a window of `w` rows; `rolling("1h")` a window of one hour *of time*, which is what you want for irregular sampling. The result at row $i$ uses rows $i-w+1, \dots, i$ (trailing) unless `center=True`, and is `NaN` until `min_periods` (default `w`) values are present. `ewm(halflife=...)` is the exponentially weighted mean, $y_i = (1-\alpha) y_{i-1} + \alpha x_i$ with `adjust=False`.
+**Rolling windows.** `rolling(w)` slides a window of `w` rows; `rolling("1h")` a window of one hour *of time*, which is what you want for irregular sampling. The result at row $i$ uses rows $i-w+1, \dots, i$ (trailing) unless `center=True`, and is `NaN` until `min_periods` (default `w`) values are present. `ewm(alpha=...)` is the exponentially weighted mean, $y_i = (1-\alpha) y_{i-1} + \alpha x_i$ with `adjust=False` (`halflife=h` sets $\alpha = 1 - 2^{-1/h}$).
 
 ▶ **Try it first (Build 6).** PY-6 §3.11's `sliding_window_view(x, w)` gives an `(n - w + 1, w)` view; its row means are a rolling mean. How long is that array, and where do its values sit in `rolling(w).mean()`?
 
@@ -883,7 +883,7 @@ See [exercises.md](exercises.md). A1–A5 are predict-and-fix drills (slices, al
 - **The MultiIndex after `groupby`.** Two keys or a list of aggregations give hierarchical labels you will fight with `.loc[("A", "temp_1")]` and `xs`. Use named aggregation (flat column names) and `reset_index()` (keys back as columns) until you need the hierarchy.
 - **`merge` multiplies rows on duplicate keys, silently.** A metadata table with one duplicated machine row doubles that machine's readings and every sum computed from them. `validate=` is not optional; neither is comparing `len` before and after.
 - **Time zones and daylight saving** will corrupt a resample once in your life: a naive local-time logger produces a duplicated hour in October, a missing hour in March, and 23- and 25-hour days (§3.11). Store UTC; localize at read time with `ambiguous=` and `nonexistent=` decided on purpose (Exercise C1).
-- **`apply(lambda row: ...)` is the slow path and feels natural** (§3.7: hundreds of times slower). When you catch yourself writing it, stop and look for the column expression.
+- **`apply(lambda row: ...)` is the slow path and feels natural** (§3.7: tens of times slower, and `iterrows` hundreds). When you catch yourself writing it, stop and look for the column expression.
 - **Untidy tables.** If an operation needs `iterrows`, a list of column names built by string formatting, or a loop over columns, the table is probably wide where it should be long. `melt` first.
 - **The API moves.** pandas changes faster than NumPy: `append`, `ix`, `applymap`, `fillna(method=...)` and uppercase frequency aliases are gone or going, and Copy-on-Write changed the semantics of assignment. Read the `FutureWarning`s and `Pandas4Warning`s instead of silencing them; they are telling you what will break next year.
 

@@ -363,6 +363,8 @@ print(f"RK4, h=T/50, {4 * n_per * 50} calls: max relative energy drift {rk4_drif
 RK4, h=T/50, 20000 calls: max relative energy drift 2.66e-03
 ```
 
+**■ What just happened.** Nearer $10^{-3}$: nothing adapts $h$, so the drift is whatever $T/50$ gives; Example 4.3 compares.
+
 ### 3.5 Build 4: stiffness, where accuracy is not what limits the step
 
 ▶ **Try it first.** Take $y'=-\lambda\,(y-\cos t)$, $y(0)=0$, $\lambda=1000$. The solution is smooth after a millisecond. Predict how many steps `RK45` takes on $[0,10]$ at `rtol=1e-6`: about 100, 3000 or 100 000?
@@ -394,7 +396,7 @@ Radau   success=True steps=   81 nfev=   624 njev=  3 mean h=0.1235 error at t=1
 LSODA   success=True steps=  275 nfev=   552 njev= 42 mean h=0.0364 error at t=10: 6.3e-11
 ```
 
-**■ What just happened.** `RK45` took 3587 steps of mean size 0.0028, a little under its stability limit $3.31/\lambda=0.0033$, although the answer is smooth enough for steps 44 times larger (`Radau`'s mean step); that is 21548 right-hand-side calls. `Radau` (implicit: each step solves a nonlinear equation using the Jacobian, counted by `njev`) took 81 steps and 624 calls, 35 times fewer,; `LSODA` switches between a non-stiff and a stiff method by itself. All errors are small: the explicit solver pays for *stability*, not accuracy. Diagnosis: a smooth answer with a huge `nfev` or tiny mean step means stiffness; switch to `Radau`, `BDF` or `LSODA`, passing `jac=` if you have it (SymPy can differentiate your right-hand side). The project repeats the test on Robertson's kinetics.
+**■ What just happened.** `RK45` took 3587 steps of mean size 0.0028, a little under its stability limit $3.31/\lambda=0.0033$, although the answer is smooth enough for steps 44 times larger (`Radau`'s mean step); that is 21548 right-hand-side calls. `Radau` (implicit: each step solves a nonlinear equation using the Jacobian, counted by `njev`) took 81 steps and 624 calls, 35 times fewer; `LSODA` switches between a non-stiff and a stiff method by itself. All errors are small: the explicit solver pays for *stability*, not accuracy. Diagnosis: a smooth answer with a huge `nfev` or tiny mean step means stiffness; switch to `Radau`, `BDF` or `LSODA`, passing `jac=` if you have it (SymPy can differentiate your right-hand side). The project repeats the test on Robertson's kinetics.
 
 
 ### 3.6 Build 2: the double pendulum, and Build 8 (why `lambdify` exists)
@@ -551,7 +553,7 @@ default absolute_sigma=False, no sigma given: g = 9.806 +/- 0.023 (scaled by the
 
 ### 3.8 `integrate.quad` and friends
 
-`quad(f, a, b)` is QUADPACK's adaptive Gauss–Kronrod rule: a 21-point rule is compared with its embedded 10-point Gauss rule, and subintervals where they disagree are bisected (at most `limit=50`, else an `IntegrationWarning`). It returns `(value, abserr)`, where `abserr` is an *estimate* from that disagreement. Infinite limits are mapped to finite ones by a change of variables. `dblquad(func, a, b, gfun, hfun)` integrates `func(y, x)`, **inner variable first**; `nquad` does $n$ dimensions. For samples, use `integrate.trapezoid`, `simpson` or `cumulative_trapezoid` (`np.trapz` is gone; use `np.trapezoid`). PY-5's `adaptive_simpson` (§3.10) is the same idea with a 3-point rule. Example 4.4 tests `abserr`.
+`quad(f, a, b)` is QUADPACK's adaptive Gauss–Kronrod rule: a 21-point rule is compared with its embedded 10-point Gauss rule, and subintervals where they disagree are bisected (at most `limit=50`, else an `IntegrationWarning`). It returns `(value, abserr)`, where `abserr` is an *estimate* from that disagreement. Infinite limits are mapped to finite ones by a change of variables. `dblquad(func, a, b, gfun, hfun)` integrates `func(y, x)`, **inner variable first**; `nquad` does $n$ dimensions. For samples, use `integrate.trapezoid`, `simpson` or `cumulative_trapezoid` (`np.trapz` is gone; use `np.trapezoid`). PY-5's `adaptive_simpson` (`integrators.py`, used in its Example 4.6 and §8) is the same idea with a 3-point rule. Example 4.4 tests `abserr`.
 
 ### 3.9 `linalg` beyond NumPy, and Build 7 (`expm` against `solve_ivp`)
 
@@ -594,6 +596,8 @@ print(f"expm vs solve_ivp (rtol 1e-12): max |difference| = {np.abs(x_exp - x_ivp
 ```text
 expm vs solve_ivp (rtol 1e-12): max |difference| = 2.4e-12
 ```
+
+**■ What just happened.** The series solves $\dot{\mathbf x}=A\mathbf x$, so `expm` is the exact solution operator, and a tight `solve_ivp` matches it to $2\times10^{-12}$.
 
 ### 3.10 `sparse`, and Build 6 (the Laplacian)
 
@@ -676,7 +680,7 @@ n=10000: sparse    5.16 ms  0.40 MB | dense   3697.9 ms  800.0 MB | ratio   717x
 eigsh smallest 4: [  9.8696  39.4784  88.8264 157.9136] | max relative error vs (3.13): 1.3592904579695642e-11
 ```
 
-Add a diagonal $V(x_j)$ and this is QM-3's finite-difference Hamiltonian; `eigsh` with `sigma` near the energy you want returns those states without a dense matrix.
+**■ What just happened.** $Tv_k=(2-2\cos\theta)v_k$, and (3.13) then predicts the discrete error $\pi^2h^2/12$ to four digits and the lowest eigenvalues to $10^{-11}$. Add a diagonal $V(x_j)$ and this is QM-3's finite-difference Hamiltonian; `eigsh` with `sigma` near the energy you want returns those states without a dense matrix.
 
 
 ### 3.11 `interpolate`
@@ -903,7 +907,7 @@ See [exercises.md](exercises.md). A1–A6 are predict-and-fix drills (SymPy gotc
 
 ## 7. Coding project
 
-`project.py` runs the pipeline with asserts, headless, in about 25 s (set `DENSE_BIG = False` if you have under 4 GB free): (1) the pendulum: Euler–Lagrange equal to the hand result, energy conserved to $10^{-8}$ at `rtol=1e-10`, period from events against (3.6) to $10^{-6}$, the small-angle limit; (2) the tolerance sweep and RK4 as a log-log figure; (3) stiffness (`nfev` ratio above 10 on two problems); (4) the double pendulum against the published form, with its divergence plot; (5) `curve_fit` recovering a planted $g$ within $2\sigma$, (3.10) from a SymPy Jacobian, a coverage experiment; (6) the sparse Poisson solve against the analytic solution, timing reported; (7) `expm` against `solve_ivp`; (8) `special`, `stats`, `fft`, `interpolate`, `lambdify` checks.
+`project.py` runs the pipeline with asserts, headless, in about 30 s (set `DENSE_BIG = False` if you have under 4 GB free): (1) the pendulum: Euler–Lagrange equal to the hand result, energy conserved to $10^{-8}$ at `rtol=1e-10`, period from events against (3.6) to $10^{-6}$, the small-angle limit; (2) the tolerance sweep and RK4 as a log-log figure; (3) stiffness (`nfev` ratio above 10 on two problems); (4) the double pendulum against the published form, with its divergence plot; (5) `curve_fit` recovering a planted $g$ within $2\sigma$, (3.10) from a SymPy Jacobian, a coverage experiment; (6) the sparse Poisson solve against the analytic solution, timing reported; (7) `expm` against `solve_ivp`; (8) `special`, `stats`, `fft`, `interpolate`, `lambdify` checks.
 
 **Build it yourself:** before opening the file, write Part 1's seven stages for the bead on a hoop. Then "Your turn": damping and driving with a resonance curve; Rosenbrock with and without the analytic gradient; a boundary-value problem with `solve_bvp`; `dsolve` of the damped oscillator against `solve_ivp`.
 
