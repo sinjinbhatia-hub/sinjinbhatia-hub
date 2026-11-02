@@ -29,13 +29,11 @@ rng = np.random.default_rng(0)
 T0 = time.time()
 Z0 = MU0 * C
 
-
 def close(a, b, rtol, label=""):
     """assert a ~ b to relative tolerance rtol"""
     err = abs(a - b) / abs(b)
     assert err < rtol, f"{label}: {a} vs {b}, rel err {err:.2e}"
     return err
-
 
 # %% [markdown]
 # ## Part 1: Plane waves in vacuum (notes 3.2, 3.4-3.5, Example 4.1)
@@ -65,12 +63,10 @@ k1s, k2s = sp.symbols("k1 k2", positive=True)                       # two string
 AR, AT = (k1s - k2s) / (k1s + k2s), 2 * k1s / (k1s + k2s)
 assert sp.simplify(1 + AR - AT) == 0 and sp.simplify(k1s * (1 - AR) - k2s * AT) == 0
 
-
 def plane_wave_numbers(I):
     """E0 = sqrt(2I/(c eps0)) from (3.7), B0 = E0/c, radiation pressure I/c absorbed, 2I/c reflected (3.8)"""
     E0 = np.sqrt(2 * I / (C * EPS0))
     return E0, E0 / C, I / C, 2 * I / C
-
 
 E01, B01, Pa1, Pr1 = plane_wave_numbers(1000.0)
 close(E01, 868.0, 1e-3, "E0"); close(B01, 2.895e-6, 1e-3, "B0"); close(Pr1, 6.671e-6, 1e-3, "P refl")
@@ -89,27 +85,20 @@ print(f"[1] sunlight I = 1361 W/m^2: E0 = {Es:.1f} V/m, P_abs = {Pas:.3e} Pa, P_
 # Stokes: S1 = |Ex|^2 - |Ey|^2, S2 = 2 Re(Ex* Ey), S3 = 2 Im(Ex* Ey), divided by S0 = |Ex|^2 + |Ey|^2.
 
 # %%
-def rot(th):
-    return np.array([[np.cos(th), -np.sin(th)], [np.sin(th), np.cos(th)]])
-
+rot = lambda th: np.array([[np.cos(th), -np.sin(th)], [np.sin(th), np.cos(th)]])
 
 def polarizer(th):
     """projection onto the transmission axis at angle th from x: P = u u^T (3.10)"""
-    u = np.array([np.cos(th), np.sin(th)])
-    return np.outer(u, u)
-
+    return np.outer([np.cos(th), np.sin(th)], [np.cos(th), np.sin(th)])
 
 def waveplate(G, th=0.0):
     """retarder with fast axis at angle th, retardance G: R(th) diag(1, e^{iG}) R(-th) (3.10)"""
     return rot(th) @ np.diag([1, np.exp(1j * G)]) @ rot(-th)
 
-
 def stokes(J):
     """normalized Stokes vector (S1, S2, S3)/S0, a point on the Poincare sphere (3.11)"""
-    Ex, Ey = J
-    S0 = abs(Ex)**2 + abs(Ey)**2
+    Ex, Ey = J; S0 = abs(Ex)**2 + abs(Ey)**2
     return np.array([abs(Ex)**2 - abs(Ey)**2, 2 * (np.conj(Ex) * Ey).real, 2 * (np.conj(Ex) * Ey).imag]) / S0
-
 
 H, D45 = np.array([1, 0], complex), np.array([1, 1], complex) / np.sqrt(2)
 Jc = waveplate(np.pi / 2) @ D45                                      # Example 4.2
@@ -156,13 +145,10 @@ def fresnel(n1, n2, th):
     rp = (n1 * ct - n2 * ci) / (n1 * ct + n2 * ci); tp = 2 * n1 * ci / (n1 * ct + n2 * ci)
     return rs, ts, rp, tp, ci, ct
 
-
 def RT(n1, n2, th):
     """reflectances and transmittances (R_s, T_s, R_p, T_p); T = Re(n2 ct)/(n1 ci) |t|^2"""
-    rs, ts, rp, tp, ci, ct = fresnel(n1, n2, th)
-    f = (n2 * ct).real / (n1 * ci.real)
+    rs, ts, rp, tp, ci, ct = fresnel(n1, n2, th); f = (n2 * ct).real / (n1 * ci.real)
     return abs(rs)**2, f * abs(ts)**2, abs(rp)**2, f * abs(tp)**2
-
 
 rs0, ts0, rp0, tp0, _, _ = fresnel(1.0, 1.5, 0.0)                     # Example 4.3
 Rs0, Ts0, _, _ = RT(1.0, 1.5, 0.0)
@@ -180,7 +166,6 @@ for n1, n2 in [(1.0, 1.5), (1.5, 1.0)]:                               # energy: 
         R_s, T_s, R_p, T_p = RT(n1, n2, th)
         assert abs(R_s + T_s - 1) < 1e-12 and abs(R_p + T_p - 1) < 1e-12
 
-
 def bc_residuals(n1, n2, th):
     """Build the three waves at z = 0 and return the jumps in E_par, eps E_perp, H_par, B_perp (all should be 0)."""
     rs, ts, rp, tp, ci, ct = fresnel(n1, n2, th); si, st = np.sin(th), n1 * np.sin(th) / n2
@@ -188,21 +173,17 @@ def bc_residuals(n1, n2, th):
     res = []
     for EI, ER, ET in [(np.array([0, 1, 0]), rs * np.array([0, 1, 0]), ts * np.array([0, 1, 0])),        # s
                        (np.array([ci, 0, -si]), rp * np.array([ci, 0, si]), tp * np.array([ct, 0, -st]))]:  # p
-        B1 = n1 * (np.cross(kI, EI) + np.cross(kR, ER)); B2 = n2 * np.cross(kT, ET)     # c B = n k-hat x E
-        E1, E2 = EI + ER, ET
+        B1, B2, E1, E2 = n1 * (np.cross(kI, EI) + np.cross(kR, ER)), n2 * np.cross(kT, ET), EI + ER, ET   # cB = n k x E
         res += [abs(E1[:2] - E2[:2]).max(), abs(n1**2 * E1[2] - n2**2 * E2[2]), abs(B1 - B2).max()]
     return max(res)
-
 
 assert max(bc_residuals(1.0, 1.5, th) for th in np.linspace(0, 1.5, 40)) < 1e-12
 assert bc_residuals(1.5, 1.0, np.radians(60)) < 1e-12                 # also beyond the critical angle
 assert np.isclose(abs(fresnel(1.5, 1.0, np.radians(60))[0]), 1) and np.isclose(abs(fresnel(1.5, 1.0, np.radians(60))[2]), 1)
 
-
 def decay_length(n1, n2, th, lam0=1.0):
     """evanescent 1/e field decay length d = lam0 / (2 pi sqrt(n1^2 sin^2 th - n2^2))  (3.19)"""
     return lam0 / (2 * np.pi * np.sqrt((n1 * np.sin(th))**2 - n2**2))
-
 
 d45 = decay_length(1.5, 1.0, th45)
 assert np.isclose(d45, 1 / (2 * np.pi * 1.5 * fresnel(1.5, 1.0, th45)[5].imag / 1.5 * 1.0))    # = 1/Im(k_z)
@@ -246,24 +227,20 @@ def fdtd(N, steps, f_launch, x_ref, eps_inf=1.0, wp2=0.0, w0=0.0, gam=0.0, S=0.5
     ei, wp2, w0, g = [np.broadcast_to(np.asarray(v, float), (N,)) for v in (eps_inf, wp2, w0, gam)]
     a1 = (2 - w0**2 * dt**2) / (1 + g * dt / 2); a2 = (1 - g * dt / 2) / (1 + g * dt / 2); a3 = wp2 * dt**2 / (1 + g * dt / 2)
     P, Pm = np.zeros(N), np.zeros(N); kmur = (S - 1) / (S + 1)
-    rec, out = np.zeros((steps, len(probes))), {}
+    rec, out = np.zeros((steps, len(probes))), {}             # probe records cost nothing when probes = ()
     for n in range(steps):
         B -= S * (E[1:] - E[:-1])
-        Pn = a1 * P + (-a2) * Pm + a3 * E
-        Eold = E.copy()
+        Pn = a1 * P - a2 * Pm + a3 * E; Eold = E.copy()
         E[1:-1] += (-S * (B[1:] - B[:-1]) - (Pn[1:-1] - P[1:-1])) / ei[1:-1]
         E[0] = Eold[1] + kmur * (E[1] - Eold[0]); E[-1] = Eold[-2] + kmur * (E[-2] - Eold[-1])
-        Pm, P = P, Pn
-        if probes: rec[n] = E[list(probes)]
+        Pm, P = P, Pn; rec[n] = E[list(probes)]
         if n + 1 in snaps: out[n + 1] = E.copy()
     return out, rec
-
 
 N4, i4 = 2000, 1000
 eps4 = np.where(np.arange(N4) > i4, 2.25, 1.0); eps4[i4] = (1 + 2.25) / 2
 gauss = lambda s: np.exp(-((s - 500.0) / 40.0)**2)                    # pulse centred 500 cells left of x_ref
-snp4, _ = fdtd(N4, 1800, gauss, x_ref=1000.0, eps_inf=eps4, snaps=(1800,))
-E4 = snp4[1800]
+E4 = fdtd(N4, 1800, gauss, x_ref=1000.0, eps_inf=eps4, snaps=(1800,))[0][1800]
 r_num, t_num = E4[:i4].min(), E4[i4:].max()
 R_num = np.sum(E4[:i4]**2) / np.sum(eps4 * E4**2); T_num = np.sum(eps4[i4:] * E4[i4:]**2) / np.sum(eps4 * E4**2)
 close(r_num, -0.2, 5e-3, "FDTD r"); close(t_num, 0.8, 5e-3, "FDTD t"); close(R_num, 0.04, 1e-2, "FDTD R"); close(T_num, 0.96, 1e-3, "FDTD T")
@@ -283,20 +260,17 @@ print(f"[4] FDTD glass half-space (n = 1.5): r = {r_num:.4f} (theory -0.2), t = 
 DEPS, W0L, WC, TAU0 = 1.25, 0.3, 0.12, 60.0
 eps_lor = lambda w: 1 + DEPS * W0L**2 / (W0L**2 - w**2 + 0j)
 k_lor = lambda w: w * np.sqrt(eps_lor(w))
-hh = 1e-4
-k1L = ((k_lor(WC + hh) - k_lor(WC - hh)) / (2 * hh)).real; k2L = ((k_lor(WC + hh) - 2 * k_lor(WC) + k_lor(WC - hh)) / hh**2).real
+hh = 1e-4; k1L = ((k_lor(WC + hh) - k_lor(WC - hh)) / (2 * hh)).real; k2L = ((k_lor(WC + hh) - 2 * k_lor(WC) + k_lor(WC - hh)) / hh**2).real
 Z1, Z2 = 1000, 3000                                                   # probe depths in the medium
 B0C = -k2L * Z1                                                      # chirp that compresses at depth Z1
 a0 = TAU0**2 - 1j * B0C / 2                                          # envelope exp(-t^2/(4 a)) with a = tau0^2 - i b/2
 launch = lambda s: (np.exp(-s**2 / (4 * a0)) * np.exp(-1j * WC * s)).real   # f(t), centred at t = 0
 width = lambda b: TAU0 * np.sqrt(1 + (b / (2 * TAU0**2))**2)
 
-
 def rms_width(sig, dt):
     """standard deviation in time of |analytic signal|^2 (the intensity envelope)"""
     F = np.fft.fft(sig); F[len(sig) // 2:] = 0; env2 = abs(np.fft.ifft(2 * F))**2; tt = np.arange(len(sig)) * dt
     m = np.sum(tt * env2) / np.sum(env2); return np.sqrt(np.sum((tt - m)**2 * env2) / np.sum(env2))
-
 
 def apply_filter(sig, dt, Hfun):
     """Multiply each physical frequency component e^{-iwt} of a real signal by H(w). NumPy's rfft bins are
@@ -305,11 +279,9 @@ def apply_filter(sig, dt, Hfun):
     Hw = np.where(w > 0, Hfun(np.maximum(w, 1e-9)), 1.0)
     return np.fft.irfft(np.fft.rfft(sig) * np.conj(Hw), len(sig))
 
-
 def propagate(sig, dt, kfun, zz):
     """E(z, t) from E(0, t): multiply each component by e^{i k(w) z} (3.28)"""
     return apply_filter(sig, dt, lambda w: np.exp(1j * kfun(w) * zz))
-
 
 N5, x5, S5 = 4600, 1000, 0.9                                         # interface at node 1000, pulse starts 600 cells left
 steps5 = int(6800 / S5)                                              # S = 0.9: less grid dispersion
@@ -334,7 +306,7 @@ print(f"[5] Lorentz medium at w = {WC}: n = {np.sqrt(eps_lor(WC)).real:.4f}, v_p
       f"v_g = 1/k' = {1/k1L:.4f} c (FDTD peak arrival: {vg_fd:.4f} c), k'' = {k2L:.3f}")
 print(f"[5] chirped pulse widths at depths 5, {Z1}, {Z2}: FDTD {np.round(w_fd, 1)}, FFT {np.round(w_fft, 1)}, "
       f"Gaussian formula {np.round(w_th, 1)} (tau0 = {TAU0})")
-fig, axs = plt.subplots(3, 1, figsize=(8, 6), sharex=False)
+fig, axs = plt.subplots(3, 1, figsize=(8, 6))
 for j, (ax, zz) in enumerate(zip(axs, (5, Z1, Z2))):
     ax.plot(ts5, rec5[:, j], lw=0.8, label=f"FDTD, depth {zz}")
     ax.plot(ts5, propagate(sig_in, dt5, k_lor, zz - 5.0), "k:", lw=0.8, label="FFT propagation")
@@ -345,8 +317,7 @@ fig.tight_layout(); fig.savefig(FIG / "dispersive_fdtd.png", dpi=100); plt.close
 kq = lambda w: 0.5 * w + 0.5 * k2L * (w - WC)**2
 ref = launch(np.arange(16384) * 1.0 - 4000.0)
 for zz in (300.0, 1000.0):
-    sq = propagate(ref, 1.0, kq, zz)
-    close(rms_width(sq, 1.0), width(B0C + k2L * zz), 1e-4, "quadratic k: exact spreading")
+    close(rms_width(propagate(ref, 1.0, kq, zz), 1.0), width(B0C + k2L * zz), 1e-4, "quadratic k: exact spreading")
 
 # %% [markdown]
 # ## Part 6: The Lorentz model, Sellmeier/Cauchy, Rayleigh, the plasma frequency (notes 3.13)
@@ -363,18 +334,15 @@ def n_toy(lam, damp=False):
     g = GJ[:, None] if damp else 0.0
     return np.sqrt(1 + np.sum(BJ[:, None] / (1 - wr**2 - 1j * g * wr), axis=0) + 0j)
 
-
 lam_v = np.linspace(0.4, 0.7, 61); n_v = n_toy(lam_v).real
 Ac, Bc = np.polyfit(1 / lam_v**2, n_v, 1)[::-1]
 n0 = np.sqrt(1 + BJ[0]); B_th = BJ[0] * LJ[0]**2 / (2 * n0)
 assert np.abs(Ac + Bc / lam_v**2 - n_v).max() < 2e-4
 close(Bc, B_th, 0.15, "Cauchy B")
-nD = n_toy(np.array([0.5893]))[0].real
-assert np.all(np.diff(n_v) < 0)                                      # normal dispersion: n falls with lambda
+nD = n_toy(np.array([0.5893]))[0].real; assert np.all(np.diff(n_v) < 0)   # normal dispersion: n falls with lambda
 lam_all = np.logspace(-1.6, 1.6, 3000); nn = n_toy(lam_all, damp=True)
 alpha = 2 * (2 * np.pi / lam_all) * nn.imag                          # absorption coefficient 2 kappa (1/um)
-ray = (700 / 450)**4
-wp_ion = np.sqrt(1e12 * QE**2 / (ME * EPS0))
+ray, wp_ion = (700 / 450)**4, np.sqrt(1e12 * QE**2 / (ME * EPS0))
 close(wp_ion / (2 * np.pi), 8.98e6, 1e-3, "ionosphere f_p")
 print(f"[6] toy glass: n(589.3 nm) = {nD:.4f}; Cauchy fit 0.4-0.7 um: A = {Ac:.5f}, B = {Bc:.5f} um^2 "
       f"(one-resonance theory n0 = {n0:.5f}, B = {B_th:.5f}); max fit error {np.abs(Ac + Bc/lam_v**2 - n_v).max():.1e}")
@@ -382,8 +350,7 @@ print(f"[6] Rayleigh (700/450)^4 = {ray:.2f}; ionosphere N = 1e12 m^-3: w_p = {w
 fig, axs = plt.subplots(2, 1, figsize=(7, 5), sharex=True)
 axs[0].semilogx(lam_all, nn.real); axs[0].axvspan(0.4, 0.7, color="0.9"); axs[0].set_ylabel("n"); axs[0].set_ylim(0, 3.5)
 axs[0].set_title("two-resonance Lorentz toy: anomalous dispersion inside each absorption band")
-axs[1].loglog(lam_all, alpha); axs[1].set_ylabel("alpha (1/um)"); axs[1].set_xlabel("wavelength (um)")
-for ax in axs: ax.grid(alpha=.3)
+axs[1].loglog(lam_all, alpha); axs[1].set_ylabel("alpha (1/um)"); axs[1].set_xlabel("wavelength (um)"); axs[1].grid(alpha=.3)
 fig.tight_layout(); fig.savefig(FIG / "lorentz_model.png", dpi=100); plt.close(fig)
 
 # %% [markdown]
@@ -395,7 +362,6 @@ SIG_CU = 5.96e7
 def k_cond(f, sig, eps=EPS0, mu=MU0):
     """complex wave number in an ohmic conductor, root with Im k > 0 (decays along +z)"""
     w = 2 * np.pi * f; return np.sqrt(mu * eps * w**2 + 1j * mu * sig * w)
-
 
 skin = {}
 for f in (60.0, 1e9):
@@ -414,8 +380,7 @@ print(f"[7] Ex 4.5 copper: delta(60 Hz) = {skin[60.0][0]*1e3:.2f} mm, delta(1 GH
 
 # %%
 a_, b_, wv, B0_ = sp.symbols("a b omega B_0", positive=True)
-m_ = sp.symbols("m", integer=True, positive=True)
-n_ = sp.symbols("n", integer=True, nonnegative=True)
+m_, n_ = sp.symbols("m", integer=True, positive=True), sp.symbols("n", integer=True, nonnegative=True)
 g2 = sp.pi**2 * (m_**2 / a_**2 + n_**2 / b_**2); kz = sp.sqrt(wv**2 / cs**2 - g2)
 Bz = B0_ * sp.cos(m_ * sp.pi * x / a_) * sp.cos(n_ * sp.pi * y / b_) * sp.exp(sp.I * (kz * z - wv * t))
 Eg = sp.Matrix([sp.I * wv / g2 * sp.diff(Bz, y), -sp.I * wv / g2 * sp.diff(Bz, x), 0])
@@ -438,7 +403,7 @@ print(f"[8] Ex 4.6  a = 2.3 cm, b = 1.0 cm: f_c(TE10) = {f10/1e9:.3f} GHz; at 10
 print("[8] lowest cutoffs (GHz): " + ", ".join(f"TE{m}{n} {fv/1e9:.2f}" for fv, m, n in modes))
 Zcoax = Z0 / (2 * np.pi * 1.5) * np.log(3.5)
 print(f"[8] coax, polyethylene (eps_r = 2.25), b/a = 3.5: Z = {Zcoax:.2f} ohm; v = c/1.5 = {C/1.5:.4e} m/s")
-fig, axs = plt.subplots(1, 4, figsize=(15, 3.2))
+fig, axs = plt.subplots(1, 5, figsize=(19, 3.2))
 xg, yg = np.meshgrid(np.linspace(0, A_WG, 41), np.linspace(0, B_WG, 19))
 for ax, (m, n) in zip(axs[:3], [(1, 0), (2, 0), (1, 1)]):
     Ex_ = -n * np.pi / B_WG * np.cos(m * np.pi * xg / A_WG) * np.sin(n * np.pi * yg / B_WG)   # E ~ (dBz/dy, -dBz/dx)
@@ -451,12 +416,10 @@ for fv, m, n in modes[:5]:
     axs[3].plot(kk_, np.sqrt((2 * np.pi * fv)**2 + (C * kk_)**2) / 2 / np.pi / 1e9, label=f"TE{m}{n}")
 axs[3].plot(kk_, C * kk_ / 2 / np.pi / 1e9, "k--", label="light line w = ck"); axs[3].axhline(10, color="0.5", ls=":")
 axs[3].set_xlabel("k (rad/m)"); axs[3].set_ylabel("f (GHz)"); axs[3].legend(fontsize=6); axs[3].set_title("dispersion")
-fig.tight_layout(); fig.savefig(FIG / "waveguide.png", dpi=100); plt.close(fig)
 ff = np.linspace(1.001 * f10, 3 * f10, 300); rt = np.sqrt(1 - (f10 / ff)**2)
-fig, ax = plt.subplots(figsize=(5, 3.2))
-ax.plot(ff / 1e9, 1 / rt, label="v_p / c"); ax.plot(ff / 1e9, rt, label="v_g / c"); ax.axhline(1, color="k", lw=0.5)
-ax.set_ylim(0, 4); ax.set_xlabel("f (GHz)"); ax.legend(); ax.set_title("TE10: v_p v_g = c^2")
-fig.tight_layout(); fig.savefig(FIG / "waveguide_velocities.png", dpi=100); plt.close(fig)
+axs[4].plot(ff / 1e9, 1 / rt, label="v_p / c"); axs[4].plot(ff / 1e9, rt, label="v_g / c"); axs[4].axhline(1, color="k", lw=0.5)
+axs[4].set_ylim(0, 4); axs[4].set_xlabel("f (GHz)"); axs[4].legend(fontsize=7); axs[4].set_title("TE10: v_p v_g = c^2")
+fig.tight_layout(); fig.savefig(FIG / "waveguide.png", dpi=100); plt.close(fig)
 
 # %% [markdown]
 # ## Your turn
@@ -479,7 +442,6 @@ def reflected_fraction(eps_profile, carrier_w, tau, N, x_int, extra=None):
     snp, _ = fdtd(N, steps, lambda s: pulse(s - off), x_ref=float(x_int), eps_inf=eps_profile, snaps=(steps,), **kw)
     Ef = snp[steps]; inc = np.sum(pulse(np.arange(-4000, 4000, 1.0))**2)
     return np.sum(Ef[: x_int - 100]**2) / inc
-
 
 N9, x9 = 3200, 1600
 idx = np.arange(N9)
@@ -524,12 +486,12 @@ print(f"[B6] group delay of 1 m of X-band guide at 10 GHz: {1/vg*1e9:.3f} ns (va
 print(f"[B7] Z(vacuum, b/a = 3.5) = {Z0/(2*np.pi)*np.log(3.5):.2f} ohm; Z(eps_r = 2.25) = {Zcoax:.2f} ohm")
 print(f"[B8] MgF2 (n = 1.38) quarter-wave on n = 1.5 glass: R = {((1.5 - 1.38**2)/(1.5 + 1.38**2))**2:.4f} vs bare 0.0400; "
       f"thickness at 550 nm = {550/(4*1.38):.1f} nm")
-wq = np.linspace(0.2, 0.42, 4001)                                     # C1: lossy Lorentz, v_g near resonance
-gL = 0.01; epsg = lambda w: 1 + DEPS * W0L**2 / (W0L**2 - w**2 - 1j * gL * w)
-kgr = (wq * np.sqrt(epsg(wq))).real; vgq = 1 / np.gradient(kgr, wq)
-fast = wq[(vgq > 1) | (vgq < 0)]
-print(f"[C1] gamma = 0.01: v_g > c or < 0 for w in [{fast.min():.4f}, {fast.max():.4f}] (w0 = {W0L}); min v_g = {vgq.min():.2f} c, "
-      f"max v_g = {vgq.max():.2f} c")
+for Fd in (5e-5, 2e-4):                                               # C1: dilute Lorentz gas, w0 = 1, gamma = 0.01
+    kd = lambda w: w * np.sqrt(1 + Fd / (1 - w**2 - 0.01j * w))
+    ng = ((kd(1 + 1e-6) - kd(1 - 1e-6)) / 2e-6).real                # c/v_g = d(Re k)/dw at w0
+    close(ng, 1 - Fd / 0.01**2, 1e-2, "group index at resonance")
+    print(f"[C1] F = {Fd:.0e}, gamma = 0.01: n_g(w0) = {ng:.4f} (dilute formula 1 - F/gamma^2 = {1 - Fd/1e-4:.2f}), "
+          f"v_g = {1/ng:.3f} c; intensity absorption length 1/alpha = {1/(2*kd(1.0).imag):.1f} (theory c gamma/F = {0.01/Fd:.1f})")
 thr = np.radians(np.linspace(41.6, 89.9, 200001)); nr = 1.51                       # C2: Fresnel rhomb
 rsr, _, rpr, _, _, _ = fresnel(nr, 1.0, thr)
 dphi = np.degrees(np.abs(np.angle(-rpr / rsr)))                      # -r_p: right-handed (p, s, k) basis per beam
