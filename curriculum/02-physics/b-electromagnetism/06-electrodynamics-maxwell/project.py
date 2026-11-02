@@ -96,8 +96,9 @@ print("[2] SymPy: curl E = -dB/dt inside, 0 outside; div E = 0 both")
 # Neumann (3.12): M = (mu0/4 pi) loop-loop integral of dl1.dl2/|r1 - r2|, done with the trapezoid rule
 # on the exact parametrization (spectrally accurate for smooth closed curves). Coaxial loops are
 # compared with the exact elliptic formula and the dipole approximation. A small tilted loop in a
-# solenoid: M12 = flux of the solenoid's B through the loop (elliptic ring fields), M21 = sum over the
-# solenoid's turns of the loop integral of the small loop's A. They must agree.
+# solenoid (loop 1 = solenoid, loop 2 = small loop, Phi_2 = M21 I_1 as in the notes): M21 = flux of the
+# solenoid's B through the loop (elliptic ring fields), M12 = sum over the solenoid's turns of the loop
+# integral of the small loop's A. They must agree.
 
 # %%
 def circle_pts(R, n, c=(0, 0, 0), u=(1, 0, 0), v=(0, 1, 0)):
@@ -145,13 +146,13 @@ rho_p = np.hypot(Pts[:, 0], Pts[:, 1])
 Br, Bz = ring_B(R_s, 1.0, rho_p[None, :], Pts[None, :, 2] - zk[:, None])
 Br, Bz = Br.sum(0), Bz.sum(0)
 Bvec = np.stack([Br * Pts[:, 0] / rho_p, Br * Pts[:, 1] / rho_p, Bz], 1)
-M12 = np.sum((Bvec @ nh) * wts)
+M21 = np.sum((Bvec @ nh) * wts)
 Ps, Ds = circle_pts(rs, 96, u=uh, v=(0, 1, 0))
-M21 = sum(neumann(*circle_pts(R_s, 96, c=(0, 0, zz)), Ps, Ds) for zz in zk)
+M12 = sum(neumann(*circle_pts(R_s, 96, c=(0, 0, zz)), Ps, Ds) for zz in zk)
 M_inf = MU0 * n_s * np.pi * rs**2 * np.cos(th)
-close(M12, M21, 1e-6, "M12 = M21"); close(M12, M_inf, 5e-3, "vs infinite solenoid")
-fin = (Lsol / 2) / np.hypot(Lsol / 2, R_s); close(M12, M_inf * fin, 1e-4, "finite-solenoid centre factor")
-print(f"[3] Ex 4.3b: small loop (5 mm, 30 deg) in 1000-turn solenoid: M12 (flux of B_sol) = {M12:.5e} H, M21 (sum of loop integrals of A_loop) = {M21:.5e} H, infinite-solenoid formula {M_inf:.5e} H, ratio {M12/M_inf:.5f}, centre-field factor (l/2)/sqrt((l/2)^2+R^2) = {fin:.5f}")
+close(M21, M12, 1e-6, "M12 = M21"); close(M21, M_inf, 5e-3, "vs infinite solenoid")
+fin = (Lsol / 2) / np.hypot(Lsol / 2, R_s); close(M21, M_inf * fin, 1e-4, "finite-solenoid centre factor")
+print(f"[3] Ex 4.3b: small loop (5 mm, 30 deg) in 1000-turn solenoid: M21 (flux of B_sol through the loop) = {M21:.5e} H, M12 (sum of loop integrals of A_loop) = {M12:.5e} H, infinite-solenoid formula {M_inf:.5e} H, ratio {M21/M_inf:.5f}, centre-field factor (l/2)/sqrt((l/2)^2+R^2) = {fin:.5f}")
 
 L_sol = MU0 * n_s**2 * np.pi * R_s**2 * Lsol
 Nt, ht, at, bt = 500, 0.01, 0.04, 0.06
@@ -363,7 +364,7 @@ axs[1].set_xlabel("x (m)"); axs[1].set_ylabel("E_y"); fig.tight_layout(); fig.sa
 
 # %% [markdown]
 # ## Part 9: 2D FDTD, TE mode (E_x, E_y, H_z) with a point source
-# dB_z/dt = -(dE_y/dx - dE_x/dy), eps0 dE_x/dt = dH_z/dy, eps0 dE_y/dt = -dH_z/dx; 2D Courant limit S <= 1/sqrt 2.
+# mu0 dH_z/dt = -(dE_y/dx - dE_x/dy), eps0 dE_x/dt = dH_z/dy, eps0 dE_y/dt = -dH_z/dx; 2D Courant limit S <= 1/sqrt 2.
 
 # %%
 N2, dx2, S2 = 401, 1e-3, 0.5

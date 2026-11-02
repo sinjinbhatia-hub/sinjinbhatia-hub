@@ -22,10 +22,10 @@ Hertz generated and detected the waves in 1887–88. Poynting (1884) found that 
 
 ```
    B out of page, growing           induced E circulates clockwise
-          . . .                            <----
-        . . . . .                        |       ^
-          . . .                          v       |
-                                           ---->
+          . . .                            ---->
+        . . . . .                        ^       |
+          . . .                          |       v
+                                           <----
 ```
 
 **A changing $\mathbf E$ makes $\mathbf B$ curl around it.** Draw a loop around the wire feeding a charging capacitor. A flat disk on the loop is pierced by the current $I$; a bag-shaped surface on the same loop that passes between the plates is pierced by no current. Same loop, same $\oint\mathbf B\cdot d\mathbf l$. What does the bag catch? A growing electric field: the plate charge grows at rate $I$, so by Gauss the flux of $\varepsilon_0\mathbf E$ through the bag grows at rate $I$. Guess: $\varepsilon_0\,\partial\mathbf E/\partial t$ counts as current. That is Maxwell's term.
@@ -115,7 +115,7 @@ $$M_{21} = \frac{\mu_0}{4\pi}\oint_1\oint_2\frac{d\mathbf l_1\cdot d\mathbf l_2}
 
 *Proof.*
 1. Stokes: $\Phi_2 = \int_{\mathcal S_2}(\nabla\times\mathbf A_1)\cdot d\mathbf a_2 = \oint_2\mathbf A_1\cdot d\mathbf l_2$.
-2. For a thin wire (Coulomb gauge), $\mathbf A_1(\mathbf r) = \frac{\mu_0I_1}{4\pi}\oint_1\frac{d\mathbf l_1}{|\mathbf r - \mathbf r_1|}$ (EM-5 (3.24)).
+2. For a thin wire (Coulomb gauge), $\mathbf A_1(\mathbf r) = \frac{\mu_0I_1}{4\pi}\oint_1\frac{d\mathbf l_1}{|\mathbf r - \mathbf r_1|}$ (EM-5 (3.24) with $\mathbf J\,d\tau'\to I\,d\mathbf l'$).
 3. Insert and divide by $I_1$: the double integral in (3.12).
 4. The integrand is symmetric under $1\leftrightarrow2$, so it is also $M_{12}$. ∎
 
@@ -259,7 +259,7 @@ $$\mathbf f = \varepsilon_0\big[(\nabla\cdot\mathbf E)\mathbf E - \mathbf E\time
 5. So the $\mathbf E$ bracket is $E_i\partial_jE_j + E_j\partial_jE_i - \tfrac12\partial_iE^2 = \partial_j(E_iE_j - \tfrac12\delta_{ij}E^2)$: the product rule read backwards. Same for $\mathbf B$.
 6. Hence $f_i = \partial_jT_{ij} - \varepsilon_0\mu_0\partial_tS_i$; integrate and apply the divergence theorem row by row: (3.30). ∎
 
-■ **What just happened.** $T_{ij}\,da_j$ is the $i$-th component of the force on a surface element whose normal is along $j$. That is Cauchy's traction $\mathbf t = \sigma\mathbf n$ of LA-12 §3.18: $T$ is a symmetric $(0,2)$ tensor, matrix times area vector gives force. For $\mathbf E = E\hat{\mathbf x}$ alone, $T = \tfrac12\varepsilon_0E^2\,\mathrm{diag}(1, -1, -1)$: a **tension** $\tfrac12\varepsilon_0E^2$ along the lines and a **pressure** of the same size across them. That is Faraday's picture of stretched, mutually repelling lines, made quantitative; at a conductor it is EM-2's surface pressure (3.17). At $1$ T the magnetic stress is $3.98\times10^5$ Pa, about 3.9 atmospheres on a magnet's windings.
+■ **What just happened.** $T_{ij}$ is the $i$-th component of the force per unit area on a face whose normal is along $j$, and $T_{ij}\,da_j$ is the $i$-th component of the force transmitted through the surface element $d\mathbf a$. That is Cauchy's traction $\mathbf t = \sigma\mathbf n$ of LA-12 §3.18: $T$ is a symmetric $(0,2)$ tensor, matrix times area vector gives force. For $\mathbf E = E\hat{\mathbf x}$ alone, $T = \tfrac12\varepsilon_0E^2\,\mathrm{diag}(1, -1, -1)$: a **tension** $\tfrac12\varepsilon_0E^2$ along the lines and a **pressure** of the same size across them. That is Faraday's picture of stretched, mutually repelling lines, made quantitative; at a conductor it is EM-2's surface pressure (3.17). At $1$ T the magnetic stress is $3.98\times10^5$ Pa, about 3.9 atmospheres on a magnet's windings.
 
 **Field momentum.** With $\mathbf F = d\mathbf p_{\rm mech}/dt$, (3.30) reads
 $$\frac{d\mathbf p_{\rm mech}}{dt} = -\frac{d}{dt}\int_{\mathcal V}\mathbf g\,d\tau + \oint_{\mathcal S}\overleftrightarrow{T}\cdot d\mathbf a,\qquad\mathbf g = \varepsilon_0\mathbf E\times\mathbf B = \frac{\mathbf S}{c^2},\qquad\frac{\partial\mathbf g}{\partial t} + \nabla\cdot(-\overleftrightarrow{T}) = -\mathbf f. \tag{3.31}$$
@@ -295,7 +295,7 @@ Conversely, if two pairs give the same fields, $\nabla\times(\mathbf A' - \mathb
 
 **Coulomb gauge, $\nabla\cdot\mathbf A = 0$** (reachable as in EM-5 §3.7). The first of (3.33) becomes
 $$\nabla^2V = -\frac{\rho}{\varepsilon_0},\qquad V(\mathbf r, t) = \frac{1}{4\pi\varepsilon_0}\int\frac{\rho(\mathbf r', t)}{\mathscr r}\,d\tau'. \tag{3.35}$$
-$V$ responds *instantly* to charge everywhere. That breaks nothing, because $V$ is not measurable: the instantaneous part of $\mathbf A$'s source ($\varepsilon_0\nabla\partial_tV$ in (3.33)) cancels the instantaneous part of $-\nabla V$ in $\mathbf E$. (Skipped: the proof that $\mathbf E$ comes out retarded; Jackson, *Classical Electrodynamics*, §6.3.) The Coulomb gauge suits statics and the quantized field.
+$V$ responds *instantly* to charge everywhere. That breaks nothing, because $V$ is not measurable: the instantaneous part of $\mathbf A$'s source (the $c^{-2}\nabla\partial_tV$ term of (3.33)) cancels the instantaneous part of $-\nabla V$ in $\mathbf E$. (Skipped: the proof that $\mathbf E$ comes out retarded; Jackson, *Classical Electrodynamics*, §6.3.) The Coulomb gauge suits statics and the quantized field.
 
 ▶ **Try it first.** Which condition kills the gradient term in the second of (3.33)? Insert it into the first.
 
@@ -448,6 +448,6 @@ The runs: a Gaussian pulse moves at $c$; a perfect conductor ($E = 0$) reflects 
 ## 10. Pair with
 
 - **Griffiths, *Introduction to Electrodynamics*, ch. 7–8.** The same order and derivations (§7.1.3's flux rule, §7.3's displacement current, §8.1–8.2's Poynting theorem and stress tensor), with more worked problems and better pictures.
-- **Purcell and Morin, *Electricity and Magnetism*, ch. 7 and 9.** More physical insight per page, and an electromagnetic wave built from a current sheet switched on at $t = 0$, which makes "the curls sustain each other" concrete.
-- **Feynman, *Lectures on Physics* Vol. II, ch. 16–18 and 27.** Ch. 17 §2 (exceptions to the flux rule) is required; ch. 27 is the best discussion of where field energy and momentum go, including the disk paradox.
+- **Purcell and Morin, *Electricity and Magnetism*, ch. 7 and 9.** More physical insight per page: ch. 7 builds induction from the moving rod, the moving loop and the moving source in turn, and proves reciprocity its own way; ch. 9 adds the displacement current and checks the plane wave against all four equations.
+- **Feynman, *Lectures on Physics* Vol. II, ch. 16–18 and 27.** Ch. 17 §2 (exceptions to the flux rule) is required; ch. 18 §4 builds a wave from a current sheet switched on at $t = 0$, which makes "the curls sustain each other" concrete; ch. 27 is the best discussion of where field energy and momentum go, including the disk paradox.
 - **MIT 8.07 lecture notes, lectures 15–19.** A compact, more mathematical second pass through the conservation laws, the stress tensor and gauge choices.
