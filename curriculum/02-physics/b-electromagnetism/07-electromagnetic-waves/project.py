@@ -51,8 +51,7 @@ X = (x, y, z)
 div = lambda F: sum(sp.diff(F[i], X[i]) for i in range(3))
 curl = lambda F: sp.Matrix([sp.diff(F[2], y) - sp.diff(F[1], z), sp.diff(F[0], z) - sp.diff(F[2], x),
                             sp.diff(F[1], x) - sp.diff(F[0], y)])
-assert div(Ev) == 0 and div(Bv) == 0
-assert sp.simplify(curl(Ev) + sp.diff(Bv, t)) == sp.zeros(3, 1)
+assert div(Ev) == 0 and div(Bv) == 0 and sp.simplify(curl(Ev) + sp.diff(Bv, t)) == sp.zeros(3, 1)
 assert sp.simplify(curl(Bv) - sp.diff(Ev, t) / cs**2) == sp.zeros(3, 1)
 a1, a2, b1, b2 = sp.symbols("a1 a2 b1 b2", real=True); w_ = sp.symbols("omega", positive=True)
 A_, B_ = a1 + sp.I * a2, b1 + sp.I * b2
@@ -116,6 +115,8 @@ I3 = 0.5 * np.linalg.norm(polarizer(np.pi / 2) @ polarizer(np.pi / 4) @ H)**2   
 assert abs(I3 - 1 / 8) < 1e-12
 Jhwp = waveplate(np.pi, np.pi / 8) @ H                               # half-wave plate at 22.5 deg
 assert np.allclose(stokes(Jhwp), stokes(D45))
+assert np.allclose(waveplate(np.pi / 2), np.diag([1, 1j]))            # QWP = the phase gate S (QC-1)
+assert np.allclose(waveplate(np.pi, np.pi / 8), np.array([[1, 1], [1, -1]]) / np.sqrt(2))   # HWP at 22.5 deg = Hadamard
 traj = np.array([stokes(waveplate(np.pi / 2, th) @ H) for th in ths])          # rotating QWP
 assert np.allclose(np.linalg.norm(traj, axis=1), 1)                  # unitary plate: stays on sphere
 assert np.allclose(traj, np.c_[np.cos(2 * ths)**2, np.sin(2 * ths) * np.cos(2 * ths), -np.sin(2 * ths)])
@@ -188,7 +189,7 @@ def decay_length(n1, n2, th, lam0=1.0):
 d45 = decay_length(1.5, 1.0, th45)
 assert np.isclose(d45, 1 / (2 * np.pi * 1.5 * fresnel(1.5, 1.0, th45)[5].imag / 1.5 * 1.0))    # = 1/Im(k_z)
 print(f"[3] Ex 4.3  n = 1.5, normal: r = {rs0.real:.3f}, t = {ts0.real:.3f}, R = {Rs0:.3f}, T = {Ts0:.3f}; "
-      f"window (two faces) T = {win2:.4f}, with incoherent multiple reflections {win_inc:.4f}")
+      f"window (two faces) T = {win2:.4f}, with incoherent multiple reflections {win_inc:.4f}; 12 faces: {Ts0**12:.3f}")
 print(f"[3] Ex 4.4  45 deg air->glass: theta_t = {np.degrees(np.arccos(ct.real)):.3f} deg, cos = {ct.real:.5f}; "
       f"r_s = {rs.real:.5f}, t_s = {ts.real:.5f}, r_p = {rp.real:.5f}, t_p = {tp.real:.5f}")
 print(f"[3]          R_s = {Rs:.5f}, T_s = {Ts:.5f}, R_p = {Rp:.6f}, T_p = {Tp:.5f}, unpolarized R = {(Rs+Rp)/2:.5f}, "
@@ -342,11 +343,12 @@ close(Bc, B_th, 0.15, "Cauchy B")
 nD = n_toy(np.array([0.5893]))[0].real; assert np.all(np.diff(n_v) < 0)   # normal dispersion: n falls with lambda
 lam_all = np.logspace(-1.6, 1.6, 3000); nn = n_toy(lam_all, damp=True)
 alpha = 2 * (2 * np.pi / lam_all) * nn.imag                          # absorption coefficient 2 kappa (1/um)
-ray, wp_ion = (700 / 450)**4, np.sqrt(1e12 * QE**2 / (ME * EPS0))
+ray, wp_ion, wp_cu = (700 / 450)**4, np.sqrt(1e12 * QE**2 / (ME * EPS0)), np.sqrt(8.47e28 * QE**2 / (ME * EPS0))
 close(wp_ion / (2 * np.pi), 8.98e6, 1e-3, "ionosphere f_p")
 print(f"[6] toy glass: n(589.3 nm) = {nD:.4f}; Cauchy fit 0.4-0.7 um: A = {Ac:.5f}, B = {Bc:.5f} um^2 "
       f"(one-resonance theory n0 = {n0:.5f}, B = {B_th:.5f}); max fit error {np.abs(Ac + Bc/lam_v**2 - n_v).max():.1e}")
-print(f"[6] Rayleigh (700/450)^4 = {ray:.2f}; ionosphere N = 1e12 m^-3: w_p = {wp_ion:.4e} rad/s, f_p = {wp_ion/2/np.pi/1e6:.2f} MHz")
+print(f"[6] Rayleigh (700/450)^4 = {ray:.2f}; ionosphere N = 1e12 m^-3: w_p = {wp_ion:.4e} rad/s, f_p = {wp_ion/2/np.pi/1e6:.2f} MHz; "
+      f"copper's free electrons (N = 8.47e28 m^-3): w_p = {wp_cu:.3e} rad/s, lambda_p = 2 pi c/w_p = {2*np.pi*C/wp_cu*1e9:.0f} nm")
 fig, axs = plt.subplots(2, 1, figsize=(7, 5), sharex=True)
 axs[0].semilogx(lam_all, nn.real); axs[0].axvspan(0.4, 0.7, color="0.9"); axs[0].set_ylabel("n"); axs[0].set_ylim(0, 3.5)
 axs[0].set_title("two-resonance Lorentz toy: anomalous dispersion inside each absorption band")
@@ -370,6 +372,7 @@ for f in (60.0, 1e9):
 close(skin[60.0][0], 8.42e-3, 2e-3, "Cu 60 Hz"); close(skin[1e9][0], 2.062e-6, 2e-3, "Cu 1 GHz")
 bt = C * k_cond(1e9, SIG_CU) / (2 * np.pi * 1e9)                     # beta~ = c k~/w at a vacuum-copper face
 R_cu = abs((1 - bt) / (1 + bt))**2
+print(f"[7] sigma/(eps0 w) at 1 GHz = {SIG_CU/(EPS0*2*np.pi*1e9):.3e}")
 print(f"[7] Ex 4.5 copper: delta(60 Hz) = {skin[60.0][0]*1e3:.2f} mm, delta(1 GHz) = {skin[1e9][0]*1e6:.3f} um; "
       f"phase of k~ = {skin[1e9][1]:.4f} deg; cB/E = {skin[1e9][2]:.3e} at 1 GHz; R = {R_cu:.6f} (1 - R = {1-R_cu:.2e})")
 
@@ -387,8 +390,7 @@ Eg = sp.Matrix([sp.I * wv / g2 * sp.diff(Bz, y), -sp.I * wv / g2 * sp.diff(Bz, x
 Bg = sp.Matrix([sp.I * kz / g2 * sp.diff(Bz, x), sp.I * kz / g2 * sp.diff(Bz, y), Bz])
 for expr in [div(Eg), div(Bg)] + list(curl(Eg) + sp.diff(Bg, t)) + list(curl(Bg) - sp.diff(Eg, t) / cs**2):
     assert sp.simplify(expr) == 0
-assert sp.simplify(Eg[1].subs(x, 0)) == 0 and sp.simplify(Eg[1].subs(x, a_)) == 0
-assert sp.simplify(Eg[0].subs(y, 0)) == 0 and sp.simplify(Eg[0].subs(y, b_)) == 0
+assert all(sp.simplify(e) == 0 for e in (Eg[1].subs(x, 0), Eg[1].subs(x, a_), Eg[0].subs(y, 0), Eg[0].subs(y, b_)))
 A_WG, B_WG = 0.023, 0.010
 fc = lambda m, n: C / 2 * np.sqrt((m / A_WG)**2 + (n / B_WG)**2)
 modes = sorted([(fc(m, n), m, n) for m in range(4) for n in range(3) if (m, n) != (0, 0)])[:7]
@@ -428,7 +430,7 @@ fig.tight_layout(); fig.savefig(FIG / "waveguide.png", dpi=100); plt.close(fig)
 #    coating n_c = 1.5 of 20 cells, carrier wavelength 120 cells, long envelope. Compare reflected energy bare vs coated.
 # 2. **Evanescent decay vs angle.** Part 3 plots d(theta). Add frustrated TIR: a gap of thickness g between two glass
 #    blocks; compute the transmitted fraction vs g/lambda0 at 45 deg with a 3-layer transfer matrix (s polarization).
-# 3. **Plasma mirror (exercise C2's FDTD half).** Make the right half a Drude plasma (w0 = 0, wp2 = w_p^2) and send
+# 3. **Plasma mirror (the FDTD side of exercise B5).** Make the right half a Drude plasma (w0 = 0, wp2 = w_p^2) and send
 #    pulses with carrier below and above w_p. Measure the reflected energy fraction and compare with |r|^2 from (3.27).
 # 4. Flip the sign of B0C in Part 5. Predict the widths at the two probes from (3.30) before you run it.
 # Reference solutions for 1 and 3 follow. Write your own first.
@@ -437,24 +439,18 @@ fig.tight_layout(); fig.savefig(FIG / "waveguide.png", dpi=100); plt.close(fig)
 def reflected_fraction(eps_profile, carrier_w, tau, N, x_int, extra=None):
     """energy reflected into x < x_int - 100 from a long pulse, after it has fully interacted"""
     pulse = lambda s: np.exp(-s**2 / (4 * tau**2)) * np.cos(carrier_w * s)
-    off = 6 * tau; steps = int((2 * off + 300) / 0.5)
-    kw = extra or {}
-    snp, _ = fdtd(N, steps, lambda s: pulse(s - off), x_ref=float(x_int), eps_inf=eps_profile, snaps=(steps,), **kw)
-    Ef = snp[steps]; inc = np.sum(pulse(np.arange(-4000, 4000, 1.0))**2)
+    off = 6 * tau; steps = int((2 * off + 300) / 0.5); inc = np.sum(pulse(np.arange(-4000, 4000, 1.0))**2)
+    Ef = fdtd(N, steps, lambda s: pulse(s - off), x_ref=float(x_int), eps_inf=eps_profile, snaps=(steps,), **(extra or {}))[0][steps]
     return np.sum(Ef[: x_int - 100]**2) / inc
 
-N9, x9 = 3200, 1600
-idx = np.arange(N9)
+N9, x9 = 3200, 1600; idx = np.arange(N9)
 eps_bare = np.where(idx >= x9, 2.25**2, 1.0)
 eps_ar = np.where(idx >= x9 + 20, 2.25**2, np.where(idx >= x9, 1.5**2, 1.0))
 R_bare = reflected_fraction(eps_bare, 2 * np.pi / 120, 100.0, N9, x9)
 R_ar = reflected_fraction(eps_ar, 2 * np.pi / 120, 100.0, N9, x9)
 close(R_bare, ((1 - 2.25) / 3.25)**2, 0.02, "bare substrate R"); assert R_ar < 0.01
-WP = 0.1
-plasma = dict(wp2=np.where(idx >= x9, WP**2, 0.0))
-R_lo = reflected_fraction(np.ones(N9), 0.05, 80.0, N9, x9, plasma)
-R_hi = reflected_fraction(np.ones(N9), 0.2, 80.0, N9, x9, plasma)
-n_hi = np.sqrt(1 - (WP / 0.2)**2)
+WP = 0.1; plasma = dict(wp2=np.where(idx >= x9, WP**2, 0.0)); n_hi = np.sqrt(1 - (WP / 0.2)**2)
+R_lo, R_hi = [reflected_fraction(np.ones(N9), wc_, 80.0, N9, x9, plasma) for wc_ in (0.05, 0.2)]
 assert R_lo > 0.97 and abs(R_hi - ((1 - n_hi) / (1 + n_hi))**2) < 3e-3
 print(f"[YT] AR coating: R bare = {R_bare:.4f} (theory {((1-2.25)/3.25)**2:.4f}), R with quarter-wave n = 1.5 layer = {R_ar:.5f}")
 print(f"[YT] plasma w_p = {WP}: R(w = 0.05) = {R_lo:.4f} (below w_p: mirror), R(w = 0.2) = {R_hi:.5f} "
@@ -468,12 +464,11 @@ lam = 500e-9; E0a = 300.0                                             # A1
 print(f"[A1] f = {C/lam:.4e} Hz, w = {2*np.pi*C/lam:.4e} rad/s, k = {2*np.pi/lam:.4e} rad/m, B0 = {E0a/C:.4e} T, I = {0.5*C*EPS0*E0a**2:.1f} W/m^2")
 Ilas = 5e-3 / (np.pi * 0.5e-3**2)                                     # A2
 print(f"[A2] I = {Ilas:.0f} W/m^2, E0 = {np.sqrt(2*Ilas/(C*EPS0)):.0f} V/m, E_rms = {np.sqrt(Ilas/(C*EPS0)):.0f} V/m, F = 2P/c = {2*5e-3/C:.3e} N")
-nw = 1.33                                                             # A4
-print(f"[A4] water: R = {((nw-1)/(nw+1))**2:.5f}, Brewster {np.degrees(np.arctan(nw)):.2f} deg, critical {np.degrees(np.arcsin(1/nw)):.2f} deg")
+nw = 1.33; print(f"[A4] water: R = {((nw-1)/(nw+1))**2:.5f}, Brewster {np.degrees(np.arctan(nw)):.2f} deg, critical {np.degrees(np.arcsin(1/nw)):.2f} deg")
 for fq in (1e4, 1e6):                                                 # A5
     print(f"[A5] seawater sigma = 4 S/m, f = {fq:.0e} Hz: delta = {np.sqrt(2/(MU0*4*2*np.pi*fq)):.4f} m, "
           f"sigma/(eps w) = {4/(81*EPS0*2*np.pi*fq):.3e}")
-Rs3, Ts3, Rp3, Tp3 = RT(1.0, 1.5, th45)                               # B3
+Rs3, Ts3, Rp3, Tp3 = RT(1.0, 1.5, th45)                               # B3 (same numbers as Example 4.4)
 print(f"[B3] 45 deg: degree of polarization of reflected light = {(Rs3-Rp3)/(Rs3+Rp3):.4f}; reflected fraction of unpolarized = {(Rs3+Rp3)/2:.5f}")
 th60 = np.radians(60); rs60 = fresnel(1.5, 1.0, th60)[0]              # B4
 print(f"[B4] glass->air 60 deg: d = {decay_length(1.5, 1.0, th60, 633):.1f} nm at 633 nm; r_s = {rs60:.4f}, |r_s| = {abs(rs60):.6f}, "
@@ -484,7 +479,9 @@ print(f"[B5] 20 MHz in the N = 1e12 ionosphere: n = {ng:.4f}, v_g = {ng:.4f} c, 
 print(f"[B6] group delay of 1 m of X-band guide at 10 GHz: {1/vg*1e9:.3f} ns (vacuum {1/C*1e9:.3f} ns); single-mode band "
       f"{f10/1e9:.2f}-{fc(2,0)/1e9:.2f} GHz")
 print(f"[B7] Z(vacuum, b/a = 3.5) = {Z0/(2*np.pi)*np.log(3.5):.2f} ohm; Z(eps_r = 2.25) = {Zcoax:.2f} ohm")
-print(f"[B8] MgF2 (n = 1.38) quarter-wave on n = 1.5 glass: R = {((1.5 - 1.38**2)/(1.5 + 1.38**2))**2:.4f} vs bare 0.0400; "
+r1, r2 = (1 - 1.38) / 2.38, (1.38 - 1.5) / 2.88; rAR = (r1 - r2) / (1 - r1 * r2)          # B8, quarter-wave: e^{2i delta} = -1
+assert np.isclose(rAR, (1.5 - 1.38**2) / (1.5 + 1.38**2))
+print(f"[B8] MgF2 (n = 1.38) quarter-wave on n = 1.5 glass: r1 = {r1:.5f}, r2 = {r2:.5f}, r = {rAR:.5f}, R = {rAR**2:.4f} vs bare 0.0400; "
       f"thickness at 550 nm = {550/(4*1.38):.1f} nm")
 for Fd in (5e-5, 2e-4):                                               # C1: dilute Lorentz gas, w0 = 1, gamma = 0.01
     kd = lambda w: w * np.sqrt(1 + Fd / (1 - w**2 - 0.01j * w))
@@ -496,8 +493,10 @@ thr = np.radians(np.linspace(41.6, 89.9, 200001)); nr = 1.51                    
 rsr, _, rpr, _, _, _ = fresnel(nr, 1.0, thr)
 dphi = np.degrees(np.abs(np.angle(-rpr / rsr)))                      # -r_p: right-handed (p, s, k) basis per beam
 sols = thr[np.where(np.diff(np.sign(dphi - 45)))[0]]
-print(f"[C2] n = 1.51: |phase(r_p) - phase(r_s)| = 45 deg at {np.degrees(sols).round(2)} deg; max {dphi.max():.2f} deg at "
-      f"{np.degrees(thr[np.argmax(dphi)]):.2f} deg")
+dachro = [np.degrees(abs(np.angle(-fresnel(nn1, 1.0, np.radians(54.62))[2] / fresnel(nn1, 1.0, np.radians(54.62))[0]))) for nn1 in (1.50, 1.52)]
+print(f"[C2] n = 1.51 (critical {np.degrees(np.arcsin(1/nr)):.2f} deg): |phase(-r_p) - phase(r_s)| = 45 deg at {np.degrees(sols).round(2)} deg; "
+      f"max {dphi.max():.2f} deg at {np.degrees(thr[np.argmax(dphi)]):.2f} deg; at 54.62 deg: n = 1.50 -> {dachro[0]:.2f}, n = 1.52 -> {dachro[1]:.2f} deg; "
+      f"toy glass n(400 nm) = {n_toy(np.array([0.4]))[0].real:.4f}, n(700 nm) = {n_toy(np.array([0.7]))[0].real:.4f}")
 td = lambda m, s0: 2 * np.sqrt(3) * m * s0**2 / HBAR                  # C3: sigma doubles
 print(f"[C3] width doubling time: electron, sigma0 = 1 A: {td(ME, 1e-10):.3e} s; 1 g marble, sigma0 = 1 um: "
       f"{td(1e-3, 1e-6):.3e} s = {td(1e-3, 1e-6)/3.156e7:.2e} yr")
