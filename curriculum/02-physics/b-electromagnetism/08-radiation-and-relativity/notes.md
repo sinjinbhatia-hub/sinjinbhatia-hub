@@ -2,7 +2,7 @@
 
 **Time:** ~10 hours · **Prerequisites:** EM-7, LA-12 · **Unlocks:** QM-1 (the stability-of-atoms problem), QM-8 (spontaneous emission context), SM-5 (blackbody context)
 
-> **Conventions in this module.** SI units; $c = 1/\sqrt{\mu_0\varepsilon_0}$. Source point $\mathbf r'$, field point $\mathbf r$, separation $\boldsymbol{\mathscr r} = \mathbf r - \mathbf r'$, $\mathscr r = |\boldsymbol{\mathscr r}|$, $\hat{\boldsymbol{\mathscr r}} = \boldsymbol{\mathscr r}/\mathscr r$ (EM-6's notation). **Retarded time** $t_r = t - \mathscr r/c$. Potentials $\mathbf E = -\nabla V - \partial_t\mathbf A$, $\mathbf B = \nabla\times\mathbf A$ in the **Lorenz gauge** $\nabla\cdot\mathbf A + c^{-2}\partial_tV = 0$; $\Box = \nabla^2 - c^{-2}\partial_t^2$ (EM-6 §3.12). A point charge $q$ moves on $\mathbf w(t)$ with velocity $\mathbf v$ and acceleration $\mathbf a$. $\beta = v/c$, $\gamma = 1/\sqrt{1 - \beta^2}$. **Relativity:** frame $\bar S$ moves at velocity $v\hat{\mathbf x}$ relative to $S$, axes parallel, origins coinciding at $t = \bar t = 0$. Events $x^\mu = (ct, x, y, z)$, $\mu = 0, 1, 2, 3$; Greek indices run 0–3, Latin 1–3; repeated upper–lower indices are summed (Einstein convention, LA-12 §3.15). **Metric signature $(-,+,+,+)$** as in Griffiths: $\eta_{\mu\nu} = \operatorname{diag}(-1, 1, 1, 1)$, $x_\mu = \eta_{\mu\nu}x^\nu = (-ct, x, y, z)$, $\partial_\mu = \partial/\partial x^\mu = (c^{-1}\partial_t, \nabla)$, $\partial^\mu = \eta^{\mu\nu}\partial_\nu$. **Field tensor (Griffiths' convention):** $F^{0i} = E_i/c$, $F^{ij} = \varepsilon_{ijk}B_k$; dual $G^{0i} = B_i$, $G^{ij} = -\varepsilon_{ijk}E_k/c$. With these, Maxwell's equations read $\partial_\nu F^{\mu\nu} = \mu_0J^\mu$ (derivative on the **second** index). Jackson and most QFT books use $(+,-,-,-)$ and $F^{0i} = -E_i$ (Gaussian or SI), which flips signs in several places (§8). Four-current $J^\mu = (c\rho, \mathbf J)$, four-potential $A^\mu = (V/c, \mathbf A)$.
+> **Conventions in this module.** SI units; $c = 1/\sqrt{\mu_0\varepsilon_0}$. Source point $\mathbf r'$, field point $\mathbf r$, separation $\boldsymbol{\mathscr r} = \mathbf r - \mathbf r'$, $\mathscr r = |\boldsymbol{\mathscr r}|$, $\hat{\boldsymbol{\mathscr r}} = \boldsymbol{\mathscr r}/\mathscr r$ (EM-6's notation). **Retarded time** $t_r = t - \mathscr r/c$. Potentials $\mathbf E = -\nabla V - \partial_t\mathbf A$, $\mathbf B = \nabla\times\mathbf A$ in the **Lorenz gauge** $\nabla\cdot\mathbf A + c^{-2}\partial_tV = 0$; $\Box = \nabla^2 - c^{-2}\partial_t^2$ (EM-6 §3.12). A point charge $q$ moves on $\mathbf w(t)$ with velocity $\mathbf v$ and acceleration $\mathbf a$. $\beta = v/c$, $\gamma = 1/\sqrt{1 - \beta^2}$. **Relativity:** frame $\bar S$ moves at velocity $v\hat{\mathbf x}$ relative to $S$, axes parallel, origins coinciding at $t = \bar t = 0$. Events $x^\mu = (ct, x, y, z)$, $\mu = 0, 1, 2, 3$; Greek indices run 0–3, Latin 1–3; repeated upper–lower indices are summed (Einstein convention, LA-12 §3.15). **Metric signature $(-,+,+,+)$** as in Griffiths: $\eta_{\mu\nu} = \operatorname{diag}(-1, 1, 1, 1)$, $x_\mu = \eta_{\mu\nu}x^\nu = (-ct, x, y, z)$, $\partial_\mu = \partial/\partial x^\mu = (c^{-1}\partial_t, \nabla)$, $\partial^\mu = \eta^{\mu\nu}\partial_\nu$. **Field tensor (Griffiths' convention):** $F^{0i} = E_i/c$, $F^{ij} = \varepsilon_{ijk}B_k$; dual $G^{0i} = B_i$, $G^{ij} = -\varepsilon_{ijk}E_k/c$. With these, Maxwell's equations read $\partial_\nu F^{\mu\nu} = \mu_0J^\mu$ (derivative on the **second** index). Jackson and most QFT books use $(+,-,-,-)$ and $F^{0i} = -E_i$ (Gaussian; $-E_i/c$ in SI), which flips signs in several places (§8). Four-current $J^\mu = (c\rho, \mathbf J)$, four-potential $A^\mu = (V/c, \mathbf A)$.
 
 ## 0. Where this sits
 
@@ -62,7 +62,7 @@ $$\nabla^2V = \frac{1}{4\pi\varepsilon_0}\int\Big[\frac{\ddot\rho}{c^2\mathscr r
 The $\dot\rho/\mathscr r^2$ terms cancel; the delta function picks out $\mathbf r' = \mathbf r$, where $t_r = t$.
 7. Since $t_r$ depends on $t$ only through $t - \mathscr r/c$, $\partial_t^2$ of (3.2) is the same integral with $\ddot\rho$. So $\nabla^2V = c^{-2}\partial_t^2V - \rho/\varepsilon_0$, which is (3.1). ∎
 
-They also satisfy the Lorenz condition, by charge conservation (Griffiths Problem 10.8; Project Part 5 checks the dipole).
+They also satisfy the Lorenz condition, by charge conservation (one of Griffiths' ch. 10 problems; Project Part 5 checks the dipole).
 
 ■ **What just happened.** "Coulomb with a delay" is exactly right for the potentials. The chain rule through $t_r$ produced the $\dot\rho$ and $\ddot\rho$ terms that turn $\nabla^2V$ into $c^{-2}\partial_t^2V$.
 
@@ -250,7 +250,7 @@ $$\Lambda = \begin{pmatrix}\gamma & -\gamma\beta & 0 & 0\\ -\gamma\beta & \gamma
 
 The **interval** between two events separated by $\Delta x^\mu$ is
 $$\Delta s^2 = \eta_{\mu\nu}\Delta x^\mu\Delta x^\nu = -c^2\Delta t^2 + \Delta x^2 + \Delta y^2 + \Delta z^2. \tag{3.24}$$
-It is invariant: by (3.22), $-c^2\gamma^2(\Delta t - v\Delta x/c^2)^2 + \gamma^2(\Delta x - v\Delta t)^2 = \gamma^2(1 - \beta^2)(\Delta x^2 - c^2\Delta t^2)$. In matrix form $\Lambda^\top\eta\Lambda = \eta$: boosts preserve the indefinite form $\eta$ as rotations preserve $\delta_{ij}$, and by Sylvester's law (LA-12 §3.8) "timelike" ($\Delta s^2 < 0$) and "spacelike" ($> 0$) mean the same in every frame.
+It is invariant: by (3.22), $-c^2\gamma^2(\Delta t - v\Delta x/c^2)^2 + \gamma^2(\Delta x - v\Delta t)^2 = \gamma^2(1 - \beta^2)(\Delta x^2 - c^2\Delta t^2)$. In matrix form $\Lambda^\top\eta\Lambda = \eta$: boosts preserve the indefinite form $\eta$ as rotations preserve $\delta_{ij}$. Because $\Delta s^2$ itself is invariant, "timelike" ($\Delta s^2 < 0$) and "spacelike" ($> 0$) mean the same in every frame; and by Sylvester's law (LA-12 §3.8, Theorem 3.12) no change of coordinates can make $\eta$ positive definite, so the minus sign is permanent.
 
 A **four-vector** is any $a^\mu$ that transforms like $x^\mu$: $\bar a^\mu = \Lambda^\mu{}_\nu a^\nu$. Lowering with $\eta$ (LA-12 (3.16)) gives $a_\mu = (-a^0, \mathbf a)$, and $a_\mu b^\mu = -a^0b^0 + \mathbf a\cdot\mathbf b$ is invariant. **Proper time** along a worldline, $d\tau = \sqrt{-ds^2}/c = dt/\gamma$, is the time on a clock carried along. **Four-velocity** $u^\mu = dx^\mu/d\tau = \gamma(c, \mathbf v)$ has $u_\mu u^\mu = \gamma^2(-c^2 + v^2) = -c^2$.
 
@@ -265,7 +265,9 @@ $$E^2 = p^2c^2 + m^2c^4. \tag{3.25}$$
 3. By step 1 this is $\frac{d}{dt}(\gamma mc^2)$. So the work done equals the change of $\gamma mc^2$, which is the energy up to a constant; the constant is fixed by requiring $p^\mu$ to be a four-vector, $E = p^0c = \gamma mc^2$.
 4. $p_\mu p^\mu = m^2u_\mu u^\mu = -m^2c^2$. Also $p_\mu p^\mu = -E^2/c^2 + p^2$. Equate and multiply by $-c^2$. ∎
 
-(Why $\gamma m\mathbf v$: $m\mathbf v$ conserved in one frame is not conserved in others; Taylor §15.9 gives the collision argument.)
+(Why $\gamma m\mathbf v$: $m\mathbf v$ conserved in one frame is not conserved in others; Taylor ch. 15, in the section that introduces four-momentum, gives the collision argument.)
+
+■ **What just happened.** The work–energy theorem with $\mathbf p = \gamma m\mathbf v$ forces $E = \gamma mc^2$, rest energy included, and the invariant length of $p^\mu$ is the mass: (3.25) is $p_\mu p^\mu = -m^2c^2$ written out in components.
 
 ### 3.14 Minkowski diagrams in one page
 
@@ -336,7 +338,7 @@ So $\mathbf E\perp\mathbf B$ in one frame means in all; $E > cB$ in one frame ru
 ▶ **Try it first.** Write the antisymmetric matrix $F^{\mu\nu}$ with $F^{0i} = E_i/c$, $F^{ij} = \varepsilon_{ijk}B_k$. Compute the $(0, 2)$ entry of $\Lambda F\Lambda^\top$ with (3.23).
 
 $$F^{\mu\nu} = \begin{pmatrix}0 & E_x/c & E_y/c & E_z/c\\ -E_x/c & 0 & B_z & -B_y\\ -E_y/c & -B_z & 0 & B_x\\ -E_z/c & B_y & -B_x & 0\end{pmatrix},\qquad G^{\mu\nu} = \begin{pmatrix}0 & B_x & B_y & B_z\\ -B_x & 0 & -E_z/c & E_y/c\\ -B_y & E_z/c & 0 & -E_x/c\\ -B_z & -E_y/c & E_x/c & 0\end{pmatrix}. \tag{3.27}$$
-$G$ (the **dual tensor**) is obtained from $F$ by $\mathbf E/c\to\mathbf B$, $\mathbf B\to-\mathbf E/c$. Warning: Jackson and most field-theory texts use $(+,-,-,-)$ with $F^{0i} = -E_i$; the physics is the same and every sign in this section flips somewhere (§8).
+$G$ (the **dual tensor**) is obtained from $F$ by $\mathbf E/c\to\mathbf B$, $\mathbf B\to-\mathbf E/c$. Warning: Jackson and most field-theory texts use $(+,-,-,-)$ with $F^{0i} = -E_i$ (Gaussian; $-E_i/c$ in SI); the physics is the same and every sign in this section flips somewhere (§8).
 
 **Theorem 3.11.** The rule for a rank-2 contravariant tensor (LA-12 (3.18)),
 $$\bar F^{\mu\nu} = \Lambda^\mu{}_\alpha\Lambda^\nu{}_\beta F^{\alpha\beta},\quad\text{i.e. }\bar F = \Lambda F\Lambda^\top, \tag{3.28}$$
@@ -370,6 +372,8 @@ These are the four Maxwell equations.
 2. $\mu = 1$: $\partial_0F^{10} + \partial_2F^{12} + \partial_3F^{13} = -\frac{1}{c^2}\partial_tE_x + \partial_yB_z - \partial_zB_y = \mu_0J_x$. That is the $x$ component of $\nabla\times\mathbf B = \mu_0\mathbf J + \mu_0\varepsilon_0\partial_t\mathbf E$. Ampère–Maxwell. ($\mu = 2, 3$ are the other components by cyclic relabelling.)
 3. $G$, $\mu = 0$: $\partial_iG^{0i} = \nabla\cdot\mathbf B = 0$.
 4. $G$, $\mu = 1$: $\partial_0G^{10} + \partial_2G^{12} + \partial_3G^{13} = -\frac1c\partial_tB_x - \frac1c\partial_yE_z + \frac1c\partial_zE_y = -\frac1c\big(\partial_t\mathbf B + \nabla\times\mathbf E\big)_x = 0$. Faraday. ∎
+
+■ **What just happened.** Row $\mu = 0$ of $\partial_\nu F^{\mu\nu}$ is Gauss, rows $1$–$3$ are Ampère–Maxwell, and the same rows of $G$ are the two source-free equations. Both sides of (3.30) transform as four-vectors, so if the equations hold in one inertial frame they hold in all: Maxwell's equations were Lorentz-covariant before anyone knew it.
 
 **Continuity follows.** Apply $\partial_\mu$ to the first of (3.30): $\partial_\mu\partial_\nu F^{\mu\nu} = 0$ because $\partial_\mu\partial_\nu$ is symmetric and $F^{\mu\nu}$ antisymmetric (swap the dummy names and get minus itself). So $\partial_\mu J^\mu = 0$: Maxwell's equations are consistent only if charge is conserved, the same observation that forced Maxwell's displacement current in EM-6, now in one line.
 
@@ -479,7 +483,7 @@ See [exercises.md](exercises.md). A1–A6 are drills. B1–B9 are the module; B2
 - **The three dipole approximations go in order (i), (ii), (iii).** The radiation term is first order in $\omega d/c$; set $\omega d/c = 0$ before expanding the cosine, or drop $1/r^2$ before expanding in $d$, and it disappears. And (ii) fails for antennas comparable to $\lambda$ (Example 4.3 has $d/\lambda = 1/3$); quote such numbers as estimates.
 - **"Radiation" means $1/r$ fields carrying energy to infinity,** not "any changing field." A dipole's near field changes but carries no net energy away; a uniformly moving charge does not radiate. Test: does the time-averaged flux through a sphere survive as $r\to\infty$?
 - **Index notation and the metric will cost you a day.** $x_\mu$ and $x^\mu$ differ in the sign of the time component; $\partial^0 = -\partial_0$. When in doubt, write the component out; LA-12 §3.16 is the prerequisite for this reason.
-- **Sign conventions for $F^{\mu\nu}$ differ.** Griffiths: $(-,+,+,+)$, $F^{0i} = E_i/c$, $\partial_\nu F^{\mu\nu} = \mu_0J^\mu$. Jackson and Peskin–Schroeder: $(+,-,-,-)$, $F^{0i} = -E_i$, $\partial_\mu F^{\mu\nu} = \frac{4\pi}{c}J^\nu$ (Gaussian) or $J^\nu$. Some books put $F^{ij} = -\varepsilon_{ijk}B_k$. Never copy a formula between books without checking that $\nu = 0$ gives $+\rho/\varepsilon_0$.
+- **Sign conventions for $F^{\mu\nu}$ differ.** Griffiths: $(-,+,+,+)$, $F^{0i} = E_i/c$, $\partial_\nu F^{\mu\nu} = \mu_0J^\mu$. Jackson and Peskin–Schroeder: $(+,-,-,-)$, $F^{0i} = -E_i$ (Gaussian; $-E_i/c$ in SI), $\partial_\mu F^{\mu\nu} = \frac{4\pi}{c}J^\nu$ (Gaussian) or $\mu_0J^\nu$ (SI). Some books put $F^{ij} = -\varepsilon_{ijk}B_k$. Never copy a formula between books without checking that $\nu = 0$ gives $+\rho/\varepsilon_0$.
 - **Relativity is covered at the minimum** needed to see $\mathbf E$ and $\mathbf B$ unify. For more, Taylor ch. 15 or Morin's *Special Relativity for the Enthusiastic Beginner*.
 - **The Abraham–Lorentz pathologies are real,** not a pedagogical omission: the classical point charge with its own field is inconsistent.
 - **Transform the force back.** In Purcell's argument, skip step 7 and the frames disagree by $\gamma_u$. Force is not the spatial part of a four-vector; $K^\mu = \gamma(\mathbf F\cdot\mathbf v/c, \mathbf F)$ is.

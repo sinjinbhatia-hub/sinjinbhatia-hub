@@ -50,8 +50,8 @@ $$\nabla t_r = -\frac{\hat{\boldsymbol{\mathscr r}}}{c - \hat{\boldsymbol{\maths
 (c) Ratio $\gamma/\gamma^{-2} = \gamma^3 = 12.07$. (The project checks $\gamma^3$ at $\beta = 0.8$ against the numerical solver.)
 (d) $|\mathbf v\times\mathbf E| = vE\sin\theta$. Ahead $\sin\theta = 0$ so $\mathbf B = 0$. Broadside both $\sin\theta = 1$ and $E$ is at its maximum, so $|\mathbf B| = vE/c^2$ is largest there; $\mathbf B$ circles the line of motion, as for a current element.
 
-**B4.** (a) $\hat{\boldsymbol\phi}\times\hat{\boldsymbol\theta} = -\hat{\mathbf r}$, so
-$$\mathbf S = \frac{1}{\mu_0}E_\phi B_\theta(\hat{\boldsymbol\phi}\times\hat{\boldsymbol\theta}) = \frac{1}{\mu_0}\frac{\mu_0m_0\omega^2}{4\pi c}\frac{\mu_0m_0\omega^2}{4\pi c^2}\frac{\sin^2\theta}{r^2}\cos^2\omega(t - r/c)\,\hat{\mathbf r} = \frac{\mu_0m_0^2\omega^4}{16\pi^2c^3}\frac{\sin^2\theta}{r^2}\cos^2(\cdot)\,\hat{\mathbf r}.$$
+**B4.** (a) $\hat{\boldsymbol\phi}\times\hat{\boldsymbol\theta} = -\hat{\mathbf r}$, and $B_\theta$ carries a minus sign relative to $E_\phi$, so the two signs cancel and $\mathbf S$ points outward:
+$$\mathbf S = \frac{1}{\mu_0}E_\phi B_\theta(\hat{\boldsymbol\phi}\times\hat{\boldsymbol\theta}) = \frac{1}{\mu_0}\Big(\frac{\mu_0m_0\omega^2}{4\pi c}\Big)\Big(-\frac{\mu_0m_0\omega^2}{4\pi c^2}\Big)\frac{\sin^2\theta}{r^2}\cos^2\omega(t - r/c)\,(-\hat{\mathbf r}) = \frac{\mu_0m_0^2\omega^4}{16\pi^2c^3}\frac{\sin^2\theta}{r^2}\cos^2(\cdot)\,\hat{\mathbf r}.$$
 Average: $\langle\mathbf S\rangle = \frac{\mu_0m_0^2\omega^4}{32\pi^2c^3}\frac{\sin^2\theta}{r^2}\hat{\mathbf r}$. Integrate over the sphere ($r^2\,d\Omega$, $\int\sin^2\theta\,d\Omega = 8\pi/3$): $\langle P\rangle = \frac{\mu_0m_0^2\omega^4}{32\pi^2c^3}\cdot\frac{8\pi}{3} = \frac{\mu_0m_0^2\omega^4}{12\pi c^3}$, (3.17).
 (b) $m_0 = \pi b^2I_0$ and, from Example 4.3, $p_0 = I_0d/\omega = I_0b/\omega$. Then
 $$\frac{P_{\rm mag}}{P_{\rm el}} = \frac{m_0^2/c^3}{p_0^2/c} = \frac{\pi^2b^4I_0^2}{c^2I_0^2b^2/\omega^2} = \Big(\frac{\pi b\omega}{c}\Big)^2.$$

@@ -394,10 +394,14 @@ print(f"Example 4.3: lambda = {lam:.4f} m, d/lambda = {d/lam:.4f}, p0 = {p0:.4e}
       f"R_rad = {Rrad:.2f} ohm (= 2pi/3 Z0 (d/lam)^2 = {2*np.pi/3*MU0*C*(d/lam)**2:.2f}), "
       f"<S> broadside at 1 km = {S1km:.4e} W/m^2, E amplitude = {E1km:.4e} V/m")
 close(Rrad, 2 * np.pi / 3 * MU0 * C * (d / lam)**2, 1e-10)
+# the numbers quoted in Example 4.3
+close(Pant, 43.90, 1e-3, "Ex 4.3 <P>"); close(Rrad, 87.79, 1e-3, "Ex 4.3 R_rad")
+close(S1km, 5.240e-6, 1e-3, "Ex 4.3 <S> at 1 km"); close(E1km, 0.0628, 1e-3, "Ex 4.3 E amplitude")
 # half-wave dipole for comparison: R = (Z0/2pi) int_0^pi cos^2(pi/2 cos th)/sin th dth
 Ihw = quad(lambda th: np.cos(np.pi / 2 * np.cos(th))**2 / np.sin(th), 0, np.pi)[0]
 print(f"   2pi/3 Z0 = {2*np.pi/3*MU0*C:.1f} ohm, (d/lambda)^2 = {(d/lam)**2:.4f}, cyclotron period at 1 T = {2*np.pi*ME/QE:.3e} s")
 print(f"   half-wave dipole: integral = {Ihw:.4f}, R_rad = {MU0*C/(2*np.pi)*Ihw:.2f} ohm")
+close(MU0 * C / (2 * np.pi) * Ihw, 73.1, 1e-3, "half-wave dipole R = 73.1 ohm (notes 3.10)")
 
 # Example 4.4: classical hydrogen collapse
 a0 = PC["Bohr radius"][0]; re = PC["classical electron radius"][0]
@@ -411,6 +415,10 @@ print(f"Example 4.4: a = {acc0:.4e} m/s^2, P = {P0:.4e} W, E = {-K*QE**2/(2*a0)/
       f"t_collapse = {tf:.4e} s (ODE reaches 0.001 a0 at {sol.t_events[0][0]:.4e} s), "
       f"orbit period = {T_orb:.4e} s, revolutions = 2 t_f/T0 = {2*tf/T_orb:.4e}")
 close(sol.t_events[0][0], tf * (1 - 1e-9), 1e-6)
+# the numbers quoted in Example 4.4 / B5
+close(acc0, 9.044e22, 1e-3, "Ex 4.4 a"); close(P0, 4.669e-8, 1e-3, "Ex 4.4 P"); close(tf, 1.556e-11, 1e-3, "Ex 4.4 t_f")
+close(T_orb, 1.520e-16, 1e-3, "Ex 4.4 T0"); close(2 * tf / T_orb, 2.048e5, 1e-3, "B5 revolutions")
+close(P0 * T_orb / (K * QE**2 / (2 * a0)), 3.26e-6, 2e-3, "B5 energy lost in first orbit")
 
 # Example 4.5: Purcell's wire, I = 10 A, s = 1 cm, q = e moving at u = 1e6 m/s parallel to I
 I, s, u = 10.0, 0.01, 1e6
@@ -422,11 +430,14 @@ F_bar = QE * abs(E_bar)
 print(f"Example 4.5: B = {MU0*I/(2*np.pi*s):.4e} T, F_lab = {F_lab:.6e} N; in the charge's frame lambda' = {lam_bar:.4e} C/m, "
       f"E' = {E_bar:.4f} V/m, F' = {F_bar:.6e} N, F'/gamma_u = {F_bar/gu:.6e} N, gamma_u - 1 = {gu-1:.3e}")
 close(F_bar / gu, F_lab, 1e-10)
+close(MU0 * I / (2 * np.pi * s), 2.000e-4, 1e-6, "Ex 4.5 B"); close(F_lab, 3.2044e-17, 1e-4, "Ex 4.5 F")
+close(lam_bar, -1.113e-10, 1e-3, "Ex 4.5 lambda'"); close(E_bar, -200.0, 1e-4, "Ex 4.5 E'")
 # The density bookkeeping from first principles with a real drift speed (copper, 1 mm^2):
 lam0 = 8.5e28 * QE * 1e-6; vd = I / lam0
 gv = 1 / np.sqrt(1 - (vd / C)**2)
 wv = (-vd - u) / (1 + u * vd / C**2); gw = 1 / np.sqrt(1 - (wv / C)**2)
 close(gw, gu * gv * (1 + u * vd / C**2), 1e-14, "gamma addition")
+close(lam0, 1.362e4, 1e-3, "Ex 4.5 lambda0"); close(vd, 7.34e-4, 1e-3, "Ex 4.5 drift"); close(u * vd / C**2, 8.2e-15, 5e-3, "Ex 4.5 uv/c^2")
 print(f"   copper: lambda0 = {lam0:.4e} C/m, drift = {vd:.4e} m/s, fractional imbalance u v/c^2 = {u*vd/C**2:.3e}")
 
 # %% [markdown]
@@ -473,6 +484,7 @@ ax.set(xlabel="angle from v in orbit plane (deg)", ylabel="dP/dOmega (normalized
 ax.legend(); fig.tight_layout(); fig.savefig(FIG / "synchrotron.png", dpi=110); plt.close(fig)
 print(f"[YT1] gamma x (full width at half max of forward lobe) for beta = 0.1, 0.5, 0.9, 0.99: {np.round(widths, 3)}")
 assert abs(widths[3] / widths[2] - 1) < 0.15       # the lobe width scales like 1/gamma
+close(widths[2], 0.67, 1e-2, "C2(c) width at beta = 0.9"); close(widths[3], 0.63, 1e-2, "C2(c) width at beta = 0.99")
 
 kd = np.pi; deltas = [0, np.pi / 2, -np.pi / 2]
 for dl in deltas:
@@ -502,21 +514,29 @@ print(f"[A1] gamma = {gmu:.4f}, lab lifetime = {gmu*taumu*1e6:.3f} us, range = {
       f"naive = {bmu*C*taumu:.1f} m, 10 km atmosphere in muon frame = {10/gmu:.4f} km")
 surv_lab = np.exp(-10e3 / (gmu * bmu * C * taumu)); surv_mu = np.exp(-(10e3 / gmu) / (bmu * C * taumu))
 close(surv_lab, surv_mu, 1e-12)
+close(gmu, 10.01, 1e-3, "A1 gamma"); close(gmu * taumu * 1e6, 22.00, 1e-3, "A1 lifetime"); close(gmu * bmu * C * taumu / 1e3, 6.562, 1e-3, "A1 range")
+close(bmu * C * taumu, 655.4, 1e-3, "A1 naive range"); close(10 / gmu, 0.9987, 1e-3, "A1 contracted atmosphere"); close(surv_lab, 0.2178, 1e-3, "A1 survival")
 print(f"[A1] surviving fraction: Earth frame {surv_lab:.4f}, muon frame {surv_mu:.4f}, without dilation {np.exp(-10e3/(bmu*C*taumu)):.2e}")
 gp = 1 + 1000 / mp; bp = np.sqrt(1 - 1 / gp**2); pc_ = np.sqrt((mp + 1000)**2 - mp**2)
 print(f"[A2] gamma = {gp:.4f}, beta = {bp:.4f}, E = {mp+1000:.2f} MeV, pc = {pc_:.1f} MeV, check gamma beta m c^2 = {gp*bp*mp:.1f} MeV")
 close(gp * bp * mp, pc_, 1e-12)
+close(gp, 2.0658, 1e-4, "A2 gamma"); close(bp, 0.8750, 1e-4, "A2 beta"); close(pc_, 1696.0, 1e-4, "A2 pc")
+close((700 / 450)**4, 5.855, 1e-3, "A3")
 print(f"[A3] (700/450)^4 = {(700/450)**4:.4f}")
 aA4 = QE * 1e6 * 1.0 / ME; PA4 = MU0 * QE**2 * aA4**2 / (6 * np.pi * C); KE = 0.5 * ME * 1e12
 print(f"[A4] a = {aA4:.4e} m/s^2, P = {PA4:.4e} W, KE = {KE:.4e} J, KE/P = {KE/PA4:.4f} s, "
       f"energy e-folding time = {3*np.pi*EPS0*ME**3*C**3/(QE**4*1.0**2):.4f} s")
+close(aA4, 1.759e17, 1e-3, "A4 a"); close(PA4, 1.766e-19, 1e-3, "A4 P"); close(KE / PA4, 2.579, 1e-3, "A4 T")
+close(3 * np.pi * EPS0 * ME**3 * C**3 / QE**4, KE / PA4, 1e-10, "A4 T formula = K/P")
 ga5 = 1 / np.sqrt(1 - (1e3 / C)**2)
 E5, B5 = boost_rules(np.zeros(3), np.array([0, 0, 1.0]), [1e3, 0, 0])
 print(f"[A5] E' = {E5} V/m, B' = {B5} T, gamma - 1 = {ga5-1:.3e}, E^2 - c^2B^2 = {-C**2:.4e} V^2/m^2")
 b3 = 0.9; g3 = 1 / np.sqrt(1 - b3**2)
 print(f"[B3] gamma = {g3:.4f}, along-axis factor 1 - beta^2 = {1-b3**2:.4f}, broadside factor gamma = {g3:.4f}, ratio gamma^3 = {g3**3:.4f}")
+close(g3, 2.294, 1e-3, "B3 gamma"); close(g3**3, 12.07, 1e-3, "B3 gamma^3")
 bB4 = 0.01; fB4 = 100e6
 print(f"[B4] pi b w / c = {np.pi*bB4*2*np.pi*fB4/C:.5f}, P_m/P_e for b = d = 1 cm at 100 MHz = (pi b w / c)^2 = {(np.pi*bB4*2*np.pi*fB4/C)**2:.4e}")
+close(np.pi * bB4 * 2 * np.pi * fB4 / C, 0.06584, 1e-3, "B4 pi b w/c"); close((np.pi * bB4 * 2 * np.pi * fB4 / C)**2, 4.335e-3, 1e-3, "B4 ratio")
 print(f"[B5] t_f = {tf:.4e} s, T0 = {T_orb:.4e} s, N = 2 t_f / T0 = {2*tf/T_orb:.4e}, "
       f"energy lost in first orbit / |E| = {P0*T_orb/(K*QE**2/(2*a0)):.3e}")
 Ev7, Bv7 = np.array([0, 1e3, 0]), np.array([0, 0, 1.0])
@@ -548,7 +568,10 @@ Pc = 2 * np.pi * Rs**2 * np.sum(mu_w * Sr)
 Pc_th = MU0 * qq**2 * w0**4 * Rc**2 / (6 * np.pi * C)
 close(Pc, Pc_th, 2e-3, "circulating power"); close(Sr / Sr.max(), (1 + np.cos(th)**2) / 2, 2e-2, "1 + cos^2 pattern")
 print(f"[B9] circulating charge: P_num = {Pc:.5e} W, theory {Pc_th:.5e} W, ratio to one linear dipole of amplitude R: {Pc/p_dipole(qq*Rc, w0):.4f}")
+close(Pc, 1.7729e-3, 1e-4, "B9 P_num"); close(Pc_th, 1.7728e-3, 1e-4, "B9 Larmor"); close(Pc / p_dipole(qq * Rc, w0), 2.0001, 1e-4, "B9 ratio")
 print(f"[C1] tau_e = {tau_e:.4e} s, c tau_e = {C*tau_e:.4e} m (2/3 r_e = {2*re/3:.4e} m)")
+close(tau_e, 6.266e-24, 1e-3, "C1 tau"); close(C * tau_e, 2 * re / 3, 1e-10, "C1 c tau = 2/3 r_e"); close(C * tau_e, 1.879e-15, 1e-3, "C1 c tau")
+close(np.degrees(np.arcsin(1 / 10)), 5.739, 1e-3, "C2 gamma = 10"); close(np.degrees(np.arcsin(1 / 1000)), 0.0573, 1e-3, "C2 gamma = 1000")
 for gC in [10, 1000]:
     print(f"[C2] gamma = {gC}: emission at theta' = 90 deg appears at sin(theta) = 1/gamma, theta = {np.degrees(np.arcsin(1/gC)):.4f} deg")
 

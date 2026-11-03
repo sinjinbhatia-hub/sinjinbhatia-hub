@@ -31,7 +31,7 @@ $$\mathbf A(s, t) = \frac{\mu_0I_0}{2\pi}\ln\Big(\frac{ct + \sqrt{c^2t^2 - s^2}}
 (a) Differentiate $c(t - t_r) = |\mathbf r - \mathbf w(t_r)|$ with respect to $t$ and show $\partial t_r/\partial t = \mathscr rc/(\boldsymbol{\mathscr r}\cdot\mathbf u)$.
 (b) Take the gradient and show $\nabla t_r = -\boldsymbol{\mathscr r}/(\boldsymbol{\mathscr r}\cdot\mathbf u)$.
 (c) Explain why these reduce to $1$ and $-\hat{\boldsymbol{\mathscr r}}/c$ for a charge at rest, and why (3.3) was nevertheless right in Theorem 3.1.
-(d) Use (a) to show that $\partial V/\partial t$ for the Liénard–Wiechert potential of a charge in uniform motion is not equal to the naive $\partial/\partial t$ of $q/(4\pi\varepsilon_0\mathscr r)$ with $\mathscr r$ treated as fixed. (One line of reasoning is enough.)
+(d) Use (a) to show that $\partial V/\partial t$ for the Liénard–Wiechert potential of a charge in uniform motion is not what you get by differentiating $q/(4\pi\varepsilon_0\mathscr r)$ with $\mathscr r$ changing at the instantaneous rate $-\hat{\boldsymbol{\mathscr r}}\cdot\mathbf v$, as if $t_r$ advanced at the same rate as $t$. (One line of reasoning is enough.)
 
 **B3. The pancake in numbers.** A charge moves at $\beta = 0.9$. At a fixed distance $R$ from its present position, find the field strength relative to Coulomb's (a) directly ahead, (b) broadside. (c) Find their ratio. (d) Show that $\mathbf B = \mathbf v\times\mathbf E/c^2$ vanishes ahead and is largest broadside.
 
