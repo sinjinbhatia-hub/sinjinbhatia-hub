@@ -158,7 +158,7 @@ win2, win_inc = (1 - Rs0)**2, (1 - Rs0)**2 / (1 - Rs0**2)
 th45 = np.pi / 4                                                      # Example 4.4
 rs, ts, rp, tp, ci, ct = fresnel(1.0, 1.5, th45); Rs, Ts, Rp, Tp = RT(1.0, 1.5, th45)
 for val, ref, lab in [(rs, -0.30334, "rs"), (ts, 0.69666, "ts"), (rp, -0.09201, "rp"), (tp, 0.72801, "tp"),
-                      (Rs, 0.09202, "Rs"), (Rp, 0.008466, "Rp")]:
+                      (Rs, 0.09201, "Rs"), (Rp, 0.008466, "Rp")]:
     close(val.real, ref, 2e-4, lab)
 thB = np.arctan(1.5); thc = np.arcsin(1 / 1.5)
 assert abs(fresnel(1.0, 1.5, thB)[2]) < 1e-14 and abs(fresnel(1.5, 1.0, np.arctan(1 / 1.5))[2]) < 1e-14
@@ -341,10 +341,11 @@ n0 = np.sqrt(1 + BJ[0]); B_th = BJ[0] * LJ[0]**2 / (2 * n0)
 assert np.abs(Ac + Bc / lam_v**2 - n_v).max() < 2e-4
 close(Bc, B_th, 0.15, "Cauchy B")
 nD = n_toy(np.array([0.5893]))[0].real; assert np.all(np.diff(n_v) < 0)   # normal dispersion: n falls with lambda
+close(nD, 1.4571, 1e-4, "toy glass n(589 nm)")                           # notes 3.13
 lam_all = np.logspace(-1.6, 1.6, 3000); nn = n_toy(lam_all, damp=True)
 alpha = 2 * (2 * np.pi / lam_all) * nn.imag                          # absorption coefficient 2 kappa (1/um)
 ray, wp_ion, wp_cu = (700 / 450)**4, np.sqrt(1e12 * QE**2 / (ME * EPS0)), np.sqrt(8.47e28 * QE**2 / (ME * EPS0))
-close(wp_ion / (2 * np.pi), 8.98e6, 1e-3, "ionosphere f_p")
+close(wp_ion / (2 * np.pi), 8.98e6, 1e-3, "ionosphere f_p"); close(wp_cu, 1.642e16, 1e-3, "Cu w_p"); close(2 * np.pi * C / wp_cu, 115e-9, 3e-3, "Cu lambda_p")
 print(f"[6] toy glass: n(589.3 nm) = {nD:.4f}; Cauchy fit 0.4-0.7 um: A = {Ac:.5f}, B = {Bc:.5f} um^2 "
       f"(one-resonance theory n0 = {n0:.5f}, B = {B_th:.5f}); max fit error {np.abs(Ac + Bc/lam_v**2 - n_v).max():.1e}")
 print(f"[6] Rayleigh (700/450)^4 = {ray:.2f}; ionosphere N = 1e12 m^-3: w_p = {wp_ion:.4e} rad/s, f_p = {wp_ion/2/np.pi/1e6:.2f} MHz; "
@@ -372,6 +373,7 @@ for f in (60.0, 1e9):
 close(skin[60.0][0], 8.42e-3, 2e-3, "Cu 60 Hz"); close(skin[1e9][0], 2.062e-6, 2e-3, "Cu 1 GHz")
 bt = C * k_cond(1e9, SIG_CU) / (2 * np.pi * 1e9)                     # beta~ = c k~/w at a vacuum-copper face
 R_cu = abs((1 - bt) / (1 + bt))**2
+close(R_cu, 0.999914, 1e-6, "Cu reflectance at 1 GHz"); close(skin[1e9][2], 3.27e4, 2e-3, "cB/E in Cu at 1 GHz")   # notes 3.12, Ex 4.5
 print(f"[7] sigma/(eps0 w) at 1 GHz = {SIG_CU/(EPS0*2*np.pi*1e9):.3e}")
 print(f"[7] Ex 4.5 copper: delta(60 Hz) = {skin[60.0][0]*1e3:.2f} mm, delta(1 GHz) = {skin[1e9][0]*1e6:.3f} um; "
       f"phase of k~ = {skin[1e9][1]:.4f} deg; cB/E = {skin[1e9][2]:.3e} at 1 GHz; R = {R_cu:.6f} (1 - R = {1-R_cu:.2e})")
@@ -383,14 +385,16 @@ print(f"[7] Ex 4.5 copper: delta(60 Hz) = {skin[60.0][0]*1e3:.2f} mm, delta(1 GH
 
 # %%
 a_, b_, wv, B0_ = sp.symbols("a b omega B_0", positive=True)
-m_, n_ = sp.symbols("m", integer=True, positive=True), sp.symbols("n", integer=True, nonnegative=True)
-g2 = sp.pi**2 * (m_**2 / a_**2 + n_**2 / b_**2); kz = sp.sqrt(wv**2 / cs**2 - g2)
-Bz = B0_ * sp.cos(m_ * sp.pi * x / a_) * sp.cos(n_ * sp.pi * y / b_) * sp.exp(sp.I * (kz * z - wv * t))
-Eg = sp.Matrix([sp.I * wv / g2 * sp.diff(Bz, y), -sp.I * wv / g2 * sp.diff(Bz, x), 0])
-Bg = sp.Matrix([sp.I * kz / g2 * sp.diff(Bz, x), sp.I * kz / g2 * sp.diff(Bz, y), Bz])
-for expr in [div(Eg), div(Bg)] + list(curl(Eg) + sp.diff(Bg, t)) + list(curl(Bg) - sp.diff(Eg, t) / cs**2):
-    assert sp.simplify(expr) == 0
-assert all(sp.simplify(e) == 0 for e in (Eg[1].subs(x, 0), Eg[1].subs(x, a_), Eg[0].subs(y, 0), Eg[0].subs(y, b_)))
+for m_, n_ in [(sp.symbols("m", integer=True, positive=True), sp.symbols("n", integer=True, nonnegative=True)),
+               (sp.symbols("m", integer=True, nonnegative=True), sp.symbols("n", integer=True, positive=True))]:   # TE_m0, TE_mn and TE_0n
+    g2 = sp.pi**2 * (m_**2 / a_**2 + n_**2 / b_**2); kz = sp.sqrt(wv**2 / cs**2 - g2)
+    Bz = B0_ * sp.cos(m_ * sp.pi * x / a_) * sp.cos(n_ * sp.pi * y / b_) * sp.exp(sp.I * (kz * z - wv * t))
+    Eg = sp.Matrix([sp.I * wv / g2 * sp.diff(Bz, y), -sp.I * wv / g2 * sp.diff(Bz, x), 0])
+    Bg = sp.Matrix([sp.I * kz / g2 * sp.diff(Bz, x), sp.I * kz / g2 * sp.diff(Bz, y), Bz])
+    for expr in [div(Eg), div(Bg)] + list(curl(Eg) + sp.diff(Bg, t)) + list(curl(Bg) - sp.diff(Eg, t) / cs**2):
+        assert sp.simplify(expr) == 0
+    assert all(sp.simplify(e) == 0 for e in (Eg[1].subs(x, 0), Eg[1].subs(x, a_), Eg[0].subs(y, 0), Eg[0].subs(y, b_)))   # E_par = 0
+    assert all(sp.simplify(e) == 0 for e in (Bg[0].subs(x, 0), Bg[0].subs(x, a_), Bg[1].subs(y, 0), Bg[1].subs(y, b_)))   # B_perp = 0 follows
 A_WG, B_WG = 0.023, 0.010
 fc = lambda m, n: C / 2 * np.sqrt((m / A_WG)**2 + (n / B_WG)**2)
 modes = sorted([(fc(m, n), m, n) for m in range(4) for n in range(3) if (m, n) != (0, 0)])[:7]
@@ -398,7 +402,8 @@ f10, f = fc(1, 0), 10e9
 root = np.sqrt(1 - (f10 / f)**2); vp, vg = C / root, C * root
 close(f10, 6.517e9, 1e-3, "TE10 cutoff"); assert np.isclose(vp * vg, C**2) and vp > C > vg
 close(fc(1, 1), 16.35e9, 1e-3, "TE11 cutoff"); close(fc(2, 0), 13.03e9, 1e-3, "TE20 cutoff")
-print("[8] TE fields satisfy Maxwell's equations and E_par = 0 on all four walls (SymPy)")
+close(C / f / root, 0.03953, 1e-3, "guide wavelength"); close(2 * np.pi * f / C * root, 158.96, 1e-4, "guide k"); close(1 / vg, 4.398e-9, 1e-3, "group delay per m")   # Ex 4.6
+print("[8] TE fields (both index families) satisfy Maxwell's equations, E_par = 0 and B_perp = 0 on all four walls (SymPy)")
 print(f"[8] Ex 4.6  a = 2.3 cm, b = 1.0 cm: f_c(TE10) = {f10/1e9:.3f} GHz; at 10 GHz sqrt(1 - (fc/f)^2) = {root:.5f}, "
       f"v_p = {vp:.4e} m/s = {vp/C:.4f} c, v_g = {vg:.4e} m/s = {vg/C:.4f} c, lambda_g = {C/f/root*100:.3f} cm, "
       f"k = {2*np.pi*f/C*root:.2f} rad/m")
@@ -471,9 +476,11 @@ for fq in (1e4, 1e6):                                                 # A5
 Rs3, Ts3, Rp3, Tp3 = RT(1.0, 1.5, th45)                               # B3 (same numbers as Example 4.4)
 print(f"[B3] 45 deg: degree of polarization of reflected light = {(Rs3-Rp3)/(Rs3+Rp3):.4f}; reflected fraction of unpolarized = {(Rs3+Rp3)/2:.5f}")
 th60 = np.radians(60); rs60 = fresnel(1.5, 1.0, th60)[0]              # B4
+assert np.allclose(rs60, -0.1 - 0.995j, atol=1e-4) and abs(np.degrees(np.angle(rs60)) + 95.74) < 0.01 and abs(decay_length(1.5, 1.0, th60, 633) - 121.5) < 0.05
 print(f"[B4] glass->air 60 deg: d = {decay_length(1.5, 1.0, th60, 633):.1f} nm at 633 nm; r_s = {rs60:.4f}, |r_s| = {abs(rs60):.6f}, "
       f"phase = {np.degrees(np.angle(rs60)):.2f} deg")
 fpi = wp_ion / 2 / np.pi; ng = np.sqrt(1 - (fpi / 20e6)**2)            # B5
+close(ng, 0.8936, 1e-4, "ionosphere n at 20 MHz"); close(1e5 / C * (1 / ng - 1), 39.73e-6, 1e-3, "ionospheric delay")
 print(f"[B5] 20 MHz in the N = 1e12 ionosphere: n = {ng:.4f}, v_g = {ng:.4f} c, v_p = {1/ng:.4f} c; "
       f"extra delay over 100 km = {1e5/C*(1/ng - 1)*1e6:.2f} us")
 print(f"[B6] group delay of 1 m of X-band guide at 10 GHz: {1/vg*1e9:.3f} ns (vacuum {1/C*1e9:.3f} ns); single-mode band "
@@ -493,11 +500,15 @@ thr = np.radians(np.linspace(41.6, 89.9, 200001)); nr = 1.51                    
 rsr, _, rpr, _, _, _ = fresnel(nr, 1.0, thr)
 dphi = np.degrees(np.abs(np.angle(-rpr / rsr)))                      # -r_p: right-handed (p, s, k) basis per beam
 sols = thr[np.where(np.diff(np.sign(dphi - 45)))[0]]
+assert np.allclose(np.degrees(sols), [48.62, 54.62], atol=0.01)                      # C2(b): roots of the quadratic in sin^2
+assert abs(dphi.max() - 2 * np.degrees(np.arctan((1 - 1 / nr**2) / (2 / nr)))) < 1e-3  # analytic max tan(D/2) = (1 - n^2)/(2n)
+assert abs(np.degrees(thr[np.argmax(dphi)]) - np.degrees(np.arcsin(np.sqrt(2 / nr**2 / (1 + 1 / nr**2))))) < 0.01   # at sin^2 = 2n^2/(1 + n^2)
 dachro = [np.degrees(abs(np.angle(-fresnel(nn1, 1.0, np.radians(54.62))[2] / fresnel(nn1, 1.0, np.radians(54.62))[0]))) for nn1 in (1.50, 1.52)]
 print(f"[C2] n = 1.51 (critical {np.degrees(np.arcsin(1/nr)):.2f} deg): |phase(-r_p) - phase(r_s)| = 45 deg at {np.degrees(sols).round(2)} deg; "
       f"max {dphi.max():.2f} deg at {np.degrees(thr[np.argmax(dphi)]):.2f} deg; at 54.62 deg: n = 1.50 -> {dachro[0]:.2f}, n = 1.52 -> {dachro[1]:.2f} deg; "
       f"toy glass n(400 nm) = {n_toy(np.array([0.4]))[0].real:.4f}, n(700 nm) = {n_toy(np.array([0.7]))[0].real:.4f}")
 td = lambda m, s0: 2 * np.sqrt(3) * m * s0**2 / HBAR                  # C3: sigma doubles
+close(td(ME, 1e-10), 2.992e-16, 1e-3, "electron doubling time"); close(td(1e-3, 1e-6), 3.285e19, 1e-3, "marble doubling time")
 print(f"[C3] width doubling time: electron, sigma0 = 1 A: {td(ME, 1e-10):.3e} s; 1 g marble, sigma0 = 1 um: "
       f"{td(1e-3, 1e-6):.3e} s = {td(1e-3, 1e-6)/3.156e7:.2e} yr")
 

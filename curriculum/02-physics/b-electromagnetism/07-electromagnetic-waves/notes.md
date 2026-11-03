@@ -119,7 +119,7 @@ $$P_{\rm abs} = \frac Ic,\qquad P_{\rm mirror} = \frac{2I}c. \tag{3.8}$$ ∎
 
 Take $\mathbf k = k\hat{\mathbf z}$. By (3.5), $\tilde{\mathbf E}_0$ has only $x$ and $y$ components. The **Jones vector** is
 $$\mathbf J = \begin{pmatrix}\tilde E_x\\\tilde E_y\end{pmatrix}\in\mathbb C^2,\qquad\mathbf E(z, t) = \operatorname{Re}\big[\mathbf Je^{i(kz - \omega t)}\big]. \tag{3.9}$$
-Linear: components in phase, e.g. $(\cos\theta, \sin\theta)$. Circular: equal magnitudes, phases $\pm\pi/2$ apart; for $\tfrac1{\sqrt2}(1, i)$ at $z = 0$, $\mathbf E = \tfrac{E_0}{\sqrt2}(\cos\omega t, \sin\omega t)$ turns from $\hat{\mathbf x}$ toward $\hat{\mathbf y}$, counterclockwise for an observer facing the oncoming beam. Anything else is elliptical.
+Linear: components in phase, e.g. $(\cos\theta, \sin\theta)$. Circular: equal magnitudes, phases $\pm\pi/2$ apart; for $\mathbf J = \tfrac{E_0}{\sqrt2}(1, i)$, at $z = 0$, $\mathbf E = \tfrac{E_0}{\sqrt2}(\cos\omega t, \sin\omega t)$ turns from $\hat{\mathbf x}$ toward $\hat{\mathbf y}$, counterclockwise for an observer facing the oncoming beam. Anything else is elliptical.
 
 Optical elements act linearly on $\mathbf J$: they are $2\times2$ complex matrices, composed right to left (LA-1).
 $$P(\theta) = \mathbf u\mathbf u^\top,\ \mathbf u = \begin{pmatrix}\cos\theta\\\sin\theta\end{pmatrix};\qquad W(\Gamma) = \begin{pmatrix}1 & 0\\0 & e^{i\Gamma}\end{pmatrix};\qquad M(\theta) = R(\theta)\,M\,R(\theta)^\top. \tag{3.10}$$
@@ -228,7 +228,7 @@ with $\lambda_0$ the vacuum wavelength.
 
 ■ **What just happened.** Beyond $\theta_c$ all the energy reflects, with phase shifts that differ between s and p (Exercise C2 turns the difference into Fresnel's glass quarter-wave plate). The field in medium 2 is an **evanescent wave**: it runs along the surface, decays away from it, and carries no average energy across it (Exercise B4). Glass to air at $45°$: $d = 0.450\lambda_0$, 285 nm at 633 nm. With the engineering sign the physical root is $-j\kappa$ (§8).
 
-**Fibres and frustrated TIR.** An optical fibre is a glass core of index slightly above its cladding; light inside the critical angle bounces down the core by TIR with no loss per bounce, so a long link is limited only by absorption and scattering in the glass (about 0.2 dB/km near 1.55 µm). Bring a second glass block within a fraction of $d$ and the evanescent field reaches it and propagates again: **frustrated TIR**, the optical twin of tunnelling (QM-3).
+**Fibres and frustrated TIR.** An optical fibre is a glass core of index slightly above its cladding; light that meets the core wall beyond the critical angle bounces down the core by TIR with no loss per bounce, so a long link is limited only by absorption and scattering in the glass (about 0.2 dB/km near 1.55 µm). Bring a second glass block within a fraction of $d$ and the evanescent field reaches it and propagates again: **frustrated TIR**, the optical twin of tunnelling (QM-3).
 
 ### 3.12 Conductors: complex wave number and skin depth
 
@@ -351,7 +351,7 @@ a TEM wave at $c$ ($c/n$ with a dielectric filling) with no cutoff, which is why
 
 **Optical fibre.** A fibre is a dielectric waveguide: the field oscillates in the core and is evanescent in the cladding, and the modes obey matching conditions like (3.16)–(3.17) at the core boundary instead of $\mathbf E^\parallel = 0$. A thin enough core carries only the lowest mode, which has no cutoff.
 
-**Where waves come from.** Everything here is source-free. Waves are launched by accelerating charges: the Rayleigh dipole, the current in a half-wave antenna. EM-8 solves Maxwell's equations with sources (the retarded potentials of EM-6 (3.37)) and derives the $\omega^4$ dipole power used above.
+**Where waves come from.** Everything here is source-free. Waves are launched by accelerating charges: the Rayleigh dipole, the current in a half-wave antenna. EM-8 solves Maxwell's equations with sources (the inhomogeneous wave equations EM-6 (3.37), by retarded potentials) and derives the $\omega^4$ dipole power used above.
 
 ## 4. Worked examples
 
@@ -414,7 +414,7 @@ See [exercises.md](exercises.md). A1–A5 are drills: a plane wave's fields and 
 
 ## 7. Coding project
 
-`project.py` runs in about 3 seconds; figures go to `figures/`.
+`project.py` runs in about 4 seconds; figures go to `figures/`.
 
 1. **Part 1, plane waves:** SymPy checks Theorem 3.3's wave against all four Maxwell equations, Lemma 3.2, and (3.4); Example 4.1.
 2. **Part 2, Jones calculus:** Malus, three polarizers, Example 4.2, QWP $= S$, HWP $=$ Hadamard; the Poincaré sphere with rotating-plate trajectories (`poincare.png`).
