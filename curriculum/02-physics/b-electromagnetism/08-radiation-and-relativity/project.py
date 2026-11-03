@@ -396,6 +396,7 @@ print(f"Example 4.3: lambda = {lam:.4f} m, d/lambda = {d/lam:.4f}, p0 = {p0:.4e}
 close(Rrad, 2 * np.pi / 3 * MU0 * C * (d / lam)**2, 1e-10)
 # half-wave dipole for comparison: R = (Z0/2pi) int_0^pi cos^2(pi/2 cos th)/sin th dth
 Ihw = quad(lambda th: np.cos(np.pi / 2 * np.cos(th))**2 / np.sin(th), 0, np.pi)[0]
+print(f"   2pi/3 Z0 = {2*np.pi/3*MU0*C:.1f} ohm, (d/lambda)^2 = {(d/lam)**2:.4f}, cyclotron period at 1 T = {2*np.pi*ME/QE:.3e} s")
 print(f"   half-wave dipole: integral = {Ihw:.4f}, R_rad = {MU0*C/(2*np.pi)*Ihw:.2f} ohm")
 
 # Example 4.4: classical hydrogen collapse
@@ -499,8 +500,12 @@ mp = PC["proton mass energy equivalent in MeV"][0]
 taumu = 2.197e-6; bmu = 0.995; gmu = 1 / np.sqrt(1 - bmu**2)
 print(f"[A1] gamma = {gmu:.4f}, lab lifetime = {gmu*taumu*1e6:.3f} us, range = {gmu*bmu*C*taumu/1e3:.4f} km, "
       f"naive = {bmu*C*taumu:.1f} m, 10 km atmosphere in muon frame = {10/gmu:.4f} km")
+surv_lab = np.exp(-10e3 / (gmu * bmu * C * taumu)); surv_mu = np.exp(-(10e3 / gmu) / (bmu * C * taumu))
+close(surv_lab, surv_mu, 1e-12)
+print(f"[A1] surviving fraction: Earth frame {surv_lab:.4f}, muon frame {surv_mu:.4f}, without dilation {np.exp(-10e3/(bmu*C*taumu)):.2e}")
 gp = 1 + 1000 / mp; bp = np.sqrt(1 - 1 / gp**2); pc_ = np.sqrt((mp + 1000)**2 - mp**2)
-print(f"[A2] gamma = {gp:.4f}, beta = {bp:.4f}, pc = {pc_:.1f} MeV, check gamma beta m c^2 = {gp*bp*mp:.1f} MeV")
+print(f"[A2] gamma = {gp:.4f}, beta = {bp:.4f}, E = {mp+1000:.2f} MeV, pc = {pc_:.1f} MeV, check gamma beta m c^2 = {gp*bp*mp:.1f} MeV")
+close(gp * bp * mp, pc_, 1e-12)
 print(f"[A3] (700/450)^4 = {(700/450)**4:.4f}")
 aA4 = QE * 1e6 * 1.0 / ME; PA4 = MU0 * QE**2 * aA4**2 / (6 * np.pi * C); KE = 0.5 * ME * 1e12
 print(f"[A4] a = {aA4:.4e} m/s^2, P = {PA4:.4e} W, KE = {KE:.4e} J, KE/P = {KE/PA4:.4f} s, "
@@ -511,8 +516,9 @@ print(f"[A5] E' = {E5} V/m, B' = {B5} T, gamma - 1 = {ga5-1:.3e}, E^2 - c^2B^2 =
 b3 = 0.9; g3 = 1 / np.sqrt(1 - b3**2)
 print(f"[B3] gamma = {g3:.4f}, along-axis factor 1 - beta^2 = {1-b3**2:.4f}, broadside factor gamma = {g3:.4f}, ratio gamma^3 = {g3**3:.4f}")
 bB4 = 0.01; fB4 = 100e6
-print(f"[B4] P_m/P_e for b = d = 1 cm at 100 MHz = (pi b w / c)^2 = {(np.pi*bB4*2*np.pi*fB4/C)**2:.4e}")
-print(f"[B5] t_f = {tf:.4e} s, T0 = {T_orb:.4e} s, N = 2 t_f / T0 = {2*tf/T_orb:.4e}")
+print(f"[B4] pi b w / c = {np.pi*bB4*2*np.pi*fB4/C:.5f}, P_m/P_e for b = d = 1 cm at 100 MHz = (pi b w / c)^2 = {(np.pi*bB4*2*np.pi*fB4/C)**2:.4e}")
+print(f"[B5] t_f = {tf:.4e} s, T0 = {T_orb:.4e} s, N = 2 t_f / T0 = {2*tf/T_orb:.4e}, "
+      f"energy lost in first orbit / |E| = {P0*T_orb/(K*QE**2/(2*a0)):.3e}")
 Ev7, Bv7 = np.array([0, 1e3, 0]), np.array([0, 0, 1.0])
 vdrift = np.cross(Ev7, Bv7) / (Bv7 @ Bv7)
 E7, B7 = boost_rules(Ev7, Bv7, vdrift)
