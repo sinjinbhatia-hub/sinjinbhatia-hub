@@ -445,10 +445,11 @@ print(f"A3: two leapfrog steps, eps=0.2 from (0,1): theta={tA[0]:.5f}, rho={rA[0
 assert np.isclose(dHA, 0.04 / 8 * tA[0]**2)
 for ph in (0.5, 0.99, -0.5): print(f"A4: AR(1) phi={ph}: n_eff/S = {(1-ph)/(1+ph):.4f}")
 print(f"B2: Gibbs rho=0.9 lag-1 = {0.81:.2f}, n_eff/S = {(1-0.81)/(1+0.81):.4f}; rho=0.99: {(1-0.9801)/(1.9801):.5f}")
-Bs = 4**2 / (4**2 + np.array([1, 4, 16])**2); print("B5: shrinkage sigma=4, tau=1,4,16:", Bs.round(4))
+Bs = 4**2 / (4**2 + np.array([1, 4, 16])**2); print("B5: shrinkage sigma=4, tau=1,4,16:", Bs.round(4), "; E[theta|tau] with mu_hat=10, y=30:", ((1 - Bs) * 30 + Bs * 10).round(2))
 ch_b = np.array([[1.0, 1.2, 0.8, 1.1], [3.0, 3.2, 2.8, 3.1]]); W = ch_b.var(1, ddof=1).mean(); Bb = 4 * ch_b.mean(1).var(ddof=1)
 print(f"B6: W={W:.4f}, B={Bb:.4f}, var+={3/4*W + Bb/4:.4f}, R-hat (no split) = {np.sqrt((3/4*W + Bb/4)/W):.3f}")
 print(f"B7: AR(1) phi=0.9: n_eff/S unthinned {1/19:.5f}; thinned by 10: {(1-0.9**10)/(1+0.9**10)/10:.5f}")
+print(f"B9(d): Var_q(s2) = {B**2/((A-1)**2*(A-2)):.4f} vs exact {bn**2/((an-1)**2*(an-2)):.4f}; E_q s2 {B/(A-1):.4f} vs {bn/(an-1):.4f}")
 print(f"B9: CAVI variance ratio (a_n-1)/a_n for a_n = 2,5,50: {[(a-1)/a for a in (2,5,50)]}")
 # B8 reference: the centered model at other step sizes (same trajectory length eps*L = 3.75).
 for e in (0.05, 0.3):

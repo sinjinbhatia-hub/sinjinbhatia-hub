@@ -1,17 +1,17 @@
 # Handoff — where the build stands and how to continue
 
-Last updated 2026-11-03 03:10 UTC, after round 14. The branch is `claude/brave-knuth-64723m`; everything below is committed and pushed. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
+Last updated 2026-11-03 14:50 UTC, after round 15. The branch is `claude/brave-knuth-64723m`; everything below is committed and pushed. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
 
-## Status (40 of 80 math modules done; Python course complete, 10 of 10 done)
+## Status (41 of 80 math modules done; Python course complete, 10 of 10 done)
 
 "Done" means all four files exist (`notes.md`, `exercises.md`, `solutions.md`, `project.py`), an independent reviewer re-derived the math and recomputed the numbers, the fixes were applied, and the script passes headless. Review notes for each module are in `tools/reviews/<code>.md`.
 
 | State | Modules |
 |---|---|
-| **Done** (40) | F1–F6 · LA-1–14 · CM-1–8 · EM-1–7 · ST-1–5 |
+| **Done** (41) | F1–F6 · LA-1–14 · CM-1–8 · EM-1–8 (E&M complete) · ST-1–5 |
 | **Done, Python** (10) | PY-1–10 — the whole course, reviewed with every code block executed; 0 high-severity findings |
-| **Written, awaiting review** (1) | EM-8 (Opus; script passes; note it uses Griffiths' (−,+,+,+) signature, so ∂_νF^μν = μ₀J^μ — the brief's form assumed (+,−,−,−); the reviewer should check the convention is stated and consistent) — not yet independently checked |
-| **Not started** (39) | SM-1–7 · QM-1–9 · ST-6–9 · ML-1–10 · QC-1–9 |
+| **Written, awaiting review** (1) | ST-6 (Opus; script passes) — not yet independently checked |
+| **Not started** (38) | SM-1–7 · QM-1–9 · ST-7–9 · ML-1–10 · QC-1–9 |
 
 **Priority (user's request, 2026-10-23): finish the Python course (`00-python/`, briefs `research/briefs/PY-*.md`) first.** Its briefs end with a REVIEW FOCUS section the reviewer applies (run every code block; a wrong stated output is high severity). The PY writer addendum is at the end of `research/WRITER-BRIEF.md`.
 
@@ -45,9 +45,9 @@ There is no usage signal readable from inside the session. The limit kills every
 
 ## Build order (prerequisites first)
 
-1. Verify EM-8 (finishes E&M). Write ST-6 (+ ST-7 if Sonnet writers).
-2. Verify those. Write ST-7, ST-8 (or QM-1).
-3. Verify those. Write the rest: ST-9, QM-1–9, SM-1–7, ML-1–10, QC-1–9 in that order.
+1. Verify ST-6. Write ST-7 (+ ST-8 if Sonnet writers).
+2. Verify those. Write ST-8, ST-9.
+3. Verify those. Write the rest: QM-1–9, SM-1–7, ML-1–10, QC-1–9 in that order.
 
 The user has asked (2026-11-02) that each round stop well before the usage limit and that nothing restart on its own: one sized round per "continue", then stop.
 
