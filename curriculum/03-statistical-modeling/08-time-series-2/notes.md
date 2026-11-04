@@ -169,7 +169,7 @@ For a general linear process with $\sum|\psi_j|\,|j|^{1/2}<\infty$ the same hold
 $$\frac{2I(\omega_j)}{f(\omega_j)}\ \xrightarrow{d}\ \chi^2_2,\qquad\text{independently across fixed }\omega_j\in(0,\tfrac12).\tag{3.14}$$
 (The proof writes $d_x(\omega)\approx\psi(e^{-2\pi i\omega})d_w(\omega)$ and applies Theorem 3.5 to $d_w$; Brockwell & Davis, *Time Series: Theory and Methods*, ch. 10, has the details.)
 
-■ **What just happened, and the key fact.** $\mathrm{Var}\,I(\omega_j)\approx f(\omega_j)^2$ **does not shrink as $n$ grows.** The periodogram is not a consistent estimator of $f$. Its standard deviation equals its mean at every sample size; a raw periodogram's 95% interval runs from $0.27I$ to $39.5I$ (two-sided $\chi^2_2$ quantiles). Longer data buys more ordinates, each just as noisy. Schuster's spurious peaks were this.
+■ **What just happened, and the key fact.** $\mathrm{Var}\,I(\omega_j)\approx f(\omega_j)^2$ **does not shrink as $n$ grows.** The periodogram is not a consistent estimator of $f$. Its standard deviation equals its mean at every sample size; a raw periodogram's 95% interval runs from $0.27I$ to $39.5I$ (two-sided $\chi^2_2$ quantiles). Longer data buys more ordinates, each equally noisy. Schuster's spurious peaks were this.
 
 **The fix: smooth across frequencies.** The ordinates at neighbouring Fourier frequencies are approximately independent and, if $f$ is smooth, have nearly the same mean. Average $L=2m+1$ of them (the **Daniell** estimator):
 $$\hat f(\omega_j)=\frac1L\sum_{k=-m}^{m}I(\omega_{j+k}).\tag{3.15}$$
@@ -285,7 +285,7 @@ The filtered mean is a precision-weighted average of prior mean and observation.
 
 1. The recursion is $P_{t+1|t}=P_{t|t-1}-\frac{P_{t|t-1}^2}{P_{t|t-1}+H}+Q=\frac{P_{t|t-1}H}{P_{t|t-1}+H}+Q$.
 2. A fixed point satisfies $\frac{P^2}{P+H}=Q$, i.e.
-$$P^2-QP-QH=0.\tag{3.25}$$
+$$P^2-QP-QH=0.\tag{3.24}$$
 3. The positive root is $P=\tfrac12\big(Q+\sqrt{Q^2+4QH}\big)$. With $q=Q/H$ (the signal-to-noise ratio) and $p=P/H$: $p=\tfrac12(q+\sqrt{q^2+4q})$ and $K=p/(p+1)$.
 4. Convergence: $g(P)=PH/(P+H)+Q$ is increasing and concave with $g'(P)=H^2/(P+H)^2<1$ for $P>0$, so iterating $g$ from any $P\ge0$ converges monotonically to the unique positive fixed point.
 
@@ -467,7 +467,7 @@ Read it. The position estimate moved 69% of the way to the measurement because p
 
 ### Example 4.7: Steady-state gain of the local level model, $q=1$
 
-$Q=H=1$. The Riccati fixed point (3.25): $P^2-P-1=0$, $P=\frac{1+\sqrt5}2=1.6180$, the golden ratio. $K=P/(P+1)=1.6180/2.6180=0.6180$, and the filtered variance is $P_{t|t}=PH/(P+H)=0.6180$ as well (so $P=P_{t|t}+Q$, as (3.20) says). Started from a diffuse prior, the gains are $K_1\approx1$, $K_2=2/3$, $K_3=5/8$, $K_4=13/21$, ratios of Fibonacci numbers converging to $0.6180$; the project prints $1,0.6667,0.625$ and $0.618$ at $t=10$. With signal and noise variances equal, each new observation gets 62% of the weight, and simple exponential smoothing with $\alpha=0.618$ is the optimal filter, which the project confirms to $10^{-8}$.
+$Q=H=1$. The Riccati fixed point (3.24): $P^2-P-1=0$, $P=\frac{1+\sqrt5}2=1.6180$, the golden ratio. $K=P/(P+1)=1.6180/2.6180=0.6180$, and the filtered variance is $P_{t|t}=PH/(P+H)=0.6180$ as well (so $P=P_{t|t}+Q$, as (3.20) says). Started from a diffuse prior, the gains are $K_1\approx1$, $K_2=2/3$, $K_3=5/8$, $K_4=13/21$, ratios of Fibonacci numbers converging to $0.6180$; the project prints $1,0.6667,0.625$ and $0.618$ at $t=10$. With signal and noise variances equal, each new observation gets 62% of the weight, and simple exponential smoothing with $\alpha=0.618$ is the optimal filter, which the project confirms to $10^{-8}$.
 
 ### Example 4.8: GARCH(1,1) with $\omega=0.01$, $\alpha=0.1$, $\beta=0.85$
 

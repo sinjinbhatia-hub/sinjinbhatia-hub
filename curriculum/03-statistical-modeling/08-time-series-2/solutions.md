@@ -27,7 +27,7 @@ with $\eta_t=w_{t+1}$. Check: $\alpha_{t+1}^{(2)}=0\cdot\alpha_t+0.4w_{t+1}=0.4w
 $$T=\begin{pmatrix}1&1\\0&1\end{pmatrix},\quad R=I_2,\quad Q=\begin{pmatrix}0.1&0\\0&0.01\end{pmatrix},\quad Z=(1\ \ 0),\quad H=2.$$
 
 **A5.** With $H=1$, $P$ solves $P^2-0.25P-0.25=0$, so $P=\tfrac12(0.25+\sqrt{0.0625+1})=\tfrac12(0.25+1.0308)=0.6404$ and $K=P/(P+1)=0.6404/1.6404=0.3904$. Each observation gets 39% of the weight.
-- $q=0.01$: $P=\tfrac12(0.01+\sqrt{0.0001+0.04})=0.1052$, so $K=0.0951$. The level barely moves, so the filter averages about the last $1/K\approx10$ observations.
+- $q=0.01$: $P=\tfrac12(0.01+\sqrt{0.0001+0.04})=0.1051$, so $K=0.0951$. The level barely moves, so the filter averages about the last $1/K\approx10$ observations.
 - $q=100$: $P=\tfrac12(100+\sqrt{10000+400})=100.99$, so $K=0.9902$. The level jumps far more than the noise, so the filter believes almost only the latest point.
 
 **A6.** $\bar\sigma^2=0.02/(1-0.98)=1.0$. Persistence $\alpha+\beta=0.98$. Half-life $\log0.5/\log0.98=34.31$ periods. By (3.36), $\sigma^2_{t+5|t}=1+0.98^4(2-1)=1+0.9224=1.9224$. After four steps of reversion only 8% of the excess has decayed, because persistence is so close to 1.
@@ -87,7 +87,7 @@ So $L\Sigma L^\top=D=\mathrm{diag}(F_1,F_2)$, hence $\Sigma^{-1}=L^\top D^{-1}L$
 
 **B7.** (a) $y_t-y_{t-1}=\mu_t-\mu_{t-1}+\varepsilon_t-\varepsilon_{t-1}=\eta_{t-1}+\varepsilon_t-\varepsilon_{t-1}$. This is a sum of white noises at lags 0 and 1 only, so $\gamma(h)=0$ for $|h|\ge2$: an MA(1). $\gamma(0)=Q+2H$ and $\gamma(1)=\mathrm{Cov}(\eta_t+\varepsilon_{t+1}-\varepsilon_t,\ \eta_{t-1}+\varepsilon_t-\varepsilon_{t-1})=-H$. So $\rho(1)=-H/(Q+2H)=-1/(q+2)$.
 
-(b) An MA(1) with coefficient $\theta$ has $\rho(1)=\theta/(1+\theta^2)$ (ST-7). Let $p=P/H$ be the scaled steady-state predicted variance, so that $p^2=qp+q$ by (3.25), and $K=p/(p+1)$. Set $\theta=K-1=-1/(p+1)$. Then
+(b) An MA(1) with coefficient $\theta$ has $\rho(1)=\theta/(1+\theta^2)$ (ST-7). Let $p=P/H$ be the scaled steady-state predicted variance, so that $p^2=qp+q$ by (3.24), and $K=p/(p+1)$. Set $\theta=K-1=-1/(p+1)$. Then
 $$\frac{\theta}{1+\theta^2}=\frac{-1/(p+1)}{1+1/(p+1)^2}=\frac{-(p+1)}{(p+1)^2+1}.$$
 We need this to equal $-1/(q+2)$, i.e. $(p+1)^2+1=(q+2)(p+1)$. Expanding, $p^2+2p+2=qp+q+2p+2$, i.e. $p^2=qp+q$, which is the Riccati equation. ✓ Since $p>0$, $|\theta|=1/(p+1)<1$: this is the invertible root.
 
@@ -118,7 +118,7 @@ So $\rho(1)=\frac{\alpha(1-\alpha\beta-\beta^2)}{1-2\alpha\beta-\beta^2}$. For $
 
 (b) Start from $P_{t|t}=P^--P^-Z^\top F^{-1}ZP^-$ with $P^-=P_{t|t-1}$ and $F=ZP^-Z^\top+H$:
 $$P_{t|t}Z^\top H^{-1}=P^-Z^\top H^{-1}-P^-Z^\top F^{-1}ZP^-Z^\top H^{-1}=P^-Z^\top F^{-1}\big[F-ZP^-Z^\top\big]H^{-1}=P^-Z^\top F^{-1}HH^{-1}=K_t.$$
-(We wrote $P^-Z^\top H^{-1}=P^-Z^\top F^{-1}FH^{-1}$ to factor.) If every row of $Z$ equals the same row vector $z$, then $Z^\top=z^\top(1,\dots,1)$ and $K_t=P_{t|t}z^\top(1,\dots,1)H^{-1}$. Column $j$ is $P_{t|t}z^\top/\sigma_j^2$. All columns are parallel, scaled by sensor precision, at every $t$, not just in steady state.
+(We wrote $P^-Z^\top H^{-1}=P^-Z^\top F^{-1}FH^{-1}$ to factor.) If every row of $Z$ equals the same row vector $z$, then $Z^\top=z^\top(1,\dots,1)$ and $K_t=P_{t|t}z^\top(1,\dots,1)H^{-1}$. Column $j$ is $P_{t|t}z^\top/\sigma_j^2$. All columns are parallel, scaled by sensor precision, at every $t$, not only in steady state.
 
 (c) Add to Part 13: `Z2 = [[1,0],[1,0]]`, `H = diag(1, 16)`, run `kalman_filter` with the tracker's $T$, $R$, $Q=1$ on any two-column data. The project prints the steady-state gain $\begin{pmatrix}0.7106&0.0444\\0.4802&0.0300\end{pmatrix}$ and the column ratio $16.0000$ (asserted). The noisy sensor still improves the estimate, but only by 1/16 as much per reading.
 

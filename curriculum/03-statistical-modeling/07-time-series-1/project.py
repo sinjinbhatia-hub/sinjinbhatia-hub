@@ -16,6 +16,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from pathlib import Path
 from scipy import stats, optimize, linalg, signal
+import sympy as sp
 
 FIG = Path(__file__).resolve().parent / "figures"
 FIG.mkdir(exist_ok=True)
@@ -196,6 +197,22 @@ th = a - 1; fc = [xs[0]]                                          # ARIMA(0,1,1)
 for t in range(1, len(xs)): fc.append(xs[t] + th * (xs[t] - fc[-1]))
 print("Ex 4.8 SES levels", np.round(lev, 5), " ARIMA(0,1,1) forecasts", np.round(fc, 5))
 assert np.allclose(lev, fc) and np.isclose(lev[-1], 11.5828)
+
+# %% [markdown]
+# ### Symbolic checks of the closed forms (3.12), (3.16), (3.22), (3.37)
+# %%
+f, t_, l_ = sp.symbols("phi theta lambda"); p1, p2, p3 = sp.symbols("phi1 phi2 phi3")
+A3 = sp.Matrix([[p1, p2, p3], [1, 0, 0], [0, 1, 0]])
+assert sp.expand((l_ * sp.eye(3) - A3).det() - l_**3 * (1 - p1 / l_ - p2 / l_**2 - p3 / l_**3)) == 0     # (3.12), p = 3
+g0, g1, g2 = sp.symbols("g0 g1 g2")
+sol = sp.solve([g1 - p1 * g0 - p2 * g1, g2 - p1 * g1 - p2 * g0, 1 - (g0 - p1 * g1 - p2 * g2)], [g0, g1, g2], dict=True)[0]
+assert sp.simplify(sol[g0] - (1 - p2) / ((1 + p2) * ((1 - p2) ** 2 - p1**2))) == 0                       # (3.16)
+G0 = (1 + 2 * f * t_ + t_**2) / (1 - f**2); G1 = (f + t_) * (1 + f * t_) / (1 - f**2)       # (3.22), sigma^2 = 1
+# moment equations from multiplying x_t = phi x_{t-1} + w_t + theta w_{t-1} by x_t and by x_{t-1}:
+assert sp.simplify(G0 - (f * G1 + 1 + t_ * (f + t_))) == 0 and sp.simplify(G1 - (f * G0 + t_)) == 0
+z = sp.symbols("z"); psi_arima011 = sp.series((1 + t_ * z) / (1 - z), z, 0, 5).removeO()
+assert all(sp.simplify(psi_arima011.coeff(z, k) - (1 + t_)) == 0 for k in range(1, 5))                    # psi_j = alpha, (3.37)
+print("SymPy: companion determinant, AR(2) variance, ARMA(1,1) gamma(0), gamma(1), ARIMA(0,1,1) psi-weights verified")
 
 # %% [markdown]
 # ## Part 1: the identification table made visual (notes 3.7)
@@ -427,7 +444,7 @@ for nn in (50, 100, 200, 400):
     f_, _ = frac_sig(np.cumsum(rng.standard_normal((4000, nn)), 1), np.cumsum(rng.standard_normal((4000, nn)), 1))
     print(f"B7 n={nn}: fraction |t|>2 = {f_:.3f}")
 f_d, _ = frac_sig(rng.standard_normal((4000, 400)), rng.standard_normal((4000, 400)))   # differences of RWs are iid
-print(f"B7 regress the differences (n=400): fraction |t|>2 = {f_d:.3f}"); assert 0.035 < f_d < 0.07
+print(f"B7 regress the differences (n=400): fraction |t|>2 = {f_d:.3f}; P(|t_398| > 2) = {2 * stats.t.sf(2, 398):.3f}"); assert 0.035 < f_d < 0.07
 idw = RW[:, :-1] * np.diff(RW, axis=1); lhs = idw.sum(1); rhs = 0.5 * (RW[:, -1] ** 2 - RW[:, 0] ** 2 - (np.diff(RW, axis=1) ** 2).sum(1))
 assert np.allclose(lhs, rhs); print("C1 identity sum x_{t-1} w_t = (x_n^2 - x_1^2 - sum w_t^2)/2 checked")
 kap, dt_, sOU = 2.0, 0.1, 1.0; print(f"C3 OU -> AR(1): phi = {np.exp(-kap * dt_):.5f}, sigma2 = {sOU**2 * (1 - np.exp(-2 * kap * dt_)) / (2 * kap):.5f}")

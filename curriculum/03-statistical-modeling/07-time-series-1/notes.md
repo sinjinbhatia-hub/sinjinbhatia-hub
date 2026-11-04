@@ -106,7 +106,7 @@ $$\gamma(h)=\sigma^2\sum_{j=-\infty}^\infty\psi_j\psi_{j+h}.\tag{3.6}$$
 2. $\mathrm{Cov}(x_{t+h},x_t)=\sum_j\sum_k\psi_j\psi_k\mathbb E[w_{t+h-j}w_{t-k}]$.
 3. The expectation is $\sigma^2$ when $t+h-j=t-k$, i.e. $j=k+h$, and 0 otherwise. So $\gamma(h)=\sigma^2\sum_k\psi_{k+h}\psi_k$, independent of $t$. ∎
 
-■ **What just happened.** Covariance at lag $h$ is the overlap between the weight sequence and itself shifted by $h$: an autocorrelation of the filter. Wold's theorem (stated; Brockwell & Davis §5.7) says every stationary, purely nondeterministic process has this form with causal $\psi$, so (3.6) covers the whole subject. ST-8 Fourier-transforms it: the spectral density is $\frac{\sigma^2}{2\pi}|\psi(e^{-i\omega})|^2$.
+■ **What just happened.** Covariance at lag $h$ is the overlap between the weight sequence and itself shifted by $h$: an autocorrelation of the filter. Wold's theorem (stated; Brockwell & Davis ch. 2) says every stationary, purely nondeterministic process has this form with causal $\psi$, so (3.6) covers the whole subject. ST-8 Fourier-transforms it: the spectral density is $\frac{\sigma^2}{2\pi}|\psi(e^{-i\omega})|^2$.
 
 ### 3.4 AR(1) and MA(1)
 
@@ -158,7 +158,7 @@ $$\det(\lambda I-A)=\lambda^p-\phi_1\lambda^{p-1}-\dots-\phi_p=\lambda^p\,\phi(1
 ▶ **Try it first.** Iterate (3.11) backward as you did for AR(1), and use LA-7 (3.8) for the leftover $A^k\mathbf s_{t-k}$. For (3.12), guess an eigenvector: if $A\mathbf v=\lambda\mathbf v$, rows 2 to $p$ say $v_{i-1}=\lambda v_i$.
 
 1. **Eigenvectors.** Rows $2,\dots,p$ of $A\mathbf v=\lambda\mathbf v$ read $v_{i-1}=\lambda v_i$. Setting $v_p=1$ forces $\mathbf v=(\lambda^{p-1},\lambda^{p-2},\dots,\lambda,1)^\top$ (and $v_p=0$ would force $\mathbf v=0$ when $\lambda\ne0$; $\lambda=0$ is not an eigenvalue when $\phi_p\ne0$, since $\det A=\pm\phi_p$).
-2. **Row 1** then reads $\phi_1\lambda^{p-1}+\phi_2\lambda^{p-2}+\dots+\phi_p=\lambda\cdot\lambda^{p-1}$, i.e. $\lambda^p-\phi_1\lambda^{p-1}-\dots-\phi_p=0$. Dividing by $\lambda^p$: $1-\phi_1\lambda^{-1}-\dots-\phi_p\lambda^{-p}=\phi(1/\lambda)=0$. So $\lambda$ is an eigenvalue iff $z=1/\lambda$ is a root of $\phi$. Since both polynomials are degree $p$ and monic up to sign, multiplicities match too, which proves (3.12).
+2. **Row 1** then reads $\phi_1\lambda^{p-1}+\phi_2\lambda^{p-2}+\dots+\phi_p=\lambda\cdot\lambda^{p-1}$, i.e. $\lambda^p-\phi_1\lambda^{p-1}-\dots-\phi_p=0$. Dividing by $\lambda^p$: $1-\phi_1\lambda^{-1}-\dots-\phi_p\lambda^{-p}=\phi(1/\lambda)=0$. So $\lambda$ is an eigenvalue iff $z=1/\lambda$ is a root of $\phi$. To get (3.12) as an identity of polynomials, multiplicities included, expand $\det(\lambda I-A)$ along its first row $(\lambda-\phi_1,-\phi_2,\dots,-\phi_p)$ (cofactor expansion, LA-6): deleting row 1 and column $k$ leaves a block-triangular matrix with $k-1$ diagonal entries $-1$ and $p-k$ diagonal entries $\lambda$, so the cofactor is $(-1)^{1+k}(-1)^{k-1}\lambda^{p-k}=\lambda^{p-k}$, and $\det(\lambda I-A)=(\lambda-\phi_1)\lambda^{p-1}-\sum_{k\ge2}\phi_k\lambda^{p-k}$.
 3. **Iterate.** $\mathbf s_t=A^k\mathbf s_{t-k}+\sum_{j=0}^{k-1}A^j\mathbf e_1w_{t-j}$. If the spectral radius $r(A)<1$, then $\|A^k\|\le Cr^k$ for some $r<1$ (LA-7 (3.8) for diagonalizable $A$; LA-11's Jordan form in general), so for a stationary $\mathbf s$ the first term goes to 0 in mean square and $x_t=\sum_{j\ge0}\psi_jw_{t-j}$ with $\psi_j=(A^j)_{11}$, absolutely summable because $|\psi_j|\le Cr^j$. Causal and stationary.
 4. **Conversely**, if some eigenvalue has $|\lambda|\ge1$, let $\mathbf u^\top$ be a left eigenvector, $\mathbf u^\top A=\lambda\mathbf u^\top$, and $y_t=\mathbf u^\top\mathbf s_t$. Then $y_t=\lambda y_{t-1}+(\mathbf u^\top\mathbf e_1)w_t$, and $u_1\ne0$ (else $\mathbf u^\top A=\lambda\mathbf u^\top$ forces $\mathbf u=0$ by the shift structure). This is a scalar AR(1) with $|\lambda|\ge1$, which by §3.4 steps 4–5 has no causal stationary solution (for complex $\lambda$ the same variance argument applies to $|y_t|^2$). ∎
 
@@ -270,7 +270,7 @@ $$-2\log L=\sum_{t=1}^n\Big[\log(2\pi P_t)+\frac{(x_t-\hat x_t)^2}{P_t}\Big]\tag
 3. Multiply and take logs:
 $$\log L(\phi,\sigma^2)=-\frac n2\log(2\pi\sigma^2)+\frac12\log(1-\phi^2)-\frac{(1-\phi^2)x_1^2+\sum_{t=2}^n(x_t-\phi x_{t-1})^2}{2\sigma^2}.\tag{3.25}$$
 
-■ **What just happened.** The exact likelihood is the conditional (CLS) likelihood plus the density of the first observation under the stationary distribution. That term contributes $\frac12\log(1-\phi^2)$, which goes to $-\infty$ as $|\phi|\to1$: the exact MLE is always stationary. Comparing (3.25) with the MVN density shows $\det\Gamma_n=\sigma^{2n}/(1-\phi^2)$ and that $\Gamma_n^{-1}$ is tridiagonal (an AR(1) is Markov, so its precision matrix has zeros beyond the first off-diagonal; ST-8's Gaussian Markov random fields generalize this). The project checks (3.25) against the 200-dimensional Toeplitz MVN evaluated by Cholesky.
+■ **What just happened.** The exact likelihood is the conditional (CLS) likelihood plus the density of the first observation under the stationary distribution. That term contributes $\frac12\log(1-\phi^2)$, which goes to $-\infty$ as $|\phi|\to1$: the exact MLE is always stationary. Comparing (3.25) with the MVN density shows $\det\Gamma_n=\sigma^{2n}/(1-\phi^2)$ and that $\Gamma_n^{-1}$ is tridiagonal (an AR(1) is Markov, so its precision matrix has zeros beyond the first off-diagonal; this sparsity is what makes ST-8's Kalman filter cost $O(n)$). The project checks (3.25) against the 200-dimensional Toeplitz MVN evaluated by Cholesky.
 
 **Asymptotic normality.** For a causal AR($p$), Yule–Walker, CLS and exact ML all satisfy
 $$\sqrt n(\hat{\boldsymbol\phi}-\boldsymbol\phi)\xrightarrow{d}\mathcal N(\mathbf 0,\ \sigma^2\Gamma_p^{-1}).\tag{3.26}$$
@@ -397,7 +397,7 @@ plus possible lagged differences: changes in $y$ respond to last period's disequ
 4. With $\alpha=1+\theta$: $\hat x_{t+1}=\alpha x_t+(1-\alpha)\hat x_t$, which is the SES recursion for $\ell_t=\hat x_{t+1}$. ∎
 $$\text{SES}(\alpha)\equiv\text{ARIMA}(0,1,1)\text{ with }\theta=\alpha-1;\quad P_{n+h}=\sigma^2\big(1+(h-1)\alpha^2\big).\tag{3.37}$$
 
-■ **What just happened.** SES is optimal exactly when the series is a random walk observed with noise (the ARIMA(0,1,1) is equivalent to that local-level model; ST-8 shows it via the Kalman filter). Invertibility $|\theta|<1$ allows $0<\alpha<2$; the usual $\alpha\in(0,1)$ is $\theta\in(-1,0)$. The ARIMA view adds what SES alone does not give you: a likelihood for $\alpha$ and the prediction variance in (3.37), from $\psi_0=1$, $\psi_j=1+\theta=\alpha$ for $j\ge1$ and (3.30). Similarly in spirit but not proved here: Holt's linear method is an ARIMA(0,2,2), and additive Holt–Winters is a seasonal ARIMA (Hyndman & Athanasopoulos ch. 8–9).
+■ **What just happened.** SES is optimal exactly when the series is a random walk observed with noise (the ARIMA(0,1,1) is equivalent to that local-level model; ST-8 shows it via the Kalman filter). Invertibility $|\theta|<1$ allows $0<\alpha<2$; the usual $\alpha\in(0,1)$ is $\theta\in(-1,0)$. The ARIMA view adds what SES alone does not give you: a likelihood for $\alpha$ and the prediction variance in (3.37), from $\psi_0=1$, $\psi_j=1+\theta=\alpha$ for $j\ge1$ and (3.30). Stated without proof: Holt's linear method is an ARIMA(0,2,2), and additive Holt–Winters is a seasonal ARIMA (Hyndman & Athanasopoulos ch. 8–9).
 
 ### 3.14 What comes next
 
@@ -479,8 +479,8 @@ ARIMA(0,1,1) with $\theta=-0.7$, starting with $\hat x_2=x_1=10$: $\hat x_3=x_2+
 - **ST-3.** Every regression on time-indexed data needs this module: autocorrelated errors invalidate the standard errors (§3.12), and the cure is either modeling the errors as ARMA (regression with ARMA errors, fit by (3.24)), HAC standard errors, or differencing.
 - **ST-6.** An MCMC chain is a stationary time series; the effective sample size (ST-6 (3.18)) is $n/\sum_h\rho(h)$, and for an AR(1)-like chain it is $n(1-\phi)/(1+\phi)$ (ST-6 Example 4.5). Its $\hat R$ is a nonstationarity diagnostic.
 - **LA-7, LA-10.** Stationarity is spectral radius < 1 of the companion matrix; the likelihood is a Toeplitz Cholesky; Durbin–Levinson is the $O(n^2)$ Toeplitz solver (Levinson 1947, for Wiener's filtering problem).
-- **CM-1, SM.** AR(1) is the sampled Ornstein–Uhlenbeck process (Brownian motion in a harmonic trap, Langevin's equation, SM-5); AR(2) with complex roots is the sampled noisy underdamped oscillator (Example 4.2). Fluctuation–dissipation is a statement about $\gamma(h)$.
-- **ML-8, ML-9.** A causal 1-D convolution is a finite MA filter; a recurrent network is a nonlinear AR. Evaluating any learned forecaster requires the time-ordered splits and the ARIMA baseline from this module.
+- **CM-1, SM.** AR(1) is the sampled Ornstein–Uhlenbeck process (Brownian motion in a harmonic trap, the Langevin dynamics of SM-7); AR(2) with complex roots is the sampled noisy underdamped oscillator (Example 4.2). Fluctuation–dissipation is a statement about $\gamma(h)$.
+- **ML-8.** A causal 1-D convolution is a finite MA filter; a recurrent network is a nonlinear AR. Evaluating any learned forecaster requires the time-ordered splits and the ARIMA baseline from this module.
 
 ## 6. Exercises
 
@@ -528,6 +528,6 @@ See `exercises.md`: 6 warm-ups (ACFs, roots, random-walk correlation, redundancy
 ## 10. Pair with
 
 - **Shumway & Stoffer, *Time Series Analysis and Its Applications*, ch. 1–3** (free "EZ" edition online). The applied core: real data sets (sunspots, global temperature, SOI, GNP) for every method here, and R code. Better than these notes for practice at identification.
-- **Brockwell & Davis, *Introduction to Time Series and Forecasting*, ch. 1–6.** Cleaner theory: the Bartlett formula, Durbin–Levinson and the innovations algorithm derived in full (§2.4–2.5, §3.3), Wold's decomposition. Read it for the proofs this module states.
+- **Brockwell & Davis, *Introduction to Time Series and Forecasting*, ch. 1–6.** Cleaner theory: the Bartlett formula, Durbin–Levinson and the innovations algorithm derived in full (ch. 2–3), Wold's decomposition. Read it for the proofs this module states.
 - **Hyndman & Athanasopoulos, *Forecasting: Principles and Practice*, ch. 8–9** (free online). Exponential smoothing in its state-space form and ARIMA from a forecaster's view, with time-series cross-validation. The practical complement.
 - **Hamilton, *Time Series Analysis*, ch. 1–5 (and 17–19 for unit roots and cointegration).** The reference: difference equations via companion matrices (ch. 1–2, the same derivation as §3.5), exact likelihoods for every ARMA (ch. 5), and the Brownian-motion derivation of (3.34) (ch. 17).

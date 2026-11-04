@@ -419,7 +419,7 @@ ax[1].fill_between(np.arange(n), -1.96 * np.sqrt(Psm_m[:, 0, 0]), 1.96 * np.sqrt
 ax[1].legend(fontsize=7)
 fig.tight_layout(); fig.savefig(FIG / "tracker.png", dpi=120); plt.close(fig)
 
-# local level, q = 1: Riccati P^2 - qP - q = 0 (eq. 3.25)
+# local level, q = 1: Riccati P^2 - qP - q = 0 (eq. 3.24)
 one = np.array([[1.0]])
 kfl = kalman_filter(rng.standard_normal(60), one, one, one, one, one, np.zeros(1), np.array([[1e6]]))
 P_ss = (1 + np.sqrt(5)) / 2
