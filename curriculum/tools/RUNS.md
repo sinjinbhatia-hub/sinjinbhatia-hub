@@ -130,3 +130,11 @@ PY-8 was complete on disk (its writer finished the files before a server 500 kil
 |---|---|
 | wf_ef5d9db5-642 | verify (Fable): EM-8 |
 | wf_deed0da5-90f | write-only (Opus): ST-6 |
+
+## Sixteenth round (2026-11-04 04:07 UTC) — user asked to use the whole window; chain rounds until the limit hits
+
+| Run ID | Modules |
+|---|---|
+| wf_609082c6-cc1 | verify (Fable): ST-6 |
+| wf_ba2dfb9d-c13 | write-only (Opus): ST-7, ST-8, ST-9 |
+| wf_84fda2d7-ce6 | write-only (Opus): QM-1, QM-2, QM-3 |
