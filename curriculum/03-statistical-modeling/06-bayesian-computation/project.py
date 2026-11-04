@@ -160,6 +160,8 @@ mu0, k0, a0, b0 = 0.0, 1.0, 2.0, 2.0
 kn = k0 + n; mun = (k0 * mu0 + n * ybar) / kn; an = a0 + n / 2; bn = b0 + 0.5 * (S_ + k0 * n / kn * (ybar - mu0)**2)
 print(f"Ex 4.2: ybar={ybar:.4f}, S={S_:.4f}, kappa_n={kn}, mu_n={mun:.4f}, alpha_n={an}, beta_n={bn:.4f}")
 print(f"  mu | s2=1: N({mun:.4f}, {1/kn:.4f});  s2 | mu=mu_n: IG({a0 + (n+1)/2}, {b0 + 0.5*(((yN-mun)**2).sum() + k0*(mun-mu0)**2):.4f})")
+assert np.isclose(mun, 4.1714, atol=1e-4) and np.isclose(bn, 13.7671, atol=1e-4)
+assert np.isclose(b0 + 0.5 * (((yN - mun)**2).sum() + k0 * (mun - mu0)**2), bn)   # Example 4.2: conditional scale at mu_n equals beta_n
 def gibbs_normal(S, rng):
     mu, s2, out = 0.0, 1.0, np.empty((S, 2))
     for s in range(S):
@@ -283,7 +285,10 @@ for d in (2, 10, 50):
     er = np.mean([ess(dr[:, i]) for i in range(d)]) / 30000; eh = np.mean([ess(dh[:, i]) for i in range(d)]) / ng
     scal[d] = (er, eh, a_r, a_h)
     print(f"d={d:2d}: RWM acc {a_r:.2f}, n_eff/eval {er:.4f} | HMC eps {eps:.3f} L {L} acc {a_h:.2f}, n_eff/grad {eh:.4f} | ratio {eh/er:.1f}")
-assert scal[50][1] / scal[50][0] > 2 * scal[2][1] / scal[2][0]
+rat = {d: scal[d][1] / scal[d][0] for d in (2, 10, 50)}
+assert rat[2] < rat[10] < rat[50] and rat[50] > 4 * rat[2]                       # HMC's advantage grows with d (notes: 3.8x -> 28x)
+assert scal[2][0] > scal[10][0] > scal[50][0] and scal[2][1] > scal[10][1] > scal[50][1]
+assert scal[50][0] / scal[2][0] < 0.1 and scal[50][1] / scal[2][1] > 0.25         # RWM falls ~1/d (0.04 of d=2); HMC far more slowly
 fig, ax = plt.subplots(figsize=(5, 4)); ds = np.array([2, 10, 50])
 ax.loglog(ds, [scal[d][0] for d in ds], "o-", label="RWM (per density eval)")
 ax.loglog(ds, [scal[d][1] for d in ds], "s-", label="HMC (per gradient eval)")
@@ -309,7 +314,7 @@ assert rhat(mixed) < 1.01 and rhat(unmixed) > 1.1
 # %%
 y8 = np.array([28., 8, -3, 7, -1, 1, 18, 12]); s8 = np.array([15., 10, 16, 11, 9, 11, 10, 18]); J8 = 8
 def tau_post(tg):
-    """Exact p(tau | y) on a grid: y ~ N(0, diag(s^2 + tau^2) + 25 11^T) after integrating out mu and theta."""
+    """Exact p(tau | y) on a grid, eq. (3.25): y ~ N(0, diag(s^2 + tau^2) + 25 11^T) after integrating out mu and theta."""
     lp = np.array([stats.multivariate_normal(np.zeros(J8), np.diag(s8**2 + t**2) + 25).logpdf(y8) for t in tg])
     lp += -np.log1p((tg / 5)**2); w = np.exp(lp - lp.max()); return w / np.trapezoid(w, tg)
 def cond_mean(t):
@@ -322,6 +327,8 @@ print(f"exact: E[tau|y]={Etau:.3f}; E[theta|y] = {Eth.round(2)}")
 print(f"shrinkage at tau = E[tau|y]: B_j = {cond_mean(Etau)[1].round(3)}")
 print(f"Ex 4.6 (tau=10): mu_hat={muh10:.3f}, B_j = {B10.round(3)}, E[theta_j|tau,y] = {th10.round(2)}")
 assert np.isclose(B10[0], 225 / 325) and np.isclose(B10[4], 81 / 181)
+assert np.isclose(muh10, 3.663, atol=1e-3) and np.allclose(th10[[0, 4, 2, 6]], [11.15, 1.09, 1.79, 10.83], atol=6e-3)   # Example 4.6
+assert np.isclose(Etau, 3.60, atol=6e-3) and np.allclose(Eth, [6.21, 4.94, 3.93, 4.76, 3.62, 4.04, 6.30, 4.85], atol=6e-3)   # notes 3.6
 ybw = (y8 / s8**2).sum() / (1 / s8**2).sum(); vbw = 1 / (1 / s8**2).sum()
 print(f"complete pooling: theta ~ N({ybw:.3f}, {np.sqrt(vbw):.3f}^2)")
 
@@ -415,6 +422,7 @@ A = a0 + (n + 1) / 2; Eprec = 1.0; hist = []
 for it in range(50):
     v = 1 / (kn * Eprec)
     B = b0 + 0.5 * (((yN - mun)**2).sum() + n * v + k0 * ((mun - mu0)**2 + v)); Eprec = A / B; hist.append((v, B))
+assert np.allclose(hist[0], (1 / 7, 14.2671), atol=1e-4) and np.allclose(hist[1], (0.37058, 15.0642), atol=1e-4) and np.allclose(hist[2], (0.39128, 15.1366), atol=1e-4)
 print("Ex 4.7: CAVI (Var_q mu, B) by iteration:", ", ".join(f"({a:.5f}, {b:.4f})" for a, b in hist[:3]), f"... -> ({v:.5f}, {B:.4f})")
 var_exact = bn / (kn * (an - 1))
 print(f"  fixed point: A={A}, B={B:.4f} (= beta_n (2a_n+1)/(2a_n) = {bn*(2*an+1)/(2*an):.4f}), E_q[1/s2] {Eprec:.4f} = a_n/b_n {an/bn:.4f}")
