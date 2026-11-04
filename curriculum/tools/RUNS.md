@@ -140,4 +140,4 @@ PY-8 was complete on disk (its writer finished the files before a server 500 kil
 | wf_84fda2d7-ce6 | write-only (Opus): QM-1, QM-2, QM-3 |
 | wf_738bfd9b-f96 | write-only (Opus): QM-4, QM-5, QM-6 (chained after the ST-6 review finished) |
 | wf_b9ac97df-6b8 | verify (Fable): QM-1, QM-2, QM-3 (chained) |
-| (next) | verify (Fable): ST-7, ST-8, ST-9 (chained) |
+| wf_72441d01-ce0 | verify (Fable): ST-7, ST-8, ST-9 (chained) |
