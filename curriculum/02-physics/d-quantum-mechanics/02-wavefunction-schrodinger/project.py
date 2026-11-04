@@ -25,6 +25,7 @@ import numpy as np
 import sympy as sp
 from scipy import constants as C
 from scipy.integrate import quad, solve_ivp
+from scipy.special import erfc
 
 FIG = Path(__file__).resolve().parent / "figures"
 FIG.mkdir(exist_ok=True)
@@ -452,7 +453,6 @@ print(f"Box slosh (hbar=m=L=1): period 4/(3 pi) = {Tslosh:.5f}; <x> amplitude 16
 lam = 1.0
 print(f"A1: P(|x| > sigma) = e^(-sqrt2) = {np.exp(-np.sqrt(2)):.4f}")
 assert abs(np.exp(-np.sqrt(2)) - 0.2431) < 1e-4
-from scipy.special import erfc
 print(f"A1: Gaussian comparison P(|x - mu| > sigma) = {erfc(1/np.sqrt(2)):.4f}")
 k_e = 2 * np.pi / 1e-10
 print(f"A2: lambda = 1 A: v_g = {hbar*k_e/me:.4e} m/s, v_p = {hbar*k_e/(2*me):.4e} m/s, E = {(hbar*k_e)**2/(2*me):.4e} J = {(hbar*k_e)**2/(2*me)/eV:.2f} eV")
