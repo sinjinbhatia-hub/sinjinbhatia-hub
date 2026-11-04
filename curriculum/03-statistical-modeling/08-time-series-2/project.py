@@ -639,12 +639,13 @@ print("A1 MA(1) theta=-0.5: f(0), f(1/4), f(1/2) =", np.round(arma_spectrum([0, 
 c2 = 0.5 * (0.3 - 1) / (4 * 0.3)
 print(f"A2 AR(2) 0.5,0.3: f(0)={float(arma_spectrum(0, [0.5, 0.3])):.4f}, f(1/2)={float(arma_spectrum(0.5, [0.5, 0.3])):.4f}, "
       f"stationary point cos={c2:.4f} at w={np.arccos(c2)/(2*np.pi):.4f} with f={float(arma_spectrum(np.arccos(c2)/(2*np.pi), [0.5, 0.3])):.4f} (a minimum)")
+print("A3 chi2_14 quantiles", np.round(stats.chi2.ppf([.025, .975], 14), 3))
 print("A3 Daniell m=3, nu=14: CI factors", round(14 / stats.chi2.ppf(.975, 14), 4), round(14 / stats.chi2.ppf(.025, 14), 4))
 P = (0.25 + np.sqrt(0.0625 + 4 * 0.25)) / 2
 print(f"A5 local level q=0.25: P_ss={P:.4f}, K_ss={P/(P+1):.4f}")
 for q in (0.01, 100):
     P = (q + np.sqrt(q * q + 4 * q)) / 2
-    print(f"   q={q}: K_ss={P/(P+1):.4f}")
+    print(f"   q={q}: P_ss={P:.4f}, K_ss={P/(P+1):.4f}")
 print("A6 GARCH 0.02,0.08,0.9: var", round(0.02 / 0.02, 3), "half-life", round(np.log(.5) / np.log(.98), 2),
       "5-step from 2.0:", round(1 + 0.98 ** 4 * (2 - 1), 4))
 # B5 two-step tracker continuation: y_2 = 2.5
