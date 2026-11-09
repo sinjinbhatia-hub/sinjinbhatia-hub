@@ -1,69 +1,67 @@
 # Handoff — where the build stands and how to continue
 
-Last updated 2026-11-03 14:50 UTC, after round 15. The branch is `claude/brave-knuth-64723m`; everything below is committed and pushed. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
+Last updated 2026-11-09 20:45 UTC, at the start of round 17. The branch is `claude/brave-knuth-64723m`. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
 
-## Status (41 of 80 math modules done; Python course complete, 10 of 10 done)
+## Status (42 of 80 math modules done; Python course complete, 10 of 10)
 
-"Done" means all four files exist (`notes.md`, `exercises.md`, `solutions.md`, `project.py`), an independent reviewer re-derived the math and recomputed the numbers, the fixes were applied, and the script passes headless. Review notes for each module are in `tools/reviews/<code>.md`.
+"Done" means all four files exist (`notes.md`, `exercises.md`, `solutions.md`, `project.py`), an independent reviewer re-derived the math and recomputed the numbers, the fixes were applied, and the script passes headless. Review notes for each module are in `tools/reviews/<code>.md`. A module with no file there has not been reviewed.
 
 | State | Modules |
 |---|---|
-| **Done** (41) | F1–F6 · LA-1–14 · CM-1–8 · EM-1–8 (E&M complete) · ST-1–5 |
-| **Done, Python** (10) | PY-1–10 — the whole course, reviewed with every code block executed; 0 high-severity findings |
-| **Written, awaiting review** (1) | ST-6 (Opus; script passes) — not yet independently checked |
-| **Not started** (38) | SM-1–7 · QM-1–9 · ST-7–9 · ML-1–10 · QC-1–9 |
+| **Done** (42) | F1–F6 · LA-1–14 · CM-1–8 · EM-1–8 · ST-1–6 |
+| **Done, Python** (10) | PY-1–10, reviewed with every code block executed |
+| **Written, awaiting review** (8) | QM-1–5 · ST-7–9 (Opus; scripts pass; reviews in flight in round 17) |
+| **Being written in round 17** (4) | QM-6, QM-7, QM-8, QM-9 |
+| **Not started** (26) | SM-1–7 · ML-1–10 · QC-1–9 |
 
-**Priority (user's request, 2026-10-23): finish the Python course (`00-python/`, briefs `research/briefs/PY-*.md`) first.** Its briefs end with a REVIEW FOCUS section the reviewer applies (run every code block; a wrong stated output is high severity). The PY writer addendum is at the end of `research/WRITER-BRIEF.md`.
+Until a module is in a Done row, treat its derivations and numbers as unverified.
 
-Until a module is in the Done row, treat its derivations and numbers as unverified.
+Courses fully done: Python, Foundations, Linear Algebra, Classical Mechanics, E&M.
+
+## What was lost on 2026-11-04, and the fix
+
+The usage limit hit mid-round and the container was reclaimed before the last edits were committed. Lost: the review fixes for QM-1 and QM-2 (their reviews had finished; they are being redone) and partial drafts of QM-6–9. Cause: the autosave script lived in `/tmp` and ran every 10 minutes. It now lives at `tools/autosave.sh`, runs every 3 minutes, and must be started at the beginning of every round:
+
+```bash
+cd <repo root>
+pip install -q numpy scipy matplotlib sympy pandas pytest numba   # a fresh container has none of these
+setsid nohup bash curriculum/tools/autosave.sh > /tmp/autosave.log 2>&1 < /dev/null & disown
+```
+
+Also commit and push by hand each time an agent reports. Do not end a turn with uncommitted work.
 
 ## How to run a round
 
-The build runs through the Workflow tool with `tools/build_modules_workflow.js` (pass it as `scriptPath`). Arguments:
+Launch one background agent per module with the Agent tool (`subagent_type: general-purpose`). The standing instructions are in two files; the launch message only names the module:
 
-```json
-{
-  "combined": true,
-  "writerModel": "sonnet",
-  "modules": [
-    {"code": "ST-3", "dir": "03-statistical-modeling/03-linear-regression", "brief": "ST-3.md", "mode": "verify"},
-    {"code": "EM-6", "dir": "02-physics/b-electromagnetism/06-electrodynamics-maxwell", "brief": "EM-6.md", "mode": "write"},
-    {"code": "EM-7", "dir": "02-physics/b-electromagnetism/07-electromagnetic-waves", "brief": "EM-7.md"}
-  ]
-}
-```
+- **Write:** "Read ROOT/tools/AGENT-WRITE.md and follow it exactly, with CODE = QM-6, DIR = 02-physics/d-quantum-mechanics/06-hydrogen-atom, BRIEF = QM-6.md." Pass `model: "opus"` (the user's choice since round 10; Sonnet also works and costs less per module against the usage limit).
+- **Review and fix:** "Read ROOT/tools/AGENT-REVIEW.md and follow it exactly, with CODE = …, DIR = …, BRIEF = …." No model override, so the reviewer runs on the session model.
 
-- `mode` omitted: write, then review+fix. `"verify"`: review+fix an existing module. `"write"`: write only, review deferred.
-- `writerModel` picks the writer model (`"sonnet"` or `"opus"`); reviewers always use the session model (Fable). Measured from transcripts: a Fable review costs 2–4M cache-read tokens; an Opus write 12–17M (PY-9: 16.6M, 75 turns); a Sonnet write 22–59M raw for the Python modules (84–158 turns) but Sonnet tokens count against the usage limit at a small fraction of Fable's rate — round 9 ran 163M Sonnet tokens plus 4 Fable reviews without hitting the limit. Round sizing: with Sonnet writers, 3–4 reviews + 3–4 writes per round; with Opus writers (user's choice from round 10), 3 reviews + 1 write. All 14 Sonnet-written modules reviewed so far had 0 high-severity findings.
-- Modules without a brief file (F1, LA-1–12, LA-14) take `"brief": "none"`. Folder paths for every module are in `research/briefs/*.md` ("Folder:" line) and the course READMEs.
-- Reviewers write their findings to `tools/reviews/<code>.md` as they go. If a reviewer is killed, the next one resumes from that file.
-- `tokenCap` exists in the script but is not useful: `budget.spent()` does not track the usage limit.
+Tell every agent: no git commands, write only inside its module folder (and its review file), save files as soon as each is drafted. `ROOT` is the absolute path of this `curriculum/` folder. Folder paths for every module are on the "Folder:" line of `research/briefs/<code>.md`. Modules without a brief (F1, LA-1–12, LA-14) take BRIEF = none.
 
-## Sizing a round so it finishes before the usage limit
+`tools/build_modules_workflow.js` holds the same prompts for the Workflow tool (args `{combined: true, writerModel, modules: [{code, dir, brief, mode}]}` with mode `write` or `verify`). Use it when that tool is available; the two AGENT files were generated from it.
 
-There is no usage signal readable from inside the session. The limit kills every running agent at once; observed windows died after roughly 20–30M Fable-weighted tokens. A round of **4 Fable reviews + 2–3 Sonnet writes** (about 17M weighted) finished with room to spare in round 7. Run that as two workflows (one verify, one write-only), both at once, then stop and wait for the user before the next round. Do not run more than three workflows at a time. Commit after each workflow returns; an autosave loop (`/tmp/claude-0/autosave.sh`, commits every 10 min) helps but does not survive a worker restart, so restart it with `setsid nohup ... & disown`.
+A reviewer that is interrupted leaves its findings in `tools/reviews/<code>.md`; the next reviewer for that module reads the file and continues.
+
+## Sizing
+
+There is no usage signal readable from inside the session. Measured: a review costs 2–4M cache-read tokens, an Opus write 12–17M. One 5-hour window has covered about 8 Opus writes plus 3 reviews (round 16) before the limit killed everything in flight. Eight agents at a time is the ceiling on this 4-CPU machine. The user's standing instructions: use the window, but when the limit hits, do not restart on the reset — wait for "continue".
 
 ## Build order (prerequisites first)
 
-1. Verify ST-6. Write ST-7 (+ ST-8 if Sonnet writers).
-2. Verify those. Write ST-8, ST-9.
-3. Verify those. Write the rest: QM-1–9, SM-1–7, ML-1–10, QC-1–9 in that order.
-
-The user has asked (2026-11-02) that each round stop well before the usage limit and that nothing restart on its own: one sized round per "continue", then stop.
-
-Note from ST-5's review: its 4 high-severity findings were quoted numbers in the notes that had drifted from the script's RNG stream (the writer edited the data generation after writing the prose). The fix was to pin every quoted number with an assert. Reviewers should keep checking for this pattern in Sonnet-written stats modules.
-4. QM-2 through QM-9 (needs EM done; QM-6 reuses EM-3's Legendre machinery).
-5. SM-1 through SM-7 (SM-5 needs QM-5).
-6. ML-1 through ML-10 (needs ST-1–5).
-7. QC-1 through QC-9 (needs QM-4, QM-7).
-
-Writers can cite earlier modules by code rather than re-deriving.
+1. Review QM-1–5 and ST-7–9. Write QM-6–9.
+2. Review QM-6–9. Write SM-1–7 (SM-5 needs QM-5).
+3. Review SM. Write ML-1–10 (needs ST-1–5, LA-14).
+4. Review ML. Write QC-1–9 (needs QM-4, QM-7).
+5. Review QC. Final pass.
 
 ## Known issues
 
-- **Length.** Almost every module runs over the STYLE.md targets (notes 9–15k words, scripts 500–900 lines). Reviewers consistently decline to trim because the material is correct and brief-mandated. Accepted; not worth the tokens to shorten.
-- **Equation tags** out of numerical order in a few modules (EM-3, LA-14) because later modules cite them. Cosmetic; leave them.
-- **Conventions** are fixed in `STYLE.md` (complex inner product conjugate-linear in the first slot; qubit 0 leftmost; QFT e^{+2πijk/N}; Osgood Fourier convention in F3, symmetric 1/√(2π) in physics; SI with ℏ and k_B explicit). ST-5 uses Bayes factor BF10 while ST-2 used B01; both state it in their conventions box.
+- **Length.** Almost every module runs over the STYLE.md targets (notes 9–15k words, scripts 500–900 lines). Reviewers decline to trim correct, brief-mandated material. Accepted.
+- **Number drift.** ST-5's review found quoted numbers in the notes that no longer matched the script, because the writer changed the data generation after writing the prose. Reviewers of simulation-heavy modules must pin every quoted number with an assert.
+- **Signature.** EM-8 uses Griffiths' (−,+,+,+) metric, so ∂_νF^μν = μ₀J^μ. QM-9 and anything relativistic should state its convention.
+- **Conventions** are fixed in `STYLE.md` (complex inner product conjugate-linear in the first slot; qubit 0 leftmost; QFT e^{+2πijk/N}; Osgood Fourier convention in F3, symmetric 1/√(2π) in physics; SI with ℏ and k_B explicit).
+- pandas 3 is installed (copy-on-write always on); PY-9 is written for it.
 
 ## Final pass, once all 80 modules are done
 
