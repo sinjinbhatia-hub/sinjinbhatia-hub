@@ -1,0 +1,16 @@
+# Brief: CM-2 — Least action: from Fermat to Hamilton's principle; Euler–Lagrange
+Folder: curriculum/02-physics/a-classical-mechanics/02-least-action/ · ~8 hours · prereqs F6, CM-1 · unlocks CM-3
+Pair with: Taylor ch. 6–7.1; Feynman Lectures II ch. 19; Landau & Lifshitz *Mechanics* §1–2; Susskind & Hrabovsky *Theoretical Minimum* lectures 6–7.
+Conventions: L = T − V; S[q] = ∫L dt; generalized coordinates q_i; p_i = ∂L/∂q̇_i (defined here).
+
+§1 is history-as-motivation: Hero, Fermat (1662) and the Cartesians, Maupertuis (1744) and the Euler dispute, Lagrange 1788 ("no diagrams"), Hamilton 1834–35, and the 20th-century payoff (survives relativity, fields, QM via Feynman). The forcing problem: CM-1's constraint pain plus coordinate independence. §2: of all paths from A at t₁ to B at t₂, nature picks the one making ∫(T − V)dt stationary; competing paths; why T − V balances fast vs high; F6's discretized-action picture with t as independent variable.
+
+Topics: recap E–L with t independent and several q_i; HAMILTON'S PRINCIPLE; DERIVE Newton's second law from it in Cartesian coordinates, all three components; WHY T − V: E–L for αT + βV reproduces Newton only when β/α = −1 (derive); non-uniqueness L + dF/dt (prove) and cL; THEOREM: E–L covariant under point transformations q → Q(q,t) — full proof (chain rule or invariance of the action + fundamental lemma); p_i and generalized force; polar coordinates from L = ½m(ṙ² + r²θ̇²) − V(r): centripetal term appears, p_θ = mr²θ̇ (CM-4 preview); pendulum in one line vs CM-1's page; inclined plane; free-particle action along the straight line vs a bent path (compute); IS IT A MINIMUM? oscillator: minimum only for t₂ − t₁ < T/2, saddle beyond (compute the second variation) — "stationary", not "least"; S(q₂, t₂) and ∂S/∂q₂ = p₂ (free particle; CM-8 teaser); Feynman's picture (e^{iS/ℏ}, coherent addition near the stationary path; QM-9; state only); velocity-dependent potentials: charged particle L = ½mv² − qφ + q v·A gives the Lorentz force (derive in full; EM-6 link); limits: dissipative forces (CM-3 handles separately).
+
+Worked examples (≥5): Newton from the principle; polar coordinates; pendulum one line vs CM-1; free-particle action along two paths with numbers (m = 1, (0,0)→(1,1) straight vs via x = 2 at t = ½); oscillator second variation and the T/2 threshold; Lorentz force derivation.
+
+Project: discretized action for a projectile, oscillator, pendulum minimized over interior points (L-BFGS-B) vs ODE solution (assert); S(ε) for perturbations εη flat at 0 (assert numerical derivative ≈ 0); oscillator: S(ε) minimum for a short interval, a descending direction beyond T/2 (find such η); sympy E–L in polar coordinates and for a charged particle in uniform B, integrate the latter and show circular motion at the cyclotron frequency; covariance: pendulum from the Cartesian-with-multiplier form (CM-1) vs the θ Lagrangian overlaid. "Your turn": brachistochrone as mechanics (its Lagrangian?); dF/dt changes S by a constant numerically; Kepler circular orbit action vs a nearby ellipse.
+
+§8 honest: "nature minimizes action" mysticism — it's a theorem equivalent to Newton; stationarity not minimality; the covariance proof feels like bookkeeping and matters most; p_i ≠ mq̇_i in general; e^{iS/ℏ} is a preview.
+
+STATUS: folder is EMPTY. Write all four files from scratch.
