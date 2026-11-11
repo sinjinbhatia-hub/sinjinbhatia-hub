@@ -142,3 +142,16 @@ PY-8 was complete on disk (its writer finished the files before a server 500 kil
 | wf_b9ac97df-6b8 | verify (Fable): QM-1, QM-2, QM-3 (chained) |
 | wf_72441d01-ce0 | verify (Fable): ST-7, ST-8, ST-9 (chained) |
 | wf_ab2d0631-e15 | write-only (Opus): QM-7, QM-8, QM-9 (chained) |
+
+## Round 17 (2026-11-09 20:30 UTC) — lost to the limit within minutes
+
+Eight Agent-tool agents (reviews QM-1, QM-2, ST-7, ST-8; writes QM-6–9) were launched 20 minutes before the limit actually reset and all died almost at once. Nothing usable was produced. The tooling written that turn (tools/autosave.sh, tools/AGENT-WRITE.md, tools/AGENT-REVIEW.md) was saved.
+
+## Round 18 (2026-11-11 03:30 UTC) — write and review chained per module
+
+| Run ID | Modules |
+|---|---|
+| wf_e6fdbe8e-0e4 | verify: QM-1, QM-2, QM-3, QM-4, QM-5 |
+| wf_b97167df-c5c | verify: ST-7, ST-8, ST-9 |
+| wf_8756f08c-8a0 | write (Opus) then review: QM-6, QM-7, QM-8, QM-9 |
+| wf_d6342676-e6b | write (Opus) then review: SM-1, SM-2, SM-3, SM-4 |

@@ -1,6 +1,6 @@
 # Handoff — where the build stands and how to continue
 
-Last updated 2026-11-09 20:45 UTC, at the start of round 17. The branch is `claude/brave-knuth-64723m`. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
+Last updated 2026-11-11 03:35 UTC, at the start of round 18. The branch is `claude/brave-knuth-64723m`. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
 
 ## Status (42 of 80 math modules done; Python course complete, 10 of 10)
 
@@ -10,9 +10,9 @@ Last updated 2026-11-09 20:45 UTC, at the start of round 17. The branch is `clau
 |---|---|
 | **Done** (42) | F1–F6 · LA-1–14 · CM-1–8 · EM-1–8 · ST-1–6 |
 | **Done, Python** (10) | PY-1–10, reviewed with every code block executed |
-| **Written, awaiting review** (8) | QM-1–5 · ST-7–9 (Opus; scripts pass; reviews in flight in round 17) |
-| **Being written in round 17** (4) | QM-6, QM-7, QM-8, QM-9 |
-| **Not started** (26) | SM-1–7 · ML-1–10 · QC-1–9 |
+| **Written, awaiting review** (8) | QM-1–5 · ST-7–9 (Opus; scripts pass; reviews in flight in round 18) |
+| **Being written, then reviewed, in round 18** (8) | QM-6–9 · SM-1–4 |
+| **Not started** (22) | SM-5–7 · ML-1–10 · QC-1–9 |
 
 Until a module is in a Done row, treat its derivations and numbers as unverified.
 
@@ -32,14 +32,16 @@ Also commit and push by hand each time an agent reports. Do not end a turn with 
 
 ## How to run a round
 
-Launch one background agent per module with the Agent tool (`subagent_type: general-purpose`). The standing instructions are in two files; the launch message only names the module:
+Preferred: the Workflow tool with `tools/build_modules_workflow.js` as `scriptPath` and args `{"combined": true, "writerModel": "opus", "modules": [{"code", "dir", "brief", "mode"?}]}`. Leave `mode` out to write a module and then review it in the same pipeline; `"verify"` reviews an existing module; `"write"` writes only. Each workflow runs 2 agents at a time on this machine, so four workflows give eight.
+
+Fallback when the Workflow tool is switched off: launch one background agent per module with the Agent tool (`subagent_type: general-purpose`). The standing instructions are in two files; the launch message only names the module:
 
 - **Write:** "Read ROOT/tools/AGENT-WRITE.md and follow it exactly, with CODE = QM-6, DIR = 02-physics/d-quantum-mechanics/06-hydrogen-atom, BRIEF = QM-6.md." Pass `model: "opus"` (the user's choice since round 10; Sonnet also works and costs less per module against the usage limit).
 - **Review and fix:** "Read ROOT/tools/AGENT-REVIEW.md and follow it exactly, with CODE = …, DIR = …, BRIEF = …." No model override, so the reviewer runs on the session model.
 
 Tell every agent: no git commands, write only inside its module folder (and its review file), save files as soon as each is drafted. `ROOT` is the absolute path of this `curriculum/` folder. Folder paths for every module are on the "Folder:" line of `research/briefs/<code>.md`. Modules without a brief (F1, LA-1–12, LA-14) take BRIEF = none.
 
-`tools/build_modules_workflow.js` holds the same prompts for the Workflow tool (args `{combined: true, writerModel, modules: [{code, dir, brief, mode}]}` with mode `write` or `verify`). Use it when that tool is available; the two AGENT files were generated from it.
+The two AGENT files were generated from the workflow script's prompts; if you change one, change the other.
 
 A reviewer that is interrupted leaves its findings in `tools/reviews/<code>.md`; the next reviewer for that module reads the file and continues.
 
