@@ -50,3 +50,17 @@ Scratch work: `/tmp/claude-0/st7/` (`recompute.py` = independent recomputation o
 
 18. **[low] notes.md §8 (random-walk ACF).** "Rule: if the ACF has not dropped below about 0.5 by lag 10, difference before identifying anything" is stated as a rule; a stationary AR(1) with φ = 0.95 has ρ(10) = 0.60, and §3.10 says to prefer a test to eyeballing. Fix: call it a rule of thumb that triggers a unit-root test.
 
+19. **[low] solutions.md A2(c).** The exercise asks for the roots of $\phi(z)$; the solution gives only $|z|=1.1547$. Fix: add $z=1\pm0.5774i$.
+
+20. **[low] solutions.md A3.** "the second sum is independent of $x_s$": the conventions box defines white noise as uncorrelated only, and uncorrelated is all the covariance needs. Fix: "uncorrelated with".
+
+21. **[low] project.py Part 1.** The Bartlett check allows 4 standard errors; the largest deviation over the 60 comparisons is 2.01 (scratch `part1.py`). The brief asks for "within the Bartlett bound". Fix: tighten to 3 standard errors.
+
+22. **[low] project.py Part 11 / solutions.md B3.** "The project checks these against a direct 3×3 Toeplitz solve": the assert compares only the last coefficient; the AR(3) coefficients and $v_1..v_3$ are printed only. Same for A2 root moduli, A6 ($Q$, both $p$-values), B2, B4 intervals, B5, C3. Fix: assert each printed value that the solutions quote.
+
+23. **[low] notes.md §3.12 (■ after Theorem 3.11).** "at $n=100,200,400$ the fraction is 0.75, 0.83, 0.88" reads as part of the $10^4$-pair run; those three come from Part 11's 4000-pair runs (B7). Fix: say so.
+
+24. **[low] notes.md §3.10 vs project.py.** Two numerically checkable claims have no check: over-differencing gives an MA(1) with $\theta=-1$, variance $2\sigma^2$, $\rho(1)=-0.5$; the airline model's ACF is nonzero only at lags 1, 11, 12, 13. Fix: two one-line asserts in Part 0.
+
+25. **[low] notes.md §3.11 step 1.** $O_p(\cdot)$ is used from here on (and in solutions) without a definition (STYLE: define every symbol at first use). Fix: one clause.
+

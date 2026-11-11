@@ -56,8 +56,11 @@ print(f"lambda_th: electron 300 K = {lam_e:.3e} m; N2 300 K = {lam_N2:.3e} m; "
       f"air spacing n^(-1/3) = {n_air**(-1/3):.3e} m; n lambda^3 (N2) = {n_air*lam_N2**3:.2e}")
 n_Cu = 8.49e28
 print(f"Cu conduction electrons: spacing {n_Cu**(-1/3):.3e} m vs lambda_th {lam_e:.3e} m")
-assert abs(lam_C - 2.426e-12) < 1e-15 and abs(lam_e - 4.30e-9) < 1e-11
-assert abs(lam_N2 - 1.91e-11) < 1e-13 and n_air * lam_N2**3 < 1e-6
+assert abs(hbar - 1.054572e-34) < 1e-40
+assert abs(lam_C - 2.4263e-12) < 1e-16 and abs(hbar / (me * c) - 3.8616e-13) < 1e-17   # (3.34)
+assert abs(lam_e - 4.30e-9) < 1e-11 and abs(lam_N2 - 1.904e-11) < 1e-14               # §3.12
+assert abs(n_air**(-1 / 3) - 3.445e-9) < 1e-12 and abs(n_air * lam_N2**3 - 1.69e-7) < 1e-9
+assert abs(n_Cu**(-1 / 3) - 2.275e-10) < 1e-13
 
 # %% [markdown]
 # ## Part 2: SymPy checks of the analytic results
@@ -83,6 +86,20 @@ prod41 = float(sp.sqrt(sp.Rational(1, 7) * sp.Rational(5, 2)))
 print(f"Example 4.1: A^2 = 15/(16a^5), <x^2> = a^2/7, <p^2> = 5hbar^2/(2a^2), "
       f"sigma_x sigma_p = sqrt(5/14) hbar = {prod41:.5f} hbar")
 assert abs(prod41 - 0.59761) < 1e-5
+
+# Theorem 3.8 for a Gaussian centred at x_0 with mean momentum p_0: Phi from (3.13), then
+# (a) int |Phi|^2 dp = 1, (b) <p> = int p |Phi|^2 dp = p_0, (c) <x> = int Phi* (i hbar d/dp) Phi dp = x_0
+x0s, p0s = sp.symbols("x_0 p_0", real=True)
+Psi_g = (2 * sp.pi * a**2)**sp.Rational(-1, 4) * sp.exp(-(x - x0s)**2 / (4 * a**2) + sp.I * p0s * x / hb)
+Phi_g = sp.simplify(sp.integrate(sp.expand(Psi_g * sp.exp(-sp.I * p * x / hb)), (x, -sp.oo, sp.oo), conds="none")
+                    / sp.sqrt(2 * sp.pi * hb))
+dens_g = sp.simplify(Phi_g * sp.conjugate(Phi_g))
+assert sp.simplify(sp.integrate(dens_g, (p, -sp.oo, sp.oo)) - 1) == 0
+assert sp.simplify(sp.integrate(p * dens_g, (p, -sp.oo, sp.oo)) - p0s) == 0
+x_in_p = sp.expand(sp.simplify(sp.conjugate(Phi_g) * sp.I * hb * sp.diff(Phi_g, p)))
+assert sp.simplify(sp.integrate(x_in_p, (p, -sp.oo, sp.oo)) - x0s) == 0
+assert sp.simplify(dens_g.subs({x0s: 0, p0s: 0}) - sp.sqrt(2 * a**2 / (sp.pi * hb**2)) * sp.exp(-2 * a**2 * p**2 / hb**2)) == 0
+print("Theorem 3.8: displaced Gaussian has int|Phi|^2 = 1, int p|Phi|^2 = p_0, int Phi*(i hbar d/dp)Phi = x_0")
 
 # Exact free Gaussian packet, eq. (3.25)
 beta = hb * t / (2 * m * a**2)
@@ -124,8 +141,12 @@ print("Madelung split checked: real part = H-J + quantum potential, imaginary pa
 # symmetric halves. Each factor is a unimodular phase multiplying the
 # coefficients in its own basis, and the FFT (unitary up to 1/N) moves between
 # bases, so the scheme conserves the norm exactly (to rounding). The time step
-# must resolve the fastest phase: (hbar k_max^2/2m) dt and V_max dt/hbar should
-# be well under pi, or the splitting error dominates.
+# must resolve the fastest phase the state actually carries: (hbar k^2/2m) dt
+# and V dt/hbar should be well under pi for the wavenumbers k and potential
+# values V where Psi has weight, or the splitting error dominates. The grid's
+# own k_max does not have to obey this (here (k_max^2/2) dt is 5 to 11 in
+# Parts 4, 7 and 8): the kinetic factor is exact for every mode, and modes the
+# state does not occupy contribute nothing to the commutator error.
 
 # %%
 class Grid:
@@ -141,9 +162,11 @@ class Grid:
         return np.fft.ifft((1j * self.k)**order * np.fft.fft(f))
 
     def norm(self, psi):
+        """int |psi|^2 dx, eq. (3.3)."""
         return np.sum(np.abs(psi)**2) * self.dx
 
     def mean_x(self, psi, f=lambda x: x):
+        """<f(x)> = int f(x) |psi|^2 dx, eq. (3.6) for f(x) = x."""
         return np.sum(f(self.x) * np.abs(psi)**2) * self.dx
 
     def p_stats(self, psi):
@@ -153,6 +176,7 @@ class Grid:
         return np.sum(self.k * w), np.sum(self.k**2 * w)
 
     def energy(self, psi, V):
+        """<H> = <p^2>/2m + <V>, eq. (3.9) with Q = H."""
         _, p2 = self.p_stats(psi)
         return 0.5 * p2 + self.mean_x(psi, lambda _: V)
 
@@ -218,6 +242,7 @@ assert np.max(np.abs(np.abs(np.fft.fft(psiT))**2 - dens_p0)) < 1e-9 * dens_p0.ma
 assert np.max(np.abs(psiT - gaussian_exact(g.x, nst * dt, x00, kk0, a0))) < 1e-9
 prod = np.array(rec["prod"])
 assert np.allclose(prod, 0.5 * np.sqrt(1 + (tt / 2)**2), atol=1e-8)
+assert abs(sx[-1] - 10.04988) < 1e-5 and abs(prod[-1] - 5.02494) < 1e-5      # numbers quoted in §3.8
 print(f"Free packet: sigma_x(20) = {sx[-1]:.5f} (theory {sx_th[-1]:.5f}); norm drift "
       f"{np.max(np.abs(np.array(rec['norm']) - 1)):.1e}; sigma_x sigma_p(20) = {prod[-1]:.5f}")
 
@@ -277,7 +302,11 @@ S_x = np.imag(np.conj(p_b) * g.deriv(p_b))[j] / np.abs(p_b[j])**2
 v_phase = -S_t / S_x
 v_group = (g.mean_x(p_c) - g.mean_x(p_a)) / 0.02
 print(f"Phase velocity at packet center = {v_phase:.4f} (k0/2 = 1); group velocity = {v_group:.6f} (k0 = 2)")
-assert abs(v_phase - 1.0) < 0.01 and abs(v_group - 2.0) < 1e-6
+# exact value from (3.25): the prefactor (1 + i beta)^(-1/2) adds -(1/2) arctan(beta) to the phase, so at
+# the centre -S_t/S_x = k0/2 + beta'/(2 k0 (1 + beta^2)), beta = t/2a^2 = 0.2, beta' = 1/2a^2 = 0.02
+v_phase_exact = kk0 / 2 + (1 / (2 * aw**2)) / (2 * kk0 * (1 + (10.0 / (2 * aw**2))**2))
+assert abs(v_phase_exact - 1.0048) < 1e-4
+assert abs(v_phase - v_phase_exact) < 2e-4 and abs(v_group - 2.0) < 1e-6   # nearest grid point is 0.04 off centre
 
 # %% [markdown]
 # ## Part 6: Probability current (3.4) and continuity (3.5) (§3.2, Example 4.2)
@@ -301,7 +330,7 @@ drho = (np.abs(pp)**2 - np.abs(pm)**2) / (2 * dtc)
 divJ = np.real(g.deriv(g.current(pc)))
 res_c = np.max(np.abs(drho + divJ)) / np.max(np.abs(drho))
 print(f"Continuity residual max|d rho/dt + dJ/dx| / max|d rho/dt| = {res_c:.2e}")
-assert res_c < 1e-4
+assert res_c < 1e-5        # 5e-6 quoted in §3.2; it is the O(dt^2) error of the centred time difference
 
 # %% [markdown]
 # ## Part 7: Ehrenfest, energy conservation, minimum uncertainty (§3.4, Example 4.6)
@@ -311,6 +340,7 @@ gh = Grid(-12, 12, 512)
 
 
 def run_ehrenfest(V, dV, psi, dt, n):
+    """Evolve psi in V on grid gh; record t, <x>, <p>, <-V'> (the two sides of (3.12)), <H>, sigma_x sigma_p."""
     out = {"t": [0.0], "x": [gh.mean_x(psi)], "p": [gh.p_stats(psi)[0]],
            "F": [-gh.mean_x(psi, dV)], "E": [gh.energy(psi, V(gh.x))], "prod": []}
 
@@ -336,12 +366,17 @@ for name, r in (("harmonic", ho), ("quartic", qu)):
     e2 = np.max(np.abs(np.gradient(r["p"], dte) - r["F"])[1:-1]) / np.max(np.abs(r["F"]))
     dE = np.max(np.abs(r["E"] - r["E"][0])) / r["E"][0]
     print(f"Ehrenfest ({name}): m d<x>/dt vs <p> rel err {e1:.1e}; d<p>/dt vs <-V'> {e2:.1e}; energy drift {dE:.1e}")
-    assert e1 < 1e-4 and e2 < 5e-4 and dE < 1e-4
+    # e1 is at rounding level (the 1e-13 of §3.3): the centred difference (x[n+1] - x[n-1])/2dt equals <p>[n]
+    # exactly, because each kinetic step moves <x> by dt times the mid-step <p>, and the two half-kicks
+    # around t_n change <p> by equal and opposite amounts relative to <p>[n].
+    assert e1 < 1e-11 and e2 < 5e-4 and dE < 1e-4
 i90 = np.argmin(np.abs(ho["t"] - np.pi / 2))
-assert np.allclose(ho["x"], 2 * np.cos(ho["t"]), atol=1e-4)
-assert np.allclose(ho["p"], -2 * np.sin(ho["t"]), atol=1e-4)
+assert np.allclose(ho["x"], 2 * np.cos(ho["t"]), atol=2e-5)      # 1.6e-5 quoted in Example 4.6
+assert np.allclose(ho["p"], -2 * np.sin(ho["t"]), atol=3e-5)
+assert abs(ho["p"][i90] + 2.0) < 1e-4
 assert abs(ho["E"][0] - 2.5) < 1e-10
-assert np.allclose(ho["prod"], 0.5, atol=1e-5)      # coherent state stays minimum-uncertainty
+assert np.max(np.abs(ho["E"] - 2.5)) / 2.5 < 6e-6                  # "relative 5e-6" in Example 4.6
+assert np.allclose(ho["prod"], 0.5, atol=1e-9)      # coherent state stays minimum-uncertainty
 print(f"Example 4.6: max|<x> - 2cos t| = {np.max(np.abs(ho['x'] - 2*np.cos(ho['t']))):.1e}, "
       f"<p>(t={ho['t'][i90]:.3f}) = {ho['p'][i90]:.4f}, <H> = {ho['E'][0]:.4f}, "
       f"sigma_x sigma_p in [{ho['prod'].min():.6f}, {ho['prod'].max():.6f}]")
@@ -351,7 +386,8 @@ dev = np.max(np.abs(cl.y[0] - qu["x"]))
 VpAtMean = -qu["x"]**3
 print(f"Quartic: max |<x>_quantum - x_classical| over t<10 = {dev:.3f}; "
       f"max |<-V'> - (-V'(<x>))| = {np.max(np.abs(qu['F'] - VpAtMean)):.3f}")
-assert dev > 0.3
+assert abs(dev - 1.981) < 5e-3                       # the 1.98 quoted in §3.4 and Example 4.6
+assert abs(qu["F"][0] + 11.0) < 1e-8 and abs(VpAtMean[0] + 8.0) < 1e-8   # -<x^3> = -11 vs -<x>^3 = -8 at t = 0
 fig, ax = plt.subplots(1, 2, figsize=(10, 3.6))
 ax[0].plot(ho["t"], ho["x"], label=r"$\langle x\rangle$"); ax[0].plot(ho["t"], 2 * np.cos(ho["t"]), "--", label="classical")
 ax[0].set(title=r"$V=x^2/2$", xlabel="t"); ax[0].legend()
@@ -384,6 +420,9 @@ R_pred = quad(lambda k: wk(k) * R_plane(k), ks - 1, ks + 1, points=[np.sqrt(2 * 
 E_mean = 0.5 * (ks**2 + 1 / (4 * aS**2))
 assert abs(E_mean - 2.005) < 1e-12
 print(f"Step: <E> = {E_mean:.3f}; reflected probability {R_sim:.5f}; plane-wave average {R_pred:.5f}; R(k0) = {R_plane(ks):.5f}")
+# 13.2% vs 13.1% in §7. The 0.1% gap is the sharp step on a dx = 0.12 grid, not physics: with
+# 16384 points instead of 4096 the same run gives 0.1311 (and 0.1310 with dt = 0.005 as well).
+assert abs(R_sim - 0.1322) < 5e-4 and abs(R_pred - 0.1310) < 1e-4
 assert abs(R_sim - R_pred) < 2e-3 and abs(R_plane(ks) - 1 / 9) < 1e-12
 fig, ax = plt.subplots(figsize=(8, 3))
 ax.plot(gs.x, np.abs(psiS)**2); ax.axvspan(0, 250, color="0.9"); ax.set(xlabel="x", ylabel=r"$|\Psi|^2$",
@@ -408,7 +447,12 @@ win = np.abs(g.x - mx) < 2 * sxx
 r_q = np.max(np.abs(St + 0.5 * Sx**2 + Q)[win]) / np.max(np.abs(St[win]))
 r_c = np.max(np.abs(St + 0.5 * Sx**2)[win]) / np.max(np.abs(St[win]))
 print(f"H-J at t = 3: relative residual with Q {r_q:.1e}; without Q {r_c:.3f}")
-assert r_q < 1e-4 and r_c > 0.02
+# with Q: 1.5e-8 (§3.11). Without Q the residual is max|Q|/max|S_t| over |y| < 2 sigma, which (3.25) gives in
+# closed form: |Q| <= hbar^2/(4 m sigma^2), |S_t| <= S_x^2/2m - hbar^2/(4 m sigma^2) at y = 2 sigma.
+sig2_ = 1 + 1.5**2                                   # sigma^2 at t = 3 for a = 1 (beta = 1.5)
+Sx_edge = 1.0 + 1.5 * 2 * np.sqrt(sig2_) / (2 * sig2_)
+r_c_exact = (1 / (4 * sig2_)) / (0.5 * Sx_edge**2 - 1 / (4 * sig2_))
+assert r_q < 1e-7 and abs(r_c - r_c_exact) < 1e-3 and abs(r_c - 0.048) < 1e-3
 
 # %% [markdown]
 # ## Part 10: Worked-example numbers in SI (Examples 4.3, 4.5)

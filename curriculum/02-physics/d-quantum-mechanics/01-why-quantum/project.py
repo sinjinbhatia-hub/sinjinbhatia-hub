@@ -43,6 +43,13 @@ def close(a, b, rtol, label=""):
     assert err < rtol, f"{label}: {a} vs {b}, rel err {err:.2e}"
     return err
 
+
+def pin(value, quoted, half_unit, label=""):
+    """assert that a computed value rounds to the number quoted in notes.md / solutions.md:
+    |value - quoted| <= half a unit in the last quoted digit. If a pin fails, the prose is stale."""
+    v, q = np.asarray(value, float), np.asarray(quoted, float)
+    assert np.all(np.abs(v - q) <= half_unit * (1 + 1e-9)), f"{label}: computed {value}, prose quotes {quoted}"
+
 # %% [markdown]
 # ## Part 1: Blackbody and photoelectric effect (notes 1.1-1.2, Examples 4.1-4.2)
 # Energy density per unit wavelength:
@@ -73,19 +80,26 @@ print(f"Ex 4.1: 8 pi h c/lam^5 = {8*np.pi*H*C/lam0**5:.4e}, e^x - 1 = {np.expm1(
       f"x(50 um) = {H*C/(50e-6*KB*T5):.4f}")
 print(f"Ex 4.1: x = {x0:.4f}, Planck u = {up:.4e} J/m^4, RJ u = {ur:.4e} J/m^4, RJ/Planck = {ur/up:.2f}")
 close(ur / up, np.expm1(x0) / x0, 1e-12, "ratio formula")
-assert 54.0 < ur / up < 55.5
-# long-wavelength agreement: at 50 um the ratio is within 3%
+# the numbers of Example 4.1, as quoted
+pin(x0, 5.7551, 5e-5, "x"); pin(8 * np.pi * H * C / lam0**5, 1.5976e8, 5e3, "8 pi h c/lam^5")
+pin(np.expm1(x0), 314.8, 0.05, "e^x - 1"); pin(KB * T5, 6.903e-20, 5e-24, "k T")
+pin(up, 5.075e5, 50, "Planck u"); pin(ur, 2.776e7, 5e3, "RJ u"); pin(ur / up, 54.70, 0.005, "RJ/Planck")
+# long-wavelength agreement: at 50 um (x = 0.058) the ratio is within 3%
+pin(H * C / (50e-6 * KB * T5), 0.058, 5e-4, "x at 50 um")
 assert abs(u_rj(50e-6, T5) / u_planck(50e-6, T5) - 1) < 0.03
+# Wien is the x >> 1 limit of Planck: Planck/Wien = 1/(1 - e^-x)
+close(up / u_wien(lam0, T5), 1 / (1 - np.exp(-x0)), 1e-12, "Wien limit")
 lam_peak = minimize_scalar(lambda L: -u_planck(L * 1e-9, T5), bounds=(300, 900), method="bounded",
                            options={"xatol": 1e-6}).x * 1e-9
 xw = brentq(lambda x: x - 5 * (1 - np.exp(-x)), 1, 10)
 b_wien = H * C / (KB * xw)
 print(f"Wien peak at 5000 K: {b_wien/T5*1e9:.1f} nm (x = {xw:.6f}, b = {b_wien:.4e} m K)")
 close(lam_peak, b_wien / T5, 1e-4, "numerical peak")
+pin(xw, 4.965114, 5e-7, "Wien x"); pin(b_wien, 2.8978e-3, 5e-8, "Wien b"); pin(b_wien / T5 * 1e9, 579.6, 0.05, "peak")
 # energy in Planck spectrum is finite: integral = (8 pi^5 k^4 / 15 h^3 c^3) T^4
 lg = np.linspace(20e-9, 200e-6, 400001)
 Uint = np.trapezoid(u_planck(lg, T5), lg) if hasattr(np, "trapezoid") else np.trapz(u_planck(lg, T5), lg)
-close(Uint, 8 * np.pi**5 * KB**4 / (15 * H**3 * C**3) * T5**4, 2e-3, "Stefan-Boltzmann")
+close(Uint, 8 * np.pi**5 * KB**4 / (15 * H**3 * C**3) * T5**4, 1e-6, "Stefan-Boltzmann")
 
 fig, ax = plt.subplots(figsize=(7, 4.2))
 L = np.linspace(100e-9, 3000e-9, 600)
@@ -106,15 +120,21 @@ lam_thr = HC_EVNM / W_NA
 print(f"Ex 4.2: E(400 nm) = {E400:.4f} eV, V_stop = {V400:.4f} V, threshold {lam_thr:.1f} nm, "
       f"f0 = {W_NA*EV/H:.4e} Hz, v_max = {np.sqrt(2*V400*EV/ME):.4e} m/s")
 assert abs(V400 - 0.80) < 0.005
+pin(E400, 3.0996, 5e-5, "E(400 nm)"); pin(V400, 0.7996, 5e-5, "V_stop"); pin(lam_thr, 539.1, 0.05, "threshold")
+pin(W_NA * EV / H, 5.56e14, 5e11, "f0"); pin(np.sqrt(2 * V400 * EV / ME), 5.30e5, 5e2, "v_max")
 # synthetic Millikan-style data: stopping potential vs frequency with 0.02 V noise
 lams = np.array([250, 280, 313, 334, 365, 405, 436, 480, 510]) * 1e-9
 f = C / lams
 V = (H * f / EV - W_NA) + rng.normal(0, 0.02, f.size)
 slope, icpt = np.polyfit(f, V, 1)
 h_fit = slope * EV
-print(f"fitted h = {h_fit:.4e} J s (true {H:.4e}), fitted W = {-icpt:.3f} eV")
+print(f"fitted h = {h_fit:.4e} J s (true {H:.4e}, off by {abs(h_fit/H-1)*100:.2f}%), fitted W = {-icpt:.3f} eV")
 close(h_fit, H, 0.02, "fitted h")
 assert abs(-icpt - W_NA) < 0.08
+# seeded values quoted in Example 4.2 (seed 0, NumPy's default PCG64 stream): if these fail, the
+# data generation changed and the prose must be updated to match
+pin(h_fit, 6.611e-34, 5e-38, "fitted h, Example 4.2"); pin(-icpt, 2.287, 5e-4, "fitted W, Example 4.2")
+assert abs(h_fit / H - 1) < 0.003
 fig, ax = plt.subplots(figsize=(6, 4))
 ax.plot(f / 1e14, V, "ko", label="synthetic data")
 ff = np.linspace(W_NA * EV / H, f.max(), 50)

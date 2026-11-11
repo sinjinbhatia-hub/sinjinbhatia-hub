@@ -106,7 +106,7 @@ $$\gamma(h)=\sigma^2\sum_{j=-\infty}^\infty\psi_j\psi_{j+h}.\tag{3.6}$$
 2. $\mathrm{Cov}(x_{t+h},x_t)=\sum_j\sum_k\psi_j\psi_k\mathbb E[w_{t+h-j}w_{t-k}]$.
 3. The expectation is $\sigma^2$ when $t+h-j=t-k$, i.e. $j=k+h$, and 0 otherwise. So $\gamma(h)=\sigma^2\sum_k\psi_{k+h}\psi_k$, independent of $t$. ∎
 
-■ **What just happened.** Covariance at lag $h$ is the overlap between the weight sequence and itself shifted by $h$: an autocorrelation of the filter. Wold's theorem (stated; Brockwell & Davis ch. 2) says every stationary, purely nondeterministic process has this form with causal $\psi$, so (3.6) covers the whole subject. ST-8 Fourier-transforms it: the spectral density is $\frac{\sigma^2}{2\pi}|\psi(e^{-i\omega})|^2$.
+■ **What just happened.** Covariance at lag $h$ is the overlap between the weight sequence and itself shifted by $h$: an autocorrelation of the filter. Wold's theorem (stated; Brockwell & Davis ch. 2) says every stationary, purely nondeterministic process has this form with causal $\psi$ and uncorrelated $w_t$ (it guarantees $\sum\psi_j^2<\infty$, slightly weaker than the absolute summability of Definition 3.3), so (3.6) covers the whole subject. ST-8 Fourier-transforms it: at frequency $\nu$ in cycles per sample, the spectral density is $f(\nu)=\sum_h\gamma(h)e^{-2\pi i\nu h}=\sigma^2|\psi(e^{-2\pi i\nu})|^2$ (ST-8 (3.3) and (3.8); ST-8 writes $\omega$ for this $\nu$ and has no factors of $2\pi$ in front).
 
 ### 3.4 AR(1) and MA(1)
 
@@ -143,7 +143,7 @@ which converges iff $|\theta|<1$. Such an MA(1) is **invertible**: it has an AR(
 
 ■ **What just happened.** Identifiability fails because (3.9) depends on $\theta$ only through $\theta/(1+\theta^2)$, which is invariant under $\theta\to1/\theta$; invertibility is the tie-breaker. In code this is the trap: a likelihood optimizer started at the wrong place happily converges to $|\theta|>1$, with the same likelihood value and a different $\sigma^2$. Restrict or reflect.
 
-**MA($q$).** $x_t=\theta(B)w_t$, $\psi_j=\theta_j$ for $j\le q$. By (3.6),
+**MA($q$).** $x_t=\theta(B)w_t$, so $\psi_j=\theta_j$ for $0\le j\le q$ (with $\theta_0=1$) and $\psi_j=0$ otherwise. By (3.6),
 $$\gamma(h)=\sigma^2\sum_{j=0}^{q-|h|}\theta_j\theta_{j+|h|}\ (|h|\le q),\qquad\gamma(h)=0\ (|h|>q).\tag{3.10}$$
 The ACF **cuts off** after lag $q$. Invertibility: all roots of $\theta(z)$ outside the unit circle (same argument as §3.5 applied to $\theta$).
 
@@ -189,6 +189,8 @@ The roots are complex iff $\phi_1^2+4\phi_2<0$, the region under the parabola $\
 3. *Real case, necessity.* If $\lambda_1,\lambda_2\in(-1,1)$, then all factors in step 1 are positive and $|\phi_2|=|\lambda_1\lambda_2|<1$.
 4. *Real case, sufficiency.* $f(1)>0$ means 1 is not between the roots: both are $<1$ or both $>1$. $f(-1)>0$: both $>-1$ or both $<-1$. "Both $>1$" or "both $<-1$" would give $\lambda_1\lambda_2>1$, contradicting $|\phi_2|<1$. So both lie in $(-1,1)$. ∎
 
+■ **What just happened.** Two real eigenvalues are trapped in $(-1,1)$ by the sign of $f$ at $\pm1$ together with a bound on their product; a complex pair is trapped by its modulus $\sqrt{-\phi_2}$ alone. Each inequality in (3.14) is one edge of a triangle, and each edge is one way to lose stationarity: on $\phi_1+\phi_2=1$ an eigenvalue sits at $+1$ (a unit root, the random-walk boundary of §3.11), on $\phi_2-\phi_1=1$ one sits at $-1$, and on $\phi_2=-1$ a complex pair sits on the unit circle (an oscillation that never damps).
+
 The vertices are $(-2,-1)$, $(2,-1)$, $(0,1)$; the project shades it (figure `ar2_triangle.png`).
 
 **Complex roots and quasi-periodicity.** Write $\lambda=re^{\pm i\omega}$ with $r=\sqrt{-\phi_2}$ and $\cos\omega=\phi_1/(2r)$ (from $\lambda_1+\lambda_2=2r\cos\omega=\phi_1$). The ACF solves the recurrence (3.13), so $\rho(h)=c\lambda^h+\bar c\bar\lambda^h$, i.e.
@@ -229,7 +231,7 @@ For $j>q$ this is the AR recurrence again, so the $\psi_j$ (and $\gamma(h)$ for 
 
 ▶ **Try it first.** Apply (3.20) with $p=q=1$. Then sum (3.6) using geometric series.
 
-1. $\psi_0=1$; $\psi_1=\theta+\phi$; $\psi_j=\phi\psi_{j-1}=(\phi+\theta)\phi^{j-1}$ for $j\ge1$.
+1. $\psi_0=1$; $\psi_1=\theta+\phi\psi_0=\theta+\phi$; for $j\ge2$ the $\theta_j$ term is gone and $\psi_j=\phi\psi_{j-1}$. So for all $j\ge1$:
 $$\psi_j=(\phi+\theta)\phi^{j-1}\ (j\ge1).\tag{3.21}$$
 2. $\gamma(0)=\sigma^2\big[1+(\phi+\theta)^2\sum_{j\ge1}\phi^{2(j-1)}\big]=\sigma^2\Big[1+\frac{(\phi+\theta)^2}{1-\phi^2}\Big]=\sigma^2\frac{1+2\phi\theta+\theta^2}{1-\phi^2}$.
 3. $\gamma(1)=\sigma^2\big[\psi_0\psi_1+\sum_{j\ge1}\psi_j\psi_{j+1}\big]=\sigma^2\Big[(\phi+\theta)+\frac{(\phi+\theta)^2\phi}{1-\phi^2}\Big]=\sigma^2\frac{(\phi+\theta)(1+\phi\theta)}{1-\phi^2}$.
@@ -299,7 +301,7 @@ $$\hat x_{n+h}=\mu+\phi^h(x_n-\mu),\qquad P_{n+h}=\sigma^2\sum_{j=0}^{h-1}\phi^{
 
 **ARMA via $\psi$-weights.** For a causal invertible ARMA with the infinite past known, the shocks $w_s$, $s\le n$, are known (invertibility), and $x_{n+h}=\sum_{j=0}^{h-1}\psi_jw_{n+h-j}+\sum_{j\ge h}\psi_jw_{n+h-j}$. The first sum is future noise, the second is known. So
 $$\hat x_{n+h}=\sum_{j\ge h}\psi_jw_{n+h-j},\qquad P_{n+h}=\sigma^2\sum_{j=0}^{h-1}\psi_j^2.\tag{3.30}$$
-In practice you iterate the ARMA recursion with future $w$'s set to 0 and past $w$'s replaced by residuals. With only $x_1,\dots,x_n$ available, residuals before $t=1$ are set to 0 (the **truncated** predictor); the error this introduces decays like $|z_{\min}|^{-n}$ for an invertible model, negligible except for short series or near-unit MA roots (the exact finite-sample version is the Kalman filter, ST-8).
+In practice you iterate the ARMA recursion with future $w$'s set to 0 and past $w$'s replaced by residuals. With only $x_1,\dots,x_n$ available, residuals before $t=1$ are set to 0 (the **truncated** predictor); the error this introduces decays like $|z_{\min}|^{-n}$ for an invertible model, where $z_{\min}$ is the root of $\theta(z)$ closest to the unit circle; it is negligible except for short series or near-unit MA roots (the exact finite-sample version is the Kalman filter, ST-8).
 
 ■ **What just happened.** Forecasting is deleting the unknown future shocks. The forecast reverts to the mean at the rate of the largest eigenvalue; the error variance accumulates one $\psi_j^2$ per step and saturates at $\gamma(0)$, since $\sum_{j\ge0}\psi_j^2\sigma^2=\gamma(0)$ by (3.6). A 95% interval is $\hat x_{n+h}\pm1.96\sqrt{P_{n+h}}$ under Gaussian shocks. It ignores parameter uncertainty, an $O(1/n)$ effect: the project's empirical coverage for a fitted AR(2) with $n=200$ is between 0.92 and 0.96 for $h=1,\dots,10$.
 
@@ -335,7 +337,7 @@ The natural statistic is the OLS $t$ ratio $\tau=\hat\varrho/\mathrm{se}(\hat\va
 
 ▶ **Try it first.** Under $H_0$ (no constant, $x_0=0$), $\hat\phi-1=\sum x_{t-1}w_t/\sum x_{t-1}^2$. Find the order of magnitude in $n$ of the numerator and the denominator, using (3.3).
 
-1. **Denominator.** $\mathbb E\sum_{t=1}^nx_{t-1}^2=\sigma^2\sum_{t=1}^n(t-1)\approx\sigma^2n^2/2$. It is $O_p(n^2)$, not $O_p(n)$ as for stationary $x$. More precisely, with $x_{\lfloor sn\rfloor}\approx\sigma\sqrt nW(s)$ for a standard Brownian motion $W$ (Donsker's theorem, stated), $n^{-2}\sum x_{t-1}^2\to\sigma^2\int_0^1W(s)^2ds$.
+1. **Denominator.** $\mathbb E\sum_{t=1}^nx_{t-1}^2=\sigma^2\sum_{t=1}^n(t-1)\approx\sigma^2n^2/2$. It is $O_p(n^2)$, not $O_p(n)$ as for stationary $x$. ($Y_n=O_p(a_n)$ means $Y_n/a_n$ stays bounded in probability: "of size $a_n$", for random quantities.) More precisely, with $x_{\lfloor sn\rfloor}\approx\sigma\sqrt nW(s)$ for a standard Brownian motion $W$ (Donsker's theorem, stated), $n^{-2}\sum x_{t-1}^2\to\sigma^2\int_0^1W(s)^2ds$.
 2. **Numerator.** Square $x_t=x_{t-1}+w_t$: $x_t^2=x_{t-1}^2+2x_{t-1}w_t+w_t^2$. Sum over $t$ and telescope:
 $$\sum_{t=1}^nx_{t-1}w_t=\tfrac12\Big(x_n^2-\sum_{t=1}^nw_t^2\Big).$$
 So $n^{-1}\sum x_{t-1}w_t\to\frac{\sigma^2}2(W(1)^2-1)$: $O_p(n)$.
@@ -373,7 +375,7 @@ $$P(|t_{\hat b}|>2)\to1\qquad(n\to\infty).\tag{3.35}$$
 3. OLS reports $\mathrm{se}(\hat b)=s/\sqrt{\sum(x_t-\bar x)^2}=O_p(\sqrt n/n)=O_p(n^{-1/2})$.
 4. $t=\hat b/\mathrm{se}(\hat b)=O_p(1)/O_p(n^{-1/2})=O_p(\sqrt n)$, and $\sqrt n\cdot(\text{a nonzero random variable})$ exceeds 2 in absolute value with probability tending to 1. ∎
 
-■ **What just happened.** The OLS standard error formula assumes the errors are uncorrelated with constant variance. Here the "errors" are a random walk, extremely autocorrelated, so the formula understates the real sampling variability of $\hat b$ by a factor of order $\sqrt n$. The project's simulation, $10^4$ pairs of independent random walks of length 50, finds $|t|>2$ in 67% of regressions; at $n=100,200,400$ the fraction is 0.75, 0.83, 0.88. Two independent stationary AR(1)s with $\phi=0.5$ give 12% (still inflated, because the errors are autocorrelated; ST-3's sandwich idea extended to time series is the Newey–West HAC standard error); two iid series give 5.2%. Granger and Newbold's rule of thumb: an $R^2$ higher than the Durbin–Watson statistic signals a spurious regression. Regression on time series without checking for unit roots is malpractice. The fix is to difference both (regress $\nabla y$ on $\nabla x$) unless they are cointegrated.
+■ **What just happened.** The OLS standard error formula assumes the errors are uncorrelated with constant variance. Here the "errors" are a random walk, extremely autocorrelated, so the formula understates the real sampling variability of $\hat b$ by a factor of order $\sqrt n$. The project's simulation, $10^4$ pairs of independent random walks of length 50, finds $|t|>2$ in 67% of regressions; at $n=100,200,400$ (4000 pairs each, Part 11) the fraction is 0.75, 0.83, 0.88. Two independent stationary AR(1)s with $\phi=0.5$ give 12% (still inflated, because the errors are autocorrelated; ST-3's sandwich idea extended to time series is the Newey–West HAC standard error); two iid series give 5.2%. Granger and Newbold's rule of thumb: an $R^2$ higher than the Durbin–Watson statistic signals a spurious regression. Regression on time series without checking for unit roots is malpractice. The fix is to difference both (regress $\nabla y$ on $\nabla x$) unless they are cointegrated.
 
 **Cointegration.** Two I(1) series (each a unit-root process) are **cointegrated** if some linear combination $y_t-\beta x_t=u_t$ is stationary. Example: $x_t$ a random walk, $y_t=1+2x_t+u_t$ with $u_t$ AR(1). Both wander, but they wander together; $u_t$ is the stationary deviation from a long-run equilibrium (prices of the same commodity in two markets, consumption and income, a stock's spot and futures prices).
 
@@ -381,7 +383,7 @@ $$P(|t_{\hat b}|>2)\to1\qquad(n\to\infty).\tag{3.35}$$
 
 *Error-correction form (Granger representation theorem, stated; Engle & Granger 1987).* Cointegrated series satisfy
 $$\nabla y_t=\alpha\,(y_{t-1}-\beta x_{t-1})+\gamma\,\nabla x_t+\varepsilon_t,\qquad\alpha<0,\tag{3.36}$$
-plus possible lagged differences: changes in $y$ respond to last period's disequilibrium, pulling the pair back together. Exercise C2 derives it for the AR(1)-deviation example. With more than two series, Johansen's method estimates several cointegrating vectors (Hamilton ch. 20).
+plus possible lagged differences (in this equation only, $\alpha$ and $\gamma$ are regression coefficients, not the constant of (3.33) or the autocovariance): changes in $y$ respond to last period's disequilibrium, pulling the pair back together. Exercise C2 derives it for the AR(1)-deviation example. With more than two series, Johansen's method estimates several cointegrating vectors (Hamilton ch. 20).
 
 ### 3.13 Exponential smoothing: the practitioner's ARIMA
 
@@ -401,7 +403,7 @@ $$\text{SES}(\alpha)\equiv\text{ARIMA}(0,1,1)\text{ with }\theta=\alpha-1;\quad 
 
 ### 3.14 What comes next
 
-ST-8 Fourier-transforms $\gamma$: the spectral density $f(\omega)=\sum_h\gamma(h)e^{-i\omega h}/2\pi$ turns convolution by $\psi$ into multiplication, a complex-root AR(2) into a peak at $\omega$ of (3.15), and the sample ACF into the periodogram. It writes every ARMA in state-space form (the companion form (3.11) is one), so that the Kalman filter computes (3.24) exactly for any ARMA with missing data. And it drops the assumption that the shocks have constant variance: GARCH models the clustering of large shocks seen in financial returns (project "Your turn" 3).
+ST-8 Fourier-transforms $\gamma$: the spectral density $f(\nu)=\sum_h\gamma(h)e^{-2\pi i\nu h}$ ($\nu$ in cycles per sample; ST-8 (3.3)) turns convolution by $\psi$ into multiplication, a complex-root AR(2) into a peak near the frequency $\omega/2\pi$ of (3.15), and the sample ACF into the periodogram. The peak is not exactly at $\omega/2\pi$: damping pulls it to a slightly lower frequency (ST-8 (3.11); for Example 4.2 the spectral peak has period 8.69 against the ACF's quasi-period 8). It writes every ARMA in state-space form (the companion form (3.11) is one), so that the Kalman filter computes (3.24) exactly for any ARMA with missing data. And it drops the assumption that the shocks have constant variance: GARCH models the clustering of large shocks seen in financial returns (project "Your turn" 3).
 
 ## 4. Worked examples
 
@@ -477,7 +479,7 @@ ARIMA(0,1,1) with $\theta=-0.7$, starting with $\hat x_2=x_1=10$: $\hat x_3=x_2+
 
 - **ST-8.** The spectral density is the Fourier transform (F3) of (3.6); the companion form (3.11) is a state-space model and the Kalman filter is the innovations algorithm (3.24) for it; GARCH extends the white-noise assumption.
 - **ST-3.** Every regression on time-indexed data needs this module: autocorrelated errors invalidate the standard errors (§3.12), and the cure is either modeling the errors as ARMA (regression with ARMA errors, fit by (3.24)), HAC standard errors, or differencing.
-- **ST-6.** An MCMC chain is a stationary time series; the effective sample size (ST-6 (3.18)) is $n/\sum_h\rho(h)$, and for an AR(1)-like chain it is $n(1-\phi)/(1+\phi)$ (ST-6 Example 4.5). Its $\hat R$ is a nonstationarity diagnostic.
+- **ST-6.** An MCMC chain is a stationary time series; the effective sample size (ST-6 (3.18)) is $n/\big(1+2\sum_{h\ge1}\rho(h)\big)$, and for an AR(1)-like chain with $\rho(h)=\phi^h$ it is $n(1-\phi)/(1+\phi)$ (ST-6 Example 4.5). Its $\hat R$ is a nonstationarity diagnostic.
 - **LA-7, LA-10.** Stationarity is spectral radius < 1 of the companion matrix; the likelihood is a Toeplitz Cholesky; Durbin–Levinson is the $O(n^2)$ Toeplitz solver (Levinson 1947, for Wiener's filtering problem).
 - **CM-1, SM.** AR(1) is the sampled Ornstein–Uhlenbeck process (Brownian motion in a harmonic trap, the Langevin dynamics of SM-7); AR(2) with complex roots is the sampled noisy underdamped oscillator (Example 4.2). Fluctuation–dissipation is a statement about $\gamma(h)$.
 - **ML-8.** A causal 1-D convolution is a finite MA filter; a recurrent network is a nonlinear AR. Evaluating any learned forecaster requires the time-ordered splits and the ARIMA baseline from this module.
