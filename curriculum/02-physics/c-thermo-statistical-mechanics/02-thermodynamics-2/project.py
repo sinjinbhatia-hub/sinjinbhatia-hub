@@ -141,7 +141,7 @@ cop_hp = 293.15 / 20.0
 print(f"Heat pump 0 C -> 20 C: Carnot COP = {cop_hp:.2f}")
 
 # %% [markdown]
-# ## Part 3: entropy production between two bodies (notes §3.5, eq. 3.9)
+# ## Part 3: entropy production between two bodies (notes §3.5, eq. 3.11)
 # S_i(U_i) = C_i ln U_i (constant heat capacity, k_B = 1). With U_A + U_B fixed,
 # S_tot(U_A) is maximal where 1/T_A = dS_A/dU_A equals 1/T_B.
 
@@ -176,7 +176,7 @@ for name, F in [("ideal", -nn * Rs * T * sp.log(V) + nn * cv * T * (1 - sp.log(T
     assert sp.simplify(sp.diff(S, V) - sp.diff(P, T)) == 0          # (∂S/∂V)_T = (∂P/∂T)_V
     CV = sp.simplify(T * sp.diff(S, T))
     assert sp.simplify(sp.diff(CV, V)) == 0                          # C_V independent of V
-    # C_P - C_V = T V α²/κ_T = -T (∂P/∂T)_V² / (∂P/∂V)_T   (eq. 3.27)
+    # C_P - C_V = T V α²/κ_T = -T (∂P/∂T)_V² / (∂P/∂V)_T   (eq. 3.29)
     diff_CP_CV = sp.simplify(-T * sp.diff(P, T)**2 / sp.diff(P, V))
     print(f"{name}: S = {sp.expand_log(sp.simplify(S), force=True)},  C_P - C_V = {diff_CP_CV}")
     if name == "ideal":
@@ -236,7 +236,7 @@ P_vdw = lambda v, T_: R * T_ / (v - bC) - aC / v**2
 
 
 def coexistence(T_):
-    """Return (P*, v_l, v_g) with ∫_{v_l}^{v_g} (P - P*) dv = 0, eq. (3.40)."""
+    """Return (P*, v_l, v_g) with ∫_{v_l}^{v_g} (P - P*) dv = 0, eq. (3.38)."""
     sp_roots = np.roots([R * T_, -2 * aC, 4 * aC * bC, -2 * aC * bC**2])   # dP/dv = 0
     vs = np.sort(sp_roots[np.abs(sp_roots.imag) < 1e-12].real)
     vs = vs[vs > bC]
@@ -341,22 +341,40 @@ print(f"A3: dS = {2 * R * (1.5 * np.log(2) + np.log(3)):.2f} J/K")
 print(f"A5: Otto r=8: {1 - 8**(1 - g):.3f}")
 print(f"A6: ice {0.05 * 334e3 / 273.15:.2f}, room {-0.05 * 334e3 / 293.15:.2f}, "
       f"total {0.05 * 334e3 * (1 / 273.15 - 1 / 293.15):.2f} J/K")
-print(f"B2: dS_gas {-R * np.log(2):.3f}, dS_res {R:.3f}, total {R * (1 - np.log(2)):.3f} J/K")
+print(f"B2: dS_gas {-R * np.log(2):.3f}, dS_res {R:.3f}, total {R * (1 - np.log(2)):.3f} J/K; at 300 K: "
+      f"W_on = {R * 300:.1f} J, W_rev = {R * 300 * np.log(2):.1f} J, T dS_tot = {300 * R * (1 - np.log(2)):.1f} J")
+assert np.isclose(R * 300 - R * 300 * np.log(2), 300 * R * (1 - np.log(2)))
 cvC = 2.5 * R; V1, V2, Ti = 1e-3, 2e-3, 300.0
 Tf4 = Ti - aC / cvC * (1 / V1 - 1 / V2)
 dS4 = cvC * np.log(Tf4 / Ti) + R * np.log((V2 - bC) / (V1 - bC))
 print(f"B4: vdW CO2 free expansion: Tf = {Tf4:.2f} K, dS = {dS4:.3f} J/K (ideal: {R * np.log(2):.3f})")
+assert np.isclose(cvC * Tf4 - aC / V2, cvC * Ti - aC / V1) and dS4 > 0      # u conserved, S rises
 v5 = 1e-3
 cpcv5 = R / (1 - 2 * aC * (v5 - bC)**2 / (R * 300 * v5**3))
 assert np.isclose(cpcv5, float(vdW_CPCV.subs({T: 300, V: v5, nn: 1, a: aC, b: bC, Rs: R})))
 print(f"B5: vdW CO2 at 300 K, 1 L/mol: C_P - C_V = {cpcv5:.2f} J/(mol K)")
 for gas, aa, bb in (("N2", 0.1370, 3.87e-5), ("H2", 0.02476, 2.661e-5)):
-    print(f"B6: {gas}: low-density inversion T = 2a/Rb = {2 * aa / (R * bb):.0f} K")
+    print(f"B6: {gas}: low-density inversion T = 2a/Rb = {2 * aa / (R * bb):.0f} K, "
+          f"mu_JT(300 K) = {(2 * aa / (R * 300) - bb) / (3.5 * R) * 1e5:.3f} K/bar")
 Tpc = 1 / (1 / T0w - R / L0 * np.log(2))
 dPdT_ice = 333.6e3 / (273.15 * (1.0002e-3 - 1.0908e-3))
 print(f"B7: boiling at 2 atm {Tpc - 273.15:.1f} C; ice line slope {dPdT_ice / 1e5:.1f} bar/K")
 print(f"C1: W_max bricks = {C * (T1 + T2 - 2 * np.sqrt(T1 * T2)):.0f} J, T_final = {np.sqrt(T1 * T2):.1f} K")
-print(f"C3: plant 0.40 x heat pump COP 3 -> {0.40 * 3:.2f} J heat per J fuel")
+print(f"C3: plant 0.40 x heat pump COP 3 -> {0.40 * 3:.2f} J heat per J fuel; break-even COP = {1 / 0.40:.2f}; "
+      f"Carnot COP at -10 C outdoors = {293.15 / 30:.2f}")
+T_be = 293.15 - 0.45 * 293.15 / 2.5
+assert np.isclose(0.45 * 293.15 / (293.15 - T_be), 2.5)
+print(f"C3(d): 0.45 x Carnot reaches break-even 2.5 at T_out = {T_be:.1f} K = {T_be - 273.15:.1f} C")
+print(f"A1(b): heat dumped = 300 + 100 = {300 + 300 / 3:.0f} W; A5: T2 = 300 x 8^0.4 = {300 * 8**0.4:.1f} K")
+P_skate = 70 * 9.81 / (3e-3 * 0.10)
+print(f"B7(c): skater 70 kg on 3 mm x 10 cm: P = {P_skate / 1e5:.1f} bar, melting point shift "
+      f"{P_skate / dPdT_ice:.3f} K")
+Wsq = C * (np.sqrt(T1) - np.sqrt(T2))**2
+assert np.isclose(Wsq, C * (T1 + T2 - 2 * np.sqrt(T1 * T2)))
+assert np.isclose(2 * C * np.log(300 / np.sqrt(T1 * T2)), C * np.log(9 / 8))
+print(f"C1: C(sqrt T1 - sqrt T2)^2 = {Wsq:.0f} J; 2C(300 - 282.8) = {2 * C * (300 - np.sqrt(T1 * T2)):.0f} J; "
+      f"2C ln(300/282.8) = {2 * C * np.log(300 / np.sqrt(T1 * T2)):.1f} J/K = C ln(9/8)")
+print(f"B8: mu(10 atm) - mu(1 atm) at 300 K = RT ln 10 = {R * 300 * np.log(10):.0f} J/mol")
 
 # %% [markdown]
 # ## Your turn
@@ -365,7 +383,7 @@ print(f"C3: plant 0.40 x heat pump COP 3 -> {0.40 * 3:.2f} J heat per J fuel")
 #    efficiency without a regenerator and compare with 1 - Tc/Th. Then count the
 #    isochoric heat as perfectly regenerated and show the efficiency returns to Carnot.
 # 2. **Gibbs paradox numerically.** Two halves, N particles each, partition removed.
-#    Compute ΔS = 2Nk ln 2 for distinguishable gases from S(U,V,N) of eq. (3.17) with the
+#    Compute ΔS = 2Nk ln 2 for distinguishable gases from S(U,V,N) of eq. (3.16) with the
 #    N inside the log treated two ways (ln V vs ln(V/N)); show only ln(V/N) gives 0 for
 #    identical gases. SM-3 explains why ln(V/N) is right.
 # 3. **Heat pump COP vs outdoor temperature.** Plot T_in/(T_in - T_out) for T_in = 293 K,
@@ -386,6 +404,10 @@ for i in range(1, len(Tb9) - 1):
     assert abs(L_cc / L_s - 1) < 2e-3
 print(f"B9: vdW CO2 latent heat at {Tb9[6]:.0f} K: T Δs = "
       f"{R * Tb9[6] * np.log((Pb9[6, 2] - bC) / (Pb9[6, 1] - bC)) / 1e3:.2f} kJ/mol, matches Clausius-Clapeyron")
+L_b9 = R * Tb9 * np.log((Pb9[:, 2] - bC) / (Pb9[:, 1] - bC))
+assert np.all(np.diff(L_b9) < 0)                               # L falls toward 0 as T -> Tc
+print(f"B9: L(240 K) = {L_b9[0] / 1e3:.2f}, L(300 K) = {L_b9[-1] / 1e3:.2f} kJ/mol; "
+      f"P*(270 K) = {Pb9[6, 0] / 1e6:.3f} MPa")
 
 # %%
 if __name__ == "__main__":
