@@ -19,7 +19,7 @@ The density rises with $\omega$, so the filter is high-pass. That fits: $x_t=w_t
 
 **A3.** $m=3$ gives $L=2m+1=7$ and $\nu=2L=14$. With $\chi^2_{14,0.025}=5.629$ and $\chi^2_{14,0.975}=26.119$, the multipliers are $14/26.119=0.536$ and $14/5.629=2.487$, so the interval is $[0.536\hat f,2.487\hat f]$. Its end-to-end ratio is $4.64$, against $6.31$ for $m=2$. The interval is narrower, and in exchange the estimate averages over a bandwidth $7/n$ instead of $5/n$, which costs bias at peaks.
 
-**A4.** (a) Use Harvey's form with $r=\max(1,2)=2$. State $\alpha_t=(x_t,\ \theta w_t)^\top$.
+**A4.** (a) Use Harvey's form (§3.8) with state dimension $k=\max(p,q+1)=\max(1,2)=2$. State $\alpha_t=(x_t,\ \theta w_t)^\top$.
 $$T=\begin{pmatrix}0.6&1\\0&0\end{pmatrix},\quad R=\begin{pmatrix}1\\0.4\end{pmatrix},\quad Q=1,\quad Z=(1\ \ 0),\quad H=0,$$
 with $\eta_t=w_{t+1}$. Check: $\alpha_{t+1}^{(2)}=0\cdot\alpha_t+0.4w_{t+1}=0.4w_{t+1}$, and $\alpha_{t+1}^{(1)}=0.6\alpha_t^{(1)}+\alpha_t^{(2)}+w_{t+1}=0.6x_t+0.4w_t+w_{t+1}=x_{t+1}$. ✓ (Project Part 9 uses exactly this form.)
 

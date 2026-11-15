@@ -35,7 +35,7 @@ Examples 4.2 and 4.5 and Exercise B3 by number, so nothing was renumbered.
    H–J residual "1.5e-8" and "5%" (`< 1e-4`, `> 0.02`), phase velocity "1.005" (`|v-1| < 0.01`),
    step reflection "13.2% vs 13.1%" (only their difference bounded). A later edit could move any of
    these and the script would still pass. Fix: pin each quoted value.
-   Status: FIXED. Pass 1 pinned Parts 5–9 (phase velocity against its closed form 1.0048, continuity < 1e-5, 2 cos t to 2e-5, energy to 6e-6, drift 1.981, step 0.1322 and 0.1310, H–J 1e-7 and 0.048 against a closed form); pass 2 re-ran and confirmed each printed value, and tightened the (3.7) check to 2e-12 (see 26).
+   Status: FIXED. Pass 1 pinned Parts 5–9 (phase velocity against its closed form 1.0048, continuity < 1e-5, 2 cos t to 2e-5, energy to 6e-6, drift 1.981, step 0.1322 and 0.1310, H–J 1e-7 and 0.048 against a closed form); pass 2 re-ran and confirmed each printed value (and that the continuity residual is the O(dt^2) error of the centred time difference: 5.25e-6, 1.31e-6, 3.28e-7 for dt, dt/2, dt/4), tightened the (3.7) check to 2e-12 (see 26), and turned two one-sided bounds into pins: continuity in (4e-6, 7e-6), H–J residual in (5e-9, 5e-8).
 2. **project.py, Parts 1, 10, 11: quoted numbers printed but not asserted.** Severity: medium.
    n lambda^3 = 1.7e-7, air and Cu spacings, 579 km, 2.2 d, 1.128 eV, 1.10 um, 0.940 eV, A2's
    150.4 eV, A4's 1.45 and 3.862e-13 m, B6(c)'s 0.56/0.30/0.20, B8(b)'s three errors. Fix: assert.
@@ -144,4 +144,18 @@ Examples 4.2 and 4.5 and Exercise B3 by number, so nothing was renumbered.
     Severity: low. Fix: tighten both, since the reworded §8 quotes the quartic drift.
     Status: FIXED. `e1 < 2e-12`; quartic drift asserted in (5e-5, 7e-5).
 
-Status: pass 2 in progress; items 1–26 fixed, second read-through of the edited files under way.
+27. **solutions B3(b) and B7(c): two loose pointers.** Severity: low. B3(b) said "the number the
+    project's step uses" without the formula or the part; B7(c) credited the constant i hbar/2 in
+    <xp> to A5(b), which is about real Psi only, when it holds for every state by A5(a).
+    Status: FIXED. B3(b) shows R = ((k-q)/(k+q))^2 = 1/9 with q = 1 and names Part 8; B7(c) cites
+    A5(a): xp = (xp + px)/2 + i hbar/2.
+28. **project.py is about 700 lines against STYLE's 150–400 guideline** (617 before this review).
+    Severity: low.
+    Status: NOT FIXED: every part is required by the brief's project list or pins a number the notes
+    or solutions quote; cutting to 400 lines means removing checks, which is the wrong trade.
+
+Run at the end of pass 2: `MPLBACKEND=Agg python3 project.py` exits 0 in about 12 s, twice, with identical
+output apart from the timing line.
+
+Status: review complete. 28 findings (0 high, 4 medium, 24 low); 27 FIXED, 1 NOT FIXED (item 28, project length guideline).
+

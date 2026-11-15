@@ -295,6 +295,7 @@ def sidelobe_slope(win, pad=64):
 sl_rect, sl_hann = sidelobe_slope(np.ones(n)), sidelobe_slope(hann)
 print(f"Side-lobe power decay exponents: rectangular {sl_rect:.2f} (theory -2), Hann {sl_hann:.2f} (theory -6)")
 assert abs(sl_rect + 2) < 0.15 and abs(sl_hann + 6) < 0.15
+assert abs(sl_rect + 1.95) < 0.01 and abs(sl_hann + 5.98) < 0.01      # the measured values quoted in §3.6
 fig, ax = plt.subplots(figsize=(6, 3.4))
 ax.semilogy(w_j, I_raw, lw=0.7, label="no taper"); ax.semilogy(w_j, I_han, lw=0.7, label="Hann")
 ax.set_xlabel("w"); ax.legend(); fig.tight_layout(); fig.savefig(FIG / "taper.png", dpi=120); plt.close(fig)
@@ -848,6 +849,9 @@ assert np.mean(lls) < ll_kf                                 # log of an unbiased
 
 # %% [markdown]
 # ## Your turn
+# Put new code here, after everything above, or give it its own `np.random.default_rng(...)`:
+# the numbers quoted in the notes are pinned by asserts, and drawing from the shared `rng`
+# earlier in the file shifts every simulated number after that point.
 # 1. Coherence: build x_t = c_t + noise, y_t = c_{t-3} filtered + noise with a common AR(1)
 #    component c_t. Estimate the squared coherence (Part 5's code) and the phase; the phase
 #    slope should be -2 pi * 3 (a pure delay). Where is the coherence high, and why?

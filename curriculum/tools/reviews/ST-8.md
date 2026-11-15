@@ -84,6 +84,18 @@ Scratch recomputation: pass 1 in `/tmp/claude-0/st8/` (`recompute.py`, `chk2.py`
 23. **[low] outside this folder, not editable here.** ST-7 §3.14 says of the AR(2) peak "damping pulls it to a slightly lower frequency (ST-8 (3.11))" without the φ1 > 0 qualifier. True for its own example; the general statement is item 1's.
    - **Status:** NOT FIXED: ST-7 is outside this module's folder; its sentence is true for the example it cites.
 
+24. **[low] notes.md §3.8 ARMA bullet, solutions.md A4 (pass 2).** The state dimension was called r = max(p, q+1) two lines after Definition 3.6 used r for the number of state shocks (R is k×r), and Q, H were not given for this form.
+   - **Status:** FIXED: the bullet and solution A4 use k = max(p, q+1), the bullet states Q = σ², H = 0, and the conventions box lists the two meanings of r and the AR-order meaning of p.
+
+25. **[low] project.py Part 1 comment, §7 runtime, pinned numbers and the reader (pass 2).** The Part 1 comment cited (3.4) for the Fourier series of the ACF (it is (3.3)); §7 said "about 10 seconds" (11–12 s here); and once numbers are pinned, a reader who draws from the shared `rng` in the middle of the file would trip later asserts without knowing why.
+   - **Status:** FIXED: comment cites (3.3); §7 says about 12 seconds; §7 and the "Your turn" header say where to put new code and why.
+
+## Verification after the fixes
+
+- `MPLBACKEND=Agg timeout 300 python3 project.py`: exit 0 in 11–12 s, 872 lines, imports unchanged (math, time, numpy, scipy, matplotlib, pathlib). Output compared line by line with the baseline run: every previously printed number is identical; the only changed lines are the leakage report (item 19), the tracker RMSE line (item 22) and the Fisher line (now also prints the peak index), plus new lines for the AR(2) pair, H_500, the side-lobe exponents, the null rejection rate and the smoothed sd across the gap.
+- notes.md equation tags run 3.1–3.36 with no gap; ST-7's citations of ST-8 (3.3), (3.8), (3.11) still point at the same equations. 17 Try-it-first and 17 What-just-happened blocks.
+- Solution C3(c)'s code block re-run after the fixes is unaffected (it uses only `rng` after everything else, and `bootstrap_pf`).
+
 ## Status
 
-Phase 2 in progress: items 1–23 dispositioned; final sweep under way.
+Complete: 25 items (1 high, 8 medium, 16 low); 22 fixed, 3 not fixed by design (14 nothing left to fix, 18 length set by the brief, 23 lives in ST-7's folder); project.py exits 0.

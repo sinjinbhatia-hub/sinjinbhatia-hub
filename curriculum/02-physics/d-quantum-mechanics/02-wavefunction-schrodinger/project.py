@@ -151,9 +151,9 @@ print("Madelung split checked: real part = H-J + quantum potential, imaginary pa
 # t/dt steps by O(dt^2) (Exercise B8 measures the 2). The unsymmetric
 # exp(A) exp(B) keeps [A, B]/2 and is only first order.
 #
-# Each factor is a unimodular phase multiplying the
-# coefficients in its own basis, and the FFT (unitary up to 1/N) moves between
-# bases, so the scheme conserves the norm exactly (to rounding). The time step
+# Each factor is a unimodular phase multiplying the coefficients in its own
+# basis, and the FFT (unitary up to 1/N) moves between bases, so the scheme
+# conserves the norm exactly (to rounding), whatever dt is. The time step
 # must resolve the fastest phase the state actually carries: (hbar k^2/2m) dt
 # and V dt/hbar should be well under pi for the wavenumbers k and potential
 # values V where Psi has weight, or the splitting error dominates. The grid's
@@ -343,7 +343,7 @@ drho = (np.abs(pp)**2 - np.abs(pm)**2) / (2 * dtc)
 divJ = np.real(g.deriv(g.current(pc)))
 res_c = np.max(np.abs(drho + divJ)) / np.max(np.abs(drho))
 print(f"Continuity residual max|d rho/dt + dJ/dx| / max|d rho/dt| = {res_c:.2e}")
-assert res_c < 1e-5        # 5e-6 quoted in §3.2; it is the O(dt^2) error of the centred time difference
+assert 4e-6 < res_c < 7e-6     # 5e-6 quoted in §3.2; it is the O(dt^2) error of the centred time difference
 
 # %% [markdown]
 # ## Part 7: Ehrenfest, energy conservation, minimum uncertainty (§3.4, Example 4.6)

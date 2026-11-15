@@ -313,7 +313,7 @@ ax.set_title("AR(2) stationary region (orange: complex roots)"); save(fig, "ar2_
 
 # %% [markdown]
 # ## Part 3: Yule-Walker vs CLS vs exact ML, 500 replications of AR(2) phi = (1.0, -0.5), n = 200 (notes 3.8)
-# The exact likelihood (3.25) is checked against the n-dimensional Toeplitz MVN evaluated by Cholesky.
+# The exact AR(2) likelihood (innovations form (3.24)) is checked against the n-dimensional Toeplitz MVN evaluated by Cholesky.
 # %%
 phT = np.array([1.0, -0.5]); nR, R = 200, 500; X = simulate(phT, n=nR, R=R)
 assert np.isclose(ar_loglik_exact(phT, 1.0, X[0] - X[0].mean()), ar_loglik_mvn(phT, 1.0, X[0] - X[0].mean()))
