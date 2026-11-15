@@ -374,6 +374,13 @@ assert np.isclose(Wsq, C * (T1 + T2 - 2 * np.sqrt(T1 * T2)))
 assert np.isclose(2 * C * np.log(300 / np.sqrt(T1 * T2)), C * np.log(9 / 8))
 print(f"C1: C(sqrt T1 - sqrt T2)^2 = {Wsq:.0f} J; 2C(300 - 282.8) = {2 * C * (300 - np.sqrt(T1 * T2)):.0f} J; "
       f"2C ln(300/282.8) = {2 * C * np.log(300 / np.sqrt(T1 * T2)):.1f} J/K = C ln(9/8)")
+print(f"intermediates: A6 Q = {0.05 * 334e3:.0f} J; A3 terms {1.5 * np.log(2):.4f}, {np.log(3):.4f}; "
+      f"B4 cv = {cvC:.3f}, dT = {aC / cvC * 500:.3f}, terms {cvC * np.log(Tf4 / Ti):.3f}, "
+      f"{R * np.log((V2 - bC) / (V1 - bC)):.3f}, ratio {(V2 - bC) / (V1 - bC):.3f}; "
+      f"B5 x = {2 * aC * (v5 - bC)**2 / (R * 300 * v5**3):.4f}; B7 T(2 atm) = {Tpc:.1f} K, "
+      f"dv_ice = {1.0002e-3 - 1.0908e-3:.3e}; C3 gain = {1.20 / 0.95 - 1:.0%}; C3(d) span = {0.45 * 293.15 / 2.5:.2f} K")
+for gas, aa, bb in (("N2", 0.1370, 3.87e-5), ("H2", 0.02476, 2.661e-5)):
+    print(f"   B6 {gas}: 2a/RT = {2 * aa / (R * 300):.3e}, minus b = {2 * aa / (R * 300) - bb:.3e}, c_P = {3.5 * R:.2f}")
 print(f"B8: mu(10 atm) - mu(1 atm) at 300 K = RT ln 10 = {R * 300 * np.log(10):.0f} J/mol")
 
 # %% [markdown]
