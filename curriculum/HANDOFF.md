@@ -1,6 +1,6 @@
 # Handoff — where the build stands and how to continue
 
-Last updated 2026-11-11 03:35 UTC, at the start of round 18. The branch is `claude/brave-knuth-64723m`. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
+Last updated 2026-11-15 02:25 UTC, at the start of round 19. The branch is `claude/brave-knuth-64723m`. Read this first, then `ROADMAP.md` for the plan and `research/WRITER-BRIEF.md` for the writing rules.
 
 ## Status (42 of 80 math modules done; Python course complete, 10 of 10)
 
@@ -10,9 +10,10 @@ Last updated 2026-11-11 03:35 UTC, at the start of round 18. The branch is `clau
 |---|---|
 | **Done** (42) | F1–F6 · LA-1–14 · CM-1–8 · EM-1–8 · ST-1–6 |
 | **Done, Python** (10) | PY-1–10, reviewed with every code block executed |
-| **Written, awaiting review** (8) | QM-1–5 · ST-7–9 (Opus; scripts pass; reviews in flight in round 18) |
-| **Being written, then reviewed, in round 18** (8) | QM-6–9 · SM-1–4 |
-| **Not started** (22) | SM-5–7 · ML-1–10 · QC-1–9 |
+| **Written, awaiting review** (8) | QM-1–5 · ST-7–9 (Opus; scripts pass; reviews queued first in round 19) |
+| **Partial drafts on disk** (4) | QM-6, QM-7, SM-1, SM-2 (writers resume from them) |
+| **Queued in round 19, write then review** (11) | QM-6–9 · SM-1–7 |
+| **Not started** (19) | ML-1–10 · QC-1–9 |
 
 Until a module is in a Done row, treat its derivations and numbers as unverified.
 
@@ -32,7 +33,9 @@ Also commit and push by hand each time an agent reports. Do not end a turn with 
 
 ## How to run a round
 
-Preferred: the Workflow tool with `tools/build_modules_workflow.js` as `scriptPath` and args `{"combined": true, "writerModel": "opus", "modules": [{"code", "dir", "brief", "mode"?}]}`. Leave `mode` out to write a module and then review it in the same pipeline; `"verify"` reviews an existing module; `"write"` writes only. Each workflow runs 2 agents at a time on this machine, so four workflows give eight.
+Preferred: the Workflow tool with `tools/build_modules_workflow.js` as `scriptPath` and args `{"combined": true, "writerModel": "opus", "modules": [{"code", "dir", "brief", "mode"?}]}`. Leave `mode` out to write a module and then review it in the same pipeline; `"verify"` reviews an existing module; `"write"` writes only. Each workflow runs 2 agents at a time on this machine.
+
+Better still, pass `"lanes": [[…modules…], [..]]` instead of `modules`: each lane works through its list strictly in order, one agent at a time, and the lanes run side by side. Put reviews at the front of each lane so cheap work that finishes modules is done before expensive writes. Two workflows of two lanes each (four agents) wastes less at the cutoff than eight agents and uses the same total budget; rounds 17 and 18 ran eight agents into an almost-spent window and finished nothing.
 
 Fallback when the Workflow tool is switched off: launch one background agent per module with the Agent tool (`subagent_type: general-purpose`). The standing instructions are in two files; the launch message only names the module:
 

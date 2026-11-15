@@ -155,3 +155,14 @@ Eight Agent-tool agents (reviews QM-1, QM-2, ST-7, ST-8; writes QM-6–9) were l
 | wf_b97167df-c5c | verify: ST-7, ST-8, ST-9 |
 | wf_8756f08c-8a0 | write (Opus) then review: QM-6, QM-7, QM-8, QM-9 |
 | wf_d6342676-e6b | write (Opus) then review: SM-1, SM-2, SM-3, SM-4 |
+
+Round 18 was cut off by the limit about 11 minutes in; no agent finished. Partial drafts of QM-6, QM-7, SM-1, SM-2 and partial review notes for QM-1, QM-2, ST-7, ST-8 were saved by the autosave.
+
+## Round 19 (2026-11-15 02:20 UTC) — lanes mode, four agents, reviews first
+
+Each workflow runs two lanes; each lane works through its list in order, one agent at a time.
+
+| Run ID | Lane 1 | Lane 2 |
+|---|---|---|
+| wf_5e57244e-8ed | review QM-1, QM-3, QM-5; then write+review QM-6, QM-8 | review QM-2, QM-4; then write+review QM-7, QM-9 |
+| wf_4656e2ff-b5e | review ST-7, ST-9; then write+review SM-1, SM-3, SM-5 | review ST-8; then write+review SM-2, SM-4, SM-6, SM-7 |
