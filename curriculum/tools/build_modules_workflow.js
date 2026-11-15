@@ -9,7 +9,11 @@ export const meta = {
 }
 
 const ROOT = '/home/user/sinjinbhatia-hub/curriculum'
-const modules = (args && args.modules) || []
+// args.lanes (optional): an array of module lists. Each lane runs its modules strictly in order, one agent at a
+// time, and the lanes run side by side, so the order of work is deterministic (put reviews first in a lane to
+// finish cheap work before expensive writes). Without it, args.modules runs through pipeline() as before.
+const LANES = (args && Array.isArray(args.lanes)) ? args.lanes.filter(l => Array.isArray(l) && l.length) : null
+const modules = LANES ? LANES.flat() : ((args && args.modules) || [])
 if (!modules.length) throw new Error('args.modules required: [{code, dir, brief, mode?}]; mode: undefined = write+review, "verify" = review only, "write" = write only (combined mode)')
 
 const WRITE_SCHEMA = {
@@ -151,7 +155,30 @@ function capped(code, stage) {
 const COMBINED = !!(args && args.combined)
 // Optional cheaper model for writers (e.g. args.writerModel = 'sonnet'); reviewers keep the session model.
 const WRITER_OPTS = (args && args.writerModel) ? { model: args.writerModel } : {}
-const results = COMBINED ? await pipeline(
+async function runOne(m) {
+  let w
+  if (m.mode === 'verify') w = { status: 'complete', script_passes: true, skipped_write: true }
+  else w = await agent(writePrompt(m), { label: `write:${m.code}`, phase: 'Write', schema: WRITE_SCHEMA, ...WRITER_OPTS })
+  if (!w) { log(`${m.code}: writer died; skipping review`); return null }
+  if (m.mode === 'write') { log(`${m.code}: written; review deferred`); return { w, rf: null } }
+  const rf = await agent(reviewFixPrompt(m), { label: `review+fix:${m.code}`, phase: 'Verify', schema: REVIEWFIX_SCHEMA })
+  if (rf) log(`${m.code}: reviewed, ${rf.issues_found} issues, ${rf.fixed} fixed`)
+  return { w, rf }
+}
+async function runLane(lane, k) {
+  const out = []
+  let dead = 0
+  for (const m of lane) {
+    if (dead >= 2) { log(`lane ${k}: two agents in a row died (usage limit?); ${m.code} not started`); out.push(null); continue }
+    let r = null
+    try { r = await runOne(m) } catch (e) { r = null }
+    dead = (!r || (m.mode !== 'write' && !r.rf)) ? dead + 1 : 0
+    out.push(r)
+  }
+  return out
+}
+const results = LANES ? (await parallel(LANES.map((lane, k) => () => runLane(lane, k)))).map((o, k) => o || LANES[k].map(() => null)).flat()
+: COMBINED ? await pipeline(
   modules,
   m => {
     if (m.mode === 'verify') return { status: 'complete', script_passes: true, skipped_write: true }
@@ -186,7 +213,7 @@ const summary = modules.map((m, i) => {
   const r = results[i]
   if (!r) return { code: m.code, status: 'FAILED (writer or pipeline died)' }
   if (r.paused) return { code: m.code, status: r.w && r.w.paused ? 'PAUSED before write (token cap)' : `PAUSED before review (token cap); write: ${r.w.skipped_write ? 'pre-existing' : r.w.status + ', script ' + (r.w.script_passes ? 'passes' : 'FAILS')}` }
-  if (COMBINED) {
+  if (COMBINED || LANES) {
     return {
       code: m.code,
       write: r.w ? (r.w.skipped_write ? 'pre-existing' : `${r.w.status}, script ${r.w.script_passes ? 'passes' : 'FAILS'}`) : 'n/a',
