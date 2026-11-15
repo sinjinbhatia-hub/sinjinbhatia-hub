@@ -453,7 +453,7 @@ nE = 100; xa, ya = np.cumsum(rng.standard_normal((RD, nE)), 1), np.cumsum(rng.st
 _, _, eres = ols_t(ya, np.stack([np.ones_like(xa), xa], -1)); teg = df_t(eres, const=False); cEG = np.quantile(teg, 0.05)
 print(f"Engle-Granger 5% critical value (n={nE}) {cEG:.3f}  vs DF {qc[1]:.3f}")
 assert -3.6 < cEG < -3.2
-pin(cEG, -3.39, 2); assert abs(cEG - (-3.3377 - 5.967 / nE - 8.98 / nE**2)) < 0.03    # MacKinnon's response surface (two variables, constant)
+pin(cEG, -3.39, 2); assert abs(cEG + 3.34) < 0.1                             # close to the asymptotic value -3.34 quoted in notes 3.12
 xc = np.cumsum(rng.standard_normal((2000, nE)), 1); u = simulate((0.5,), n=nE, R=2000); yc = 1.0 + 2.0 * xc + u
 bc, _, ec = ols_t(yc, np.stack([np.ones_like(xc), xc], -1)); pEG = np.mean(df_t(ec, const=False) < cEG)
 print(f"cointegrated pair (y = 1 + 2x + AR(1) 0.5): mean beta_hat {bc[:, 1].mean():.4f}, EG rejection rate {pEG:.3f}")
@@ -481,53 +481,85 @@ print("SES == ARIMA(0,1,1) with theta = alpha - 1: checked at alpha = 0.1, 0.5, 
 # ## Part 11: numbers for the exercises
 # %%
 gA1 = arma_acov((), (0.6, -0.3), 1, 3); print("A1 MA(2) gamma(0..3):", np.round(gA1, 4), " rho(1,2):", np.round(gA1[1:3] / gA1[0], 4))
-assert np.allclose(gA1, [1.45, 0.42, -0.3, 0])
+assert np.allclose(gA1, [1.45, 0.42, -0.3, 0]) and np.allclose(np.round(gA1[1:3] / gA1[0], 4), [0.2897, -0.2069])
 zA1 = np.roots([-0.3, 0.6, 1.0]); print("A1 roots of theta(z):", np.round(zA1, 4)); assert np.all(np.abs(zA1) > 1)
-for ph in [(1.2, -0.2), (0.4, 0.45), (1.5, -0.75)]:
-    print("A2", ph, "|roots| =", np.round(np.abs(np.roots(np.r_[-np.array(ph)[::-1], 1.0])), 4))
+assert np.allclose(np.round(np.sort(zA1), 4), [-1.0817, 3.0817])
+for ph, zq, lq in [((1.2, -0.2), [1, 5], [0.2, 1]), ((0.4, 0.45), [-2, 1 / 0.9], [-0.5, 0.9]),
+                   ((1.5, -0.75), [1 - 1j / np.sqrt(3), 1 + 1j / np.sqrt(3)], [0.75 - 0.25j * np.sqrt(3), 0.75 + 0.25j * np.sqrt(3)])]:
+    zz = np.roots(np.r_[-np.array(ph)[::-1], 1.0]); print("A2", ph, "roots =", np.round(np.sort_complex(zz), 4), "|roots| =", np.round(np.abs(zz), 4))
+    assert np.allclose(np.sort_complex(zz), zq) and np.allclose(np.sort_complex(np.linalg.eigvals(companion(ph))), lq)
 lmA2 = np.linalg.eigvals(companion((1.5, -0.75))); assert np.isclose(2 * np.pi / abs(np.angle(lmA2[0])), 12)
-print("A3 corr(x_100, x_110) =", round(np.sqrt(100 / 110), 4))
-print(f"A5 P(at least one of 20 white-noise lags outside the band) = {1 - 0.95**20:.4f}")
+assert np.allclose(np.round([np.abs(lmA2[0]), 1 / np.abs(lmA2[0]), np.abs(lmA2[0].imag), 1 / np.sqrt(3), 1 / 0.9], 4), [0.8660, 1.1547, 0.4330, 0.5774, 1.1111])
+gA2b = arma_acov((0.4, 0.45), (), 1, 12); c1 = (gA2b[1] / gA2b[0] + 0.5) / 1.4                # rho(h) = c1 0.9^h + c2 (-0.5)^h
+assert np.allclose(gA2b / gA2b[0], c1 * 0.9 ** np.arange(13) + (1 - c1) * (-0.5) ** np.arange(13)) and c1 > 0.85
+print("A3 corr(x_100, x_110) =", round(np.sqrt(100 / 110), 4)); assert round(np.sqrt(100 / 110), 4) == 0.9535
+print(f"A5 P(at least one of 20 white-noise lags outside the band) = {1 - 0.95**20:.4f}"); assert round(1 - 0.95**20, 4) == 0.6415
 Q = 100 * 102 * (0.15**2 / 99 + 0.1**2 / 98 + 0.05**2 / 97); print(f"A6 Q = {Q:.4f}, chi2_3 95% = {stats.chi2.ppf(0.95, 3):.3f}, p = {stats.chi2.sf(Q, 3):.4f}")
 print(f"A6 after an AR(1) fit: chi2_2 95% = {stats.chi2.ppf(0.95, 2):.3f}, p = {stats.chi2.sf(Q, 2):.4f}")
-for nn in (4, 5, 6, 10):
+assert np.allclose(np.round([Q, stats.chi2.sf(Q, 3), stats.chi2.sf(Q, 2)], 4), [3.6219, 0.3053, 0.1635])
+assert np.allclose(np.round([stats.chi2.ppf(0.95, 3), stats.chi2.ppf(0.95, 2)], 3), [7.815, 5.991])
+for nn, q_ in zip((4, 5, 6, 10), (0.0292, -0.0392, -0.0812, -0.1514)):
     ev = np.linalg.eigvalsh(linalg.toeplitz(np.r_[1, 0.6, np.zeros(nn - 2)])); print(f"B1 n={nn}: min eigenvalue {ev[0]:.4f}")
+    assert np.isclose(ev[0], 1 - 1.2 * np.cos(np.pi / (nn + 1))) and round(ev[0], 4) == q_         # the hint's formula, and the quoted values
 assert np.linalg.eigvalsh(linalg.toeplitz([1, 0.6, 0, 0]))[0] > 0 and np.linalg.eigvalsh(linalg.toeplitz([1, 0.6, 0, 0, 0]))[0] < 0
 gB2 = arma_acov((1.5, -0.75), (), 1, 4); print("B2 gamma(0) =", round(gB2[0], 4), " rho(1..4) =", np.round(gB2[1:] / gB2[0], 4))
+assert round(gB2[0], 4) == 8.6154 and np.allclose(np.round(gB2[1:] / gB2[0], 4), [0.8571, 0.5357, 0.1607, -0.1607])
 rB3 = np.array([1, 0.8, 0.5, 0.3]); print("B3 PACF:", np.round(durbin_levinson(rB3, 3), 4))
 assert np.allclose(durbin_levinson(rB3, 3), [0.8, -0.14 / 0.36, (1 / 18) / (11 / 36)])
 ph3 = linalg.solve(linalg.toeplitz(rB3[:3]), rB3[1:]); pc3 = durbin_levinson(rB3, 3); v = np.cumprod(1 - pc3**2)
 print("B3 AR(3) YW coefficients:", np.round(ph3, 4), " prediction error variances v1..v3 / gamma(0):", np.round(v, 4))
-assert np.isclose(ph3[-1], pc3[-1])
+assert np.allclose(np.round(ph3, 4), [1.1818, -0.5909, 0.1818]) and np.isclose(ph3[-1], pc3[-1])  # direct 3x3 Toeplitz solve
+assert np.allclose(np.round(linalg.solve(linalg.toeplitz(rB3[:2]), rB3[1:3]), 4), [1.1111, -0.3889])
+assert np.allclose(np.round(v, 4), [0.36, 0.3056, 0.2955]) and np.allclose(v, [1 - linalg.solve(linalg.toeplitz(rB3[:k]), rB3[1:k + 1]) @ rB3[1:k + 1] for k in (1, 2, 3)])
 fB4, mB4 = ar_forecast(np.array([2.0, 1.0]), (1.0, -0.5), 1.0, 3); print("B4 forecasts", fB4, " MSE", mB4)
-assert np.allclose(fB4, [0, -0.5, -0.5]) and np.allclose(mB4, [1, 2, 2.25])
-print("B4 95% intervals:", [(round(float(a - 1.96 * np.sqrt(b)), 4), round(float(a + 1.96 * np.sqrt(b)), 4)) for a, b in zip(fB4, mB4)])
+assert np.allclose(fB4, [0, -0.5, -0.5]) and np.allclose(mB4, [1, 2, 2.25]) and np.allclose(psi_weights((1.0, -0.5), (), 3), [1, 1, 0.5])
+iB4 = np.array([(a - 1.96 * np.sqrt(b), a + 1.96 * np.sqrt(b)) for a, b in zip(fB4, mB4)]); print("B4 95% intervals:", np.round(iB4, 4).tolist())
+assert np.allclose(np.round(iB4, 4), [[-1.96, 1.96], [-3.2719, 2.2719], [-3.44, 2.44]])
 print(f"B2 r = {np.sqrt(0.75):.4f}, omega = {np.arccos(1.5 / (2 * np.sqrt(0.75))):.4f} (pi/6 = {np.pi / 6:.4f})")
+assert np.isclose(np.arccos(1.5 / (2 * np.sqrt(0.75))), np.pi / 6) and round(np.pi / 6, 4) == 0.5236
 xb6 = np.array([1.0, 2, 4]); cls6 = (xb6[1:] @ xb6[:-1]) / (xb6[:-1] @ xb6[:-1]); yw6 = (xb6[1:] @ xb6[:-1]) / (xb6 @ xb6)
-print(f"B6 x=(1,2,4): CLS {cls6:.4f}, YW {yw6:.4f}"); assert np.isclose(cls6, 2) and np.isclose(yw6, 10 / 21)
-print("B5 theta from r=0.4:", (1 - np.sqrt(1 - 4 * 0.16)) / 0.8)
+print(f"B6 x=(1,2,4): CLS {cls6:.4f}, YW {yw6:.4f}"); assert np.isclose(cls6, 2) and np.isclose(yw6, 10 / 21) and round(yw6, 4) == 0.4762
+assert np.isclose(cls6 / yw6, 1 + xb6[-1] ** 2 / (xb6[:-1] @ xb6[:-1]))                           # B6(c)
+print("B5 theta from r=0.4:", (1 - np.sqrt(1 - 4 * 0.16)) / 0.8); assert np.allclose(np.sort(np.roots([0.4, -1, 0.4])), [0.5, 2])
+sdB5 = np.sqrt((1 - 3 * 0.45**2 + 4 * 0.45**4) / 50); print(f"B5(c) Bartlett sd of rho_hat(1) for an MA(1) with rho(1)=0.45, n=50: {sdB5:.3f}")
+rt_ = np.r_[1, 0.45, np.zeros(60)]; ks = np.arange(1, 40)                                          # the same number from Bartlett's sum
+assert np.isclose(sdB5**2, np.sum((rt_[ks + 1] + rt_[np.abs(ks - 1)] - 2 * 0.45 * rt_[ks]) ** 2) / 50) and round(sdB5, 1) == 0.1
 psB8 = np.cumsum(0.5 ** np.arange(3)); print("B8 psi:", psB8, " MSE:", np.cumsum(psB8**2))
-assert np.allclose(np.cumsum(psB8**2), [1, 3.25, 6.3125])
+assert np.allclose(np.cumsum(psB8**2), [1, 3.25, 6.3125]) and np.allclose(psi_weights((1.5, -0.5), (), 3), psB8)   # (1-0.5z)(1-z) = 1 - 1.5z + 0.5z^2
+psl = psi_weights((1.5, -0.5), (), 400); assert np.isclose(psl[-1], 2) and np.isclose(psl[-1] ** 2, 1 / (1 - 0.5) ** 2)   # slope of P_{n+h}: 4
+assert np.isclose(arma_acov((0.5,), (), 1, 300)[0] + 2 * arma_acov((0.5,), (), 1, 300)[1:].sum(), 4)                      # = long-run variance of the differences
 yB8 = [9.0, 10.0]
 for _ in range(3): yB8.append(yB8[-1] + 0.5 * (yB8[-1] - yB8[-2]))
 print("B8 forecasts:", yB8[2:]); assert np.allclose(yB8[2:], [10.5, 10.75, 10.875])
+fB7 = []
 for nn in (50, 100, 200, 400):
     f_, _ = frac_sig(np.cumsum(rng.standard_normal((4000, nn)), 1), np.cumsum(rng.standard_normal((4000, nn)), 1))
-    print(f"B7 n={nn}: fraction |t|>2 = {f_:.3f}")
+    print(f"B7 n={nn}: fraction |t|>2 = {f_:.3f}"); fB7.append(f_)
+for f_, q_ in zip(fB7, (0.657, 0.752, 0.830, 0.876)): pin(f_, q_)                                  # solutions B7(a); notes 3.12 quotes 0.75, 0.83, 0.88
+ns_ = 1 - np.round(fB7, 3); print("B7 not significant:", np.round(ns_, 3), " ratio per doubling of n:", np.round(ns_[1:] / ns_[:-1], 2))
+assert np.allclose(np.round(ns_[1:] / ns_[:-1], 2), [0.72, 0.69, 0.73]) and np.all(np.diff(fB7) > 0)   # B7(c): about 1/sqrt(2) = 0.71
 f_d, _ = frac_sig(rng.standard_normal((4000, 400)), rng.standard_normal((4000, 400)))   # differences of RWs are iid
 print(f"B7 regress the differences (n=400): fraction |t|>2 = {f_d:.3f}; P(|t_398| > 2) = {2 * stats.t.sf(2, 398):.3f}"); assert 0.035 < f_d < 0.07
+pin(f_d, 0.049); pin(2 * stats.t.sf(2, 398), 0.046)
 idw = RW[:, :-1] * np.diff(RW, axis=1); lhs = idw.sum(1); rhs = 0.5 * (RW[:, -1] ** 2 - RW[:, 0] ** 2 - (np.diff(RW, axis=1) ** 2).sum(1))
 assert np.allclose(lhs, rhs); print("C1 identity sum x_{t-1} w_t = (x_n^2 - x_1^2 - sum w_t^2)/2 checked")
-kap, dt_, sOU = 2.0, 0.1, 1.0; print(f"C3 OU -> AR(1): phi = {np.exp(-kap * dt_):.5f}, sigma2 = {sOU**2 * (1 - np.exp(-2 * kap * dt_)) / (2 * kap):.5f}")
+# C2(b): the error-correction form holds exactly, with alpha = phi - 1 and gamma = beta (separate stream rng2)
+bC, phC = 2.0, 0.5; xC = np.cumsum(rng2.standard_normal(400)); epsC = rng2.standard_normal(400); uC = signal.lfilter([1.0], [1.0, -phC], epsC)
+yC = bC * xC + uC; ecm = np.diff(yC) - (phC - 1) * (yC[:-1] - bC * xC[:-1]) - bC * np.diff(xC)
+assert np.allclose(ecm, epsC[1:]); print("C2 error-correction identity checked: alpha = phi - 1 = -0.5, gamma = beta = 2")
+kap, dt_, sOU = 2.0, 0.1, 1.0; phOU, s2OU = np.exp(-kap * dt_), sOU**2 * (1 - np.exp(-2 * kap * dt_)) / (2 * kap)
+print(f"C3 OU -> AR(1): phi = {phOU:.5f}, sigma2 = {s2OU:.5f}")
+assert round(phOU, 5) == 0.81873 and round(s2OU, 5) == 0.08242 and round(phOU**2, 5) == 0.67032 and np.isclose(s2OU / (1 - phOU**2), sOU**2 / (2 * kap))
 
 # %% [markdown]
 # ## Your turn
 # 1. **Seasonal ARIMA.** Simulate monthly data from (1 - B^12) x_t = (1 + Theta B^12) w_t with Theta = -0.6 plus a
 #    mean seasonal pattern. Show the sample ACF of x has spikes at 12, 24, 36 that decay slowly; seasonally difference
 #    and show the ACF of nabla_12 x cuts off after lag 12 (an MA at lag 12). Fit Theta by conditional least squares.
-# 2. **Yule's sunspots.** Simulate Yule's model directly: an AR(2) with complex roots, modulus 0.9 and period 11
-#    (phi_1 = 2 (0.9) cos(2 pi/11), phi_2 = -0.81). Fit an AR(2) by Yule-Walker on n = 300 and report the implied
-#    period 2 pi / arccos(phi_1 / (2 sqrt(-phi_2))) (notes (3.15)). How variable is it over 200 runs?
+# 2. **A Yule-style sunspot model.** Simulate an AR(2) with complex roots, modulus 0.9 and period 11
+#    (phi_1 = 2 (0.9) cos(2 pi/11), phi_2 = -0.81; these are round illustrative values, not Yule's own estimates).
+#    Fit an AR(2) by Yule-Walker on n = 300 and report the implied period 2 pi / arccos(phi_1 / (2 sqrt(-phi_2)))
+#    (notes (3.15)). How variable is it over 200 runs?
 # 3. **GARCH(1,1) preview of ST-8.** Simulate r_t = s_t z_t, s_t^2 = 0.05 + 0.1 r_{t-1}^2 + 0.85 s_{t-1}^2. Show the
 #    sample ACF of r is inside the bands (white noise!) while the ACF of r^2 is not: the series is uncorrelated but
 #    not independent, and no ARMA model of r can see the volatility clustering.

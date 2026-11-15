@@ -1,6 +1,6 @@
 # ST-7 Solutions
 
-Numbers are printed by Part 11 of `project.py` unless another part is named. $\sigma^2=1$ unless stated.
+Numbers are printed and asserted by Part 11 of `project.py` unless another part is named. $\sigma^2=1$ unless stated.
 
 ## A. Warm-up
 

@@ -138,7 +138,20 @@ print("Madelung split checked: real part = H-J + quantum potential, imaginary pa
 # diagonal in position space. Strang splitting,
 #   exp(-i H dt/hbar) = exp(-i V dt/2hbar) exp(-i T dt/hbar) exp(-i V dt/2hbar) + O(dt^3),
 # because the Baker–Campbell–Hausdorff terms of order dt^2 cancel between the
-# symmetric halves. Each factor is a unimodular phase multiplying the
+# symmetric halves.
+#
+# Derivation. Write A = -i V dt/hbar and B = -i T dt/hbar, both O(dt). The
+# exact step is exp(A + B), which does not factor because A and B do not
+# commute. Baker–Campbell–Hausdorff: exp(X) exp(Y) = exp(X + Y + [X, Y]/2 + ...),
+# the dots being nested commutators of third order and higher. Use it twice:
+#   exp(A/2) exp(B)        = exp(A/2 + B + [A, B]/4 + O(dt^3)),
+#   (that) times exp(A/2)  = exp(A + B + [A, B]/4 + [A/2 + B, A/2]/2 + O(dt^3))
+#                          = exp(A + B + [A, B]/4 - [A, B]/4 + O(dt^3)).
+# The dt^2 commutator cancels, so one step is wrong by O(dt^3) and a run of
+# t/dt steps by O(dt^2) (Exercise B8 measures the 2). The unsymmetric
+# exp(A) exp(B) keeps [A, B]/2 and is only first order.
+#
+# Each factor is a unimodular phase multiplying the
 # coefficients in its own basis, and the FFT (unitary up to 1/N) moves between
 # bases, so the scheme conserves the norm exactly (to rounding). The time step
 # must resolve the fastest phase the state actually carries: (hbar k^2/2m) dt
@@ -361,15 +374,21 @@ coh = np.pi**-0.25 * np.exp(-(gh.x - 2.0)**2 / 2) + 0j       # displaced ground 
 dte = 0.005
 ho = run_ehrenfest(Vho, dVho, coh, dte, 2000)
 qu = run_ehrenfest(Vq, dVq, coh, dte, 2000)
+drift = {}
 for name, r in (("harmonic", ho), ("quartic", qu)):
     e1 = np.max(np.abs(np.gradient(r["x"], dte) - r["p"])[1:-1]) / np.max(np.abs(r["p"]))
     e2 = np.max(np.abs(np.gradient(r["p"], dte) - r["F"])[1:-1]) / np.max(np.abs(r["F"]))
-    dE = np.max(np.abs(r["E"] - r["E"][0])) / r["E"][0]
+    dE = drift[name] = np.max(np.abs(r["E"] - r["E"][0])) / r["E"][0]
     print(f"Ehrenfest ({name}): m d<x>/dt vs <p> rel err {e1:.1e}; d<p>/dt vs <-V'> {e2:.1e}; energy drift {dE:.1e}")
     # e1 is at rounding level (the 1e-13 of §3.3): the centred difference (x[n+1] - x[n-1])/2dt equals <p>[n]
     # exactly, because each kinetic step moves <x> by dt times the mid-step <p>, and the two half-kicks
     # around t_n change <p> by equal and opposite amounts relative to <p>[n].
-    assert e1 < 1e-11 and e2 < 5e-4 and dE < 1e-4
+    assert e1 < 2e-12 and e2 < 5e-4 and dE < 1e-4
+# §8 quotes the quartic run: energy to 6e-5 at dt = 0.005, although the grid's own maxima give
+# V_max dt = 26 and (k_max^2/2) dt = 11, far above pi. The packet's own <H> dt is 0.04.
+assert 5e-5 < drift["quartic"] < 7e-5
+assert abs(Vq(gh.x).max() * dte - 25.92) < 1e-9 and abs(0.5 * np.abs(gh.k).max()**2 * dte - 11.23) < 0.01
+assert abs(qu["E"][0] - 7.4375) < 1e-8 and abs(qu["E"][0] * dte - 0.037) < 1e-3   # <H> = 1/4 + <x^4>/4
 i90 = np.argmin(np.abs(ho["t"] - np.pi / 2))
 assert np.allclose(ho["x"], 2 * np.cos(ho["t"]), atol=2e-5)      # 1.6e-5 quoted in Example 4.6
 assert np.allclose(ho["p"], -2 * np.sin(ho["t"]), atol=3e-5)
@@ -382,11 +401,13 @@ print(f"Example 4.6: max|<x> - 2cos t| = {np.max(np.abs(ho['x'] - 2*np.cos(ho['t
       f"sigma_x sigma_p in [{ho['prod'].min():.6f}, {ho['prod'].max():.6f}]")
 
 cl = solve_ivp(lambda _, y: [y[1], -y[0]**3], (0, 10), [2.0, 0.0], t_eval=qu["t"], rtol=1e-10, atol=1e-12)
-dev = np.max(np.abs(cl.y[0] - qu["x"]))
+gap = np.abs(cl.y[0] - qu["x"])
+dev, t_dev_max = np.max(gap), qu["t"][np.argmax(gap)]
 VpAtMean = -qu["x"]**3
-print(f"Quartic: max |<x>_quantum - x_classical| over t<10 = {dev:.3f}; "
-      f"max |<-V'> - (-V'(<x>))| = {np.max(np.abs(qu['F'] - VpAtMean)):.3f}")
+print(f"Quartic: max |<x>_quantum - x_classical| over t<10 = {dev:.3f} at t = {t_dev_max:.2f} "
+      f"(gap at t = 10: {gap[-1]:.3f}); max |<-V'> - (-V'(<x>))| = {np.max(np.abs(qu['F'] - VpAtMean)):.3f}")
 assert abs(dev - 1.981) < 5e-3                       # the 1.98 quoted in §3.4 and Example 4.6
+assert abs(t_dev_max - 5.57) < 0.02 and abs(gap[-1] - 0.426) < 5e-3   # reached at t = 5.6; 0.43 left at t = 10
 assert abs(qu["F"][0] + 11.0) < 1e-8 and abs(VpAtMean[0] + 8.0) < 1e-8   # -<x^3> = -11 vs -<x>^3 = -8 at t = 0
 fig, ax = plt.subplots(1, 2, figsize=(10, 3.6))
 ax[0].plot(ho["t"], ho["x"], label=r"$\langle x\rangle$"); ax[0].plot(ho["t"], 2 * np.cos(ho["t"]), "--", label="classical")
@@ -462,9 +483,14 @@ tau_e = 2 * me * (1e-10)**2 / hbar
 tau_g = 2 * 1e-9 * (1e-6)**2 / hbar
 tau_g1A = 2 * 1e-9 * (1e-10)**2 / hbar
 yr = 365.25 * 86400
-print(f"Example 4.3: electron a = 1 A: tau = {tau_e:.4e} s; sigma after 1 s = {hbar*1/(2*me*1e-10)/1e3:.1f} km")
+v_spread = hbar / (2 * me * 1e-10)          # sigma_p/m_e for a = 1 A; times 1 s it is the width after 1 s
+print(f"Example 4.3: electron a = 1 A: tau = {tau_e:.4e} s, sqrt(3) tau = {np.sqrt(3)*tau_e:.2e} s; "
+      f"sigma_p/m = {v_spread:.3e} m/s; sigma after 1 s = {v_spread*1.0/1e3:.1f} km")
 print(f"             1 ug grain, a = 1 um: tau = {tau_g:.4e} s = {tau_g/yr:.3e} yr; a = 1 A: {tau_g1A:.3e} s = {tau_g1A/86400:.2f} d")
 assert abs(tau_e - 1.7276e-16) < 1e-19 and abs(tau_g / yr - 6.01e5) < 1e3
+assert abs(np.sqrt(3) * tau_e - 2.99e-16) < 1e-18                       # "about 3e-16 s"
+assert abs(v_spread - 5.788e5) < 1e2 and abs(v_spread * 1.0 / 1e3 - 578.8) < 0.1   # 5.8e5 m/s, 579 km
+assert abs(tau_g - 1.8965e13) < 1e9 and abs(tau_g1A - 1.8965e5) < 10 and abs(tau_g1A / 86400 - 2.195) < 1e-3
 
 L_box = 1e-9
 E1 = np.pi**2 * hbar**2 / (2 * me * L_box**2)
@@ -472,7 +498,10 @@ eV = C.e
 f21 = 3 * E1 / h
 print(f"Example 4.5: E1 = {E1/eV:.4f} eV, E2 - E1 = {3*E1/eV:.4f} eV, f = {f21:.4e} Hz, "
       f"lambda = {c/f21*1e6:.3f} um, period = {1/f21:.4e} s, <H> = {2.5*E1/eV:.4f} eV")
-assert abs(E1 / eV - 0.3760) < 5e-4 and abs(f21 - 2.727e14) < 1e11
+assert abs(E1 - 6.0247e-20) < 1e-23 and abs(E1 / eV - 0.3760) < 1e-4            # 6.02e-20 J = 0.3760 eV
+assert abs(3 * E1 / eV - 1.1281) < 1e-4 and abs(f21 - 2.7277e14) < 1e10         # 1.128 eV, 2.728e14 Hz
+assert abs(1 / f21 - 3.6661e-15) < 1e-19 and abs(c / f21 * 1e6 - 1.0991) < 1e-4   # 3.67e-15 s, 1.10 um
+assert abs(2.5 * E1 / eV - 0.9401) < 1e-4                                       # <H> = 0.940 eV
 
 
 def box_rho(xx, tt_, Lb=1.0):
@@ -485,10 +514,12 @@ def box_rho(xx, tt_, Lb=1.0):
 
 xb = np.linspace(0, 1, 4001)
 Tslosh = 2 * np.pi / (3 * np.pi**2 / 2)
-xm = lambda tt_: np.trapezoid(xb * box_rho(xb, tt_), xb)
+trapz = getattr(np, "trapezoid", None) or np.trapz        # np.trapezoid is the NumPy >= 2.0 name
+xm = lambda tt_: trapz(xb * box_rho(xb, tt_), xb)
 assert abs(xm(0) - (0.5 - 16 / (9 * np.pi**2))) < 1e-7
 assert abs(xm(Tslosh / 2) - (0.5 + 16 / (9 * np.pi**2))) < 1e-7 and abs(xm(Tslosh) - xm(0)) < 1e-9
 print(f"Box slosh (hbar=m=L=1): period 4/(3 pi) = {Tslosh:.5f}; <x> amplitude 16/(9 pi^2) = {16/(9*np.pi**2):.5f}")
+assert abs(Tslosh - 0.4244) < 5e-5 and abs(16 / (9 * np.pi**2) - 0.1801) < 5e-5
 
 # %% [markdown]
 # ## Part 11: Numbers in the exercise solutions
@@ -499,13 +530,18 @@ print(f"A1: P(|x| > sigma) = e^(-sqrt2) = {np.exp(-np.sqrt(2)):.4f}")
 assert abs(np.exp(-np.sqrt(2)) - 0.2431) < 1e-4
 print(f"A1: Gaussian comparison P(|x - mu| > sigma) = {erfc(1/np.sqrt(2)):.4f}")
 k_e = 2 * np.pi / 1e-10
-print(f"A2: lambda = 1 A: v_g = {hbar*k_e/me:.4e} m/s, v_p = {hbar*k_e/(2*me):.4e} m/s, E = {(hbar*k_e)**2/(2*me):.4e} J = {(hbar*k_e)**2/(2*me)/eV:.2f} eV")
-assert abs(hbar * k_e / me - 7.274e6) < 1e3
+E_A2 = (hbar * k_e)**2 / (2 * me)
+print(f"A2: lambda = 1 A: k = {k_e:.4e} /m, v_g = {hbar*k_e/me:.4e} m/s, v_p = {hbar*k_e/(2*me):.4e} m/s, "
+      f"E = {E_A2:.4e} J = {E_A2/eV:.2f} eV")
+assert abs(k_e - 6.283e10) < 1e7 and abs(hbar * k_e / me - 7.274e6) < 1e3 and abs(hbar * k_e / (2 * me) - 3.637e6) < 1e3
+assert abs(E_A2 - 2.410e-17) < 1e-20 and abs(E_A2 / eV - 150.41) < 0.01
 m_He = 4.002602e-3 / C.N_A
 lHe = lam_th(m_He, 4.2)
 nHe = 125.0 / m_He
-print(f"A4: He-4 at 4.2 K: lambda_th = {lHe:.3e} m, spacing = {nHe**(-1/3):.3e} m, n lambda^3 = {nHe*lHe**3:.2f}; m = {m_He:.4e} kg, n = {nHe:.3e} /m^3")
-assert abs(lHe - 4.26e-10) < 2e-12 and abs(nHe**(-1/3) - 3.76e-10) < 2e-12
+print(f"A4: hbar/(m_e c) = {hbar/(me*c):.4e} m (Part 1). He-4 at 4.2 K: lambda_th = {lHe:.3e} m, "
+      f"spacing = {nHe**(-1/3):.3e} m, n lambda^3 = {nHe*lHe**3:.2f}; m = {m_He:.4e} kg, n = {nHe:.3e} /m^3")
+assert abs(hbar / (me * c) - 3.862e-13) < 1e-16 and abs(m_He - 6.646e-27) < 1e-30 and abs(nHe - 1.881e28) < 1e25
+assert abs(lHe - 4.26e-10) < 2e-12 and abs(nHe**(-1/3) - 3.76e-10) < 2e-12 and abs(nHe * lHe**3 - 1.45) < 5e-3
 # B2: two-sided exponential in momentum space
 Phi_exp = lambda pp_: np.sqrt(lam / (2 * np.pi)) * 2 * lam / (lam**2 + pp_**2)
 nrm = quad(lambda pp_: Phi_exp(pp_)**2, -np.inf, np.inf)[0]
@@ -517,7 +553,8 @@ xs = 16 / (9 * np.pi**2)
 pm_amp = 8 / 3          # 2 |x12| * (E2 - E1) = (16/9pi^2) * (3 pi^2/2) in hbar=m=L=1
 assert abs(xs * 3 * np.pi**2 / 2 - pm_amp) < 1e-12
 print(f"B4: <x> = 1/2 - {xs:.5f} cos(w t), <p> = {pm_amp:.4f} sin(w t) (hbar/L), w = 3pi^2/2 = {3*np.pi**2/2:.4f}")
-# B8: Strang splitting is second order: energy error ratio for dt and dt/2
+assert abs(3 * np.pi**2 / 2 - 14.80) < 5e-3 and abs(xs - 0.1801) < 5e-5 and abs(pm_amp - 2.667) < 5e-4
+# B8(b): Strang splitting is second order. State error ||Psi_dt - Psi_ref|| at t = 2 for dt, dt/2, dt/4.
 psiq = np.pi**-0.25 * np.exp(-(gh.x - 2.0)**2 / 2) + 0j
 ref = evolve(gh, psiq, Vq(gh.x), 0.000625, 3200)
 errs = []
@@ -525,7 +562,16 @@ for dtt in (0.01, 0.005, 0.0025):
     errs.append(np.sqrt(gh.norm(evolve(gh, psiq, Vq(gh.x), dtt, int(round(2.0 / dtt))) - ref)))
 ratios = [errs[0] / errs[1], errs[1] / errs[2]]
 print(f"B8: state error at t = 2 for dt = 0.01, 0.005, 0.0025: {[f'{e:.2e}' for e in errs]}; ratios {ratios[0]:.2f}, {ratios[1]:.2f}")
-assert all(3.5 < r < 4.5 for r in ratios)
+assert abs(errs[0] - 1.26e-3) < 5e-6 and abs(errs[1] - 3.12e-4) < 5e-7 and abs(errs[2] - 7.42e-5) < 5e-8
+# An error c dt^2 measured against a reference that itself errs by c dt_ref^2 gives ratios
+# (dt1^2 - dt_ref^2)/(dt2^2 - dt_ref^2): (16^2 - 1)/(8^2 - 1) = 4.05 and (8^2 - 1)/(4^2 - 1) = 4.20, not 4 and 4.
+assert abs(ratios[0] - 255 / 63) < 0.01 and abs(ratios[1] - 63 / 15) < 0.01
+# B8(c) and §8: a conserved norm is not accuracy. The same run with dt = 0.4 (five steps to t = 2), where
+# the packet's own <H> dt = 3.0: the norm is still 1 to rounding and the state is wrong at order 1.
+big = evolve(gh, psiq, Vq(gh.x), 0.4, 5)
+err_big = np.sqrt(gh.norm(big - ref))
+print(f"B8(c): dt = 0.4: <H> dt = {qu['E'][0]*0.4:.2f}, |norm - 1| = {abs(gh.norm(big) - 1):.1e}, state error {err_big:.2f}")
+assert abs(gh.norm(big) - 1) < 1e-12 and abs(err_big - 0.79) < 0.01 and abs(qu["E"][0] * 0.4 - 2.975) < 1e-6
 # B6: quartic force deficit for a Gaussian centred at x0 width s: <x^3> = x0^3 + 3 x0 s^2
 x0q, sq_ = 2.0, 1 / np.sqrt(2)
 assert abs(-qu["F"][0] - (x0q**3 + 3 * x0q * sq_**2)) < 1e-8
@@ -540,14 +586,19 @@ wid = np.array(wid)
 i_min = np.argmin(wid[:, 1])
 print(f"B5: chirped packet: sigma_p(0) = {np.sqrt(mp2_c):.5f}, min width {wid[i_min,1]:.5f} at t = {wid[i_min,0]:.3f}")
 assert abs(wid[i_min, 0] - 1.0) < 2e-3 and abs(wid[i_min, 1] - 1 / np.sqrt(2)) < 1e-6
-# B6: quartic deviation vs packet width: time for |<x> - x_cl| to first exceed 0.1
+# B6: quartic deviation vs packet width: time for |<x> - x_cl| to first exceed 0.1 (sampled every dt = 0.005),
+# against the estimate of B6(b), sqrt(0.1/(3 a^2)), which only knows the t = 0 force
 t_dev = {}
-for aw_ in (0.3, 1 / np.sqrt(2), 1.0):
+for aw_ in (0.1, 0.3, 1 / np.sqrt(2), 1.0):
     r_ = run_ehrenfest(Vq, dVq, gaussian(gh.x, 2.0, 0.0, aw_), dte, 2000)
     t_dev[aw_] = r_["t"][np.argmax(np.abs(r_["x"] - cl.y[0]) > 0.1)]
-    print(f"B6: a = {aw_:.3f}: |<x> - x_cl| first exceeds 0.1 at t = {t_dev[aw_]:.2f}; "
-          f"<-V'>(0) = {r_['F'][0]:.3f} = -(8 + 6a^2)")
+    print(f"B6: a = {aw_:.3f}: |<x> - x_cl| first exceeds 0.1 at t = {t_dev[aw_]:.3f} "
+          f"(estimate {np.sqrt(0.1/(3*aw_**2)):.2f}); <-V'>(0) = {r_['F'][0]:.3f} = -(8 + 6a^2)")
     assert abs(r_["F"][0] + 8 + 6 * aw_**2) < 1e-8
+t_est = [np.sqrt(0.1 / (3 * aw_**2)) for aw_ in (0.3, 1 / np.sqrt(2), 1.0)]
+assert np.allclose(t_est, [0.61, 0.26, 0.18], atol=5e-3)                             # B6(b)
+assert np.allclose([t_dev[aw_] for aw_ in (0.3, 1 / np.sqrt(2), 1.0)], [0.555, 0.300, 0.200], atol=0.006)
+assert abs(t_dev[0.1] - 0.325) < 0.006 and t_dev[0.1] < t_dev[0.3]                   # narrower is not always better
 # B7: virial for Example 4.6's state at t = 0: d<xp>/dt = 2<T> - <x V'> = 2(1/4) - 9/2 = -4
 print(f"B7: d<xp>/dt at t = 0 for Example 4.6 = {2*0.25 - (4 + 0.5):.1f} (classical -2 sin 2t)' = -4)")
 # C1: uniform force in momentum space, Phi(k,t) = phi0(k - F t) exp(-i [k^3 - (k - F t)^3] / (6 m hbar F))
@@ -573,16 +624,24 @@ print("C2: Bohm trajectories x = v t + y0 sigma(t)/a follow S_x/m and obey m x''
 c3 = np.sqrt(np.pi**2 / 12 - 0.5)
 print(f"C3: box ground state sigma_x sigma_p = sqrt(pi^2/12 - 1/2) hbar = {c3:.4f} hbar")
 assert abs(c3 - 0.5679) < 1e-4
-print(f"B8(c): p_max = pi hbar/dx = {np.pi/gh.dx:.1f} for dx = {gh.dx:.4f}")
+print(f"B8(c): p_max = pi hbar/dx = {np.pi/gh.dx:.1f} for dx = 24/512 = {gh.dx:.6f}")
+assert abs(gh.dx - 24 / 512) < 1e-12 and abs(np.pi / gh.dx - 67.0) < 0.05
 
 # %% [markdown]
 # ## Your turn
 # 1. **Uniform force.** Set V = -F x (F = 0.1) for the free packet of Part 4
 #    (k0 = 0) and check Ehrenfest: <x> = x0 + F t^2/2m, <p> = F t, with
 #    sigma_x(t) exactly the free one. (Reference below.)
-# 2. **Box slosh with the solver.** Put the n = 1, 2 superposition in a box
-#    made of a high wall (V = 1e4 outside [0, 1]) and measure the slosh period;
-#    compare with 4/(3 pi) from Part 10. Expect a small shift from wall penetration.
+# 2. **Box slosh with the solver.** Put the n = 1, 2 superposition of
+#    Example 4.5 in a box with finite walls: V = 1000 outside [0, 1], on
+#    Grid(-1, 2, 1024) with dt = 2e-4. Two things have to be resolved, and the
+#    usual dt = 0.01 on the wide grid of Part 4 resolves neither: the wall
+#    phase V dt must stay well under pi, and dx (here 0.003) must be smaller
+#    than the decay length 1/kappa = 1/sqrt(2 V) = 0.022 of the tail inside
+#    the wall. Measure the slosh period of <x>(t). It comes out at 0.46, not
+#    the 4/(3 pi) = 0.424 of Part 10: the state leaks a distance 1/kappa into
+#    each wall, so the box is effectively L + 2/kappa wide, and the period,
+#    which goes as L^2, is longer by (1 + 2/kappa)^2 = 1.09. (Reference below.)
 # 3. **Momentum-space Schrödinger equation.** For V = 0 solve
 #    i hbar dPhi/dt = (p^2/2m) Phi directly (one line), transform back, and
 #    compare with gaussian_exact. (Reference below.)
@@ -606,6 +665,22 @@ assert np.allclose(lin["x"], 0.5 * F * lin["t"]**2, atol=1e-8)
 assert np.allclose(lin["p"], F * lin["t"], atol=1e-8)
 assert np.allclose(lin["sx"], np.sqrt(1 + (lin["t"] / 2)**2), atol=1e-8)
 print(f"Your turn 1: uniform force, <x>(6) = {lin['x'][-1]:.5f} (F t^2/2 = {0.5*F*36:.5f})")
+
+gb = Grid(-1.0, 2.0, 1024)
+inside = (gb.x > 0) & (gb.x < 1)
+V0b, dtb = 1e3, 2e-4
+psib = np.where(inside, np.sin(np.pi * gb.x) + np.sin(2 * np.pi * gb.x), 0.0) + 0j   # (psi_1 + psi_2)/sqrt2
+psib /= np.sqrt(gb.norm(psib))
+xbox = []
+evolve(gb, psib, np.where(inside, 0.0, V0b), dtb, 15000, callback=lambda n, ps: xbox.append(gb.mean_x(ps) - 0.5))
+xbox = np.array(xbox)                                    # <x> - L/2 at t = dtb, 2 dtb, ..., 3
+up = np.nonzero((xbox[:-1] < 0) & (xbox[1:] >= 0))[0]    # upward crossings of L/2, linearly interpolated
+t_up = (up + 1 + xbox[up] / (xbox[up] - xbox[up + 1])) * dtb
+T_box = np.mean(np.diff(t_up))
+T_pen = Tslosh * (1 + 2 / np.sqrt(2 * V0b))**2           # ideal period times (L_eff/L)^2, L_eff = L + 2/kappa
+print(f"Your turn 2: slosh period with V = 1000 walls = {T_box:.3f} over {len(t_up) - 1} periods "
+      f"(ideal box {Tslosh:.3f}; with L + 2/kappa: {T_pen:.3f})")
+assert len(t_up) >= 6 and abs(T_box - 0.46) < 0.005 and abs(T_box / T_pen - 1) < 0.01
 
 Phi0 = np.fft.fft(gaussian(g.x, x00, kk0, a0))
 psi_from_p = np.fft.ifft(Phi0 * np.exp(-0.5j * g.k**2 * 7.0))

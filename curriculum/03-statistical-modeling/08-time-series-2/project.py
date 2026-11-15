@@ -130,6 +130,17 @@ print(f"Ex 4.2 AR(2): cos(2pi w*)={c_star:.3f}, w*={w_star:.4f}, period={1/w_sta
       f"f(w*)={arma_spectrum(w_star, [p1, p2]):.3f}, f(0)={arma_spectrum(0, [p1, p2]):.3f}; "
       f"root modulus {abs(1/roots[0]):.4f}, quasi-period {quasi:.2f}")
 assert abs(c_star - 0.75) < 1e-12 and abs(quasi - 8) < 1e-9
+assert abs(w_star - 0.1150) < 5e-5 and abs(1 / w_star - 8.69) < 0.005
+assert np.allclose(arma_spectrum([w_star, 0], [p1, p2]), [8.0, 4.0])
+# §3.3 step 5: |cos(2 pi w*)| >= |cos(theta)|, so the peak is further from w = 1/4 than theta/(2 pi):
+# below theta/(2 pi) when phi1 > 0, above it when phi1 < 0 (the mirror image w -> 1/2 - w).
+for a1, below in ((1.0, True), (-1.0, False)):
+    w_pk = fine[np.argmax(arma_spectrum(fine, [a1, p2]))]
+    w_th = np.arccos(a1 / (2 * np.sqrt(-p2))) / (2 * np.pi)          # theta / (2 pi) from the roots
+    assert abs(w_pk - np.arccos(a1 * (p2 - 1) / (4 * p2)) / (2 * np.pi)) < 1e-5
+    assert (w_pk < w_th) == below and abs(w_pk - 0.25) > abs(w_th - 0.25)
+    print(f"   AR(2) phi=({a1:+.0f},{p2}): spectral peak w*={w_pk:.4f}, theta/(2 pi)={w_th:.4f}")
+assert abs(fine[np.argmax(arma_spectrum(fine, [-1.0, p2]))] - 0.3850) < 5e-5
 
 # %% [markdown]
 # ## Part 2: linear filters (§3.4, Example 4.3)
@@ -146,6 +157,8 @@ _, hma = signal.freqz(np.ones(3) / 3, 1, worN=2 * np.pi * wtest)
 assert np.allclose(np.abs(hma) ** 2, ((1 + 2 * np.cos(2 * np.pi * wtest)) / 3) ** 2)
 _, hd = signal.freqz([1, -1], 1, worN=2 * np.pi * wtest)
 assert np.allclose(np.abs(hd) ** 2, [0, 1, 2, 3, 4])
+_, h5 = signal.freqz(np.ones(5) / 5, 1, worN=2 * np.pi * wtest)
+assert np.allclose(np.abs(h5[1:]) ** 2, 0.04)             # Example 4.3: 1/25 at w = 1/6, 1/4, 1/3, 1/2
 wn = rng.standard_normal((300, 2048))
 fig, ax = plt.subplots(figsize=(6, 3.6))
 for name, b in filters.items():
@@ -175,17 +188,26 @@ assert abs(w_sl - np.arccos(0.5) / (2 * np.pi)) < 1e-3
 # ## Part 3: the periodogram is not consistent; smoothing fixes it (§3.5, Example 4.4)
 
 # %%
+var_I = []
 for n in (128, 1024, 8192):
     _, I = periodogram(rng.standard_normal((2000, n)))
     j = n // 8                                     # w = 1/8, f = 1
     print(f"white noise n={n:5d}: mean I(1/8)={I[:, j].mean():.3f}, var I(1/8)={I[:, j].var():.3f}")
     assert abs(I[:, j].mean() - 1) < 0.1 and abs(I[:, j].var() - 1) < 0.2
+    var_I.append(I[:, j].var())
+assert np.allclose(var_I, [1.05, 1.11, 1.03], atol=0.006)      # Example 4.4's quoted values (this seed)
+H500 = sum(1 / k for k in range(1, 501))                       # E max of 500 iid Exp(1) ordinates (§8)
+print(f"Largest of 500 white-noise ordinates: on average H_500 = {H500:.2f} times the mean")
+assert abs(H500 - 6.79) < 0.005
 q_lo, q_hi = stats.chi2.ppf([0.025, 0.975], 10)
 print(f"Ex 4.4: chi2_10 quantiles {q_lo:.3f}, {q_hi:.3f}; 95% CI = [{10/q_hi:.3f} fhat, {10/q_lo:.3f} fhat]; "
       f"raw periodogram CI from chi2_2: [{2/stats.chi2.ppf(.975,2):.3f} I, {2/stats.chi2.ppf(.025,2):.1f} I]")
 assert abs(10 / q_hi - 0.488) < 1e-3 and abs(10 / q_lo - 3.080) < 1e-3
 print(f"Ex 4.4: fhat=2.5 -> [{2.5*10/q_hi:.2f}, {2.5*10/q_lo:.2f}]; width ratio {q_hi/q_lo:.2f} vs raw "
       f"{stats.chi2.ppf(.975,2)/stats.chi2.ppf(.025,2):.0f}")
+assert abs(q_lo - 3.247) < 5e-4 and abs(q_hi - 20.483) < 5e-4
+assert abs(25 / q_hi - 1.22) < 0.005 and abs(25 / q_lo - 7.70) < 0.005 and abs(q_hi / q_lo - 6.31) < 0.005
+assert abs(2 / stats.chi2.ppf(.975, 2) - 0.271) < 5e-4 and abs(2 / stats.chi2.ppf(.025, 2) - 39.5) < 0.05
 
 # coverage of the nu = 2(2m+1) interval, AR(1) phi=0.5, w = 1/4
 X = simulate_arma([0.5], (), 1024, reps=3000)
@@ -195,7 +217,7 @@ j = 256
 f_true = arma_spectrum(0.25, [0.5])
 cover = np.mean((10 * fhat[:, j] / q_hi <= f_true) & (f_true <= 10 * fhat[:, j] / q_lo))
 print(f"Coverage of the chi2_10 interval at w=1/4 over 3000 AR(1) series: {cover:.3f}")
-assert 0.93 < cover < 0.97
+assert abs(cover - 0.948) < 1e-3                               # Example 4.4's quoted 94.8% (this seed)
 
 # bias-variance in the bandwidth at a sharp AR(2) peak (root modulus 0.95, w = 0.1)
 phs = [2 * 0.95 * np.cos(2 * np.pi * 0.1), -0.95 ** 2]
@@ -231,16 +253,42 @@ fig.tight_layout(); fig.savefig(FIG / "bias_variance.png", dpi=120); plt.close(f
 # %%
 n = 512
 t = np.arange(n)
-x = 10 * np.cos(2 * np.pi * 0.1037 * t) + 0.01 * np.cos(2 * np.pi * 0.3 * t) + 0.001 * rng.standard_normal(n)
-hann = signal.windows.hann(n, sym=False)
-I_raw = np.abs(np.fft.rfft(x)) ** 2 / n
-I_han = np.abs(np.fft.rfft(x * hann)) ** 2 / np.sum(hann ** 2)
+strong, noise4 = 10 * np.cos(2 * np.pi * 0.1037 * t), 0.001 * rng.standard_normal(n)
+hann = signal.windows.hann(n, sym=False)           # h_t = sin^2(pi t / n)
 w_j = np.arange(n // 2 + 1) / n
-far = np.abs(w_j - 0.3) < 0.004
-ratio_raw = I_raw[far].max() / I_raw[np.abs(w_j - 0.25) < 0.01].max()
-ratio_han = I_han[far].max() / I_han[np.abs(w_j - 0.25) < 0.01].max()
-print(f"Leakage: weak line at 0.3 over background at 0.25: raw {ratio_raw:.1f}x, Hann {ratio_han:.0f}x")
-assert ratio_raw < 3 and ratio_han > 50
+
+
+def line_prominence(I, w, w0=0.3):
+    """Largest ordinate within 0.004 of w0, over the median ordinate 0.008 to 0.03 away from w0:
+    how far a spectral line stands above its own surroundings."""
+    d = np.abs(w - w0)
+    return I[d < 0.004].max() / np.median(I[(d > 0.008) & (d < 0.03)])
+
+
+prom = {}
+for amp in (0.003, 0.01):                          # weak line 0.2 cycles from the strong one; same noise
+    x = strong + amp * np.cos(2 * np.pi * 0.3 * t) + noise4
+    I_raw = np.abs(np.fft.rfft(x)) ** 2 / n
+    I_han = np.abs(np.fft.rfft(x * hann)) ** 2 / np.sum(hann ** 2)
+    prom[amp] = (line_prominence(I_raw, w_j), line_prominence(I_han, w_j))
+    print(f"Leakage: line of amplitude {amp} at w=0.3 over its surroundings: "
+          f"raw {prom[amp][0]:.1f}x, Hann {prom[amp][1]:.0f}x")
+assert 6.0 < prom[0.01][0] < 6.4 and 9e3 < prom[0.01][1] < 1.3e4      # a one-bin blip vs four decades
+assert 1.6 < prom[0.003][0] < 1.9 and 8e2 < prom[0.003][1] < 1.1e3    # lost vs three decades
+
+
+def sidelobe_slope(win, pad=64):
+    """Log-log slope of the side-lobe envelope of |DFT(win)|^2 against distance from the main lobe."""
+    W = np.abs(np.fft.rfft(win, pad * len(win))) ** 2
+    fr = np.arange(len(W)) / (pad * len(win))
+    centres = np.array([0.02, 0.04, 0.08, 0.16])
+    env = [W[(fr > a) & (fr < 1.25 * a)].max() for a in centres]
+    return np.polyfit(np.log(centres), np.log(env), 1)[0]
+
+
+sl_rect, sl_hann = sidelobe_slope(np.ones(n)), sidelobe_slope(hann)
+print(f"Side-lobe power decay exponents: rectangular {sl_rect:.2f} (theory -2), Hann {sl_hann:.2f} (theory -6)")
+assert abs(sl_rect + 2) < 0.15 and abs(sl_hann + 6) < 0.15
 fig, ax = plt.subplots(figsize=(6, 3.4))
 ax.semilogy(w_j, I_raw, lw=0.7, label="no taper"); ax.semilogy(w_j, I_han, lw=0.7, label="Hann")
 ax.set_xlabel("w"); ax.legend(); fig.tight_layout(); fig.savefig(FIG / "taper.png", dpi=120); plt.close(fig)
@@ -261,10 +309,13 @@ def fisher_g(x):
 x = 0.4 * np.cos(2 * np.pi * 37 / 501 * np.arange(501)) + rng.standard_normal(501)
 g, p = fisher_g(x)
 gn, pn = fisher_g(rng.standard_normal(501))
-print(f"Hidden periodicity (amp 0.4 in unit noise, n=501): Fisher g={g:.4f}, p={p:.2e}; pure noise p={pn:.2f}")
-assert p < 1e-3
+j_pk = 1 + int(np.argmax(periodogram(x)[1][1:251]))
+print(f"Hidden periodicity (amp 0.4 in unit noise, n=501): periodogram peak at j={j_pk} (planted at j=37, "
+      f"w={37/501:.4f}); Fisher g={g:.4f}, p={p:.2e}; pure noise p={pn:.2f}")
+assert j_pk == 37 and 5e-8 < p < 2e-7 and pn > 0.05           # the peak is the planted line; p ~ 1e-7
 pvals = np.array([fisher_g(rng.standard_normal(201))[1] for _ in range(1000)])
-assert abs(np.mean(pvals < 0.05) - 0.05) < 0.02
+print(f"Fisher's test under the null (1000 white-noise series, n=201): rejects at 5% in {np.mean(pvals < 0.05):.3f}")
+assert abs(np.mean(pvals < 0.05) - 0.05) < 0.015
 
 # %% [markdown]
 # ## Part 5: transfer function of a damped oscillator from the cross-spectrum (§3.7)
@@ -292,7 +343,9 @@ pk = np.argmax(np.abs(Hhat))
 print(f"Transfer function: median rel. gain error {np.median(relerr):.3f} on 0.02<w<0.2; "
       f"estimated resonance w={w_j[pk]:.4f} (true {w_j[np.argmax(np.abs(Htrue))]:.4f}); "
       f"coherence at resonance {coh[pk]:.3f}, at w=0.4 {coh[np.argmin(abs(w_j-0.4))]:.3f}")
-assert np.median(relerr) < 0.1 and abs(w_j[pk] - 0.08) < 0.003
+assert abs(np.median(relerr) - 0.012) < 0.001                  # the 1.2% quoted in §3.7 (this seed)
+assert abs(w_j[pk] - 0.0782) < 2e-4 and abs(w_j[pk] - w_j[np.argmax(np.abs(Htrue))]) < 1e-3
+assert coh[pk] > 0.98 and coh[np.argmin(abs(w_j - 0.4))] < 0.1  # trustworthy at resonance, not far above it
 fig, ax = plt.subplots(1, 2, figsize=(11, 3.4))
 ax[0].semilogy(w_j, np.abs(Hhat), lw=0.7, label="|f_yu / f_uu|")
 ax[0].semilogy(w_j, np.abs(Htrue), "k", lw=0.8, label="true |H|"); ax[0].legend()
@@ -374,6 +427,13 @@ print(f"Ex 4.6 update: F={kf1['F'][0,0,0]:.4f}, K={np.round(kf1['K'][0,:,0],4)},
       f"a_1|1={np.round(kf1['af'][0],4)}, P_1|1={np.round(kf1['Pf'][0],4).tolist()}")
 assert np.allclose(P10, [[2.25, 1.5], [1.5, 2.0]]) and abs(kf1["F"][0, 0, 0] - 3.25) < 1e-12
 assert np.allclose(kf1["af"][0], [1 + 2.25 / 3.25, 1 + 1.5 / 3.25])
+K1, Pf1 = kf1["K"][0], kf1["Pf"][0]
+assert np.allclose(K1[:, 0], [9 / 13, 6 / 13]) and np.allclose(Pf1, np.array([[9, 6], [6, 17]]) / 13)
+assert np.allclose(np.round(K1[:, 0], 4), [0.6923, 0.4615]) and np.allclose(np.round(Pf1, 4), [[0.6923, 0.4615], [0.4615, 1.3077]])
+# §3.10 on the same numbers: the Joseph form equals (3.23), and precisions add
+IKZ = np.eye(2) - K1 @ Zcv
+assert np.allclose(IKZ @ P10 @ IKZ.T + K1 @ Hcv @ K1.T, Pf1)
+assert np.allclose(np.linalg.inv(Pf1), np.linalg.inv(P10) + Zcv.T @ np.linalg.inv(Hcv) @ Zcv)
 
 # Example 4.5: AR(2) companion form, eigenvalues and innovation variances with exact observation
 T2 = np.array([[1.0, -0.5], [1.0, 0.0]])
@@ -383,6 +443,10 @@ kf2s = kalman_filter(np.zeros(6), T2, np.array([[1.0, 0]]), np.array([[1.0], [0]
                      np.eye(1), np.zeros((1, 1)), np.zeros(2), P2)
 print(f"Ex 4.5: eigenvalues {np.round(ev, 4)}, modulus {abs(ev[0]):.4f}; F_t = {np.round(kf2s['F'][:, 0, 0], 4)}")
 assert np.allclose(np.sort_complex(ev), [0.5 - 0.5j, 0.5 + 0.5j]) and np.allclose(kf2s['F'][2:, 0, 0], 1.0)
+assert np.allclose(kf2s['F'][:2, 0, 0], [2.4, 4 / 3])       # gamma(0), then the AR(1)-predictor error, then sigma^2
+# with exact observations the state is known after p = 2 steps, so P_{t+1|t} = diag(sigma^2, 0) is singular:
+# the invertibility hypothesis of Theorem 3.8 fails here (and there is nothing to smooth)
+assert np.allclose(kf2s['Pp'][3], [[1.0, 0.0], [0.0, 0.0]])
 
 # simulate a trajectory
 n = 300
@@ -395,9 +459,12 @@ ys = xs[:, 0] + sd_y * rng.standard_normal(n)
 kf = kalman_filter(ys, Tcv, Zcv, Rcv, Qs_, Hs_, np.array([0.0, 0.0]), np.diag([100.0, 10.0]))
 asm, Psm = rts_smoother(kf, Tcv)
 rmse = lambda e: np.sqrt(np.mean(e ** 2))
-r_raw, r_f, r_s = rmse(ys - xs[:, 0]), rmse(kf["af"][20:, 0] - xs[20:, 0]), rmse(asm[20:, 0] - xs[20:, 0])
-print(f"Tracker position RMSE: raw {r_raw:.2f}, filtered {r_f:.2f}, smoothed {r_s:.2f}")
+r_raw, r_f, r_s = rmse(ys[20:] - xs[20:, 0]), rmse(kf["af"][20:, 0] - xs[20:, 0]), rmse(asm[20:, 0] - xs[20:, 0])
+print(f"Tracker position RMSE (t >= 20): raw {r_raw:.2f}, filtered {r_f:.2f}, smoothed {r_s:.2f}")
 assert r_s < r_f < r_raw
+assert np.allclose([r_raw, r_f, r_s], [2.86, 1.76, 0.91], atol=0.005)       # quoted in §3.11 (this seed)
+# smoothing never loses accuracy: P_{t|t} - P_{t|n} is positive semidefinite at every t (§3.11)
+assert min(np.linalg.eigvalsh(kf["Pf"][t] - Psm[t]).min() for t in range(n)) > -1e-9
 zstd = kf["v"][:, 0] / np.sqrt(kf["F"][:, 0, 0])
 Qlb, plb = ljung_box(zstd[10:], 10)
 print(f"Innovations: mean {zstd.mean():.3f}, var {zstd.var():.3f}, Ljung-Box(10) p={plb:.2f}")
@@ -411,6 +478,10 @@ asm_m, Psm_m = rts_smoother(kfm, Tcv)
 print(f"Missing 150-199: filtered sd at t=199 {np.sqrt(kfm['Pf'][199,0,0]):.2f} vs {np.sqrt(kf['Pf'][199,0,0]):.2f}"
       f" with data; smoothed sd at t=175 {np.sqrt(Psm_m[175,0,0]):.2f}")
 assert kfm["Pf"][199, 0, 0] > 5 * kf["Pf"][199, 0, 0] and Psm_m[175, 0, 0] < kfm["Pf"][175, 0, 0]
+gap_pk = 150 + int(np.argmax(Psm_m[150:200, 0, 0]))       # the smoothed sd peaks mid-gap (§7), not at its end
+print(f"   smoothed sd across the gap: {np.sqrt(Psm_m[150,0,0]):.2f} at t=150, largest at t={gap_pk}, "
+      f"{np.sqrt(Psm_m[199,0,0]):.2f} at t=199")
+assert gap_pk in (174, 175) and Psm_m[gap_pk, 0, 0] > 10 * max(Psm_m[150, 0, 0], Psm_m[199, 0, 0])
 fig, ax = plt.subplots(1, 2, figsize=(12, 3.6))
 ax[0].plot(ys, ".", ms=2, color="0.6", label="y"); ax[0].plot(xs[:, 0], "k", label="true")
 ax[0].plot(kf["af"][:, 0], label="filtered"); ax[0].plot(asm[:, 0], label="smoothed"); ax[0].legend(fontsize=7)
@@ -426,7 +497,8 @@ P_ss = (1 + np.sqrt(5)) / 2
 K_ss = P_ss / (P_ss + 1)
 print(f"Ex 4.7 local level q=1: P_ss={P_ss:.4f}, K_ss={K_ss:.4f}, P_t|t={P_ss/(P_ss+1):.4f}; "
       f"filter gain at t=1,2,3,4,10: {np.round(kfl['K'][[0,1,2,3,9],0,0],4)}")
-assert abs(kfl['K'][3, 0, 0] - 13 / 21) < 1e-5
+assert np.allclose(kfl['K'][1:4, 0, 0], [2 / 3, 5 / 8, 13 / 21], atol=1e-5)   # Fibonacci ratios
+assert abs(kfl['K'][9, 0, 0] - 0.618) < 5e-4 and abs(K_ss - 0.6180) < 5e-5 and abs(P_ss - 1.6180) < 5e-5
 assert abs(kfl["K"][30, 0, 0] - K_ss) < 1e-10 and abs(kfl["Pp"][30, 0, 0] - P_ss) < 1e-10
 # steady-state local level = simple exponential smoothing with alpha = K (Holt-Winters link)
 yy = np.cumsum(rng.standard_normal(200)) + rng.standard_normal(200)

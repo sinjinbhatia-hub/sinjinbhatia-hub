@@ -2,7 +2,7 @@
 
 **Time:** ~12 hours · **Prerequisites:** ST-7 (ARMA, ACF, Yule–Walker, Ljung–Box, exponential smoothing); F3 (Fourier transform, DFT, convolution theorem, windowing); F5 (MVN conditionals); LA-10 (Cholesky) · **Unlocks:** ML-4 (Gaussian processes as state-space models); control-theory pointers for an ME
 
-> **Conventions in this module.** Frequency $\omega$ is in **cycles per sample**, $\omega\in[-\tfrac12,\tfrac12]$ (F3's convention); $\lambda=2\pi\omega$ is the angular frequency in radians per sample when it shortens a formula. The **spectral density** is $f(\omega)=\sum_h\gamma(h)e^{-2\pi i\omega h}$, so $\gamma(h)=\int_{-1/2}^{1/2}f(\omega)e^{2\pi i\omega h}\,d\omega$ and $\int f=\gamma(0)$: no factors of $2\pi$ anywhere. A filter $y_t=\sum_j\psi_jx_{t-j}$ has transfer polynomial $\psi(z)=\sum_j\psi_jz^j$ and **frequency response** $\psi(e^{-2\pi i\omega})$. The **periodogram** is $I(\omega_j)=|\sum_{t=1}^nx_te^{-2\pi i\omega_jt}|^2/n$ at the Fourier frequencies $\omega_j=j/n$. ARMA follows ST-7: $\phi(B)x_t=\theta(B)w_t$, $\phi(z)=1-\phi_1z-\dots-\phi_pz^p$, $\theta(z)=1+\theta_1z+\dots+\theta_qz^q$, $w_t$ white noise with variance $\sigma^2$. **State space:** state $\alpha_t\in\mathbb R^k$, observation $y_t\in\mathbb R^p$, $\alpha_{t+1}=T\alpha_t+R\eta_t$, $\eta_t\sim\mathcal N(0,Q)$; $y_t=Z\alpha_t+\varepsilon_t$, $\varepsilon_t\sim\mathcal N(0,H)$. $Y_t=(y_1,\dots,y_t)$. Filtered moments $a_{t|t},P_{t|t}$ (given $Y_t$), predicted $a_{t|t-1},P_{t|t-1}$ (given $Y_{t-1}$), smoothed $a_{t|n},P_{t|n}$. Innovation $v_t=y_t-Za_{t|t-1}$ with variance $F_t$; gain $K_t=P_{t|t-1}Z^\top F_t^{-1}$, so $a_{t|t}=a_{t|t-1}+K_tv_t$. **Volatility:** returns $\varepsilon_t=\sigma_tz_t$, $z_t$ iid mean 0 variance 1; GARCH(1,1) is $\sigma_t^2=\omega+\alpha\varepsilon_{t-1}^2+\beta\sigma_{t-1}^2$. In §3.15–3.17 only, $\omega,\alpha,\beta$ are GARCH parameters, not a frequency and a state. $\mathcal N(m,V)$ takes the covariance.
+> **Conventions in this module.** Frequency $\omega$ is in **cycles per sample**, $\omega\in[-\tfrac12,\tfrac12]$ (F3's convention); $\lambda=2\pi\omega$ is the angular frequency in radians per sample when it shortens a formula. The **spectral density** is $f(\omega)=\sum_h\gamma(h)e^{-2\pi i\omega h}$, so $\gamma(h)=\int_{-1/2}^{1/2}f(\omega)e^{2\pi i\omega h}\,d\omega$ and $\int f=\gamma(0)$: no factors of $2\pi$ anywhere. A filter $y_t=\sum_j\psi_jx_{t-j}$ has transfer polynomial $\psi(z)=\sum_j\psi_jz^j$ and **frequency response** $\psi(e^{-2\pi i\omega})$. The **periodogram** is $I(\omega_j)=|\sum_{t=1}^nx_te^{-2\pi i\omega_jt}|^2/n$ at the Fourier frequencies $\omega_j=j/n$. ARMA follows ST-7: $\phi(B)x_t=\theta(B)w_t$, $\phi(z)=1-\phi_1z-\dots-\phi_pz^p$, $\theta(z)=1+\theta_1z+\dots+\theta_qz^q$, $w_t$ white noise with variance $\sigma^2$. **State space:** state $\alpha_t\in\mathbb R^k$, observation $y_t\in\mathbb R^p$, $\alpha_{t+1}=T\alpha_t+R\eta_t$, $\eta_t\sim\mathcal N(0,Q)$; $y_t=Z\alpha_t+\varepsilon_t$, $\varepsilon_t\sim\mathcal N(0,H)$. $Y_t=(y_1,\dots,y_t)$. Filtered moments $a_{t|t},P_{t|t}$ (given $Y_t$), predicted $a_{t|t-1},P_{t|t-1}$ (given $Y_{t-1}$), smoothed $a_{t|n},P_{t|n}$. Innovation $v_t=y_t-Za_{t|t-1}$ with variance $F_t$; gain $K_t=P_{t|t-1}Z^\top F_t^{-1}$, so $a_{t|t}=a_{t|t-1}+K_tv_t$. **Volatility:** returns $\varepsilon_t=\sigma_tz_t$, $z_t$ iid mean 0 variance 1; GARCH(1,1) is $\sigma_t^2=\omega+\alpha\varepsilon_{t-1}^2+\beta\sigma_{t-1}^2$. Wherever the subject is volatility (the last paragraph of §2, §3.15–3.17, Example 4.8, and the ARCH/GARCH items in §8, §9 and the exercises), $\omega,\alpha,\beta$ are GARCH parameters, not a frequency and a state. **Other reused letters**, always fixed by context: $\gamma_t$ and $\omega_t$ are the seasonal effect and its shock in §3.8 and §3.13; $\nu$ is a trend slope (§3.8), the equivalent degrees of freedom of a spectral estimate (§3.5) and a Matérn smoothness (§3.14); $p$ is $\dim y_t$, the scaled variance $P/H$ (§3.10) and a position (constant-velocity model); $B$ is the backshift and, in §3.5, a bandwidth; $\theta$ is an MA coefficient, the angle of a complex AR root (§3.3) and a generic parameter vector (§3.12, §3.17); $f$ and $h$ are the spectral density and a lag, and in §3.14 the transition and observation maps. $\mathcal N(m,V)$ takes the covariance.
 
 ## 0. Where this sits
 
@@ -10,11 +10,11 @@ ST-7 described a stationary series by its autocovariance $\gamma(h)$ and fitted 
 
 ## 1. The problem that forced this idea
 
-Arthur Schuster had a question about the weather and the Sun: is there a 26-day period (the solar rotation) in magnetic and meteorological records? In 1898 he proposed computing $|\sum_tx_te^{-2\pi i\omega t}|^2$ over a grid of trial frequencies and looking for a peak. He called it the periodogram, and he used it on earthquake records and, later, sunspots. It found peaks everywhere. Some were real; many were noise, and nobody could yet say which. G. Udny Yule's 1927 sunspot paper, the origin of ST-7's AR(2), was partly a reaction: a damped oscillator kicked by random shocks produces "cycles" without any strict period, and a periodogram of such a series is ragged. Eugen Slutsky showed the same year that moving-averaging pure noise creates convincing business cycles.
+Arthur Schuster had a question about the weather and the Sun: is there a 26-day period (the solar rotation) in magnetic and meteorological records? In 1898 he proposed computing $|\sum_tx_te^{-2\pi i\omega t}|^2$ over a grid of trial frequencies and looking for a peak. He called it the periodogram. He had already hunted for periods in earthquake records, and in 1906 he turned the periodogram on sunspots. It found peaks everywhere. Some were real and many were noise. Schuster knew how large one ordinate could get by chance, but among hundreds of trial frequencies some ordinate is always large, and a test for the largest of them had to wait for Fisher (1929, §3.6). G. Udny Yule's 1927 sunspot paper, the origin of ST-7's AR(2), was partly a reaction: a damped oscillator kicked by random shocks produces "cycles" without any strict period, and a periodogram of such a series is ragged. Eugen Slutsky showed the same year that moving-averaging pure noise creates convincing business cycles.
 
 The theory came next. Norbert Wiener (1930) and Aleksandr Khinchin (1934) proved that for a stationary process, the autocovariance and a spectral measure are a Fourier pair. ST-7's time-domain theory and Schuster's frequency domain are the same theory written in two bases. Making it practical took John Tukey: with Ralph Blackman (1958) he explained why the raw periodogram must be smoothed, and with James Cooley (1965) he published the FFT (F3) that made spectral estimation cheap.
 
-The second problem was navigation. In 1960 Rudolf Kalman published a recursive solution to "estimate the current state of a linear system from all noisy measurements so far, and update the estimate when a new one arrives, without reprocessing the past." Stanley Schmidt's group at NASA Ames adapted it, in its linearized (extended) form, for the Apollo midcourse navigation computer. The same recursion now runs in every GPS receiver, phone IMU and autopilot. For a statistician, the punchline is that ST-7's ARMA models are a special case: an ARMA series is a linear readout of a finite-dimensional state, and the Kalman filter gives its exact likelihood with missing values, time-varying parameters and unobserved components for free.
+The second problem was navigation. In 1960 Rudolf Kalman published a recursive solution to "estimate the current state of a linear system from all noisy measurements so far, and update the estimate when a new one arrives, without reprocessing the past." Stanley Schmidt's group at NASA Ames adapted it, in its linearized (extended) form, to the Apollo midcourse navigation problem, and a version of it ran in the Apollo guidance computer. Variants of the same recursion now run in GPS receivers, phone motion sensors and autopilots. For a statistician, the punchline is that ST-7's ARMA models are a special case: an ARMA series is a linear readout of a finite-dimensional state, and the Kalman filter gives its exact likelihood with missing values, time-varying parameters and unobserved components for free.
 
 The third problem was finance. ST-7 modelled the conditional mean and assumed constant variance. Returns on assets have a nearly unpredictable mean and a strongly predictable variance: quiet weeks follow quiet weeks and turbulent ones follow turbulent ones. Robert Engle (1982) introduced ARCH (he first applied it to UK inflation uncertainty, not stock returns); Tim Bollerslev (1986) generalized it to GARCH. Engle shared the 2003 Nobel prize in economics for it.
 
@@ -62,7 +62,7 @@ $$\gamma(h)=\tfrac{A^2}{4}e^{2\pi i\omega_0h}+\tfrac{A^2}{4}e^{-2\pi i\omega_0h}
 
 ■ **What just happened.** A random-phase sinusoid is stationary, its ACF is a cosine that never decays, and its variance $A^2/2$ sits as two point masses of $A^2/4$ at $\pm\omega_0$. Every stationary process is a limit of such sums: **Herglotz's theorem** says $\gamma$ is nonnegative definite (ST-7) if and only if $\gamma(h)=\int_{(-1/2,1/2]}e^{2\pi i\omega h}\,dF(\omega)$ for a unique nondecreasing **spectral distribution** $F$ with total mass $\gamma(0)$. In symbols,
 $$\gamma(h)=\int_{(-1/2,1/2]}e^{2\pi i\omega h}\,dF(\omega),\tag{3.2}$$
-and (3.1) is the case where $F$ has two jumps. (Proof: Brockwell & Davis ch. 4; we prove the case with a density below.)
+and (3.1) is the case where $F$ has two jumps. (Proof: Brockwell & Davis, *Time Series: Theory and Methods*, ch. 4; we prove the case with a density below.)
 
 ### 3.2 The spectral density and the Wiener–Khinchin theorem
 
@@ -81,7 +81,7 @@ $$\gamma(h)=\int_{-1/2}^{1/2}f(\omega)e^{2\pi i\omega h}\,d\omega.\tag{3.4}$$
 2. Orthogonality on the circle: $\int_{-1/2}^{1/2}e^{2\pi i\omega m}\,d\omega=1$ if $m=0$ and $\frac{\sin(\pi m)}{\pi m}=0$ otherwise.
 3. Uniform convergence lets us integrate term by term: $\int f(\omega)e^{2\pi i\omega k}d\omega=\sum_h\gamma(h)\int e^{2\pi i\omega(k-h)}d\omega=\gamma(k)$. That is (3.4).
 4. Real and even: $\gamma(-h)=\gamma(h)$ is real, so pairing $h$ and $-h$ gives $f(\omega)=\gamma(0)+2\sum_{h\ge1}\gamma(h)\cos(2\pi\omega h)$, which is real and even in $\omega$.
-5. Nonnegative: for any $n$, $0\le\frac1n\mathbb E\big|\sum_{t=1}^nx_te^{-2\pi i\omega t}\big|^2=\frac1n\sum_{s,t}\gamma(t-s)e^{-2\pi i\omega(t-s)}$. The number of pairs $(s,t)$ in $\{1..n\}^2$ with $t-s=h$ is $n-|h|$, so this equals
+5. Nonnegative: take $\mathbb Ex_t=0$ (subtracting the mean changes neither $\gamma$ nor $f$). For any $n$, $0\le\frac1n\mathbb E\big|\sum_{t=1}^nx_te^{-2\pi i\omega t}\big|^2=\frac1n\sum_{s,t}\gamma(t-s)e^{-2\pi i\omega(t-s)}$. The number of pairs $(s,t)$ in $\{1..n\}^2$ with $t-s=h$ is $n-|h|$, so this equals
 $$\sum_{|h|<n}\Big(1-\frac{|h|}{n}\Big)\gamma(h)e^{-2\pi i\omega h}.\tag{3.5}$$
 As $n\to\infty$ each term tends to $\gamma(h)e^{-2\pi i\omega h}$ and the terms are dominated by $|\gamma(h)|$, so (3.5) $\to f(\omega)$ by dominated convergence. A limit of nonnegative numbers is nonnegative. ∎
 
@@ -128,13 +128,15 @@ The denominator is increasing in $\omega\in[0,\tfrac12]$ when $\phi>0$ (because 
 3. $dD/dc=2\phi_1(\phi_2-1)-8\phi_2c=0$ gives
 $$\cos(2\pi\omega^*)=\frac{\phi_1(\phi_2-1)}{4\phi_2}.\tag{3.11}$$
 4. $d^2D/dc^2=-8\phi_2$. This is positive, so $\omega^*$ minimizes $D$ and maximizes $f$, exactly when $\phi_2<0$; and it lies in $(0,\tfrac12)$ only if the right side of (3.11) is in $(-1,1)$.
-5. Compare with the roots. ST-7 showed that complex roots of $\phi$ have reciprocals $re^{\pm i\theta}$ with $\phi_1=2r\cos\theta$, $\phi_2=-r^2$. Substitute into (3.11): $\cos(2\pi\omega^*)=\cos\theta\cdot\frac{1+r^2}{2r}$. Since $\frac{1+r^2}{2r}\ge1$ (AM–GM), $\cos2\pi\omega^*\ge\cos\theta$, so $\omega^*\le\theta/2\pi$, with equality only as $r\to1$.
+5. Compare with the roots. ST-7 showed that complex roots of $\phi$ have reciprocals $re^{\pm i\theta}$ with $\phi_1=2r\cos\theta$, $\phi_2=-r^2$. Substitute into (3.11): $\cos(2\pi\omega^*)=\cos\theta\cdot\frac{1+r^2}{2r}$. Since $\frac{1+r^2}{2r}\ge1$ (AM–GM), $\cos2\pi\omega^*$ has the sign of $\cos\theta$ and $|\cos2\pi\omega^*|\ge|\cos\theta|$, with equality only as $r\to1$ or when $\cos\theta=0$. Which way the peak moves therefore depends on the sign of $\phi_1$: for $\phi_1>0$ ($\theta<\tfrac\pi2$) the cosine grows and $\omega^*\le\theta/2\pi$; for $\phi_1<0$ ($\theta>\tfrac\pi2$) it becomes more negative and $\omega^*\ge\theta/2\pi$; for $\phi_1=0$ both equal $\tfrac14$. In every case the peak sits further from $\omega=\tfrac14$ than $\theta/2\pi$ does, toward whichever of $0$ and $\tfrac12$ is nearer. (If $|\cos\theta|\frac{1+r^2}{2r}\ge1$ there is no interior peak and the maximum is at that endpoint.) Check: $\phi=(1,-0.5)$ has $\theta/2\pi=0.125$ and $\omega^*=0.1150$; $\phi=(-1,-0.5)$ has $\theta/2\pi=0.375$ and $\omega^*=0.3850$.
 
-■ **What just happened.** Yule's quasi-period $2\pi/\theta$ from the roots and the spectral peak period $1/\omega^*$ are not the same number. Damping ($r<1$) broadens the resonance and pushes its peak toward lower frequency, the discrete-time version of CM-1's result that a damped oscillator's amplitude resonance sits below its natural frequency. As the roots approach the unit circle the two agree and the peak sharpens.
+■ **What just happened.** Yule's quasi-period $2\pi/\theta$ from the roots and the spectral peak period $1/\omega^*$ are not the same number. Damping ($r<1$) broadens the resonance and pushes its peak away from $\omega=\tfrac14$. For $\phi_1>0$, the slow-oscillation case of Yule's sunspots and Example 4.2, that means toward lower frequency: the discrete-time version of CM-1's result that a damped oscillator's amplitude resonance sits below its natural frequency. For $\phi_1<0$ it means toward $\tfrac12$, which is the same picture reflected by $\omega\to\tfrac12-\omega$, as for the AR(1). As the roots approach the unit circle the two frequencies agree and the peak sharpens.
 
 ### 3.4 Linear filters
 
 Every moving average and difference is a filter, and (3.8) says what it does to each frequency.
+
+▶ **Try it first.** Compute $|\psi(e^{-2\pi i\omega})|^2$ for $\psi(z)=1-z$ and for $\psi(z)=\tfrac1k(1+z+\dots+z^{k-1})$ (a geometric sum). Where is each one zero?
 
 **First difference** $\nabla x_t=x_t-x_{t-1}$: $\psi(z)=1-z$ and
 $$|1-e^{-2\pi i\omega}|^2=2-2\cos2\pi\omega=4\sin^2(\pi\omega).$$
@@ -142,7 +144,9 @@ Zero at $\omega=0$, 4 at $\omega=\tfrac12$: a high-pass filter. Differencing a t
 
 **The $k$-point moving average** $\psi_j=1/k$ for $j=0,\dots,k-1$: a geometric sum,
 $$\psi(e^{-i\lambda})=\frac1k\frac{1-e^{-ik\lambda}}{1-e^{-i\lambda}}=\frac1ke^{-i(k-1)\lambda/2}\frac{\sin(k\lambda/2)}{\sin(\lambda/2)},\qquad|\psi|^2=\Big(\frac{\sin(\pi k\omega)}{k\sin(\pi\omega)}\Big)^2.\tag{3.12}$$
-This is F3's Dirichlet kernel (the discrete sinc): 1 at $\omega=0$, zeros at $\omega=1/k,2/k,\dots$, and side lobes in between. A moving average is a low-pass filter with a leaky stopband: frequencies between its zeros pass through, attenuated but not removed. The phase factor $e^{-i(k-1)\lambda/2}$ is a delay of $(k-1)/2$ samples; centring the average removes it.
+This ratio of sines is F2's Dirichlet kernel (Definition 3.11) rescaled, the discrete counterpart of F3's sinc: 1 at $\omega=0$, zeros at $\omega=1/k,2/k,\dots$, and side lobes in between. A moving average is a low-pass filter with a leaky stopband: frequencies between its zeros pass through, attenuated but not removed. The phase factor $e^{-i(k-1)\lambda/2}$ is a delay of $(k-1)/2$ samples; centring the average removes it.
+
+■ **What just happened.** Two short computations give the two basic filter shapes. A difference removes the bottom of the spectrum and amplifies the top. An average keeps the bottom and removes the top, except for what leaks through its side lobes. Example 4.3 puts numbers on both.
 
 **Filter design intuition.** Sharp cutoffs need long filters (a short filter has a smooth frequency response: F3's time–frequency uncertainty). Cascading filters multiplies responses. Every practical smoother is a compromise between cutoff sharpness, side-lobe height and length.
 
@@ -157,7 +161,7 @@ For $j\neq0$, $\sum_te^{-2\pi i\omega_jt}=0$, so subtracting the mean changes no
 
 **Theorem 3.5 (Distribution of the periodogram, Gaussian white noise).** If $x_t$ are iid $\mathcal N(0,\sigma^2)$ and $0<\omega_j<\tfrac12$, then $I(\omega_j)\sim\tfrac{\sigma^2}{2}\chi^2_2$, so $\mathbb EI=\sigma^2$ and $\mathrm{Var}\,I=\sigma^4$; ordinates at distinct such $\omega_j$ are independent.
 
-▶ **Try it first.** Split $d(\omega_j)=C_j-iS_j$ into cosine and sine sums. What are their variances and covariance? You need F3's discrete orthogonality: $\sum_t\cos^2(2\pi\omega_jt)=\sum_t\sin^2(2\pi\omega_jt)=n/2$ and $\sum_t\cos(2\pi\omega_jt)\sin(2\pi\omega_kt)=0$ for $0<\omega_j,\omega_k<\tfrac12$.
+▶ **Try it first.** Split $d(\omega_j)=C_j-iS_j$ into cosine and sine sums. What are their variances and covariance? You need discrete orthogonality at Fourier frequencies $0<\omega_j,\omega_k<\tfrac12$ (the real and imaginary parts of F3 Theorem 3.19): $\sum_t\cos^2(2\pi\omega_jt)=\sum_t\sin^2(2\pi\omega_jt)=n/2$; $\sum_t\cos(2\pi\omega_jt)\sin(2\pi\omega_kt)=0$ for all $j,k$; and $\sum_t\cos(2\pi\omega_jt)\cos(2\pi\omega_kt)=\sum_t\sin(2\pi\omega_jt)\sin(2\pi\omega_kt)=0$ for $j\ne k$.
 
 *Proof.*
 1. $C_j=n^{-1/2}\sum_tx_t\cos(2\pi\omega_jt)$ and $S_j=n^{-1/2}\sum_tx_t\sin(2\pi\omega_jt)$ are linear in Gaussian $x$, so all $C_j,S_j$ are jointly Gaussian with mean 0.
@@ -251,7 +255,7 @@ $$a_{t|t-1}=Ta_{t-1|t-1},\qquad P_{t|t-1}=TP_{t-1|t-1}T^\top+RQR^\top.\tag{3.20}
 5. Name the pieces:
 $$v_t=y_t-Za_{t|t-1},\qquad F_t=ZP_{t|t-1}Z^\top+H.\tag{3.21}$$
 $v_t$ is the **innovation**, the part of $y_t$ the past could not predict, and $F_t$ is its variance.
-6. Apply F5's formula with $u=\alpha_t$, $v=y_t$: the conditional mean is $a_{t|t-1}+P_{t|t-1}Z^\top F_t^{-1}v_t$. Define the gain
+6. Apply F5's formula with $u=\alpha_t$, $v=y_t$. It needs $S_{vv}=F_t$ to be invertible, which holds whenever $H$ is positive definite (and, when $H=0$ as in Example 4.5, whenever $ZP_{t|t-1}Z^\top$ is). The conditional mean is $a_{t|t-1}+P_{t|t-1}Z^\top F_t^{-1}v_t$. Define the gain
 $$K_t=P_{t|t-1}Z^\top F_t^{-1}.\tag{3.22}$$
 7. The conditional covariance is $P_{t|t-1}-P_{t|t-1}Z^\top F_t^{-1}ZP_{t|t-1}$: the **Schur complement** of $F_t$ in the joint covariance (LA-10). Since $K_tF_tK_t^\top=P_{t|t-1}Z^\top F_t^{-1}F_tF_t^{-1}ZP_{t|t-1}$, this is $P_{t|t-1}-K_tF_tK_t^\top$.
 $$a_{t|t}=a_{t|t-1}+K_tv_t,\qquad P_{t|t}=P_{t|t-1}-K_tF_tK_t^\top.\tag{3.23}$$
@@ -266,16 +270,18 @@ Note that $P_{t|t}$, $P_{t|t-1}$ and $K_t$ never depend on the data. They can be
 
 **Theorem 3.7 (Innovations).** The innovations $v_1,\dots,v_n$ are independent, $v_t\sim\mathcal N(0,F_t)$.
 
+▶ **Try it first.** $v_t$ is $y_t$ minus its conditional mean given $Y_{t-1}$. What is $\mathbb E[v_t\mid Y_{t-1}]$, and what does the tower property (F5) then give for $\mathbb E[v_tv_s^\top]$ when $s<t$?
+
 *Proof.*
 1. $v_t=y_t-\mathbb E[y_t\mid Y_{t-1}]$, so $\mathbb E[v_t\mid Y_{t-1}]=0$, and given $Y_{t-1}$, $v_t\sim\mathcal N(0,F_t)$ by step 4 above. Since $F_t$ does not depend on $Y_{t-1}$, this is also the unconditional distribution.
 2. For $s<t$, $v_s$ is a function of $Y_s\subseteq Y_{t-1}$. Tower property: $\mathbb E[v_tv_s^\top]=\mathbb E\big[\mathbb E[v_t\mid Y_{t-1}]v_s^\top\big]=0$.
 3. The $v$'s are linear in the jointly Gaussian $y$'s, hence jointly Gaussian; uncorrelated jointly Gaussian vectors are independent. ∎
 
-So a correctly specified filter turns the correlated $y$'s into white noise. That is the diagnostic: standardized innovations $v_t/\sqrt{F_t}$ should pass ST-7's Ljung–Box test and look $\mathcal N(0,1)$.
+■ **What just happened.** A correctly specified filter turns the correlated $y$'s into white noise. That is the diagnostic: standardized innovations $v_t/\sqrt{F_t}$ should pass ST-7's Ljung–Box test and look $\mathcal N(0,1)$.
 
 **The gain as relative precision.** For the local level model, $Z=1$ and (3.22) gives
 $$K_t=\frac{P_{t|t-1}}{P_{t|t-1}+H}=\frac{1/H}{1/P_{t|t-1}+1/H},\qquad a_{t|t}=(1-K_t)a_{t|t-1}+K_ty_t.$$
-The filtered mean is a precision-weighted average of prior mean and observation. This is ST-5's Normal–Normal posterior mean, and the weight is the shrinkage factor that ST-5 also found in the Beta–Binomial model. In matrix form the matrix inversion lemma rewrites (3.23) as $P_{t|t}^{-1}=P_{t|t-1}^{-1}+Z^\top H^{-1}Z$: precisions add. The filtered distribution **is** the Bayesian posterior of $\alpha_t$ given $Y_t$, and the predicted distribution is the next step's prior. The Kalman filter is recursive Bayesian updating, and with $T=I$, $Q=0$ it is recursive least squares for a fixed regression coefficient.
+The filtered mean is a precision-weighted average of prior mean and observation. This is ST-5's Normal–Normal posterior mean, and the weight is the shrinkage factor that ST-5 also found in the Beta–Binomial model. In matrix form, when $P_{t|t-1}$ and $H$ are invertible, the matrix inversion lemma rewrites (3.23) as $P_{t|t}^{-1}=P_{t|t-1}^{-1}+Z^\top H^{-1}Z$: precisions add. The filtered distribution **is** the Bayesian posterior of $\alpha_t$ given $Y_t$, and the predicted distribution is the next step's prior. The Kalman filter is recursive Bayesian updating, and with $T=I$, $Q=0$ it is recursive least squares for a fixed regression coefficient.
 
 **Numerical stability.** In floating point, $P_{t|t-1}-K_tF_tK_t^\top$ subtracts two nearly equal matrices when the observation is precise, and rounding can leave $P_{t|t}$ asymmetric or with a negative eigenvalue (LA-13: the subtraction is ill-conditioned). The **Joseph form** $P_{t|t}=(I-K_tZ)P_{t|t-1}(I-K_tZ)^\top+K_tHK_t^\top$ is algebraically equal (expand it, using (3.22)) and is a sum of PSD terms, so it stays PSD under rounding. Production filters go further and propagate a Cholesky factor of $P$ (LA-10), the **square-root filter**, which also doubles the effective precision. The project symmetrizes $P$ after each update, the cheapest defence.
 
@@ -286,7 +292,8 @@ The filtered mean is a precision-weighted average of prior mean and observation.
 1. The recursion is $P_{t+1|t}=P_{t|t-1}-\frac{P_{t|t-1}^2}{P_{t|t-1}+H}+Q=\frac{P_{t|t-1}H}{P_{t|t-1}+H}+Q$.
 2. A fixed point satisfies $\frac{P^2}{P+H}=Q$, i.e.
 $$P^2-QP-QH=0.\tag{3.24}$$
-3. The positive root is $P=\tfrac12\big(Q+\sqrt{Q^2+4QH}\big)$. With $q=Q/H$ (the signal-to-noise ratio) and $p=P/H$: $p=\tfrac12(q+\sqrt{q^2+4q})$ and $K=p/(p+1)$.
+3. The positive root is $P=\tfrac12\big(Q+\sqrt{Q^2+4QH}\big)$. With $q=Q/H$ (the signal-to-noise ratio) and $p=P/H$:
+$$p=\tfrac12\big(q+\sqrt{q^2+4q}\big),\qquad K=\frac{p}{p+1}.\tag{3.25}$$
 4. Convergence: $g(P)=PH/(P+H)+Q$ is increasing and concave with $g'(P)=H^2/(P+H)^2<1$ for $P>0$, so iterating $g$ from any $P\ge0$ converges monotonically to the unique positive fixed point.
 
 ■ **What just happened.** The steady-state gain depends only on $q$: $K\to0$ as $q\to0$ (a constant level; average everything), $K\to1$ as $q\to\infty$ (the level jumps; believe the latest point). With $K$ fixed, $a_{t|t}=a_{t-1|t-1}+K(y_t-a_{t-1|t-1})$ is ST-7's **simple exponential smoothing** with smoothing constant $K$. The ad hoc forecasting rule is the optimal filter for a local level model, and the model tells you how to choose the constant. For the constant-velocity model the steady-state filter is the tracking engineer's "$\alpha$–$\beta$ filter."
@@ -295,7 +302,7 @@ $$P^2-QP-QH=0.\tag{3.24}$$
 
 The filter uses $Y_t$. After all the data are in, you want $\alpha_t\mid Y_n$, which also uses the future.
 
-**Theorem 3.8 (Rauch–Tung–Striebel smoother).** With $J_t=P_{t|t}T^\top P_{t+1|t}^{-1}$, running backward from $a_{n|n},P_{n|n}$,
+**Theorem 3.8 (Rauch–Tung–Striebel smoother).** Assume every $P_{t+1|t}$ is invertible. With $J_t=P_{t|t}T^\top P_{t+1|t}^{-1}$, running backward from $a_{n|n},P_{n|n}$,
 $$a_{t|n}=a_{t|t}+J_t(a_{t+1|n}-a_{t+1|t}),\qquad P_{t|n}=P_{t|t}+J_t(P_{t+1|n}-P_{t+1|t})J_t^\top.\tag{3.26}$$
 
 ▶ **Try it first.** Given $\alpha_{t+1}$, is $\alpha_t$ informed by $y_{t+1},\dots,y_n$? Use the Markov structure.
@@ -306,7 +313,7 @@ $$a_{t|n}=a_{t|t}+J_t(a_{t+1|n}-a_{t+1|t}),\qquad P_{t|n}=P_{t|t}+J_t(P_{t+1|n}-
 3. F5's formula: $\alpha_t\mid\alpha_{t+1},Y_t\sim\mathcal N\big(a_{t|t}+J_t(\alpha_{t+1}-a_{t+1|t}),\ P_{t|t}-J_tP_{t+1|t}J_t^\top\big)$.
 4. Average over $\alpha_{t+1}\mid Y_n\sim\mathcal N(a_{t+1|n},P_{t+1|n})$. Law of total expectation: $a_{t|n}=a_{t|t}+J_t(a_{t+1|n}-a_{t+1|t})$. Law of total variance: $P_{t|n}=P_{t|t}-J_tP_{t+1|t}J_t^\top+J_tP_{t+1|n}J_t^\top$, which is (3.26). ∎
 
-■ **What just happened.** One backward pass corrects each filtered estimate by how much the future revised its successor. Filtering is what a controller can use in real time; smoothing is what an analyst uses afterwards, and it is always at least as accurate ($P_{t|n}\preceq P_{t|t}$ because $P_{t+1|n}\preceq P_{t+1|t}$). In the project's tracker, filtering cuts position RMSE from 2.85 (raw sensor) to 1.76 and smoothing to 0.91.
+■ **What just happened.** One backward pass corrects each filtered estimate by how much the future revised its successor. Filtering is what a controller can use in real time; smoothing is what an analyst uses afterwards, and it is always at least as accurate ($P_{t|n}\preceq P_{t|t}$ because $P_{t+1|n}\preceq P_{t+1|t}$). The invertibility hypothesis fails only in degenerate cases such as Example 4.5, where the state is observed exactly, $P_{t+1|t}=\mathrm{diag}(\sigma^2,0)$, and there is nothing to smooth; a pseudoinverse in $J_t$ covers them. In the project's tracker, filtering cuts position RMSE from 2.85 (raw sensor) to 1.76 and smoothing to 0.91.
 
 **Forecasting.** With no new data, iterate (3.20): $a_{n+h|n}=T^ha_{n|n}$, $P_{n+h|n}=TP_{n+h-1|n}T^\top+RQR^\top$, and $y_{n+h}$ has forecast $Za_{n+h|n}$ and variance $ZP_{n+h|n}Z^\top+H$. For an AR($p$) in companion form this reproduces ST-7's forecasts and their growing variance.
 
@@ -317,6 +324,8 @@ $$a_{t|n}=a_{t|t}+J_t(a_{t+1|n}-a_{t+1|t}),\qquad P_{t|n}=P_{t|t}+J_t(P_{t+1|n}-
 **Theorem 3.9 (Prediction error decomposition).** For model (3.19) with parameters $\theta$ (entries of $T,Z,R,Q,H$),
 $$\log p(y_1,\dots,y_n;\theta)=-\frac12\sum_{t=1}^n\Big[p\log2\pi+\log|F_t|+v_t^\top F_t^{-1}v_t\Big].\tag{3.27}$$
 
+▶ **Try it first.** Factor the joint density as $\prod_tp(y_t\mid Y_{t-1})$. Step 4 of §3.9 already gave you each factor.
+
 *Proof.*
 1. Chain rule of densities: $p(y_1,\dots,y_n)=\prod_tp(y_t\mid Y_{t-1})$.
 2. From step 4 of §3.9, $y_t\mid Y_{t-1}\sim\mathcal N(Za_{t|t-1},F_t)$, whose log density at $y_t$ is $-\tfrac12[p\log2\pi+\log|F_t|+v_t^\top F_t^{-1}v_t]$.
@@ -326,13 +335,13 @@ $$\log p(y_1,\dots,y_n;\theta)=-\frac12\sum_{t=1}^n\Big[p\log2\pi+\log|F_t|+v_t^
 
 ■ **What just happened.** The Kalman filter computes the exact Gaussian likelihood in $O(n)$, where the direct formula needs the $n\times n$ covariance and its Cholesky factor (LA-10) in $O(n^3)$. For ST-7's ARMA, put the model in the form of §3.8, start the filter at the stationary distribution $P_{1|0}=\Sigma$ solving the discrete Lyapunov equation $\Sigma=T\Sigma T^\top+RQR^\top$, and (3.27) is the exact likelihood. The project checks this against the direct multivariate Normal log density for an ARMA(1,1) with $n=200$: $-276.614139$ both ways. This is how statistical software computes ARMA likelihoods.
 
-**Maximum likelihood.** Maximize (3.27) numerically over $\theta$, parametrizing variances by their logs so the optimizer is unconstrained, and get standard errors from the inverse of the numerical Hessian (ST-1's observed information; the delta method converts to the variance scale). For nonstationary states (random walks, trends), no stationary distribution exists; the usual approximation is a "diffuse" start with huge $P_{1|0}$, whose first few innovations contribute an almost parameter-free constant (Durbin & Koopman ch. 5 treat the exact diffuse likelihood). The project fits the local level model to $n=800$ simulated points and recovers $\hat\sigma^2_\eta=0.58\pm0.07$ (true 0.5) and $\hat\sigma^2_\varepsilon=0.90\pm0.08$ (true 1.0), and the local linear trend's three variances within their standard errors. The alternative is the **EM algorithm** (ML-6): the E-step is the smoother, the M-step has closed forms for $Q$ and $H$.
+**Maximum likelihood.** Maximize (3.27) numerically over $\theta$, parametrizing variances by their logs so the optimizer is unconstrained, and get standard errors from the inverse of the numerical Hessian (ST-1's observed information; the delta method converts to the variance scale). For nonstationary states (random walks, trends), no stationary distribution exists; the usual approximation is a "diffuse" start with huge $P_{1|0}$, whose first few innovations contribute an almost parameter-free constant (Durbin & Koopman ch. 5 give the exact treatment of a diffuse start). The project fits the local level model to $n=800$ simulated points and recovers $\hat\sigma^2_\eta=0.58\pm0.07$ (true 0.5) and $\hat\sigma^2_\varepsilon=0.90\pm0.08$ (true 1.0), and the local linear trend's three variances within their standard errors. The alternative is the **EM algorithm** (ML-6): the E-step is the smoother, the M-step has closed forms for $Q$ and $H$.
 
 ### 3.13 Structural time series
 
 A **structural model** writes $y_t=\mu_t+\gamma_t+\varepsilon_t$: a trend (local linear trend), a seasonal (§3.8) and an irregular. Stack the states, $\alpha_t=(\mu_t,\nu_t,\gamma_t,\gamma_{t-1},\dots,\gamma_{t-s+2})$, make $T$ block-diagonal from the components' transition matrices, and set $Z=(1,0,1,0,\dots,0)$. The smoother (3.26) then delivers $a_{t|n}$, whose components are estimates of the trend and the seasonal with standard errors from $P_{t|n}$. This is what "seasonal adjustment" means when it is done with a model. Each component's variance is estimated by ML, and setting one to zero makes that component deterministic.
 
-The connection to ST-7's forecasting folklore is exact. The steady-state filter for the local level model is simple exponential smoothing (§3.10); for the local linear trend it is Holt's linear method; adding the seasonal gives additive Holt–Winters. The Kalman filter supplies what the folklore lacks: a likelihood to choose the smoothing constants, prediction intervals, and the freedom to handle missing values and a non-steady start.
+The connection to ST-7's forecasting folklore is exact for the first two models. The steady-state filter for the local level model is simple exponential smoothing (§3.10); for the local linear trend it is Holt's linear method, with both smoothing constants fixed by the variance ratios. Adding the seasonal gives recursions of the additive Holt–Winters kind (level, slope and seasonal each corrected by a multiple of the one-step error), close to Holt–Winters but not identical: this filter also revises the other seasons' effects, and Holt–Winters is exactly optimal for a model in which one noise source drives all three components (the seasonal ARIMA that ST-7 §3.13 mentions). The Kalman filter supplies what the folklore lacks: a likelihood to choose the smoothing constants, prediction intervals, and the freedom to handle missing values and a non-steady start.
 
 ### 3.14 Nonlinear and non-Gaussian extensions; the GP connection
 
@@ -378,7 +387,7 @@ $$\bar\sigma^2=\mathbb E\varepsilon_t^2=\frac{\omega}{1-\alpha-\beta},\qquad\tex
 $\alpha+\beta$ is the **persistence**.
 2. With $u_t=\varepsilon_t^2-\sigma_t^2$ as before: $\varepsilon_t^2-u_t=\omega+\alpha\varepsilon_{t-1}^2+\beta(\varepsilon_{t-1}^2-u_{t-1})$, i.e.
 $$\varepsilon_t^2=\omega+(\alpha+\beta)\varepsilon_{t-1}^2+u_t-\beta u_{t-1}.\tag{3.34}$$
-**The squared GARCH(1,1) is an ARMA(1,1)** in ST-7's sense, with AR coefficient $\alpha+\beta$ and MA coefficient $-\beta$. Its ACF is ST-7's ARMA(1,1) ACF with those values: $\rho(1)=\frac{\alpha(1-\alpha\beta-\beta^2)}{1-2\alpha\beta-\beta^2}$ and $\rho(h)=(\alpha+\beta)\rho(h-1)$ (exercise B9). With $\alpha$ small and $\alpha+\beta$ near 1, $\rho(1)$ is small and the decay is slow: the empirical pattern.
+**The squared GARCH(1,1) is an ARMA(1,1)** in ST-7's sense, with AR coefficient $\alpha+\beta$ and MA coefficient $-\beta$. Its ACF is ST-7's ARMA(1,1) ACF with those values: $\rho(1)=\frac{\alpha(1-\alpha\beta-\beta^2)}{1-2\alpha\beta-\beta^2}$ and $\rho(h)=(\alpha+\beta)\rho(h-1)$ for $h\ge2$ (exercise B9). With $\alpha$ small and $\alpha+\beta$ near 1, $\rho(1)$ is small and the decay is slow: the empirical pattern.
 3. Kurtosis for Gaussian $z$: $\sigma^2_{t+1}=\omega+\sigma_t^2(\alpha z_t^2+\beta)$, and $\mathbb E(\alpha z^2+\beta)^2=3\alpha^2+2\alpha\beta+\beta^2$. Taking expectations of the square, $\mathbb E\sigma^4=\frac{\omega^2+2\omega(\alpha+\beta)\bar\sigma^2}{1-3\alpha^2-2\alpha\beta-\beta^2}$, and $\kappa=3\mathbb E\sigma^4/\bar\sigma^4$ simplifies (as in step 5 of §3.15) to $\kappa=\frac{3[1-(\alpha+\beta)^2]}{1-(\alpha+\beta)^2-2\alpha^2}$, finite iff $(\alpha+\beta)^2+2\alpha^2<1$. For $\alpha=0.1$, $\beta=0.85$: $\kappa=3.774$.
 
 ■ **What just happened.** ST-7's ARMA reappears, applied to the squares. Stationarity, the ACF and mean reversion of the variance all come from ST-7 with $\varepsilon_t^2$ in place of $x_t$. The one subtlety: $u_t$ is uncorrelated but heteroskedastic and non-Gaussian, so ARMA estimation on $\varepsilon_t^2$ is inefficient. Use the likelihood.
@@ -402,7 +411,7 @@ $$\sigma^2_{t+h|t}=\bar\sigma^2+(\alpha+\beta)^{h-1}\big(\sigma^2_{t+1}-\bar\sig
 
 **Value-at-risk.** A bank's one-day 99% VaR is the loss it exceeds with probability 1%: with conditionally Normal returns, $\mathrm{VaR}_{t+1}=-\big(\mu+\sigma_{t+1|t}\,\Phi^{-1}(0.01)\big)\approx2.33\,\sigma_{t+1|t}$ (in return units, $\mu\approx0$). GARCH makes VaR rise after turbulent days, which is the point and also the criticism (it reacts after the fact). Heavier-tailed $z_t$ (Student $t$) and backtesting the frequency of exceedances are standard.
 
-**Stochastic volatility as state space.** An alternative treats log-variance as a latent AR(1): $h_{t+1}=\mu+\phi(h_t-\mu)+\eta_t$, $y_t=e^{h_t/2}z_t$. This is a nonlinear, non-Gaussian state-space model (3.19 with $Z\alpha$ replaced by a variance), so the Kalman filter does not apply directly. Taking $\log y_t^2=h_t+\log z_t^2$ makes it linear with non-Gaussian noise (a Kalman-filter QML), and a particle filter (§3.14) gives the exact likelihood. GARCH is the special case in which next period's variance is a deterministic function of the past, which is why its likelihood is so cheap.
+**Stochastic volatility as state space.** An alternative treats log-variance as a latent AR(1): $h_{t+1}=\mu+\phi(h_t-\mu)+\eta_t$, $y_t=e^{h_t/2}z_t$. This is a nonlinear, non-Gaussian state-space model (3.19 with $Z\alpha$ replaced by a variance), so the Kalman filter does not apply directly. Taking $\log y_t^2=h_t+\log z_t^2$ makes it linear with non-Gaussian noise (a Kalman-filter QML), and a particle filter (§3.14) gives the exact likelihood. GARCH differs in having no separate volatility shock: next period's variance is a deterministic function of past returns, so nothing is latent, which is why its likelihood is so cheap.
 
 **The three views.** *Time domain* (ST-7): ACF, ARMA, forecasting; right when the goal is prediction and the dynamics are short-memory. *Frequency domain* (§3.1–3.7): right when the physics is oscillatory or the question is "which frequencies," when you identify a linear system, or when filtering is the operation. *State space* (§3.8–3.14): right when there is a physical hidden state, missing or irregular data, several sensors, time-varying structure, or a need for exact likelihoods and smoothing. They are three coordinate systems on one object: (3.9) translates ARMA to the frequency domain, and §3.8 translates it to state space.
 
@@ -467,7 +476,7 @@ Read it. The position estimate moved 69% of the way to the measurement because p
 
 ### Example 4.7: Steady-state gain of the local level model, $q=1$
 
-$Q=H=1$. The Riccati fixed point (3.24): $P^2-P-1=0$, $P=\frac{1+\sqrt5}2=1.6180$, the golden ratio. $K=P/(P+1)=1.6180/2.6180=0.6180$, and the filtered variance is $P_{t|t}=PH/(P+H)=0.6180$ as well (so $P=P_{t|t}+Q$, as (3.20) says). Started from a diffuse prior, the gains are $K_1\approx1$, $K_2=2/3$, $K_3=5/8$, $K_4=13/21$, ratios of Fibonacci numbers converging to $0.6180$; the project prints $1,0.6667,0.625$ and $0.618$ at $t=10$. With signal and noise variances equal, each new observation gets 62% of the weight, and simple exponential smoothing with $\alpha=0.618$ is the optimal filter, which the project confirms to $10^{-8}$.
+$Q=H=1$. The Riccati fixed point (3.24): $P^2-P-1=0$, $P=\frac{1+\sqrt5}2=1.6180$, the golden ratio. $K=P/(P+1)=1.6180/2.6180=0.6180$, and the filtered variance is $P_{t|t}=PH/(P+H)=0.6180$ as well (so $P=P_{t|t}+Q$, as (3.20) says). Started from a diffuse prior, the gains are $K_1\approx1$, $K_2=2/3$, $K_3=5/8$, $K_4=13/21$, ratios of Fibonacci numbers converging to $0.6180$; the project prints $1,0.6667,0.625$ and $0.618$ at $t=10$. With signal and noise variances equal, each new observation gets 62% of the weight, and simple exponential smoothing with smoothing constant 0.618 is the optimal filter, which the project confirms to $10^{-8}$.
 
 ### Example 4.8: GARCH(1,1) with $\omega=0.01$, $\alpha=0.1$, $\beta=0.85$
 
@@ -479,7 +488,7 @@ Nine steps of reversion closed 37% of the gap to 0.2. The project checks the for
 
 - **ML-4 (Gaussian processes).** §3.14 and C2: a Matérn GP is a linear state-space model, and the RTS smoother (3.26) computes its posterior in $O(n)$. Temporal GPs on long series are done this way.
 - **ML-6 (EM).** EM for state-space models uses the smoother as its E-step; the hyperparameters of §3.12 are its M-step.
-- **ST-6 (MCMC).** Bayesian state-space models are sampled by Gibbs, drawing the whole state path given parameters (forward filtering, backward sampling, which is (3.26) with draws in place of means) and parameters given the path. Particle filters are ST-6's importance sampling made sequential.
+- **ST-6 (MCMC).** Bayesian state-space models are sampled by Gibbs, drawing the whole state path given parameters (forward filtering, backward sampling: run the filter, draw $\alpha_n$ from $\mathcal N(a_{n|n},P_{n|n})$, then draw each $\alpha_t$ backward from the conditional in step 3 of Theorem 3.8's proof) and parameters given the path. Particle filters are ST-6's importance sampling made sequential.
 - **CM-1 and F3.** An AR(2) with complex roots is CM-1's damped oscillator sampled in time; (3.11) is its resonance; §3.7 is F3's LTI-system frequency response measured from data.
 - **Control (ME).** The Kalman filter is the estimator half of LQG control: the steady-state gain of §3.10 solves a Riccati equation that is the dual of the LQR controller's Riccati equation. Observability (can the state be recovered from $y$?) decides whether the Riccati recursion converges.
 - **LA-10, LA-13.** The direct ARMA likelihood is a Toeplitz Cholesky; the Kalman filter is a fast, recursive version of the same factorization (the innovations are the Cholesky-whitened data), and the square-root filter is LA-10 applied to $P$.
@@ -514,7 +523,7 @@ See [exercises.md](exercises.md): 18 problems. A1–A6 are drills (spectra at gi
 1. Write the spectral density of white noise, AR(1) and MA(1). Which is low-pass for $\phi>0$, and why is $\phi\to-\phi$ a reflection $\omega\to\tfrac12-\omega$?
 2. Why is the inversion formula (3.4) a Fourier-series coefficient formula and not an inverse Fourier transform?
 3. State the linear filter theorem and use it to derive the ARMA spectrum in one line.
-4. For an AR(2), when does the spectrum have an interior peak, and why is the peak frequency below $\theta/2\pi$?
+4. For an AR(2), when does the spectrum have an interior peak, and on which side of $\theta/2\pi$ does it sit when $\phi_1>0$ and when $\phi_1<0$? Why?
 5. What is the distribution of a periodogram ordinate of Gaussian white noise, and why does that make the periodogram inconsistent?
 6. Give the equivalent degrees of freedom of a Daniell smoother of span $L$ and the 95% interval for $f$.
 7. What does a taper fix, and what does it cost?
@@ -526,9 +535,9 @@ See [exercises.md](exercises.md): 18 problems. A1–A6 are drills (spectra at gi
 
 ## 10. Pair with
 
-- **Shumway & Stoffer, *Time Series Analysis and Its Applications*, 4th ed., ch. 4 and 6.** The closest match to these notes' conventions (cycles per sample). Ch. 4 has more on spectral estimation, multitapers and coherence with real data; ch. 6 covers state space with R code, EM and the diffuse start.
-- **Brockwell & Davis, *Introduction to Time Series and Forecasting*, ch. 4 and 8.** Herglotz's theorem and the periodogram's asymptotics proved carefully (radian convention: convert). Ch. 8 develops state space with a clean treatment of ARMA forms.
-- **Durbin & Koopman, *Time Series Analysis by State Space Methods*, 2nd ed., ch. 2–4.** The local level model in full in ch. 2, then the general filter, smoother and likelihood with every derivation; the reference for structural models and diffuse initialization.
+- **Shumway & Stoffer, *Time Series Analysis and Its Applications*, 4th ed., ch. 4 and 6.** The closest match to these notes' conventions (cycles per sample). Ch. 4 has more on spectral estimation, tapering and coherence with real data; ch. 6 covers state space with R code, including maximum likelihood and EM.
+- **Brockwell & Davis, *Introduction to Time Series and Forecasting*, ch. 4 and 8 (2nd ed. numbering).** Spectral densities, the periodogram and linear filters stated more carefully than here (radian convention: convert). Ch. 8 develops state space with a clean treatment of ARMA forms. The full proofs of Herglotz's theorem and of the periodogram's asymptotics are in their *Time Series: Theory and Methods*, ch. 4 and 10.
+- **Durbin & Koopman, *Time Series Analysis by State Space Methods*, 2nd ed., ch. 2–4.** The local level model in full in ch. 2 (filter, smoother, initialization, likelihood), structural models in ch. 3, and the general filter and smoother with every derivation in ch. 4; the standard reference for structural models, with diffuse initialization in ch. 5.
 - **Särkkä, *Bayesian Filtering and Smoothing* (free PDF), ch. 4–8.** The Bayesian derivation of the filter and smoother, and the clearest account of the EKF, UKF and particle filters. Read it for §3.14.
 - **Welch & Bishop, "An Introduction to the Kalman Filter" (free).** A short engineering-flavoured walk-through; useful to see the same equations in control notation.
-- **Tsay, *Analysis of Financial Time Series*, 3rd ed., ch. 3.** ARCH, GARCH and their variants on real return data, with diagnostics and the stochastic-volatility comparison.
+- **Tsay, *Analysis of Financial Time Series*, 3rd ed., ch. 3.** ARCH, GARCH and their variants on real return data, with diagnostics and a section on stochastic volatility.

@@ -1,6 +1,6 @@
 # ST-7 Exercises
 
-Conventions as in the notes: $\phi(z)=1-\phi_1z-\dots-\phi_pz^p$, $\theta(z)=1+\theta_1z+\dots+\theta_qz^q$, $w_t\sim\mathrm{WN}(0,\sigma^2)$, $\sigma^2=1$ unless stated, mean zero unless stated. Equation numbers refer to `notes.md`. Numerical answers are printed by Part 11 of `project.py`.
+Conventions as in the notes: $\phi(z)=1-\phi_1z-\dots-\phi_pz^p$, $\theta(z)=1+\theta_1z+\dots+\theta_qz^q$, $w_t\sim\mathrm{WN}(0,\sigma^2)$, $\sigma^2=1$ unless stated, mean zero unless stated. Equation numbers refer to `notes.md`. Numerical answers are printed and asserted by Part 11 of `project.py`.
 
 ## A. Warm-up (do all; 5–10 minutes each)
 
