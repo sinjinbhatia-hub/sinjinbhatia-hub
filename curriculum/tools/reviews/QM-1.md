@@ -101,4 +101,55 @@ seeded number, inconsistency a reader would trip on, dubious attribution; LOW = 
     the fringes. A reader expects the shift of part (a). Fix: rename to gamma and say why it drops out.
 23. **LOW. solutions B7(d).** See item 9 (1.7609e11 vs the displayed arithmetic 1.7608e11).
 
+## Second pass (the first reviewer was interrupted after writing the list above)
+
+State found on disk: `project.py` already had the `pin()` helper and the Part 1 pins (Example 4.1 and 4.2
+numbers, the seeded fitted h and W); nothing else in the list had been applied, and notes.md, exercises.md and
+solutions.md were untouched. The Part 1 pins quote 1.5976e8 and 6.903e-20, which the notes did not yet say
+(item 16), so code and prose disagreed until item 16 was applied.
+
+Every item 1–23 was re-verified before acting on it: derivations re-derived (SymPy: Planck mean energy, Bohr
+r_n/E_n/v_1, reduced-mass L and kinetic energy, all six Pauli products, Bloch expectation values and the n.sigma
+eigenvector, precession phase, B7, B8(a), B9, C3 ratio and its 1 + 3/(2n) expansion; NumPy: brute-force mode count
+against k^3 V/(3 pi^2), (3.16) against an explicit joint state with complex tags, the B4 projector identity, the
+C2 lune fraction) and every number recomputed in /tmp/claude-0/qm1/check1.py with CODATA constants. All 23 items
+are real. None is a wrong final number or a wrong derivation: the module has 0 HIGH findings.
+
+### Additional findings (second pass)
+
+24. **LOW (rounding). solutions C1(a).** The fixed-point iterates from x = 5 are 4.96631, 4.96516, 4.96512; the
+    solution lists "4.966, 4.9651", but the second iterate rounds to 4.9652. Fix: list 4.9663, 4.9652, 4.9651.
+25. **LOW (consistency). solutions C1(c).** Says project.py checks the Stefan–Boltzmann integral "to 0.2%"; the
+    assert is 1e-6 and the actual error is 1.5e-7. Fix the prose.
+26. **LOW (style). notes Theorem 3.2.** The statement is the bare formula; the hypotheses (free electron,
+    initially at rest, photon scattered through theta) are only in the Try-it-first. Fix: state them.
+27. **LOW (math, unstated hypothesis). notes §3.10 What-just-happened.** "The fringe visibility is exactly
+    |<t1|t2>|" holds only for equal slit amplitudes; in general it is 2|phi1||phi2||<t1|t2>|/(|phi1|^2+|phi2|^2).
+    Fix: add the qualifier.
+28. **LOW (template). notes §3.4 and §3.6.** The brief names four key derivations (Bohr levels, Compton shift,
+    de Broglie standing waves, the Stern–Gerlach force); the last two have no Try-it-first / What-just-happened.
+    Fix: add one-line prompts (no renumbering).
+29. **LOW (consistency). exercises.md header vs solutions.md header.** One says the numbers are printed by
+    "Part 8", the other by "Parts 2, 6 and 8"; they are printed in Parts 1, 2, 3, 6 and 8. Fix both.
+30. **LOW (code). project.py.** R = m e^4/(8 eps0^2 h^3 c) (notes §3.3), the de Broglie standing-wave step
+    2 pi r = n h/p => L = n hbar (§3.6), Parseval for the Born probabilities (Postulate 3), and the classical
+    Stern–Gerlach band (uniform cos alpha, §3.4) were stated in the notes and never checked. Fix: add asserts.
+31. **LOW (history). notes §3.12.** "Spin was not even recognized as a separate two-dimensional degree of
+    freedom until ... 1927" contradicts §1.4 (spin proposed 1925). First pass listed it under item 19 as
+    "not changed"; it is an internal inconsistency, so fix the wording. Same for §1.7: say the 1974 and 1989
+    experiments used an electron biprism in place of slits, and that the Bologna paper appeared in 1976.
+
+Checked again and found correct (no action): section F does not apply (no REVIEW FOCUS in the brief), but the
+two code blocks in solutions.md (B8(b), C2(c)) were run and work. Imports are numpy/scipy/matplotlib/sympy plus
+stdlib only. No banned phrases. Inbound references from other modules (QM-1 §1.4, §3.3, §3.8, §3.11, (3.13),
+Theorem 3.x, Proposition 3.7, Exercise B6, "Part 3") are untouched by the fixes: no label is renumbered.
+
+Totals: 31 findings, 0 HIGH, 9 MEDIUM (items 1, 2, 3, 4, 5, 11, 12, 14 and the code/prose split of 16), 22 LOW.
+
+## Resolution log
+
+(Each item is marked here as it is applied.)
+
 ## Status
+
+Phase 1 complete (second pass); Phase 2 in progress.
