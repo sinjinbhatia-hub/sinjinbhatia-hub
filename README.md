@@ -1,30 +1,26 @@
 # Sinjin Bhatia
 
-**Mechanical Engineering + Applied Mathematics @ The Ohio State University** · rising sophomore · 4.0 GPA
+**Mechanical Engineering + Applied Mathematics @ The Ohio State University** · sophomore · 4.0 GPA · graduating May 2029
 
-I build AI systems end-to-end — multi-agent orchestration, full-stack apps, and the math underneath — while training as a mechanical engineer.
+I'm an engineering and math student who writes Python for modeling and analysis. I also build software projects with AI coding tools: I set the design, review the code, and test it.
 
 ## Projects
 
 | | |
 |---|---|
-| **[qalqi](https://github.com/sinjinbhatia-hub/qalqi)** | Multi-agent personal assistant: 15+ agents, hybrid local (Ollama) + cloud LLM routing with budget gates, encrypted OAuth connector vault, scheduler daemon, web dashboard, native iOS client. 870+ tests. |
-| **[atlas](https://github.com/sinjinbhatia-hub/atlas)** | AI strength coach — FastAPI + React + Supabase (RLS) + Claude, built on the Banister fitness/fatigue impulse-response model. [Live](https://atlas-zeta-six.vercel.app). |
-| **[beefit](https://github.com/sinjinbhatia-hub/beefit)** | AI fitness app — Expo/React Native mobile client + FastAPI backend with readiness-aware workout generation. |
-| **[marketing-content-pipeline](https://github.com/sinjinbhatia-hub/marketing-content-pipeline)** | Multi-agent content automation: trend research → Whisper/FFmpeg auto-editing → human review gate → publishing → analytics feedback loop. |
-| **[mylos-grill](https://github.com/sinjinbhatia-hub/mylos-grill)** | Animated restaurant site — React 19 + Vite with a hand-rolled scroll/motion system. |
+| **[qalqi](https://github.com/sinjinbhatia-hub/qalqi)** | A personal assistant I use every day. It logs meals and workouts, tracks goals, and runs scheduled jobs such as a morning briefing. You reach it through a web dashboard, a CLI, or Discord. Models run locally (Ollama) or on Claude. Built with a lot of AI help; the README lists what doesn't work yet. |
 
-## Toolbox
+## Skills
 
-- **Software** — Python, TypeScript/JavaScript, FastAPI, React / React Native (Expo), Supabase/Postgres, Docker, pytest, Git
-- **AI** — Anthropic & OpenAI APIs, local inference (Ollama), agent orchestration, Whisper, prompt & eval design
-- **Mechanical** — MATLAB, SolidWorks, Autodesk Fusion, Arduino; engineering coursework at OSU
-- **Math** — mathematical modeling (impulse-response systems), statistics, numerical methods
+- **Comfortable with:** Python, MATLAB, CAD (Onshape)
+- **Learning now:** NumPy, pandas, scikit-learn, PyTorch
+- **Math:** linear algebra, differential equations, probability, numerical methods (coursework plus self-study)
+- **AI-assisted work:** web apps (FastAPI, React, SQL, Docker) that I design, direct and test, written mostly by AI coding tools
 
 ## Looking for
 
-Summer 2027 internships in **software / AI-ML** and **mechanical engineering** — including aerospace & defense (RTX, Lockheed Martin, Northrop Grumman, Boeing, Anduril).
+Summer 2027 internships: early-talent programs for underclassmen, quantitative and math-heavy roles, modeling, simulation and data work (including national labs), software and AI/ML, and mechanical engineering. U.S. citizen.
 
 ## Contact
 
-[LinkedIn](https://www.linkedin.com/in/sinjin-bhatia-453a77241) · sinjin.bhatia@gmail.com
+[LinkedIn](https://www.linkedin.com/in/sinjin-bhatia) · sinjin.bhatia@gmail.com
