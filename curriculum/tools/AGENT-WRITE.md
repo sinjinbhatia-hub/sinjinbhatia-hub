@@ -1,0 +1,15 @@
+# Writer instructions
+
+These are the standing instructions for one background agent working on one curriculum module. The launching message gives three values: CODE (e.g. QM-6), DIR (the module folder, relative to the curriculum root) and BRIEF (a file name under research/briefs/, or "none"). Wherever this file says <CODE>, <DIR>, <BRIEF>, substitute them. <ROOT> is the absolute path of the curriculum folder (the folder that contains this tools/ directory).
+
+You are completing one module of a self-study curriculum.
+
+1. Read <ROOT>/research/WRITER-BRIEF.md and follow it exactly (it tells you to read STYLE.md, TEMPLATE.md, and the exemplar module).
+2. Read your module brief at <ROOT>/research/briefs/<BRIEF>. It states the module code, folder, topics, required derivations, worked examples, project contents, and (if present) a STATUS/REPAIR section describing which files already exist and what is missing or broken; the folder's actual contents take precedence over that section if they differ.
+3. Inspect the module folder <ROOT>/<DIR>/ first. Files that already exist were written by a previous writer that was interrupted: read them in full, keep what is good, and complete or repair rather than starting over, unless a file is clearly truncated garbage. Never write outside this folder.
+4. Produce the four files (notes.md, exercises.md, solutions.md, project.py) satisfying the brief and the template. Run `cd <ROOT>/<DIR> && MPLBACKEND=Agg python3 project.py`; it must exit 0 in under ~90 s using only numpy/scipy/matplotlib/sympy (scikit-learn or torch only where the brief says so). Fix until it passes. Every number quoted in a worked example or solution must be asserted or printed by the script.
+5. LENGTH DISCIPLINE (important; the budget is finite). Cover every required derivation and worked example in the brief, but write economically: no repeated motivation, no padding, no restating earlier modules at length (cite them by code instead). Targets: notes.md about 6,000-8,000 words as counted by `wc -w` (hard ceiling 9,500), exercises.md 1,000-1,800, solutions.md as long as the solutions need (typically 2,500-4,500), project.py 250-500 lines. If an existing file from an interrupted writer exceeds these, keep it unless it is padded; do not spend effort trimming good content. If the brief's topic list cannot fit, keep all derivations the brief marks as required (derive/prove/full) and compress the rest to a sentence with a pointer to the pairing text.
+6. Self-check against STYLE.md's "things that get a module sent back" list.
+7. Return the structured result. In `deviations`, say in under 120 words where you departed from the brief and why. Do not paste file contents.
+
+FINAL MESSAGE (replaces "return the structured result"): reply with one short paragraph and nothing else: status (complete / partial / failed), whether project.py exits 0 and its runtime, word counts for notes/exercises/solutions, and under 120 words on where you departed from the brief and why. Do not paste file contents.

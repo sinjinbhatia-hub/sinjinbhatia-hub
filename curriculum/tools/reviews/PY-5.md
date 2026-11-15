@@ -1,0 +1,46 @@
+# Review: PY-5 — Errors, testing, debugging, type hints
+
+Reviewer: adversarial pass (Phase 1 = find, Phase 2 = fix). Environment: Python 3.13.16, pytest 9.1.1, mypy 2.4.0, ruff 0.17.2, numpy 2.5.3, scipy 1.18.1.
+
+Baseline before any edit: `MPLBACKEND=Agg python3 project.py` exits 0 in 10 s; `python -m pytest -q` from the module folder: 53 passed; `mypy --strict integrators.py` clean; doctest clean.
+
+## Findings (one item per line group; severity high/medium/low; status updated in Phase 2)
+
+### Verified correct (no action)
+- All 57 fenced blocks of notes.md and all 40 of solutions.md were extracted verbatim into /tmp/claude-0/py5 and run (Python 3.13.16, pytest 9.1.1, mypy 2.4.0). Every stated output matches the real output, including: §1 buggy-Simpson table; §3.1 hierarchy; §3.2 control flow; §3.3–§3.7 outputs; §3.8 traceback and the full pdb transcript (bdb.py(680) frame included); §3.9 logging at INFO/DEBUG; §3.10 collect-only, exit status 5, red/green/refactor counts (1 error; 2 failed 12 passed; 14; 26 failed 14 passed; 40), the planted-bug `uniq -c` table and the weights[3] diff; the fixture `-s` transcript; §3.11 both mypy runs and the runtime TypeError; Examples 4.1, 4.3 (diffs verbatim), 4.4, 4.5 (chained traceback), 4.6; solutions A1–A5, B1 (incl. the plant table and the [sin]-blind-spot claim), B2–B7, C1, C2 (direction asserts), C3 tests.
+- Math: (3.1) (1+h²) energy factor and 1.04³=1.125, 1.04⁴−1=17.0%; Step 0 facts (Simpson exact on cubics, 4/15 h⁵, f⁽⁴⁾h⁵/90, (3.2) with /180, trapezoid h³f''/12 per panel), (3.3) Richardson identity; Example 4.3 bound 4.15e-4 / 2.1e-4 and measured 2.69e-4 / 1.3e-4; Example 4.4 worst relative bound 5.1e-8 (sin), 20×; §3.10 numbers (1/3 for the constant at n=2, 4h/3 weight, 1.998684 and 6.6e-4 at n=100, 5e-9 for the correct rule); §8 0.152564 vs 0.177245; B1 midpoint/trapezoid error ratio −2; B2 residual 1/32 after 5 bisections. All recomputed (project.py asserts them and they agree).
+- Language-reference claims (try/except/else/finally order, return-in-finally, `except` matching, PEP 479, PEP 553, `-O`, warnings categories, `with` expansion, pdb command table, pytest discovery rules and exit codes, approx semantics) checked against my own knowledge of the reference: correct.
+- Template: §0–§10 present with template headings; conventions box; 6 Try-it-first + 7 Build-it-yourself + 6 What-just-happened; 6 worked examples; A1–A6/B1–B7/C1–C3 (16) with complete solutions; §8 specific; §10 matches the brief's list. project.py exits 0 in 10 s; suite 53 passed; `mypy --strict integrators.py` clean; doctest 4/4; planted bug caught by exactly the six named functions; no bare `except:` outside A2's counter-example; no `assert` validation outside §3.6's counter-example; integrators.py / test_integrators.py / project.py fully type-hinted.
+- Cross-references that exist and match: PY-4 §3.3 `Vec`, §3.7 `Dual`, §3.10 `Evaluable`/Simpson ratio table/`Exception` as ABC, Example 4.5 `Matrix` vs `numpy.linalg.solve`; PY-2 §3.7 iteration protocol, §3.8 generators; PY-3 §3.5 decorators; PY-1 Newton with `RuntimeError`; CM-1 §3.11 and CM-8 §3.11 (symplectic Euler); LA-2 LU; LA-13 condition number; LA-14 Jacobians.
+- History: only PEP 479, PEP 553 and the Python 3.14 deferred-annotations default are cited; all correct.
+
+### Problems found
+
+1. **[medium] test_integrators.py:136 / notes.md §3.12 (line 959).** Notes claim "both files of this module pass [`ruff format` and `ruff check`] with `--line-length 100`". A plain `ruff check --line-length 100` (also with `--isolated`, i.e. ruff's defaults) reports RUF100 "Unused `noqa` directive (non-enabled: E731)" on the `mix = lambda ...  # noqa: E731` line; the claim only holds under project.py's `--select E,F,B,W`. Fix: replace the lambda assignment with a nested `def mix(x)` (closure over `al`, `be`) so no `noqa` is needed; keep line 120 (the weights assert quoted in §3.10) where it is. Re-run suite, project.py and both ruff commands.
+2. **[medium] solutions.md A6 (line ~172).** The solution quotes `mypy a6.py` errors at lines 10 and 11 and runtime results (`['aa','bb','cc']`, `['2','22']`) but never shows `a6.py`, so the line numbers and the runtime claims are unreproducible from the text. Fix: add the 11-line `a6.py` (verified: mypy reports exactly the two quoted errors at lines 10 and 11; Python prints the quoted lists).
+3. **[medium] solutions.md C3 (line ~1081).** The output of `measure.py` (the cost ratio and the min_depth error table, which is the deliverable of C3(b)) is quoted but `measure.py` is not shown. Fix: add it, with the table regenerated from a real run (errors 2.47e-02, 2.47e-02, 2.68e-05, 1.42e-05, 8.08e-14 confirmed; the "unchanged at min_depth=1" claim is exact because depth-0 splitting of min_depth=0 reproduces the min_depth=1 call tree). The timing ratio is machine-dependent; the assert must be loose and say so.
+4. **[low] solutions.md B6 (line ~685).** `fixed.py` is referenced (`mypy --strict fixed.py`, `python3 fixed.py`) but not shown; it is `misuse.py` without the two rejected lines. Fix: say so in one sentence.
+5. **[low] notes.md §3.4 (line 187).** "PY-1's Newton raised `RuntimeError("did not converge")`" — PY-1 §3 raises `RuntimeError("Newton's method did not converge")`. Fix: quote the real message.
+6. **[low] notes.md §0 (line 9) and §5 (line 1124).** "ML-2's gradient checks" / "**ML-2, LA-14.** A gradient check ... tests every optimizer": ML-2 (optimization) has no gradient-check item in its brief; gradient checking lives in LA-14 §3.8 ("Gradient checking by finite differences") and is the mandatory per-layer test in ML-7's brief. Fix: point at LA-14 §3.8 and ML-7.
+7. **[low] notes.md §3.8 (line 470).** "`git bisect` does it over history, PY-10": PY-10's brief covers git basics, not `bisect`. Fix: soften to "git arrives in PY-10".
+8. **[low] notes.md §3.4 `rootfind.py` (line 209), §3.7 `timer`/`temp_directory`/`Timer` (lines 417–443), §3.9 `simulate` (line 612).** Brief convention: type hints on every public function from PY-5 on; these are the module's named build-it-yourself artefacts (reused in Example 4.5 and B4) and ship unhinted while project.py's copies are hinted. Fix: add hints (one-line signature via `Fn = Callable[[float], float]`), then regenerate Example 4.5's traceback line numbers from a real run. The remaining predict-the-output demo functions (`attempt`, `sqrt_assert`, `mean_reading`, `pick_rule`, `my_for`, `next_step`, Example 4.1) are deliberately minimal and precede §3.11; left as is (flagged only).
+9. **[low, flagged only] notes.md length.** 9,468 words including code (addendum target 6,000–8,000, ceiling 9,500). Under the ceiling; not cut. Edits below must not push it over.
+10. **[low, flagged only] project.py Part 7.** `from mypy import api` and a `ruff` subprocess are not on the brief's import list; both are guarded by `find_spec` and the conventions box says project.py runs without them. Accepted.
+11. **[low, flagged only] project.py Part 4 / solutions C2.** Timing-based asserts (`t_miss > 2 * t_hit`; C2's direction asserts). Measured 3.1× and the C2 directions on this machine; margins are comfortable. Left.
+
+### Phase 2 status per item
+1. FIXED — `mix` is now a nested `def` with `al`/`be` bound as defaults (no `noqa`); `ruff check --isolated --line-length 100` and `--select E,F,B,W` both clean, `ruff format --check` clean, suite 53 passed, §3.10's quoted line 120 unchanged.
+2. FIXED — `a6.py` added to solutions A6; mypy output and runtime lists re-verified from the extracted block.
+3. FIXED — `measure.py` added to solutions C3 (extracted and run: ratios 0.998/1.058 on this machine, table 2.47e-02, 2.47e-02, 2.68e-05, 1.42e-05, 8.08e-14); the quoted ratio lines and the (a) prose now say the ratio is within a few percent and machine-dependent; assert is `< 1.1`.
+4. FIXED — one sentence defines `fixed.py`.
+5. FIXED — PY-1's real message quoted.
+6. FIXED — §0 and §5 now point at LA-14 §3.8 (and ML-7); ML-2 reference removed.
+7. FIXED — softened to "git: PY-10".
+8. FIXED — hints on `newton` (`rootfind.py`), `Timer`, `timer`, `temp_directory`, `simulate`; Example 4.5's traceback regenerated from a real run (lines 13 and 15); all four blocks re-run and diffed clean against their stated outputs; the three snippets pass `mypy --strict` (an `[exit-return]` complaint on `Timer.__exit__ -> bool` was fixed by returning `None`, matching project.py). Remaining demo functions left unhinted, as noted.
+9. NOT FIXED (flagged) — edits took the notes to 9,530 words; seven redundant phrases trimmed (no content lost) to 9,489, under the 9,500 ceiling but above the 8,000 target. Cutting further would rewrite correct sections.
+10. NOT FIXED (accepted) — optional, guarded mypy/ruff use in project.py; documented in the conventions box.
+11. NOT FIXED (accepted) — timing asserts have comfortable margins (5.4× and 3.1× measured for Part 4; C2 directions hold).
+
+Final verification: `MPLBACKEND=Agg python3 project.py` exits 0 in 3 s ("All checks passed."); `python -m pytest -q` 53 passed; `mypy --strict integrators.py` clean; doctest 4/4; ruff clean under defaults and E,F,B,W; every edited code block re-run against its stated output.
+
+STATUS: 11 findings (0 high, 3 medium, 8 low); 8 fixed, 3 flagged-and-accepted; module passes all checks.

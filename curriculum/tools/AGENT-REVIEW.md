@@ -1,0 +1,21 @@
+# Reviewer instructions (review, then fix)
+
+These are the standing instructions for one background agent working on one curriculum module. The launching message gives three values: CODE (e.g. QM-6), DIR (the module folder, relative to the curriculum root) and BRIEF (a file name under research/briefs/, or "none"). Wherever this file says <CODE>, <DIR>, <BRIEF>, substitute them. <ROOT> is the absolute path of the curriculum folder (the folder that contains this tools/ directory).
+
+You are an independent, adversarial reviewer for one module of a self-study curriculum. You did not write it. First find every error; then fix what you found. Assume there are mistakes and hunt for them.
+
+Module folder: <ROOT>/<DIR>/ (notes.md, exercises.md, solutions.md, project.py). Brief: <ROOT>/research/briefs/<BRIEF> (if present). Style rules: <ROOT>/STYLE.md. Template: <ROOT>/TEMPLATE.md.
+
+PHASE 1 — REVIEW (do not edit the module yet). Keep a written list of every problem in <ROOT>/tools/reviews/<CODE>.md (create the directory if needed; the file is committed, so it survives if you are interrupted). Write to it as you go, one item per finding with file, location, severity, what is wrong, and the fix. If that file already exists, a previous reviewer was interrupted: read it, re-verify each item before trusting it, and continue from where it stops instead of starting over. Cover:
+A. MATH. Read notes.md §3–§4 and solutions.md line by line. For every derivation check each step follows; check signs, factors of 2 and pi, transposes vs inverses, conjugates, index ranges, and that hypotheses are actually used. For every numerical value in worked examples and solutions, recompute it yourself with python3 (numpy/sympy/scipy) in a scratch script under /tmp/claude-0 and compare.
+B. CONSISTENCY. exercises.md and solutions.md numbering match; every exercise has a complete solution (no "similarly", "left to the reader", or "it can be shown" for anything central); the conventions box matches what the notes do; cross-references to other modules name objects that exist (check the referenced module's notes if it exists under <ROOT>).
+C. CODE. Run `cd <ROOT>/<DIR> && MPLBACKEND=Agg timeout 300 python3 project.py`; it must exit 0. Asserts must test what the notes claim, not something weaker. Imports only numpy/scipy/matplotlib/sympy (plus anything the brief explicitly allows).
+D. TEMPLATE. Sections 0–10 with the template headings; conventions box; Try-it-first / What-just-happened around key derivations; at least three worked examples; A/B/C exercises; §8 specific; §10 matches the brief.
+E. HISTORY. Flag any historical attribution or date you cannot confirm from your own knowledge.
+F. If the brief has a REVIEW FOCUS section (programming modules), apply every item in it; for those modules, extract and run every code block in notes.md and solutions.md and treat a stated output that differs from the real output as high severity.
+
+PHASE 2 — FIX. Fix every mathematical error, wrong number, failing or weakened assert, missing required section, incomplete solution, convention inconsistency, and dubious attribution (soften or remove it rather than guess). Before changing anything, re-derive or recompute to confirm the problem is real; if it isn't, leave it. Keep the four files consistent: when a number or claim changes, change it everywhere and make project.py assert the corrected value. Fix low-severity pedagogy issues only when the fix is local and clearly better. Do not rewrite sections that are correct. Re-run the script until it exits 0. As you resolve each item, mark it in the review file ("FIXED" or "NOT FIXED: reason"), and end the file with a one-line status. Write only inside the module folder and the review file (scratch work goes under /tmp/claude-0).
+
+Return the structured result: counts of issues found (and how many high/medium), how many you fixed, a one-line list of anything you could not fix in `not_fixed`, and a summary under 150 words. Do not paste file contents.
+
+FINAL MESSAGE (replaces "return the structured result"): reply with one short paragraph and nothing else: issues found (how many high / medium), how many fixed, whether project.py exits 0, anything not fixed and why, in under 150 words. Do not paste file contents.
