@@ -5,7 +5,9 @@
 # matrix, Yule-Walker vs conditional least squares vs exact Gaussian ML, Durbin-Levinson, forecasting and
 # coverage, ARIMA vs trend regression, Ljung-Box, the Dickey-Fuller distribution and power, spurious regression,
 # Engle-Granger cointegration, and simple exponential smoothing as ARIMA(0,1,1). Every number in notes.md
-# Section 4 and solutions.md is asserted or printed (Part 0 for the worked examples, Part 11 for the exercises).
+# Section 4 and solutions.md is asserted (Part 0 for the worked examples, Part 11 for the exercises), and every
+# simulated number quoted in the prose is pinned with `pin` to the precision quoted, so the text cannot drift
+# from the script. If you change a seed or a sample size, the pins tell you which sentences to update.
 # Run: `MPLBACKEND=Agg python3 project.py`.
 
 # %%
@@ -21,11 +23,17 @@ import sympy as sp
 FIG = Path(__file__).resolve().parent / "figures"
 FIG.mkdir(exist_ok=True)
 rng = np.random.default_rng(7)
+rng2 = np.random.default_rng(77)     # separate stream for the extra checks, so they do not shift the main one
 T0 = time.time()
 
 
 def save(fig, name):
     fig.tight_layout(); fig.savefig(FIG / name, dpi=110); plt.close(fig)
+
+
+def pin(value, quoted, d=3):
+    """Assert that a seeded simulation result still rounds to the number quoted in notes.md / solutions.md (d decimals)."""
+    assert abs(float(value) - quoted) <= 0.5 * 10.0 ** -d + 1e-9, f"prose quotes {quoted}, the script now gives {value}"
 
 
 # %% [markdown]
@@ -95,13 +103,19 @@ def cls_ar(x, p):
 
 def ar_loglik_exact(phi, sigma2, x):
     """Exact Gaussian log-likelihood of a zero-mean AR(p): MVN of the first p values (Toeplitz Gamma_p) times the
-    conditional densities of the rest, eq. (3.25)."""
+    conditional densities of the rest (the innovations form (3.24); for p = 1 it is eq. (3.25))."""
     p = len(phi); A = companion(phi); Q = np.zeros((p, p)); Q[0, 0] = sigma2
     Gp = linalg.solve_discrete_lyapunov(A, Q)                     # Gamma_p solves Gamma = A Gamma A^T + sigma^2 e1 e1^T
     c, low = linalg.cho_factor(Gp); x0 = x[:p]
     l0 = -0.5 * p * np.log(2 * np.pi) - np.log(np.diag(c)).sum() - 0.5 * x0 @ linalg.cho_solve((c, low), x0)
     X = np.column_stack([x[p - k - 1: len(x) - k - 1] for k in range(p)]); e = x[p:] - X @ np.asarray(phi)
     return l0 + stats.norm.logpdf(e, scale=np.sqrt(sigma2)).sum()
+
+
+def ar1_loglik_325(phi, sigma2, x):
+    """Eq. (3.25) written out literally for a zero-mean AR(1): the stationary density of x_1 times the n-1 transitions."""
+    n = len(x); rss = (1 - phi**2) * x[0] ** 2 + np.sum((x[1:] - phi * x[:-1]) ** 2)
+    return -0.5 * n * np.log(2 * np.pi * sigma2) + 0.5 * np.log(1 - phi**2) - rss / (2 * sigma2)
 
 
 def ar_loglik_mvn(phi, sigma2, x):
@@ -112,7 +126,7 @@ def ar_loglik_mvn(phi, sigma2, x):
 
 
 def ar_mle(x, p):
-    """Exact ML for a stationary AR(p): maximize (3.25) over (phi, log sigma2), starting from Yule-Walker."""
+    """Exact ML for a stationary AR(p): maximize the exact likelihood (3.24) over (phi, log sigma2), starting from Yule-Walker."""
     x = np.asarray(x) - np.mean(x); ph0, s0 = yule_walker(x, p)
     def nll(v):
         ph = v[:p]
@@ -160,14 +174,19 @@ assert np.allclose(np.sort_complex(1 / z), np.sort_complex(lam)) and np.allclose
 period = 2 * np.pi / np.abs(np.angle(lam[0])); r2 = arma_acov((1.0, -0.5), (), 1, 8); r2n = r2 / r2[0]
 print(f"       period = {period:.4f};  gamma(0) = {r2[0]:.4f};  rho(0..8) =", np.round(r2n, 4))
 assert np.isclose(period, 8) and np.isclose(r2[0], 2.4) and np.allclose(r2n[1:5], [2 / 3, 1 / 6, -1 / 6, -1 / 4])
+assert np.allclose(r2n[5:], [-1 / 6, -1 / 24, 1 / 24, 1 / 16]) and np.allclose(np.round(r2n[5:], 4), [-0.1667, -0.0417, 0.0417, 0.0625])
+nu = np.linspace(0.01, 0.5, 490001); spec = 1 / np.abs(1 - np.exp(-2j * np.pi * nu) + 0.5 * np.exp(-4j * np.pi * nu)) ** 2
+per_spec = 2 * np.pi / np.arccos(1.0 * (-0.5 - 1) / (4 * -0.5))     # ST-8 (3.11): the spectral peak is NOT at the ACF's frequency
+print(f"       spectral peak period = {per_spec:.4f} (notes 3.14), against the ACF quasi-period 8")
+assert np.isclose(1 / nu[np.argmax(spec)], per_spec, atol=1e-3) and round(per_spec, 2) == 8.69
 hh = np.arange(9); assert np.allclose(r2n, 2 ** (-hh / 2) * (np.cos(np.pi * hh / 4) + np.sin(np.pi * hh / 4) / 3))   # closed form
 g0_ar2 = lambda p1, p2: (1 - p2) / ((1 + p2) * ((1 - p2) ** 2 - p1**2))                                   # eq. (3.16)
 assert np.isclose(g0_ar2(1.0, -0.5), 2.4) and np.isclose(g0_ar2(1.5, -0.75), arma_acov((1.5, -0.75), (), 1, 0)[0])
 # Ex 4.3 Yule-Walker from gamma = (2, 1.2, 0.4)
 G = np.array([2.0, 1.2, 0.4]); phYW = linalg.solve(linalg.toeplitz(G[:2]), G[1:]); s2YW = G[0] - phYW @ G[1:]
 print("Ex 4.3 YW phi =", phYW, " sigma2 =", s2YW); assert np.allclose(phYW, [0.75, -0.25]) and np.isclose(s2YW, 1.2)
-assert np.allclose(arma_acov(phYW, (), s2YW, 2), G)
-assert np.allclose(np.abs(np.linalg.eigvals(companion(phYW))), 0.5) and np.isclose(phYW[0]**2 + 4 * phYW[1], -0.4375)   # complex eigenvalues of modulus sqrt(0.25)        # the fitted model reproduces the three autocovariances
+assert np.allclose(arma_acov(phYW, (), s2YW, 2), G)                            # the fitted model reproduces the three autocovariances
+assert np.allclose(np.abs(np.linalg.eigvals(companion(phYW))), 0.5) and np.isclose(phYW[0]**2 + 4 * phYW[1], -0.4375)   # complex, modulus sqrt(0.25)
 # Ex 4.4 PACF of AR(1) phi=0.7 by regression
 pa = pacf_regression(arma_acov((0.7,), (), 1, 4), 3); print("Ex 4.4 PACF(1..3) =", np.round(pa, 12))
 assert np.allclose(pa, [0.7, 0, 0])
@@ -177,6 +196,8 @@ print("Ex 4.5 psi(0..4) =", ps, " gamma(0..3) =", np.round(ga, 5), " rho(1..3) =
 print("       AR(1) with the same rho(1) would have rho(2) =", round((1.08 / 1.56) ** 2, 4))
 assert np.allclose(ps, [1, 0.9, 0.45, 0.225, 0.1125]) and np.allclose(ga[:2], [2.08, 1.44])
 assert np.isclose(ga[1] / ga[0], 1.08 / 1.56) and np.allclose(ga[2:] / ga[1:-1], 0.5)
+assert np.allclose(ga, [2.08, 1.44, 0.72, 0.36]) and np.allclose(np.round(ga[1:] / ga[0], 5), [0.69231, 0.34615, 0.17308])
+assert round((ga[1] / ga[0]) ** 2, 3) == 0.479
 # Ex 4.6 AR(1) phi=0.8 forecasts from x_n = 2
 for h in (1, 5):
     f = 0.8**h * 2; mse = (1 - 0.8 ** (2 * h)) / (1 - 0.64); hw = 1.96 * np.sqrt(mse)
@@ -184,19 +205,46 @@ for h in (1, 5):
 assert np.isclose(0.8**5 * 2, 0.65536) and np.isclose((1 - 0.8**10) / 0.36, 2.479516, atol=1e-6)
 print(f"       gamma(0) = {1 / 0.36:.4f}; sqrt(P5) = {np.sqrt(2.479516):.5f}; half-width {1.96 * np.sqrt(2.479516):.5f};"
       f" width ratio to the limit {np.sqrt(2.479516 * 0.36):.4f}")
+P5 = (1 - 0.8**10) / 0.36; hw5 = 1.96 * np.sqrt(P5)
+assert round(P5, 5) == 2.47952 and round(np.sqrt(P5), 5) == 1.57465 and round(hw5, 5) == 3.08631 and round(1 / 0.36, 3) == 2.778
+assert np.allclose([1.6 - 1.96, 1.6 + 1.96], [-0.36, 3.56]) and np.allclose([0.65536 - hw5, 0.65536 + hw5], [-2.4309, 3.7417], atol=5e-5)
+assert round(np.sqrt(P5 * 0.36), 3) == 0.945
 # Ex 4.7 exact AR(1) likelihood for x = (0.5, 1.0, -0.2), phi = 0.6, sigma2 = 1
 x3 = np.array([0.5, 1.0, -0.2]); l_fact = ar_loglik_exact((0.6,), 1.0, x3); l_mvn = ar_loglik_mvn((0.6,), 1.0, x3)
 terms = [stats.norm.logpdf(0.5, scale=np.sqrt(1 / 0.64)), stats.norm.logpdf(1.0 - 0.3), stats.norm.logpdf(-0.2 - 0.6)]
 print("Ex 4.7 log-lik terms", np.round(terms, 5), " total", round(l_fact, 5), " (MVN/Cholesky:", round(l_mvn, 5), ")")
-assert np.isclose(l_fact, l_mvn) and np.isclose(l_fact, sum(terms))
+assert np.isclose(l_fact, l_mvn) and np.isclose(l_fact, sum(terms)) and np.isclose(l_fact, ar1_loglik_325(0.6, 1.0, x3))
 print(f"       pieces: {-0.5 * np.log(2 * np.pi * 1.5625):.5f} - 0.08;  {-0.5 * np.log(2 * np.pi):.5f} - 0.245;  ... - 0.32")
+assert np.allclose(np.round(terms, 5), [-1.22208, -1.16394, -1.23894]) and round(l_fact, 5) == -3.62496
+assert round(-0.5 * np.log(2 * np.pi * 1.5625), 5) == -1.14208 and round(-0.5 * np.log(2 * np.pi), 5) == -0.91894
 # Ex 4.8 SES alpha=0.3 = ARIMA(0,1,1) theta=-0.7
 xs = np.array([10.0, 12, 11, 13, 12]); a = 0.3; lev = [xs[0]]
 for v in xs[1:]: lev.append(a * v + (1 - a) * lev[-1])
 th = a - 1; fc = [xs[0]]                                          # ARIMA(0,1,1): xhat_{t+1} = x_t + theta (x_t - xhat_t)
 for t in range(1, len(xs)): fc.append(xs[t] + th * (xs[t] - fc[-1]))
 print("Ex 4.8 SES levels", np.round(lev, 5), " ARIMA(0,1,1) forecasts", np.round(fc, 5))
-assert np.allclose(lev, fc) and np.isclose(lev[-1], 11.5828)
+assert np.allclose(lev, fc) and np.allclose(lev, [10, 10.6, 10.72, 11.404, 11.5828])
+
+# %% [markdown]
+# ### Other closed-form claims of notes Section 3 (deterministic, or drawn from the separate stream `rng2`)
+# %%
+# 3.8: eq. (3.25) literally, against the 200-dimensional Toeplitz MVN by Cholesky, for an AR(1); det Gamma_n; tridiagonal precision
+xa1 = simulate((0.6,), n=200, rng=rng2); G200 = linalg.toeplitz(arma_acov((0.6,), (), 1.5, 199))
+assert np.isclose(ar1_loglik_325(0.6, 1.5, xa1), ar_loglik_mvn((0.6,), 1.5, xa1)) and np.isclose(ar1_loglik_325(0.6, 1.5, xa1), ar_loglik_exact((0.6,), 1.5, xa1))
+assert np.isclose(np.linalg.slogdet(G200)[1], 200 * np.log(1.5) - np.log(1 - 0.36))                      # det Gamma_n = sigma^(2n)/(1-phi^2)
+Prec = linalg.inv(G200); assert np.allclose(np.triu(Prec, 2), 0, atol=1e-9) and np.allclose(np.diag(Prec, 1), -0.6 / 1.5)
+print(f"(3.25) = 200-dim Toeplitz MVN for an AR(1): {ar1_loglik_325(0.6, 1.5, xa1):.6f}; det and tridiagonal precision checked")
+# 3.2: divisor n gives a PSD Gamma_hat; divisor n-h can give an indefinite one (data of exercise B6)
+xc_ = np.array([1.0, 2, 4]) - 7 / 3; gn = np.array([xc_[h:] @ xc_[: 3 - h] / 3 for h in range(3)]); gnh = gn * 3 / (3 - np.arange(3))
+ev_n, ev_nh = np.linalg.eigvalsh(linalg.toeplitz(gn)), np.linalg.eigvalsh(linalg.toeplitz(gnh))
+print("Gamma_hat for x=(1,2,4): eigenvalues with divisor n", np.round(ev_n, 4), " with divisor n-h", np.round(ev_nh, 4))
+assert ev_n[0] > 0 and ev_nh[0] < 0
+# 3.10: over-differencing gives an MA(1) with theta = -1 (variance 2 sigma^2, rho(1) = -1/2); airline-model ACF
+god = arma_acov((), (-1.0,), 1, 2); assert np.allclose(god, [2, -1, 0])
+th_, Th_ = -0.4, -0.6; gair = arma_acov((), np.r_[th_, np.zeros(10), Th_, th_ * Th_], 1, 20)
+assert [h for h in range(1, 21) if abs(gair[h]) > 1e-12] == [1, 11, 12, 13]
+# 5, 8: ESS factor (1-phi)/(1+phi) for rho(h) = phi^h (ST-6 (3.18)); rho(10) of an AR(1) with phi = 0.95
+assert np.isclose(1 / (1 + 2 * np.sum(0.9 ** np.arange(1, 2000))), 0.1 / 1.9) and round(0.95**10, 2) == 0.60
 
 # %% [markdown]
 # ### Symbolic checks of the closed forms (3.12), (3.16), (3.22), (3.37)
@@ -217,7 +265,7 @@ print("SymPy: companion determinant, AR(2) variance, ARMA(1,1) gamma(0), gamma(1
 # %% [markdown]
 # ## Part 1: the identification table made visual (notes 3.7)
 # Nine processes, each with its sample ACF and PACF and +-2/sqrt(n) bands. Theoretical ACFs of the stationary ones
-# are asserted against the sample ACF within 4 Bartlett standard errors, eq. (3.5) generalized (Bartlett's formula).
+# are asserted against the sample ACF within 3 Bartlett standard errors, eq. (3.5) generalized (Bartlett's formula).
 # %%
 n = 2000; H = 20
 procs = {"AR(1) 0.7": ((0.7,), ()), "AR(2) real (0.5,0.3)": ((0.5, 0.3), ()), "AR(2) complex (1,-0.5)": ((1.0, -0.5), ()),
@@ -237,11 +285,14 @@ for i, (k, x) in enumerate(series.items()):
         for h in range(1, 11):                                       # Bartlett: var = (1/n) sum_k (rho(k+h)+rho(k-h)-2rho(h)rho(k))^2
             ks = np.arange(1, 50); c = H + 60
             v = np.sum((ext[c + ks + h] + ext[c + ks - h] - 2 * rt[h] * rt[ks]) ** 2) / n
-            assert abs(r[h] - rt[h]) < 4 * np.sqrt(v), (k, h)
+            assert abs(r[h] - rt[h]) < 3 * np.sqrt(v), (k, h)        # 60 comparisons; the largest is 2.0 standard errors
 ax[0, 0].set_title("series (first 300)"); ax[0, 1].set_title("sample ACF (red: theory)"); ax[0, 2].set_title("sample PACF")
 save(fig, "identification_table.png")
 r_rw = sacf(series["random walk"], 20); print("random walk sample ACF lags 1,5,10,20:", np.round(r_rw[[1, 5, 10, 20]], 3))
 assert np.all(r_rw[1:] > 2 / np.sqrt(n))                           # 'significant' at every lag: the slow-decay diagnostic
+for h_, q_ in zip((1, 5, 10, 20), (0.996, 0.983, 0.965, 0.924)): pin(r_rw[h_], q_)                # notes 3.2, solutions A3
+c_rw = (1 - r_rw[[1, 5, 10, 20]]) * n / np.array([1, 5, 10, 20]); print("  rho_hat(h) = 1 - c h/n with c =", np.round(c_rw, 2))
+assert round(2 / np.sqrt(n), 3) == 0.045 and np.all(np.abs(c_rw - 7.3) < 0.4)                     # 'about 7', nearly linear decay
 
 # %% [markdown]
 # ## Part 2: AR(2) stationarity triangle and companion eigenvalues (notes 3.5; LA-7 eq. (3.8))
@@ -279,6 +330,13 @@ for k, e in est.items():
 dML, dYW = np.abs(est["ML"] - est["CLS"]), np.abs(est["YW"] - est["CLS"])
 print(f"  |ML - CLS|: mean {dML.mean():.4f}, max {dML.max():.4f};  |YW - CLS|: mean {dYW.mean():.4f}, max {dYW.max():.4f}")
 assert dML.mean() < 0.005 and dYW.mean() < 0.03 and dML.max() < 0.05
+# the numbers quoted in notes 3.8 and solutions B6(c)
+pin(np.sqrt(Vasy[0, 0] / nR), 0.0612, 4); pin(np.sqrt(Vasy[1, 1] / nR), 0.0612, 4); pin(dML.mean(), 0.004)
+for k in ("CLS", "ML"):
+    pin(est[k].std(0)[0], 0.0622, 4); pin(est[k].std(0)[1], 0.0608, 4); assert np.all(np.abs(est[k].mean(0) - phT) < 0.012)
+pin(est["YW"].mean(0)[0], 0.978); pin(est["CLS"].mean(0)[0], 0.988)
+assert abs(est["YW"].mean(0)[0] - 1) > abs(est["CLS"].mean(0)[0] - 1)                                # YW has the larger bias
+assert max(np.max(np.abs(np.linalg.eigvals(companion(ph_)))) for ph_ in est["YW"]) < 1               # YW fits are always causal
 fig, ax = plt.subplots(1, 2, figsize=(10, 3.5))
 for j in range(2):
     for k, e in est.items(): ax[j].hist(e[:, j], bins=30, histtype="step", density=True, label=k)
@@ -313,6 +371,7 @@ for y in Y:
     cover += np.abs(y[nR:] - m - f) < 1.96 * np.sqrt(mse)
 cover /= R; print("AR(2) forecast coverage h=1..10:", np.round(cover, 3))
 assert np.all(np.abs(cover - 0.95) < 0.035)
+assert cover.min() >= 0.92 - 1e-9 and cover.max() <= 0.96 + 1e-9             # notes 3.9: "between 0.92 and 0.96"
 f, mse = ar_forecast(Y[0][:nR] - Y[0][:nR].mean(), *cls_ar(Y[0][:nR], 2)[:2], 30)
 fig, ax = plt.subplots(figsize=(8, 3)); tt = np.arange(nR - 50, nR); tf = np.arange(nR, nR + 30)
 ax.plot(tt, Y[0][nR - 50:nR] - Y[0][:nR].mean(), "k"); ax.plot(tf, f, "C0")
@@ -333,6 +392,7 @@ for x in Xd:
 cov_arima /= RA; cov_trend /= RA
 print(f"h={HA} interval coverage: ARIMA(0,1,0)+drift {cov_arima:.3f}, trend regression {cov_trend:.3f}")
 assert abs(cov_arima - 0.95) < 0.03 and cov_trend < 0.85
+pin(cov_trend, 0.638); pin(cov_arima, 0.930)                                 # notes 3.10
 
 # %% [markdown]
 # ## Part 7: Ljung-Box calibration and power (notes 3.8)
@@ -343,6 +403,7 @@ for z in Z:
 size, power = np.mean(np.array(pv_ok) < 0.05), np.mean(np.array(pv_under) < 0.05)
 print(f"Ljung-Box K={K}: size (correct AR(2)) {size:.3f}, power (AR(1) under-fit) {power:.3f}")
 assert 0.03 < size < 0.075 and power > 0.9
+pin(size, 0.052); assert power == 1.0                                        # notes 3.8: size 0.052; the under-fit "rejects every time"
 
 # %% [markdown]
 # ## Part 8: the Dickey-Fuller distribution and the test's power (notes 3.11)
@@ -353,9 +414,12 @@ q0, qc = np.quantile(t0, [0.01, 0.05, 0.10]), np.quantile(tc, [0.01, 0.05, 0.10]
 print("DF quantiles (1,5,10%) no constant:", np.round(q0, 3), " with constant:", np.round(qc, 3),
       " t_{98} 5%:", round(stats.t.ppf(0.05, nD - 2), 3))
 assert abs(q0[1] + 1.95) < 0.08 and abs(qc[1] + 2.89) < 0.08 and qc[1] < stats.t.ppf(0.05, nD - 2) - 1
-print(f"P(chi2_1 < 1) = {stats.chi2.cdf(1, 1):.4f}")
+pin(q0[1], -1.94, 2); pin(qc[1], -2.89, 2); pin(stats.t.ppf(0.05, nD - 2), -1.66, 2)                 # notes 3.11
+print(f"P(chi2_1 < 1) = {stats.chi2.cdf(1, 1):.4f}"); pin(stats.chi2.cdf(1, 1), 0.6827, 4)
 rhohat = (np.sum(RW[:, :-1] * np.diff(RW, axis=1), 1) / np.sum(RW[:, :-1] ** 2, 1))
 print("n(phi_hat - 1) for phi = 1: mean", round(np.mean(nD * rhohat), 3), " 5% quantile", round(np.quantile(nD * rhohat, 0.05), 3))
+pin(np.mean(nD * rhohat), -1.772); pin(np.quantile(nD * rhohat, 0.05), -7.833)                       # solutions C1(d)
+assert np.mean(rhohat < 0) > 0.6 and stats.skew(nD * rhohat) < -1            # phi_hat is usually below 1; long left tail, C1(c)
 pw = {}
 for ph1 in (1.0, 0.99, 0.97, 0.95, 0.9, 0.8):
     xs_ = np.zeros((4000, nD)); e = rng.standard_normal((4000, nD)); xs_[:, 0] = e[:, 0] / np.sqrt(max(1 - ph1**2, 1e-3))
@@ -363,6 +427,7 @@ for ph1 in (1.0, 0.99, 0.97, 0.95, 0.9, 0.8):
     pw[ph1] = np.mean(df_t(xs_, const=True) < qc[1])
 print("DF power (5%, constant, n=100):", {k: round(float(v), 3) for k, v in pw.items()})
 assert abs(pw[1.0] - 0.05) < 0.015 and pw[0.9] < 0.5 and pw[0.8] > 0.8
+pin(pw[0.99], 0.059); pin(pw[0.97], 0.082); pin(pw[0.95], 0.129); pin(pw[0.9], 0.34, 2); pin(pw[0.8], 0.873)   # notes 3.11
 fig, ax = plt.subplots(figsize=(7, 3.5)); gx = np.linspace(-5, 3, 300)
 ax.hist(t0, bins=80, density=True, histtype="step", label="DF, no constant"); ax.hist(tc, bins=80, density=True, histtype="step", label="DF, constant")
 ax.plot(gx, stats.t.pdf(gx, nD - 2), "k--", label="t(98)"); ax.legend(); ax.set_title(r"t statistic for $\phi=1$, 10$^4$ random walks")
@@ -379,16 +444,22 @@ fr_ar, _ = frac_sig(simulate((0.5,), n=nS, R=RS), simulate((0.5,), n=nS, R=RS))
 fr_iid, _ = frac_sig(rng.standard_normal((RS, nS)), rng.standard_normal((RS, nS)))
 print(f"fraction |t|>2, n={nS}: random walks {fr_rw:.3f}, AR(1) 0.5 {fr_ar:.3f}, iid {fr_iid:.3f}")
 assert fr_rw > 0.5 and 0.04 < fr_iid < 0.07 and fr_iid < fr_ar < fr_rw
+pin(fr_rw, 0.669); pin(fr_ar, 0.121); pin(fr_iid, 0.052)                     # notes 3.12 (67%, 12%, 5.2%), solutions B7(a)
+# why 12%: for two independent AR(1)s the true variance of b_hat is (1+phi^2)/(1-phi^2) times what OLS reports, so t ~ N(0, 5/3)
+fr_ar_theory = 2 * stats.norm.sf(2 / np.sqrt((1 + 0.25) / (1 - 0.25))); print(f"  AR(1) pairs, large-n theory: {fr_ar_theory:.3f}")
+assert abs(fr_ar - fr_ar_theory) < 0.01
 # Engle-Granger: DF t on residuals of y on x; critical values simulated under no cointegration (independent RWs)
 nE = 100; xa, ya = np.cumsum(rng.standard_normal((RD, nE)), 1), np.cumsum(rng.standard_normal((RD, nE)), 1)
 _, _, eres = ols_t(ya, np.stack([np.ones_like(xa), xa], -1)); teg = df_t(eres, const=False); cEG = np.quantile(teg, 0.05)
 print(f"Engle-Granger 5% critical value (n={nE}) {cEG:.3f}  vs DF {qc[1]:.3f}")
 assert -3.6 < cEG < -3.2
+pin(cEG, -3.39, 2); assert abs(cEG - (-3.3377 - 5.967 / nE - 8.98 / nE**2)) < 0.03    # MacKinnon's response surface (two variables, constant)
 xc = np.cumsum(rng.standard_normal((2000, nE)), 1); u = simulate((0.5,), n=nE, R=2000); yc = 1.0 + 2.0 * xc + u
 bc, _, ec = ols_t(yc, np.stack([np.ones_like(xc), xc], -1)); pEG = np.mean(df_t(ec, const=False) < cEG)
 print(f"cointegrated pair (y = 1 + 2x + AR(1) 0.5): mean beta_hat {bc[:, 1].mean():.4f}, EG rejection rate {pEG:.3f}")
 assert abs(bc[:, 1].mean() - 2) < 0.01 and pEG > 0.9
 size_wrong = np.mean(teg < qc[1]); print(f"EG with the plain DF critical value: size {size_wrong:.3f}")
+pin(bc[:, 1].mean(), 1.9993, 4); pin(pEG, 1.000); pin(size_wrong, 0.149)     # notes 3.12, solutions C2(c)
 fig, ax = plt.subplots(1, 2, figsize=(10, 3.2))
 ax[0].hist(t_rw, bins=80, density=True); ax[0].plot(gx * 3, stats.norm.pdf(gx * 3), "k--")
 ax[0].set_title("slope t, independent random walks (n=50)")

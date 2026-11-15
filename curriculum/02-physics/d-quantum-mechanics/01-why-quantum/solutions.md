@@ -1,6 +1,6 @@
 # QM-1 Solutions
 
-Every number below is printed by `project.py` (Parts 2, 6 and 8). $hc = 1239.84$ eV nm.
+Every number below is printed by `project.py` (Parts 1, 2, 3, 6 and 8) and pinned there by an assert. $hc = 1239.84$ eV nm.
 
 ## A. Warm-up
 
@@ -8,7 +8,7 @@ Every number below is printed by `project.py` (Parts 2, 6 and 8). $hc = 1239.84$
 
 Only the 400 nm photon exceeds $W = 2.3$ eV. Threshold: $\lambda_0 = hc/W = 1239.84/2.3 = 539.1$ nm.
 
-The radio transmitter: each electron absorbs one photon at a time (3.3). One radio photon delivers $4\times10^{-9}$ eV, about $10^{-9}$ of what is needed. The number of photons sets how many absorption events happen, not how much energy each one delivers. Two photons can be absorbed by one electron at once, but at these intensities and energies the probability is negligible (it needs about $5\times10^8$ simultaneous photons).
+The radio transmitter: each electron absorbs one photon at a time (3.3). One radio photon delivers $4\times10^{-9}$ eV, about $2\times10^{-9}$ of what is needed. The number of photons sets how many absorption events happen, not how much energy each one delivers. Two photons can be absorbed by one electron at once, but at these intensities and energies the probability is negligible (it would take $2.3/(4.136\times10^{-9}) = 5.6\times10^8$ photons absorbed at once).
 
 **A2.** $E_n = -13.606/n^2$ eV. $E_2 = -13.606/4 = -3.401$ eV; $E_3 = -13.606/9 = -1.512$ eV.
 
@@ -31,7 +31,7 @@ Ionization from $n = 2$: $0 - E_2 = 3.401$ eV (a 364.5 nm photon, the Balmer ser
 
 (b) $|{+x}\rangle = \frac1{\sqrt2}(1, 1)^\top$ and $|{-x}\rangle = \frac1{\sqrt2}(1, -1)^\top$ give identical $S_z$ probabilities ($\frac12$, $\frac12$) but an $S_x$ measurement distinguishes them perfectly: $P(S_x = +\hbar/2) = 1$ for the first and 0 for the second. A relative phase of $e^{i\pi} = -1$ between components is not a global phase: you cannot remove it by multiplying the whole vector by one number.
 
-**A5.** $k_BT = (1.381\times10^{-23})(300)/(1.602\times10^{-19}) = 0.02585$ eV. $p = \sqrt{2m_nk_BT}$ with $m_n = 1.675\times10^{-27}$ kg: $p = \sqrt{2(1.675\times10^{-27})(4.142\times10^{-21})} = 3.725\times10^{-24}$ kg m/s, so $\lambda = h/p = 0.1779$ nm. That sits inside the 0.1–0.3 nm range of interatomic spacings, so crystals diffract thermal neutrons strongly (the Bragg condition $2d\sin\theta = \lambda$ has solutions at sizeable angles). Neutrons are neutral and scatter off nuclei, so they see light atoms (hydrogen) and magnetic order that X-rays miss.
+**A5.** $k_BT = (1.3806\times10^{-23})(300) = 4.142\times10^{-21}$ J $= 0.02585$ eV. $p = \sqrt{2m_nk_BT}$ with $m_n = 1.675\times10^{-27}$ kg: $p = \sqrt{2(1.675\times10^{-27})(4.142\times10^{-21})} = 3.725\times10^{-24}$ kg m/s, so $\lambda = h/p = 0.1779$ nm. That sits inside the 0.1–0.3 nm range of interatomic spacings, so crystals diffract thermal neutrons strongly (the Bragg condition $2d\sin\theta = \lambda$ has solutions at sizeable angles). Neutrons are neutral and scatter off nuclei, so they see light atoms (hydrogen) and magnetic order that X-rays miss.
 
 ## B. Core
 
@@ -87,16 +87,17 @@ $\sigma_z\sigma_x = \begin{pmatrix}1&0\\0&-1\end{pmatrix}\begin{pmatrix}0&1\\1&0
 
 (c) $U^\dagger U = \operatorname{diag}(e^{i\omega_0t/2}e^{-i\omega_0t/2}, e^{-i\omega_0t/2}e^{i\omega_0t/2}) = I$.
 
-(d) $\omega_0 = g\mu_BB/\hbar = 2.0023\times9.274\times10^{-24}\times1/(1.0546\times10^{-34}) = 1.7609\times10^{11}$ rad/s; period $2\pi/\omega_0 = 35.68$ ps (a 28 GHz precession, the frequency of electron spin resonance at 1 T).
+(d) $\omega_0 = g\mu_BB/\hbar = 2.0023\times9.274\times10^{-24}\times1/(1.0546\times10^{-34}) = 1.7608\times10^{11}$ rad/s; period $2\pi/\omega_0 = 35.68$ ps (a 28 GHz precession, the frequency of electron spin resonance at 1 T).
 
 **B8.** (a) $\bar\phi_1\phi_2 = A^2e^{ikx}e^{ikx} = A^2e^{2ikx}$. So $2\operatorname{Re}[\bar\phi_1\phi_2\langle t_1|t_2\rangle] = 2A^2r\operatorname{Re}e^{i(2kx + \delta)} = 2A^2r\cos(2kx + \delta)$, and with $|\phi_1|^2 = |\phi_2|^2 = A^2$, (3.16) gives $P = 2A^2[1 + r\cos(2kx + \delta)]$. Over a fringe (with $A$ slowly varying), $P_{\max} = 2A^2(1 + r)$ and $P_{\min} = 2A^2(1 - r)$, so the visibility is $\frac{2r}{2} = r$. The phase $\delta$ shifts the whole fringe pattern sideways by $\delta/(2k)$ without changing its contrast.
 
-(b) The overlap is $\langle t_1|t_2\rangle = (1, 0)\cdot(\cos\beta, e^{i\delta}\sin\beta)^\top = \cos\beta$, so the visibility is $|\cos\beta|$: 1, 0.866, 0.5, 0. A reference implementation, added after the existing loop in Part 5:
+(b) The overlap is $\langle t_1|t_2\rangle = (1, 0)\cdot(\cos\beta, e^{i\gamma}\sin\beta)^\top = \cos\beta$, so the visibility is $|\cos\beta|$: 1, 0.866, 0.5, 0. The phase $\gamma$ does not matter. It sits on the component of $|t_2\rangle$ orthogonal to $|t_1\rangle$; that component adds $|\phi_2|^2\sin^2\beta$ to $P(x)$ whatever its phase and never meets $\phi_1$. The overlap is real, so in the notation of part (a) $r = |\cos\beta|$ and $\delta = 0$: no sideways shift. To get part (a)'s shift, put the phase on the whole tag, $|t_2\rangle = e^{i\delta}(\cos\beta, \sin\beta)$, which has overlap $e^{i\delta}\cos\beta$; `project.py` Part 5 checks that case against the explicit joint state. A reference implementation for the exercise's tags (with $\gamma = 0.4$), as in Part 8:
 
 ```python
+gam = 0.4                                                # any phase gamma; it drops out
 for beta in (0, np.pi / 6, np.pi / 3, np.pi / 2):
-    t1, t2 = np.array([1, 0]), np.array([np.cos(beta), np.exp(0.4j) * np.sin(beta)])
-    ov = np.vdot(t1, t2)                                 # <t1|t2>, conjugating t1
+    t1, t2 = np.array([1, 0]), np.array([np.cos(beta), np.exp(1j * gam) * np.sin(beta)])
+    ov = np.vdot(t1, t2)                                 # <t1|t2> = cos(beta), conjugating t1
     p1, p2 = amps(xs)
     joint = p1[:, None] * t1[None, :] + p2[:, None] * t2[None, :]
     P = (np.abs(joint)**2).sum(1)                        # sum over tag outcomes, Parseval
@@ -116,11 +117,11 @@ for beta in (0, np.pi / 6, np.pi / 3, np.pi / 2):
 
 ## C. Challenge
 
-**C1.** (a) $u_\lambda\propto\lambda^{-5}(e^{hc/\lambda k_BT} - 1)^{-1}$. In terms of $x = hc/(\lambda k_BT)$, $\lambda\propto1/x$, so $u\propto g(x) = x^5/(e^x - 1)$ and maximizing over $\lambda$ is maximizing $g$ over $x$. $g'(x) = \frac{5x^4(e^x - 1) - x^5e^x}{(e^x - 1)^2} = 0$ gives $5(e^x - 1) = xe^x$, i.e. $x = 5(1 - e^{-x})$. Iterating $x\leftarrow5(1 - e^{-x})$ from $x = 5$: $4.966, 4.9651, \dots$; Brent's method in `project.py` gives $x = 4.965114$. Then $b = \lambda_{\max}T = hc/(k_Bx) = 2.8978\times10^{-3}$ m K $= 2.8978$ mm K.
+**C1.** (a) $u_\lambda\propto\lambda^{-5}(e^{hc/\lambda k_BT} - 1)^{-1}$. In terms of $x = hc/(\lambda k_BT)$, $\lambda\propto1/x$, so $u\propto g(x) = x^5/(e^x - 1)$ and maximizing over $\lambda$ is maximizing $g$ over $x$. $g'(x) = \frac{5x^4(e^x - 1) - x^5e^x}{(e^x - 1)^2} = 0$ gives $5(e^x - 1) = xe^x$, i.e. $x = 5(1 - e^{-x})$. Iterating $x\leftarrow5(1 - e^{-x})$ from $x = 5$: $4.9663, 4.9652, 4.9651, \dots$; Brent's method in `project.py` gives $x = 4.965114$. Then $b = \lambda_{\max}T = hc/(k_Bx) = 2.8978\times10^{-3}$ m K $= 2.8978$ mm K.
 
 (b) $\lambda_{\max} = 2.8978\times10^{-3}/5772$ m $= 502.0$ nm (blue-green). At 5000 K, 579.6 nm.
 
-(c) $\int_0^\infty u_\lambda d\lambda$: substitute $\lambda = hc/(xk_BT)$, $d\lambda = -\frac{hc}{k_BT}\frac{dx}{x^2}$. Then $\frac{8\pi hc}{\lambda^5} = 8\pi hc\frac{x^5k_B^5T^5}{h^5c^5}$ and the integral is $8\pi hc\frac{k_B^5T^5}{h^5c^5}\frac{hc}{k_BT}\int_0^\infty\frac{x^3\,dx}{e^x - 1} = \frac{8\pi k_B^4T^4}{h^3c^3}\cdot\frac{\pi^4}{15}$. So $a = 8\pi^5k_B^4/(15h^3c^3) = 7.566\times10^{-16}$ J m$^{-3}$ K$^{-4}$ (`project.py` Part 1 checks the integral numerically to 0.2%). With (3.1), $\int\lambda^{-4}d\lambda$ diverges as $\lambda^{-3}$ at the short-wavelength end: the ultraviolet catastrophe.
+(c) $\int_0^\infty u_\lambda d\lambda$: substitute $\lambda = hc/(xk_BT)$, $d\lambda = -\frac{hc}{k_BT}\frac{dx}{x^2}$. Then $\frac{8\pi hc}{\lambda^5} = 8\pi hc\frac{x^5k_B^5T^5}{h^5c^5}$ and the integral is $8\pi hc\frac{k_B^5T^5}{h^5c^5}\frac{hc}{k_BT}\int_0^\infty\frac{x^3\,dx}{e^x - 1} = \frac{8\pi k_B^4T^4}{h^3c^3}\cdot\frac{\pi^4}{15}$. So $a = 8\pi^5k_B^4/(15h^3c^3) = 7.566\times10^{-16}$ J m$^{-3}$ K$^{-4}$ (`project.py` Part 1 integrates (3.2) numerically from 20 nm to 200 μm at 5000 K and agrees with $aT^4$ to better than one part in $10^6$). With (3.1), $\int\lambda^{-4}d\lambda$ diverges as $\lambda^{-3}$ at the short-wavelength end: the ultraviolet catastrophe.
 
 **C2.** (a) *Repeatability:* an atom with $m_z > 0$ passes SGz$+$ and, since $\mathbf m$ is unchanged, gives $+$ again. *Experiment 2:* given $m_z > 0$, $\mathbf m$ is uniform on the upper hemisphere, which is symmetric under $m_x\to-m_x$, so $P(m_x > 0) = \frac12$.
 

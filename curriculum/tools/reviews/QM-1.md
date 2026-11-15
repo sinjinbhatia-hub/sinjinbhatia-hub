@@ -150,6 +150,39 @@ Totals: 31 findings, 0 HIGH, 9 MEDIUM (items 1, 2, 3, 4, 5, 11, 12, 14 and the c
 
 (Each item is marked here as it is applied.)
 
+- 11 FIXED. §3.3 What-just-happened now says the 1913 agreement was within the several-percent uncertainty of
+  e, m, h, and that with today's constants it is right to the reduced-mass correction (5 parts in 10^4).
+- 12 FIXED. §1.3: Geiger and Marsden's experiments (from 1909) as analyzed by Rutherford in 1911; Bohr's jump
+  "emits radiation of frequency f = dE/h" with a parenthesis that Bohr did not accept light quanta until the
+  mid-1920s.
+- 13 FIXED. §1.2: the threshold is a separate sentence, not attributed to Lenard; Millikan "quoted uncertainty".
+- 14 FIXED. Header says "EM-8 and SM-4 helpful"; §0 says which two SM-4 results §3.1 quotes and that SM-5
+  comes after QM-3.
+- 15 FIXED. §3.6 no longer says "why wave mechanics came first"; §3.12 says matrix mechanics came a few months
+  earlier and why wave mechanics was adopted for calculating.
+- 16 FIXED. Example 4.1 now displays hc = 1.9864e-25 J m, k_B T = 0.43087 eV = 6.903e-20 J, x = 1239.84/(500 x
+  0.43087) = 5.7551, 8 pi hc/lam^5 = 1.5976e8, RJ with 6.903e-20; each displayed quotient reproduces the stated
+  value (rechecked numerically). "Roughly the temperature of the Sun's surface (5772 K)". Matches the Part 1 pins.
+- 17 FIXED. Example 4.5 displays p = 5.403e-24 from 9.1094e-31 and 1.6022e-19, and lambda = 6.626e-34/5.403e-24.
+- 18 FIXED. §3.11 has a What-just-happened after Proposition 3.7.
+- 19/31 FIXED. §1.7: "(Bologna, 1974; published 1976) ... both with an electron biprism playing the role of the
+  two slits". §3.12: "Spin, proposed in 1925 (§1.4), did not get its two-component description ... until Pauli
+  introduced his matrices in 1927".
+- 26 FIXED. Theorem 3.2 states its hypotheses.
+- 27 FIXED. §3.10: "for slits of equal strength (|phi1| = |phi2|)" and the role of the overlap's phase.
+- 28 FIXED. §3.4 and §3.6 each have a Try-it-first and a What-just-happened; §3.6's two steps are numbered.
+  No equation, theorem or section number changed.
+- 20 FIXED. solutions A1: "about 2e-9 of what is needed"; "2.3/(4.136e-9) = 5.6e8 photons absorbed at once".
+- 21 FIXED. solutions A5 displays k_B T = (1.3806e-23)(300) = 4.142e-21 J = 0.02585 eV.
+- 22 FIXED. exercises B8(b) and solutions B8(b): the tag phase is gamma; the exercise asks whether it shifts
+  the fringes; the solution explains why it drops out and how to get part (a)'s shift (phase on the whole tag).
+- 23 FIXED (solutions side). B7(d) says 1.7608e11 rad/s, matching the displayed arithmetic with g = 2.0023.
+- 24 FIXED. solutions C1(a) iterates: 4.9663, 4.9652, 4.9651.
+- 25 FIXED. solutions C1(c): "agrees with a T^4 to better than one part in 10^6" (the assert's tolerance).
+- 29 FIXED. Both headers now say the numbers are printed and asserted by project.py (Parts 1, 2, 3, 6, 8).
+- 32 (new, found by a pin) LOW (rounding). notes Example 4.1: "5.08e-4 J/m^3 per nm" is a double rounding of
+  5.07496e5 J/m^4 (5.075e5 -> 5.08e5); to three figures it is 5.07e-4. FIXED in the notes and pinned.
+
 ## Status
 
 Phase 1 complete (second pass); Phase 2 in progress.

@@ -151,7 +151,15 @@ $$\lambda' - \lambda = \frac{h}{mc}(1 - \cos\theta). \tag{3.7}$$
 
 de Broglie's hypothesis: a particle of momentum $p$ has wavelength
 $$\lambda = \frac{h}{p}. \tag{3.8}$$
-For a circular orbit, require the wave to fit around the circumference without mismatch: $2\pi r = n\lambda = nh/p$. Then $L = pr = nh/2\pi = n\hbar$, Bohr's condition. Quantization becomes the same thing as the discrete overtones of a guitar string: a boundary condition on a wave. That is exactly how Schrödinger's equation produces discrete levels (QM-3), and why wave mechanics came first. For a nonrelativistic particle of kinetic energy $E$, $p = \sqrt{2mE}$; Example 4.5 puts in numbers.
+
+▶ **Try it first.** Wrap a wave of wavelength $\lambda = h/p$ around a circular orbit of radius $r$. What must be true of $2\pi r$ for the wave to join onto itself after one lap? Rewrite the condition in terms of $L = pr$.
+
+1. The wave is single-valued only if a whole number of wavelengths fits around the circumference: $2\pi r = n\lambda$, $n = 1, 2, \dots$
+2. With (3.8), $2\pi r = nh/p$, so $L = pr = nh/2\pi = n\hbar$. That is Bohr's condition.
+
+■ **What just happened.** Quantization became the same thing as the discrete overtones of a guitar string: a boundary condition on a wave. Bohr's unexplained rule is what a wave on a closed orbit does anyway. That is exactly how Schrödinger's equation produces discrete levels (QM-3), and it is the idea Schrödinger started from in 1926 (§1.8).
+
+For a nonrelativistic particle of kinetic energy $E$, $p = \sqrt{2mE}$; Example 4.5 puts in numbers.
 
 ### 3.7 The postulates in vector-space language
 
@@ -245,7 +253,7 @@ $$P(x) = |\phi_1(x)|^2 + |\phi_2(x)|^2 + 2\operatorname{Re}\big[\overline{\phi_1
 2. Summing over $k$: $P(x) = \sum_k|\langle k|\Phi_x\rangle|^2 = \|\Phi_x\|^2$ (Parseval again).
 3. Expand: $\|\Phi_x\|^2 = |\phi_1|^2\langle t_1|t_1\rangle + |\phi_2|^2\langle t_2|t_2\rangle + \bar\phi_1\phi_2\langle t_1|t_2\rangle + \bar\phi_2\phi_1\langle t_2|t_1\rangle$, and the last two terms are complex conjugates. ∎
 
-■ **What just happened.** Identical tags ($\langle t_1|t_2\rangle = 1$, no path information) give $|\phi_1 + \phi_2|^2$: full interference. Orthogonal tags (perfect path information) give $|\phi_1|^2 + |\phi_2|^2$: the classical sum, rule (iii). In between, the fringe visibility is exactly $|\langle t_1|t_2\rangle|$ (Exercise B8). Nothing "disturbed" the electron's motion; the interference term was multiplied by the overlap of two states of *another* system. This is the simplest instance of decoherence, which QM-7 and QM-9 develop: the environment acquiring path information is what makes quantum superpositions look classical. `project.py` Part 5 builds the joint state explicitly and samples electrons one at a time.
+■ **What just happened.** Identical tags ($\langle t_1|t_2\rangle = 1$, no path information) give $|\phi_1 + \phi_2|^2$: full interference. Orthogonal tags (perfect path information) give $|\phi_1|^2 + |\phi_2|^2$: the classical sum, rule (iii). In between, for slits of equal strength ($|\phi_1| = |\phi_2|$), the fringe visibility is exactly $|\langle t_1|t_2\rangle|$, and the phase of $\langle t_1|t_2\rangle$ slides the fringes sideways (Exercise B8). Nothing "disturbed" the electron's motion; the interference term was multiplied by the overlap of two states of *another* system. This is the simplest instance of decoherence, which QM-7 and QM-9 develop: the environment acquiring path information is what makes quantum superpositions look classical. `project.py` Part 5 builds the joint state explicitly and samples electrons one at a time.
 
 ### 3.11 Commutators and incompatibility
 
@@ -254,6 +262,8 @@ $$P(x) = |\phi_1(x)|^2 + |\phi_2(x)|^2 + 2\operatorname{Re}\big[\overline{\phi_1
 **Proposition 3.7.** $[\hat S_x, \hat S_y] = i\hbar\hat S_z$, and cyclically $[\hat S_y, \hat S_z] = i\hbar\hat S_x$, $[\hat S_z, \hat S_x] = i\hbar\hat S_y$.
 
 *Derivation.* $\sigma_x\sigma_y = \begin{pmatrix}0&1\\1&0\end{pmatrix}\begin{pmatrix}0&-i\\i&0\end{pmatrix} = \begin{pmatrix}i&0\\0&-i\end{pmatrix} = i\sigma_z$, and $\sigma_y\sigma_x = \begin{pmatrix}0&-i\\i&0\end{pmatrix}\begin{pmatrix}0&1\\1&0\end{pmatrix} = \begin{pmatrix}-i&0\\0&i\end{pmatrix} = -i\sigma_z$. So $[\sigma_x, \sigma_y] = 2i\sigma_z$ and $[\hat S_x, \hat S_y] = \frac{\hbar^2}{4}2i\sigma_z = i\hbar\hat S_z$. The other two follow by the same two multiplications with the indices relabeled (each is written out in Exercise B6). ∎
+
+■ **What just happened.** $\sigma_x\sigma_y$ and $\sigma_y\sigma_x$ differ by a sign, so the order of multiplication matters, and the amount by which it matters is the third spin component. No two of the three spin operators commute. These three relations are the whole algebra of spin: QM-5 gets the allowed eigenvalues and, for spin-1/2, the matrices (3.13) back from them alone.
 
 **Why the commutator measures incompatibility.** If $[\hat A, \hat B] = 0$ for Hermitian $\hat A$, $\hat B$, they have a common orthonormal eigenbasis (each preserves the other's eigenspaces; QM-4 proves it), so a state can have definite values of both and measuring one does not disturb the other. Experiment 3 says $\hat S_x$ and $\hat S_z$ have no common eigenvector, and Proposition 3.7 says they do not commute. The quantitative statement is the uncertainty principle.
 
@@ -272,7 +282,7 @@ and it turns $\{L_x, L_y\} = L_z$ into Proposition 3.7 and $\{q, p\} = 1$ into $
 
 QM-2 and QM-3 apply §3.7 to a particle on a line. The state space becomes $L^2(\mathbb R)$, square-integrable complex functions with LA-8's inner product $\langle\phi|\psi\rangle = \int\bar\phi\psi\,dx$ (LA-8 §3.1's function-space example). The "components" of $|\psi\rangle$ in the position "basis" are the values $\psi(x)$, and $|\psi(x)|^2dx$ is the Born probability of finding the particle in $[x, x + dx]$. The Hamiltonian is a differential operator, $\hat H = -\frac{\hbar^2}{2m}\frac{d^2}{dx^2} + V(x)$, and (3.11) becomes a PDE, the Schrödinger equation you will solve with separation of variables and boundary conditions.
 
-Why is this order historical? Schrödinger's wave equation was something physicists in 1926 knew how to solve, it gave hydrogen directly, and spin was not even recognized as a separate two-dimensional degree of freedom until Pauli introduced his matrices in 1927. Why do we do wave mechanics next, when spin is simpler? Because positions, momenta, atoms, tunnelling and bound states, the things QM is used for in mechanical and materials physics, live there; because you are strong at PDEs; and because the infinite-dimensional case has genuine new features ($\hat x$ and $\hat p$ have no normalizable eigenvectors; $[\hat x, \hat p] = i\hbar$ cannot hold for finite matrices, since the trace of a commutator is 0 and the trace of $i\hbar I$ is not). This module's payoff comes in QM-4: when the formalism is stated in general, you will already know it.
+Why is this order historical? Matrix mechanics came a few months earlier (§1.8), but Schrödinger's wave equation was something physicists in 1926 knew how to solve, and it gave hydrogen directly, so wave mechanics is what they adopted for calculating. Spin, proposed in 1925 (§1.4), did not get its two-component description, the $\mathbb C^2$ of §3.8, until Pauli introduced his matrices in 1927. Why do we do wave mechanics next, when spin is simpler? Because positions, momenta, atoms, tunnelling and bound states, the things QM is used for in mechanical and materials physics, live there; because you are strong at PDEs; and because the infinite-dimensional case has genuine new features ($\hat x$ and $\hat p$ have no normalizable eigenvectors; $[\hat x, \hat p] = i\hbar$ cannot hold for finite matrices, since the trace of a commutator is 0 and the trace of $i\hbar I$ is not). This module's payoff comes in QM-4: when the formalism is stated in general, you will already know it.
 
 ### 3.13 What the postulates say and do not say
 
@@ -284,13 +294,15 @@ The advice: compute first, philosophize later. Every question in QM-1 to QM-8 ca
 
 ### Example 4.1: Rayleigh–Jeans versus Planck at 500 nm and 5000 K (project Part 1)
 
-$x = hc/(\lambda k_BT) = (6.626\times10^{-34})(2.998\times10^8)/\big[(500\times10^{-9})(1.381\times10^{-23})(5000)\big] = 5.7551$.
+Constants: $hc = 1239.84$ eV nm $= 1.9864\times10^{-25}$ J m; $k_BT = (8.61733\times10^{-5}\text{ eV/K})(5000\text{ K}) = 0.43087$ eV $= 6.903\times10^{-20}$ J.
 
-Planck (3.2): $8\pi hc/\lambda^5 = 8\pi(1.986\times10^{-25})/(3.125\times10^{-32}) = 1.598\times10^{8}$ J/m$^4$; $e^{5.7551} - 1 = 314.8$; $u_\lambda = 5.075\times10^5$ J/m$^4$ (that is, $5.08\times10^{-4}$ J/m$^3$ per nm of bandwidth).
+$x = hc/(\lambda k_BT) = 1239.84/(500\times0.43087) = 5.7551$.
 
-Rayleigh–Jeans (3.1): $8\pi k_BT/\lambda^4 = 8\pi(6.904\times10^{-20})/(6.25\times10^{-26}) = 2.776\times10^7$ J/m$^4$.
+Planck (3.2): $8\pi hc/\lambda^5 = 8\pi(1.9864\times10^{-25})/(3.125\times10^{-32}) = 1.5976\times10^{8}$ J/m$^4$; $e^{5.7551} - 1 = 314.8$; $u_\lambda = 1.5976\times10^8/314.8 = 5.075\times10^5$ J/m$^4$ (that is, $5.07\times10^{-4}$ J/m$^3$ per nm of bandwidth).
 
-Ratio: $2.776\times10^7/5.075\times10^5 = 54.70 = (e^x - 1)/x$. At green light and the temperature of the Sun's surface, classical physics is off by a factor of 55, and the error grows exponentially toward the ultraviolet. At 50 μm ($x = 0.058$) the two agree within 3%. The Planck curve at 5000 K peaks at 579.6 nm. Figure `blackbody.png` shows all three laws.
+Rayleigh–Jeans (3.1): $8\pi k_BT/\lambda^4 = 8\pi(6.903\times10^{-20})/(6.25\times10^{-26}) = 2.776\times10^7$ J/m$^4$.
+
+Ratio: $2.776\times10^7/5.075\times10^5 = 54.70 = (e^x - 1)/x$. At green light and roughly the temperature of the Sun's surface (5772 K), classical physics is off by a factor of 55, and the error grows exponentially toward the ultraviolet. At 50 μm ($x = 0.058$) the two agree within 3%. The Planck curve at 5000 K peaks at 579.6 nm. Figure `blackbody.png` shows all three laws.
 
 ### Example 4.2: The photoelectric stopping potential for sodium under 400 nm light (project Part 1)
 
@@ -312,7 +324,7 @@ $h/mc = 6.626\times10^{-34}/\big[(9.109\times10^{-31})(2.998\times10^8)\big] = 2
 
 ### Example 4.5: de Broglie wavelengths: an electron at 100 eV and a baseball (project Part 2)
 
-Electron: $p = \sqrt{2mE} = \sqrt{2(9.109\times10^{-31})(100)(1.602\times10^{-19})} = 5.40\times10^{-24}$ kg m/s; $\lambda = h/p = 0.1226$ nm. That is the spacing of atoms in a crystal, so crystals diffract 100 eV electrons. (The relativistic correction at 100 eV changes $\lambda$ by less than $10^{-4}$, since $E\ll mc^2 = 511$ keV.)
+Electron: $p = \sqrt{2mE} = \sqrt{2(9.1094\times10^{-31})(100)(1.6022\times10^{-19})} = 5.403\times10^{-24}$ kg m/s; $\lambda = h/p = 6.626\times10^{-34}/5.403\times10^{-24} = 0.1226$ nm. That is the spacing of atoms in a crystal, so crystals diffract 100 eV electrons. (The relativistic correction at 100 eV changes $\lambda$ by less than $10^{-4}$, since $E\ll mc^2 = 511$ keV.)
 
 Davisson–Germer check: at 54 eV, $\lambda = h/\sqrt{2mE} = 0.1669$ nm. Nickel's surface rows are spaced $d = 0.215$ nm, and the grating condition $d\sin\theta = \lambda$ at the observed $\theta = 50°$ gives $0.215\times0.7660 = 0.1647$ nm. Agreement to 1.3%.
 

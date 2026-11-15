@@ -83,6 +83,9 @@ close(ur / up, np.expm1(x0) / x0, 1e-12, "ratio formula")
 # the numbers of Example 4.1, as quoted
 pin(x0, 5.7551, 5e-5, "x"); pin(8 * np.pi * H * C / lam0**5, 1.5976e8, 5e3, "8 pi h c/lam^5")
 pin(np.expm1(x0), 314.8, 0.05, "e^x - 1"); pin(KB * T5, 6.903e-20, 5e-24, "k T")
+pin(H * C, 1.9864e-25, 5e-30, "h c in J m"); pin(KB / EV, 8.61733e-5, 5e-11, "k_B in eV/K")
+pin(KB * T5 / EV, 0.43087, 5e-6, "k T in eV"); pin(HC_EVNM, 1239.84, 5e-3, "h c in eV nm")
+pin(up * 1e-9, 5.07e-4, 5e-7, "Planck u per nm")
 pin(up, 5.075e5, 50, "Planck u"); pin(ur, 2.776e7, 5e3, "RJ u"); pin(ur / up, 54.70, 0.005, "RJ/Planck")
 # long-wavelength agreement: at 50 um (x = 0.058) the ratio is within 3%
 pin(H * C / (50e-6 * KB * T5), 0.058, 5e-4, "x at 50 um")
@@ -145,9 +148,10 @@ ax.set_title("Photoelectric effect, sodium"); ax.legend()
 fig.tight_layout(); fig.savefig(FIG / "photoelectric.png", dpi=120); plt.close(fig)
 
 # %% [markdown]
-# ## Part 2: Bohr, Compton, de Broglie, Stern-Gerlach numbers (notes 3.2-3.6, Examples 4.3-4.5)
-# Bohr: r_n = n^2 a0, a0 = 4 pi eps0 hbar^2/(m e^2) (3.4); E_n = -E_R/n^2, E_R = m e^4/(2 (4 pi eps0)^2 hbar^2) (3.5).
-# Rydberg R = E_R/(h c). Compton (3.7): dlam = (h/mc)(1 - cos theta). de Broglie: lam = h/p.
+# ## Part 2: Bohr, Compton, de Broglie, Stern-Gerlach numbers (notes 3.3-3.6, Examples 4.3-4.5)
+# Bohr (3.4): r_n = n^2 a0, a0 = 4 pi eps0 hbar^2/(m e^2); E_n = -E_R/n^2, E_R = m e^4/(2 (4 pi eps0)^2 hbar^2).
+# Rydberg (3.5): 1/lam = R (1/nf^2 - 1/ni^2), R = E_R/(h c). Stern-Gerlach force (3.6): F_z = mu_z dB_z/dz.
+# Compton (3.7): dlam = (h/mc)(1 - cos theta). de Broglie (3.8): lam = h/p.
 
 # %%
 K = 1 / (4 * np.pi * EPS0)
@@ -158,6 +162,11 @@ close(a0, PC["Bohr radius"][0], 1e-8, "a0")
 close(Rinf, PC["Rydberg constant"][0], 1e-8, "Rinf")
 v1 = QE**2 * K / HBAR
 print(f"Ex 4.3: a0 = {a0*1e9:.6f} nm, E1 = {-ER:.4f} eV, v1/c = {v1/C:.6f} (1/{C/v1:.2f}), R = {Rinf:.6e} 1/m")
+# the What-just-happened of notes 3.3: R = m e^4 / (8 eps0^2 h^3 c)
+close(Rinf, ME * QE**4 / (8 * EPS0**2 * H**3 * C), 1e-12, "R = m e^4/(8 eps0^2 h^3 c)")
+# Example 4.3 as quoted
+pin(a0 * 1e9, 0.052918, 5e-7, "a0"); pin(ER, 13.606, 5e-4, "E_R"); pin(C / v1, 137.04, 5e-3, "1/alpha")
+pin(Rinf, 1.097373e7, 5, "R_inf"); pin([-ER, -ER / 4, -ER / 9], [-13.606, -3.401, -1.512], 5e-4, "E_1, E_2, E_3")
 
 
 def line(ni, nf, R=Rinf, Z=1):
@@ -171,11 +180,18 @@ Ha_inf, Ha_H, Ha_D = line(3, 2), line(3, 2, RH), line(3, 2, RD)
 N_AIR = 1.000277
 print(f"H-alpha: {Ha_inf:.2f} nm (infinite mass), {Ha_H:.2f} nm (reduced mass, vacuum), "
       f"{Ha_H/N_AIR:.2f} nm (air); D-alpha {Ha_D:.2f} nm, isotope shift {Ha_H-Ha_D:.3f} nm")
-assert abs(Ha_inf - 656.1) < 0.05 and abs(Ha_H / N_AIR - 656.28) < 0.03
+pin(Ha_inf, 656.11, 5e-3, "H-alpha, infinite mass"); pin(36e9 / (5 * Rinf), 656.11, 5e-3, "36/(5 R)")
+pin(RH, 1.096776e7, 5, "R_H"); pin(Ha_H, 656.47, 5e-3, "H-alpha, reduced mass")
+pin(Ha_H / N_AIR, 656.29, 5e-3, "H-alpha in air")
+assert abs(Ha_H / N_AIR - 656.28) < 0.015          # the measured line in air, to 0.01 nm
+pin(ME / MP, 5e-4, 5e-5, "reduced-mass correction to R (notes 3.3)")
 balmer = [line(n, 2) for n in range(3, 8)]
 print("Balmer (nm):", np.round(balmer, 1), " limits: Lyman %.1f, Balmer %.1f, Paschen %.1f" %
       (1e9 / Rinf, 4e9 / Rinf, 9e9 / Rinf))
-close(balmer[1], 486.0, 1e-3, "H-beta")
+pin(balmer, [656.1, 486.0, 433.9, 410.1, 396.9], 0.05, "Balmer series")
+pin([1e9 / Rinf, 4e9 / Rinf, 9e9 / Rinf], [91.1, 364.5, 820.1], 0.05, "series limits")
+pin(line(2, 1), 121.5, 0.05, "Lyman-alpha")
+assert all(line(n, 1) < 380 for n in range(2, 60)) and all(line(n, 3) > 750 for n in range(4, 60))  # UV, IR
 
 fig, axs = plt.subplots(2, 1, figsize=(8, 5), gridspec_kw={"height_ratios": [2, 1]})
 for n in range(1, 8):
@@ -200,14 +216,18 @@ fig.tight_layout(); fig.savefig(FIG / "bohr_series.png", dpi=120); plt.close(fig
 r_e = K * QE**2 / (ME * C**2)
 t_f = a0**3 / (4 * r_e**2 * C)
 print(f"classical collapse time from a0: {t_f:.3e} s")
-assert 1.5e-11 < t_f < 1.6e-11
+pin(t_f, 1.556e-11, 5e-15, "collapse time (EM-8 Example 4.4)"); pin(t_f, 1.56e-11, 5e-14, "collapse time (notes 1.3)")
+pin(a0 * 1e9, 0.053, 5e-4, "starting radius (notes 1.3)")
 
 # correspondence principle (C3): orbital frequency vs transition frequency n -> n-1
 for n in (10, 100, 1000):
     f_orb = 2 * ER / n**3
     f_tr = ER * (1 / (n - 1)**2 - 1 / n**2)
     print(f"  n = {n}: f(n->n-1)/f_orbit = {f_tr/f_orb:.5f}")
-assert abs(ER * (1 / 81 - 1 / 100) / (2 * ER / 1000) - 1.17284) < 1e-4
+    assert np.isclose(f_tr / f_orb, (2 * n - 1) * n / (2 * (n - 1)**2))       # C3(b) closed form
+    assert abs(f_tr / f_orb - (1 + 1.5 / n)) < 3 / n**2                       # 1 + 3/(2n) + O(1/n^2)
+pin(ER * (1 / 81 - 1 / 100) / (2 * ER / 1000), 1.17284, 5e-6, "C3, n = 10")
+pin(ER * (1 / 99**2 - 1 / 100**2) / (2 * ER / 100**3), 1.01520, 5e-6, "C3, n = 100")
 
 # Compton (Example 4.4): Mo K-alpha, 71.07 pm, at 90 degrees
 lamC = H / (ME * C)

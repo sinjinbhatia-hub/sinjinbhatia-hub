@@ -64,3 +64,31 @@ Scratch work: `/tmp/claude-0/st7/` (`recompute.py` = independent recomputation o
 
 25. **[low] notes.md §3.11 step 1.** $O_p(\cdot)$ is used from here on (and in solutions) without a definition (STYLE: define every symbol at first use). Fix: one clause.
 
+## Pass 3 (resumed after the interruption): re-verification and further findings
+
+The pass above was interrupted after writing the 25 findings and after applying some notes.md edits (commit 03166b7) without marking anything. This pass re-verified every item before trusting it, then continued. Scratch: `/tmp/claude-0/st7b/` (`indep.py` = my own recomputation of every deterministic number in §4 and solutions.md without the project's functions; `probe.py` = full-precision values of every simulated number; `run1.txt` = script log before my edits, identical to `run0.txt`).
+
+Re-verification of items 1–25 (each re-derived or recomputed; "applied" = the notes.md edit from the interrupted pass is present and I checked its content):
+
+- 1: real (ST-8 conventions box, (3.3), (3.8) read directly). Applied in §3.3 and §3.14; content checked.
+- 2: real ($\cos2\pi\nu^*=0.75$, period 8.6936 by formula and by a numerical argmax of the AR(2) spectrum). Applied; 8.69 is right.
+- 3: real (ST-6 (3.18) read directly; $1/(1+2\phi/(1-\phi))=(1-\phi)/(1+\phi)$ checked). Applied.
+- 4: real; all quoted simulated values equal today's output (probe.py), none pinned. Pending.
+- 5, 6, 13–22, 24: real, pending. (21: the largest Bartlett deviation is 2.011 standard errors, recomputed in probe.py. 15: a sampled continuous-time AR(2) is a discrete ARMA(2,1). 16: Yule's fit $1.34254,-0.65504$ gives modulus 0.809 and period 10.6. 18: $0.95^{10}=0.599$.)
+- 7, 8, 9, 11, 12, 23, 25: real; applied; content checked.
+- 10: real; the (3.36) parenthetical is applied, the conventions-box sentence is pending.
+
+Further findings:
+
+26. **[low] notes.md §3.4 (■ after the AR(1) derivation).** "(F5 §3.12: the transition kernel is $\mathcal N(\phi x,\sigma^2)$ …)" reads as if F5 §3.12 covered this. F5 Definition 3.36 is for a finite state space with a transition matrix; the AR(1) is a continuous-state chain whose "matrix" is a transition density. Fix: say it is the continuous-state analogue.
+
+27. **[low] notes.md §3.5, Theorem 3.5 proof step 1.** "$v_p=0$ would force $\mathbf v=0$ when $\lambda\ne0$": back-substitution $v_{i-1}=\lambda v_i$ from $v_p=0$ gives $\mathbf v=\mathbf 0$ for every $\lambda$, including 0. Where $\lambda\ne0$ is needed is step 2's division by $\lambda^p$. The caveat is attached to the wrong step. Fix: move it.
+
+28. **[low] notes.md §7.** The list of parts stops at Part 10, but exercises.md and solutions.md send the reader to Part 11; and "Yule's sunspot model" repeats item 16's attribution. Fix: name Part 11; "a Yule-style sunspot AR(2)".
+
+29. **[low] project.py: checkable claims with no check.** §3.8 "the Yule–Walker fit is always causal" (500 fits available in Part 3); §3.2 "divisor $n$ makes $\hat\Gamma_n$ PSD, divisor $n-h$ can give an indefinite matrix"; §3.14 "spectral period 8.69"; §3.11 "probability 0.68"; §3.12 the 12% for AR(1) pairs; §5 the ESS identity; solutions B5(c) "sd about 0.1", B7(c) ratios 0.72/0.69/0.73, C2(b) the error-correction identity, C3(b). Fix: add asserts (new random draws from a separate generator so the main stream and every quoted number are unchanged).
+
+Checked and found correct (no action): all of §3's derivations step by step (Theorem 3.2, the Bartlett heuristic including the index-pairing arguments, (3.6)–(3.10), the cofactor expansion for (3.12), the left-eigenvector converse, the triangle, (3.15)–(3.16), Theorem 3.8, (3.19)–(3.22), (3.25), (3.28)–(3.31), the telescoping identity and (3.34), the orders of magnitude in Theorem 3.11, Theorem 3.12 and (3.37)); the DF and MacKinnon critical values quoted; every deterministic number in §4 and solutions.md (indep.py); equation tags (3.1)–(3.37) unique and every reference resolves; exercise and solution numbering A1–A6, B1–B8, C1–C3; template sections 0–10; §10 against the brief; brief topic list and project list. History (Yule 1927, Slutsky 1927 and the lottery numbers, Wold 1938, Box–Jenkins 1970, Granger–Newbold 1974, Dickey–Fuller 1979, Nelson–Plosser 1982 and the fourteen series, Engle–Granger 1987, the 2003 prize, Perron 1989, Levinson 1947, Box–Pierce 1970, Fuller 1976): all as I know them; the one attribution that was off is item 16. The brief has no REVIEW FOCUS section.
+
+## Resolution
+
