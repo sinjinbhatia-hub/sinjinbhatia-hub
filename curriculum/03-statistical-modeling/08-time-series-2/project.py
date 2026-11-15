@@ -70,7 +70,7 @@ def acf_theory_arma11(phi, theta, hmax, s2=1.0):
 
 # %% [markdown]
 # ## Part 1: ARMA spectra three ways (notes §3.2-3.3, Examples 4.1-4.2)
-# Closed form (3.9) vs the Fourier series of the theoretical ACF (3.4) vs the
+# Closed form (3.9) vs the Fourier series of the theoretical ACF (3.3) vs the
 # averaged periodogram of 200 long simulations.
 
 # %%
@@ -117,6 +117,11 @@ for phi in (0.7, -0.7):
 assert np.allclose(arma_spectrum([0, .25, .5], [0.7]), [1 / 0.09, 1 / 1.49, 1 / 2.89])
 assert np.allclose(arma_spectrum([0, .25, .5], [-0.7]), [1 / 2.89, 1 / 1.49, 1 / 0.09])
 print(f"Ex 4.1 gamma(0)={1/0.51:.3f}, f(0)/f(1/2)={(1/0.09)/(1/2.89):.1f}")
+# the variance budget (3.6): the mean of f over a full period is gamma(0), for both signs of phi
+grid1 = np.arange(4096) / 4096
+for ph in (0.7, -0.7):
+    assert abs(arma_spectrum(grid1, [ph]).mean() - 1 / 0.51) < 1e-9
+assert abs(1 / 0.51 - 1.961) < 5e-4 and abs((1 / 0.09) / (1 / 2.89) - (1.7 / 0.3) ** 2) < 1e-9
 
 # Example 4.2: AR(2) peak, cos(2 pi w*) = phi1 (phi2 - 1) / (4 phi2), eq. (3.11)
 p1, p2 = 1.0, -0.5
@@ -159,6 +164,7 @@ _, hd = signal.freqz([1, -1], 1, worN=2 * np.pi * wtest)
 assert np.allclose(np.abs(hd) ** 2, [0, 1, 2, 3, 4])
 _, h5 = signal.freqz(np.ones(5) / 5, 1, worN=2 * np.pi * wtest)
 assert np.allclose(np.abs(h5[1:]) ** 2, 0.04)             # Example 4.3: 1/25 at w = 1/6, 1/4, 1/3, 1/2
+assert abs(np.mean(4 * np.sin(np.pi * grid1) ** 2) - 2) < 1e-12   # Var(w_t - w_{t-1}) = 2 as the integral of (3.8)
 wn = rng.standard_normal((300, 2048))
 fig, ax = plt.subplots(figsize=(6, 3.6))
 for name, b in filters.items():
@@ -542,6 +548,7 @@ est, se = fit_ml(nll_ll, np.zeros(2))
 print(f"Local level ML: sigma_eta^2={est[0]:.3f}+-{se[0]:.3f} (true {s_eta}), "
       f"sigma_eps^2={est[1]:.3f}+-{se[1]:.3f} (true {s_eps})")
 assert np.all(np.abs(est - [s_eta, s_eps]) < 3 * se)
+assert np.allclose(est, [0.58, 0.90], atol=0.005) and np.allclose(se, [0.07, 0.08], atol=0.005)   # §3.12 (this seed)
 
 n = 500
 tv = (0.2, 0.01, 1.0)                                        # level, slope, obs variances
@@ -555,7 +562,7 @@ nll_lt = lambda th: -kalman_filter(ylt, Tlt, Zlt, np.eye(2), np.diag(np.exp(th[:
                                    np.array([ylt[0], 0.0]), np.diag([1e7, 1e7]))["ll"]
 est3, se3 = fit_ml(nll_lt, np.log([0.5, 0.05, 0.5]))
 print(f"Local linear trend ML: {np.round(est3,4)} +- {np.round(se3,4)} (true {tv})")
-assert np.all(np.abs(est3 - tv) < 3 * se3)
+assert np.all(np.abs(est3 - tv) < se3)                      # §3.12: all three within one standard error (this seed)
 
 # %% [markdown]
 # ## Part 9: ARMA(1,1) exact likelihood: state space vs direct MVN (§3.12)
@@ -571,6 +578,7 @@ Sig = linalg.toeplitz(acf_theory_arma11(phi, th, n - 1))
 ll_mvn = stats.multivariate_normal(np.zeros(n), Sig).logpdf(xa)
 print(f"ARMA(1,1) exact log-lik: Kalman {ll_kf:.6f}, MVN {ll_mvn:.6f}")
 assert abs(ll_kf - ll_mvn) < 1e-6
+assert abs(ll_kf + 276.614139) < 1e-5                       # the value quoted in §3.12 (this seed)
 assert np.isclose(P0a[0, 0], acf_theory_arma11(phi, th, 1)[0])
 
 # %% [markdown]
@@ -613,7 +621,8 @@ yp = xp[:, 0] + sd_m * rng.standard_normal(n)
 
 
 def ekf(y, f, J, Q, Hv, a0, P0):
-    """Extended Kalman filter, y_t = alpha_t[0] + eps_t, alpha_{t+1} = f(alpha_t) + eta_t (eq. 3.29)."""
+    """Extended Kalman filter (eq. 3.28) for y_t = alpha_t[0] + eps_t, alpha_{t+1} = f(alpha_t) + eta_t,
+    with J the Jacobian of f; the pendulum's f and J are eq. (3.29)."""
     a, P, out = a0.astype(float), P0.astype(float), []
     for yt in y:
         F = P[0, 0] + Hv
@@ -628,8 +637,11 @@ ae = ekf(yp, fpend, Jpend, Qp, sd_m ** 2, np.array([1.5, 0.0]), np.eye(2))
 Tlin = Jpend(np.zeros(2))
 al = ekf(yp, lambda x: Tlin @ x, lambda x: Tlin, Qp, sd_m ** 2, np.array([1.5, 0.0]), np.eye(2))
 r_e, r_l = rmse(ae[50:, 0] - xp[50:, 0]), rmse(al[50:, 0] - xp[50:, 0])
-print(f"Pendulum (theta0=2 rad): EKF angle RMSE {r_e:.3f}, linearized-at-0 KF {r_l:.3f}, raw {rmse(yp-xp[:,0]):.3f}")
+r_y = rmse(yp - xp[:, 0])
+print(f"Pendulum (theta0=2 rad): EKF angle RMSE {r_e:.3f}, linearized-at-0 KF {r_l:.3f}, raw {r_y:.3f}")
 assert r_e < 0.5 * r_l and r_e < sd_m
+assert r_l > r_y                                            # the small-angle filter is worse than no filter
+assert abs(r_e - 0.054) < 0.001 and abs(r_l - 1.48) < 0.005 and abs(r_y - 0.208) < 0.001   # §3.14 (this seed)
 fig, ax = plt.subplots(figsize=(8, 3.2))
 ax.plot(yp, ".", ms=2, color="0.6"); ax.plot(xp[:, 0], "k"); ax.plot(ae[:, 0], "C0", label="EKF")
 ax.plot(al[:, 0], "C3", lw=0.7, label="linear KF"); ax.legend(fontsize=7)
@@ -672,11 +684,14 @@ print(f"Stylized facts: max|ACF(e)| lags 1-10 {np.abs(r_e).max():.3f} (band {2/n
       f"ACF(e^2) lag1 {r_e2[0]:.3f}, lag10 {r_e2[9]:.3f}; kurtosis {kurt:.2f} (theory {kurt_th:.3f}); "
       f"var {e.var():.4f} (theory {omg/(1-ag-bg):.2f})")
 assert np.abs(r_e).max() < 3 / np.sqrt(n) and r_e2[0] > 0.1 and r_e2[9] > 0.05 and kurt > 3.2
+assert abs(kurt_th - 3.774) < 5e-4
+assert abs(r_e2[0] - 0.145) < 0.001 and abs(kurt - 3.58) < 0.005   # quoted in B9(c) and Example 4.8 (this seed)
 res = optimize.minimize(garch_nll, [0.05, 0.05, 0.5], args=(e,), method="Nelder-Mead",
                         options=dict(xatol=1e-7, fatol=1e-7, maxiter=4000))
 gh = res.x
 print(f"GARCH QML: omega={gh[0]:.4f}, alpha={gh[1]:.4f}, beta={gh[2]:.4f}, persistence {gh[1]+gh[2]:.4f}")
 assert abs(gh[1] - ag) < 0.04 and abs(gh[2] - bg) < 0.06 and abs(gh[1] + gh[2] - 0.95) < 0.03
+assert abs(gh[1] - 0.097) < 0.001 and abs(gh[2] - 0.856) < 0.001   # the estimates quoted in §3.17 (this seed)
 
 sbar, pers = omg / (1 - ag - bg), ag + bg
 hh = np.arange(1, 61)
@@ -684,6 +699,7 @@ fc = sbar + pers ** (hh - 1) * (0.05 - sbar)            # eq. (3.36), sigma^2_{t
 print(f"Ex 4.8: sigma_bar^2={sbar:.3f}, persistence={pers:.2f}, 10-step forecast={fc[9]:.4f}, "
       f"half-life={np.log(0.5)/np.log(pers):.1f} steps")
 assert abs(sbar - 0.2) < 1e-12 and abs(fc[9] - (0.2 - 0.15 * 0.95 ** 9)) < 1e-12
+assert abs(fc[9] - 0.1055) < 5e-5 and abs(0.95 ** 9 - 0.6302) < 5e-5 and abs(np.log(0.5) / np.log(pers) - 13.5) < 0.05
 # Monte Carlo check of the forecast: simulate 20000 paths from sigma^2_{t+1}=0.05
 S = np.full(20000, 0.05)
 mc = []
@@ -691,10 +707,13 @@ for h in range(10):
     mc.append(S.mean())
     eps = np.sqrt(S) * rng.standard_normal(S.size)
     S = omg + ag * eps ** 2 + bg * S
-assert abs(mc[9] - fc[9]) < 0.005
-# ARCH(1) kurtosis 3(1-a^2)/(1-3a^2) for a=0.3
+assert np.allclose(mc, fc[:10], atol=0.001)                 # every horizon 1..10, within Monte Carlo error
+# ARCH(1) kurtosis 3(1-a^2)/(1-3a^2) for a=0.3, eq. (3.31), against the fourth-moment recursion of §3.15
 k_arch = 3 * (1 - 0.09) / (1 - 0.27)
+mu2_a = 1 / (1 - 0.3)                                       # omega = 1
+mu4_a = 3 * (1 + 2 * 0.3 * mu2_a) / (1 - 3 * 0.09)          # mu4 = 3 (omega^2 + 2 omega alpha mu2 + alpha^2 mu4)
 print(f"ARCH(1) alpha=0.3 kurtosis {k_arch:.4f}")
+assert abs(mu4_a / mu2_a ** 2 - k_arch) < 1e-12
 fig, ax = plt.subplots(1, 3, figsize=(13, 3.4))
 ax[0].plot(e[:1500], lw=0.5); ax[0].set_title("GARCH returns")
 ax[1].bar(np.arange(1, 11) - 0.2, r_e, 0.4, label="ACF e"); ax[1].bar(np.arange(1, 11) + 0.2, r_e2, 0.4, label="ACF e^2")
@@ -708,18 +727,31 @@ fig.tight_layout(); fig.savefig(FIG / "garch.png", dpi=120); plt.close(fig)
 
 # %%
 print("A1 MA(1) theta=-0.5: f(0), f(1/4), f(1/2) =", np.round(arma_spectrum([0, .25, .5], (), [-0.5]), 4))
+assert np.allclose(arma_spectrum([0, .25, .5], (), [-0.5]), [0.25, 1.25, 2.25])
 c2 = 0.5 * (0.3 - 1) / (4 * 0.3)
+w2 = np.arccos(c2) / (2 * np.pi)
+assert np.allclose([c2, w2], [-0.2917, 0.2971], atol=5e-5)
+assert np.allclose(arma_spectrum([0, 0.5, w2], [0.5, 0.3]), [25.0, 0.6944, 0.4897], atol=5e-5)
+assert arma_spectrum(w2, [0.5, 0.3]) <= arma_spectrum(np.linspace(0, 0.5, 2001), [0.5, 0.3]).min() + 1e-9   # a minimum
+assert np.allclose(np.sort(np.roots([-0.3, -0.5, 1])), [-2.8403, 1.1736], atol=5e-5)
 print(f"A2 AR(2) 0.5,0.3: f(0)={float(arma_spectrum(0, [0.5, 0.3])):.4f}, f(1/2)={float(arma_spectrum(0.5, [0.5, 0.3])):.4f}, "
       f"stationary point cos={c2:.4f} at w={np.arccos(c2)/(2*np.pi):.4f} with f={float(arma_spectrum(np.arccos(c2)/(2*np.pi), [0.5, 0.3])):.4f} (a minimum)")
 print("A3 chi2_14 quantiles", np.round(stats.chi2.ppf([.025, .975], 14), 3))
 print("A3 Daniell m=3, nu=14: CI factors", round(14 / stats.chi2.ppf(.975, 14), 4), round(14 / stats.chi2.ppf(.025, 14), 4))
+q14 = stats.chi2.ppf([.025, .975], 14)
+assert np.allclose(q14, [5.629, 26.119], atol=5e-4) and np.allclose(14 / q14[::-1], [0.536, 2.487], atol=5e-4)
+assert abs(q14[1] / q14[0] - 4.64) < 0.005
 P = (0.25 + np.sqrt(0.0625 + 4 * 0.25)) / 2
 print(f"A5 local level q=0.25: P_ss={P:.4f}, K_ss={P/(P+1):.4f}")
-for q in (0.01, 100):
-    P = (q + np.sqrt(q * q + 4 * q)) / 2
+assert abs(P - 0.6404) < 5e-5 and abs(P / (P + 1) - 0.3904) < 5e-5
+for q, P_a5, K_a5 in ((0.01, 0.1051, 0.0951), (100, 100.99, 0.9902)):
+    P = (q + np.sqrt(q * q + 4 * q)) / 2                   # eq. (3.25) with H = 1
     print(f"   q={q}: P_ss={P:.4f}, K_ss={P/(P+1):.4f}")
+    assert abs(P - P_a5) < 5e-4 and abs(P / (P + 1) - K_a5) < 5e-5
+    assert abs(P * P - q * P - q) < 1e-9                   # the Riccati fixed point (3.24)
 print("A6 GARCH 0.02,0.08,0.9: var", round(0.02 / 0.02, 3), "half-life", round(np.log(.5) / np.log(.98), 2),
       "5-step from 2.0:", round(1 + 0.98 ** 4 * (2 - 1), 4))
+assert abs(np.log(.5) / np.log(.98) - 34.31) < 0.005 and abs(1 + 0.98 ** 4 - 1.9224) < 5e-5
 # B5 two-step tracker continuation: y_2 = 2.5
 a21, P21 = Tcv @ kf1["af"][0], Tcv @ kf1["Pf"][0] @ Tcv.T + Rcv @ Rcv.T
 kf2 = kalman_filter(np.array([2.5]), Tcv, Zcv, Rcv, Qcv, Hcv, a21, P21)
@@ -727,9 +759,15 @@ print(f"B5 step 2: a_2|1={np.round(a21,4)}, P_2|1={np.round(P21,4).tolist()}, F=
       f"K={np.round(kf2['K'][0,:,0],4)}, a_2|2={np.round(kf2['af'][0],4)}")
 kf12 = kalman_filter(np.array([2.0, 2.5]), Tcv, Zcv, Rcv, Qcv, Hcv, a10, P10)
 assert np.allclose(kf12["af"][1], kf2["af"][0])
+assert np.allclose(a21, [3.1538, 1.4615], atol=5e-5) and np.allclose(P21, [[3.1731, 2.2692], [2.2692, 2.3077]], atol=5e-5)
+assert abs(kf2["F"][0, 0, 0] - 4.1731) < 5e-5 and abs(kf2["v"][0, 0] + 0.6538) < 5e-5
+assert np.allclose(kf2["K"][0, :, 0], [0.7604, 0.5438], atol=5e-5) and np.allclose(kf2["af"][0], [2.6567, 1.1060], atol=5e-5)
+assert kf2["af"][0][1] < a21[1]                              # the velocity estimate went down
 s1, s2_ = 1.0, 4.0
 print(f"C1 static fusion: weights {s2_/(s1+s2_):.2f}, {s1/(s1+s2_):.2f}; fused var {1/(1/s1+1/s2_):.2f}")
 print(f"B8 ARCH(1) alpha=0.5: kurtosis {3*(1-.25)/(1-.75):.1f}; alpha>=1/sqrt(3)={1/np.sqrt(3):.4f} infinite")
+assert abs(s2_ / (s1 + s2_) - 0.8) < 1e-12 and abs(1 / (1 / s1 + 1 / s2_) - 0.8) < 1e-12
+assert abs(3 * (1 - .25) / (1 - .75) - 9.0) < 1e-12 and abs(1 / np.sqrt(3) - 0.5774) < 5e-5
 
 r1 = ag * (1 - ag * bg - bg ** 2) / (1 - 2 * ag * bg - bg ** 2)
 print(f"B9 GARCH(0.1,0.85) ACF of e^2: rho(1)={r1:.4f}, rho(2)={r1*pers:.4f}, rho(10)={r1*pers**9:.4f} "
@@ -741,6 +779,8 @@ for _ in range(40):                        # Monte Carlo of the e^2 ACF, shorter
         ee[t_] = np.sqrt(ss) * zz[t_]; ss = omg + ag * ee[t_] ** 2 + bg * ss
     r1_s.append(acf(ee ** 2, 1)[0])
 print(f"   mean simulated rho(1) over 40 paths of 4000: {np.mean(r1_s):.3f}; single paths scatter widely because e^4 is heavy-tailed")
+assert np.allclose([r1, r1 * pers, r1 * pers ** 9], [0.1791, 0.1701, 0.1129], atol=5e-5)
+assert abs(np.mean(r1_s) - 0.191) < 0.001 and min(r1_s) < r1 < max(r1_s)     # B9(c) (this seed)
 # C2: exponential-kernel GP regression = Kalman smoother on an AR(1) state
 ell, sg2, nz = 3.0, 1.0, 0.25
 yg = rng.standard_normal(50)
@@ -752,25 +792,32 @@ kfg = kalman_filter(yg, np.array([[phg]]), one, one, np.array([[sg2 * (1 - phg *
 ks_mean, _ = rts_smoother(kfg, np.array([[phg]]))
 print(f"C2 GP (exponential kernel) posterior mean vs RTS smoother: max diff {np.abs(gp_mean - ks_mean[:, 0]).max():.1e}")
 assert np.allclose(gp_mean, ks_mean[:, 0], atol=1e-10)
+gp_var = np.diag(Kg - Kg @ np.linalg.solve(Kg + nz * np.eye(50), Kg))       # GP posterior variance = P_{t|n}
+assert np.allclose(gp_var, rts_smoother(kfg, np.array([[phg]]))[1][:, 0, 0], atol=1e-10)
 
 print("A2 roots of 1-0.5z-0.3z^2:", np.round(np.roots([-0.3, -0.5, 1]), 4))
 print(f"A3 interval ratio m=3: {stats.chi2.ppf(.975,14)/stats.chi2.ppf(.025,14):.2f} vs m=2: {q_hi/q_lo:.2f}")
 k12 = (np.sin(np.pi * 12 / 36) / (12 * np.sin(np.pi / 36))) ** 2
 print(f"B2(c) 12-term MA at w=1/36 (3-year cycle in monthly data): |psi|^2={k12:.4f}")
+assert abs(k12 - 0.6857) < 5e-5 and abs(1 - np.sqrt(k12) - 0.17) < 0.005
 print(f"B5 v_2={kf2['v'][0,0]:.4f}")
 pq = (1 + np.sqrt(5)) / 2; th1 = pq / (pq + 1) - 1
 print(f"B7 q=1: theta=K-1={th1:.4f}, theta/(1+theta^2)={th1/(1+th1**2):.4f}, -1/(q+2)={-1/3:.4f}")
 assert abs(th1 / (1 + th1 ** 2) + 1 / 3) < 1e-12
 m8 = 105 * ag ** 4 + 60 * ag ** 3 * bg + 18 * ag ** 2 * bg ** 2 + 4 * ag * bg ** 3 + bg ** 4
 print(f"B9(c) fourth-moment condition (a+b)^2+2a^2={pers**2+2*ag**2:.4f}; eighth: E(a z^2+b)^4={m8:.4f}")
+assert abs(pers ** 2 + 2 * ag ** 2 - 0.9225) < 1e-12 and abs(m8 - 0.9592) < 5e-5
 Z2 = np.array([[1.0, 0.0], [1.0, 0.0]])
 kfc = kalman_filter(np.tile(rng.standard_normal((200, 1)), 2), Tcv, Z2, Rcv, np.eye(1), np.diag([1.0, 16.0]),
                     np.zeros(2), np.eye(2) * 100)
 Kc = kfc["K"][-1]
 print(f"C1(c) two-sensor steady-state gain: {np.round(Kc, 4).tolist()}; column ratio {Kc[0,0]/Kc[0,1]:.4f}")
 assert np.allclose(Kc[:, 0], 16 * Kc[:, 1])
+assert np.allclose(Kc, [[0.7106, 0.0444], [0.4802, 0.0300]], atol=5e-5)      # solution C1(c)
+assert np.allclose(Kc, kfc["Pf"][-1] @ Z2.T @ np.diag([1.0, 1 / 16]))        # K = P_{t|t} Z' H^{-1}, C1(b)
 k4 = lambda w: (np.sin(np.pi * 4 * w) / (4 * np.sin(np.pi * w))) ** 2
 print(f"B2 4-pt MA |psi|^2 at w=1/8, 1/4, 1/2: {k4(1/8):.4f}, {k4(0.25):.4f}, {k4(0.5):.4f}")
+assert abs(k4(1 / 8) - 0.4268) < 5e-5 and k4(0.25) < 1e-20 and k4(0.5) < 1e-20
 
 
 def bootstrap_pf(y, f_prop, loglik_obs, x0, N, rng_):
@@ -796,6 +843,8 @@ lls = [bootstrap_pf(ypf, lambda x, r: x + r.standard_normal(x.size),
 print(f"C3 particle filter on a local level model: log-lik {np.mean(lls):.2f} (sd {np.std(lls):.2f} over 5 runs) "
       f"vs Kalman {ll_kf:.2f}")
 assert abs(np.mean(lls) - ll_kf) < 1.0
+assert abs(np.mean(lls) + 190.51) < 0.01 and abs(np.std(lls) - 0.44) < 0.01 and abs(ll_kf + 190.35) < 0.005   # C3(a)
+assert np.mean(lls) < ll_kf                                 # log of an unbiased estimate is biased downward (C3(b))
 
 # %% [markdown]
 # ## Your turn
@@ -805,10 +854,13 @@ assert abs(np.mean(lls) - ll_kf) < 1.0
 # 2. Sensor fusion (exercise C1): observe one constant-velocity object with two sensors,
 #    H = diag(1, 16). Stack Z = [[1,0],[1,0]] and run `kalman_filter`. Print the steady-state
 #    gain columns: the precise sensor gets exactly 16 times the weight (C1 proves why).
-# 3. Stochastic volatility by a particle filter: h_t = mu + phi(h_{t-1}-mu) + eta_t,
-#    y_t = exp(h_t/2) z_t. Propagate 2000 particles, weight by N(y_t; 0, e^{h_t}), resample
-#    when the effective sample size drops below 1000 (ST-6), and accumulate the log-likelihood
-#    log mean(weights), reusing `bootstrap_pf` above. Profile it over phi on a grid.
+# 3. Stochastic volatility by a particle filter (exercise C3): h_t = mu + phi(h_{t-1}-mu) + eta_t,
+#    y_t = exp(h_t/2) z_t. Propagate 2000 particles, weight by N(y_t; 0, e^{h_t}), resample, and
+#    accumulate the log-likelihood log mean(weights): `bootstrap_pf` above does this once you
+#    pass it the transition and the observation log-density. Profile it over phi on a grid.
+#    Extension (ST-6's effective sample size): resample only when the ESS drops below N/2,
+#    carrying the weights forward otherwise; the likelihood increment is then the weighted mean
+#    of the new weights.
 
 # %%
 if __name__ == "__main__":

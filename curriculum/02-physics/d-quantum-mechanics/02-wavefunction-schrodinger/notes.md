@@ -484,7 +484,7 @@ See [exercises.md](exercises.md). **A1–A5** are drills: normalizing an exponen
 
 ## 7. Coding project
 
-`project.py` (about 10 s, half of it SymPy) builds a split-operator solver and checks every number in §3–§4 and in the solutions. The scheme: over a step $dt$,
+`project.py` (about 12 s, of which 5 s is SymPy) builds a split-operator solver and checks every number in §3–§4 and in the solutions. The scheme: over a step $dt$,
 $$
 e^{-i\hat H\,dt/\hbar} = e^{-iV\,dt/2\hbar}\,e^{-i\hat p^2dt/2m\hbar}\,e^{-iV\,dt/2\hbar} + O(dt^3). \tag{7.1}
 $$
@@ -492,7 +492,7 @@ $V$ is diagonal on the position grid; $\hat p^2/2m$ is diagonal on the FFT grid 
 
 The parts: (1) the scales of §3.12; (2) SymPy checks of Example 4.1, of Theorem 3.8 on a Gaussian with nonzero $x_0$ and $p_0$ (so that $i\hbar\partial_p$ has something to find), of (3.25) solving (3.1) and having width (3.26), and of the Madelung split (3.32)–(3.33); (3) the solver; (4) the free Gaussian: width against (3.26) to $10^{-8}$, $|\Phi|^2$ fixed, norm drift $2\times10^{-13}$, $\sigma_x\sigma_p$ growing as $\frac12\sqrt{1+(t/2)^2}$, and Example 4.4; (5) phase vs group velocity (`phase_group.png`, a grid of $\operatorname{Re}\Psi$ and $|\Psi|$ snapshots with the two speeds marked); (6) the current of Example 4.2 and the continuity equation on the grid; (7) Ehrenfest for harmonic and quartic potentials, energy conservation, and the coherent state's $\sigma_x\sigma_p = \hbar/2$ (`ehrenfest.png`); (8) a packet with $\langle E\rangle = 2.005 > V_0 = 1.5$ hitting a step: $13.2\%$ reflects, against $13.1\%$ from averaging the plane-wave $R(k) = ((k-q)/(k+q))^2$, $q = \sqrt{k^2 - 2mV_0/\hbar^2}$, over $|\phi(k)|^2$, and $R(k_0) = 1/9$ (QM-3 derives $R$; the $0.1\%$ gap is the sharp step on a grid with $dx = 0.12$, and four times as many points give $13.1\%$); (9) the Hamilton–Jacobi check of §3.11; (10) the SI numbers of Examples 4.3 and 4.5; (11) the exercise numbers.
 
-**Build it yourself first:** write `evolve(grid, psi, V, dt, n)` from (7.1) using `np.fft`, and test it on the free Gaussian against (3.25) before reading the file's version. Then do the "Your turn" items: a uniform force (Ehrenfest says $\langle x\rangle = x_0 + Ft^2/2m$ with the free width), the box slosh period measured with the solver (high walls), and the free equation solved directly in momentum space.
+**Build it yourself first:** write `evolve(grid, psi, V, dt, n)` from (7.1) using `np.fft`, and test it on the free Gaussian against (3.25) before reading the file's version. Then do the "Your turn" items: a uniform force (Ehrenfest says $\langle x\rangle = x_0 + Ft^2/2m$ with the free width), the box slosh period measured with the solver (finite walls of height $1000$: expect $0.46$, not Example 4.5's $0.4244$, because the state leaks a distance $1/\kappa = \hbar/\sqrt{2mV_0}$ into each wall and the period goes as the square of the effective width $L + 2/\kappa$), and the free equation solved directly in momentum space.
 
 ## 8. Where you'll struggle
 
@@ -502,7 +502,7 @@ The parts: (1) the scales of §3.12; (2) SymPy checks of Example 4.1, of Theorem
 - **"The wavefunction is the particle" is a misreading.** $|\Psi|^2$ spreading to 579 km (Example 4.3) does not mean the electron is 579 km wide. Each detection finds it at one point; $\Psi$ encodes the distribution of outcomes.
 - **The Gaussian-packet algebra is long, and completing the square is where errors live.** Step 4 of §3.8 is where everyone loses a factor of 2 or an $i$. Fix: do it with $k_0 = 0$ first (much shorter), then get $k_0 \ne 0$ by noting the $k_0$ packet is the $k_0 = 0$ one boosted (multiply by $e^{ik_0x - i\hbar k_0^2t/2m}$ and shift $x\to x - vt$). Check your result by putting it into (3.1), as the project does.
 - **Momentum space feels redundant.** Until QM-4 it partly is. Its payoffs here: (3.18) makes $\langle p^n\rangle$ an ordinary average, the free particle is trivial in it, and the split-operator method lives on it.
-- **The split-operator time step must resolve the fastest phase.** The kinetic factor $e^{-ip^2dt/2m\hbar}$ is exact per mode, but the splitting error grows with $p_{\max}^2dt/m\hbar$ and $V_{\max}dt/\hbar$. If $V_{\max}dt/\hbar$ approaches $\pi$, the potential phase aliases and the result is garbage while the norm stays perfect. A conserved norm is not evidence of accuracy (LA-13's stability-vs-accuracy distinction). Check energy and halve $dt$.
+- **The split-operator time step must resolve the fastest phase the state carries.** Each factor of (7.1) is exact on its own; the error is in the splitting, and its size is set by the phases $p^2dt/2m\hbar$ and $V\,dt/\hbar$ at the momenta and positions where $\Psi$ has weight. The grid's own maxima do not have to obey anything. In Part 7's quartic run ($dt = 0.005$) the grid has $V_{\max}dt/\hbar = 26$ and $p_{\max}^2dt/2m\hbar = 11$, both far above $\pi$, and the energy still holds to $6\times10^{-5}$: the packet never reaches those corners, and its own $\langle H\rangle dt/\hbar$ is $0.04$. Raise $dt$ to $0.4$, so that $\langle H\rangle dt/\hbar = 3.0$, and the state at $t = 2$ is off by $0.79$ in norm (two unrelated unit vectors differ by about $1.4$) while $\int|\Psi|^2dx$ is still $1$ to $10^{-12}$. A conserved norm is not evidence of accuracy (LA-13's stability-vs-accuracy distinction). Check energy and halve $dt$.
 
 ## 9. Check yourself
 
@@ -521,7 +521,7 @@ The parts: (1) the scales of §3.12; (2) SymPy checks of Example 4.1, of Theorem
 
 ## 10. Pair with
 
-- **Griffiths & Schroeter, *Introduction to Quantum Mechanics* (3rd ed.), ch. 1 and §2.1, §2.4.** The standard route through §3.2–3.5 and §3.9 with many more short problems; its §1.5–1.6 derivation of $\hat p$ is the one used here.
+- **Griffiths & Schroeter, *Introduction to Quantum Mechanics* (3rd ed.), ch. 1 and §2.1, §2.4.** The standard route through §3.2–3.5 and §3.9 with many more short problems; its §1.5 derivation of $\hat p$ is the one used here.
 - **MIT 8.04 (Zwiebach), lectures 1–6, and Zwiebach, *Mastering Quantum Mechanics*, ch. 3–5.** More careful than Griffiths about momentum space, wave packets, and the free-particle Gaussian; good on why the equation must be complex and first order.
 - **Shankar, *Principles of Quantum Mechanics*, ch. 4 (optional now).** The postulates stated in Hilbert-space form; read it after QM-4 if this module's "two bases" remark left you wanting the formal version.
 - **Feynman Lectures on Physics, vol. III, ch. 16.** Feynman's own heuristic route to the equation and to the momentum amplitude, with a physicist's view of why $|\Phi(p)|^2$ is the momentum distribution.

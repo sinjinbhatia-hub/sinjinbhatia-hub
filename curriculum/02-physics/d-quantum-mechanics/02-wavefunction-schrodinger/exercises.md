@@ -57,7 +57,7 @@ Conventions as in the notes: $\hat p = -i\hbar\,\partial_x$, $\langle f, g\rangl
 
 **B8.** (Order of the split-operator method; code.) (a) Using $e^{A}e^{B} = e^{A + B + \frac12[A,B] + \cdots}$, show that the unsymmetric splitting $e^{-iV\,dt/\hbar}e^{-iT\,dt/\hbar}$ has a local error of order $dt^2$, and that the symmetric (7.1) cancels it.
 (b) In `project.py`, evolve the displaced Gaussian of Example 4.6 in $V = \frac14x^4$ to $t = 2$ with $dt = 0.01, 0.005, 0.0025$, compare each with a reference run at $dt = 0.000625$, and report the ratios of successive errors. What order does this show?
-(c) For a grid with $dx = 0.047$, what is $p_{\max}$? Explain why a perfectly conserved norm does not tell you $dt$ is small enough.
+(c) For the project's grid `gh` ($512$ points on $[-12, 12)$, so $dx = 24/512$), what is $p_{\max}$? Repeat the run of (b) with $dt = 0.4$ and report the norm and the error. Explain why a perfectly conserved norm does not tell you $dt$ is small enough.
 
 ## C. Challenge (do at least one)
 

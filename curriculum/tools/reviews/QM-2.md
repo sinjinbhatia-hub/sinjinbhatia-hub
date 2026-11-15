@@ -35,47 +35,47 @@ Examples 4.2 and 4.5 and Exercise B3 by number, so nothing was renumbered.
    H–J residual "1.5e-8" and "5%" (`< 1e-4`, `> 0.02`), phase velocity "1.005" (`|v-1| < 0.01`),
    step reflection "13.2% vs 13.1%" (only their difference bounded). A later edit could move any of
    these and the script would still pass. Fix: pin each quoted value.
-   Status: pending (pass 1 tightened these in project.py; re-verifying).
+   Status: FIXED. Pass 1 pinned Parts 5–9 (phase velocity against its closed form 1.0048, continuity < 1e-5, 2 cos t to 2e-5, energy to 6e-6, drift 1.981, step 0.1322 and 0.1310, H–J 1e-7 and 0.048 against a closed form); pass 2 re-ran and confirmed each printed value, and tightened the (3.7) check to 2e-12 (see 26).
 2. **project.py, Parts 1, 10, 11: quoted numbers printed but not asserted.** Severity: medium.
    n lambda^3 = 1.7e-7, air and Cu spacings, 579 km, 2.2 d, 1.128 eV, 1.10 um, 0.940 eV, A2's
    150.4 eV, A4's 1.45 and 3.862e-13 m, B6(c)'s 0.56/0.30/0.20, B8(b)'s three errors. Fix: assert.
-   Status: pending (Part 1 done in pass 1; Parts 10 and 11 not).
+   Status: FIXED. Part 1 by pass 1. Pass 2 added asserts in Part 10 (sqrt(3) tau, 5.8e5 m/s, 579 km, 1.90e13 s, 1.90e5 s, 2.2 d, 6.02e-20 J, 1.128 eV, 2.728e14 Hz, 3.67e-15 s, 1.10 um, 0.940 eV, 0.4244, 0.1801) and Part 11 (A2: k, v_g, v_p, 2.410e-17 J, 150.4 eV; A4: 3.862e-13 m, m, n, 1.45; A5(b): i hbar/2 on the grid; B4: 14.80, 0.1801, 2.667; B6(b) and (c); B7 from the grid instead of typed-in arithmetic; B8(b) errors and ratios; B8(c) 67.0).
 3. **notes §8 and project Part 3 markdown: time-step rule stated with the grid's maxima, which the
    project itself violates.** Severity: medium. Part 4 has (k_max^2/2) dt = 5.2, Part 7 has 11.2,
    Part 8 has 6.6, all above pi, and all accurate; and in Part 7's quartic run the grid's
    V_max dt = 25.9 (pass 2, `dtcheck.py`), where §8 says "if V_max dt/hbar approaches pi ... the
    result is garbage". The rule is about momenta and potential values where the state has weight
    (solutions B8(c) says this correctly). Fix: reword both, and show the failure with a number.
-   Status: pending (project markdown done in pass 1; notes §8 not).
+   Status: FIXED. Project markdown by pass 1. Notes §8 rewritten: the rule is about where Psi has weight; it quotes Part 7's own grid maxima (26 and 11, both > pi, energy still good to 6e-5) and a dt = 0.4 run (<H> dt = 3.0, state error 0.79, norm 1 to 1e-12). All five numbers are asserted in Parts 7 and 11. Exercise B8(c) and its solution now use the same run.
 4. **exercises B8(c): dx = 0.047 gives p_max = 66.8, the solution says 67.0** (which is for the
    project's dx = 24/512 = 0.046875). Severity: low. Fix: state the grid as `gh`, dx = 24/512.
-   Status: pending.
+   Status: FIXED. Exercise B8(c) names the grid (512 points on [-12, 12), dx = 24/512); solution shows 512 pi/24 = 67.0; project asserts dx and 67.0.
 5. **notes §3.12: "Localizing an electron below lambda_C requires momentum spread >~ m_e c".**
    Severity: low. With lambda_C = h/m_e c, (3.15) gives only sigma_p > m_e c/4 pi. The statement is
    right for the reduced length hbar/m_e c (sigma_p > m_e c/2), which is what solution A4(a) uses.
    Fix: say hbar/m_e c.
-   Status: pending.
+   Status: FIXED. §3.12 now says sigma_x < hbar/m_e c forces sigma_p > m_e c/2 by (3.15), and points to Exercise A4.
 6. **notes §3.10 step 4: Sturm–Liouville identification "p = 1, q = V".** Severity: low. In F2's
    form Lf = (1/w)[(pf')' + qf], (3.28) is p = 1, q = -2mV/hbar^2, w = 1, eigenvalue -2mE/hbar^2.
    Fix: write that.
-   Status: pending.
+   Status: FIXED. §3.10 step 4 writes (3.28) in F2's form with p = 1, q = -2mV/hbar^2, w = 1, eigenvalue -2mE/hbar^2.
 7. **notes §3.11: "This is the derivation CM-8 §3.10 promised."** Severity: low. CM-8 §3.10 carries
    the split out itself (its "capstone"); nothing is promised there. Fix: say CM-8 did it once and
    this section redoes it with A = sqrt(rho) and keeps the term CM-8 dropped.
-   Status: pending.
+   Status: FIXED. §3.11 now says CM-8 §3.10 did the split as its capstone and dropped the hbar^2 term; here it is kept.
 8. **notes §10: Griffiths "§1.5–1.6 derivation of p-hat".** Severity: low. The derivation is §1.5
    (Momentum); §1.6 is the uncertainty principle. Fix.
-   Status: pending.
+   Status: FIXED. §10 says §1.5.
 9. **solutions B5(c): "local momentum hbar S_x ∝ 2 hbar C x".** Severity: low. With Psi = R e^{iS/hbar}
    the local momentum is S_x = 2 hbar C x. Fix.
-   Status: pending.
+   Status: FIXED. B5(c) now reads S/hbar = C x^2, local momentum S_x = 2 hbar C x, with the signs spelled out.
 10. **solutions C1(c): exactness argument incomplete.** Severity: low. "[p^2, x] ∝ p" is neither zero
     nor a number; it drops out because the symmetric splitting cancels the single commutator
     (B8(a)), and only then do the remaining nested commutators reduce to a number. Fix: say so.
-    Status: pending.
+    Status: FIXED. C1(c) now says the single commutator is cancelled by the symmetric arrangement (B8(a)), the third-order terms are a number and zero, and everything higher vanishes; adds why the unsymmetric split is not exact.
 11. **solutions B8(b): ratio 4.20 left unexplained.** Severity: low. It is exactly what second order
     predicts against a dt = 0.000625 reference: (16^2-1)/(8^2-1) = 4.05, (8^2-1)/(4^2-1) = 4.20. Fix: add.
-    Status: pending.
+    Status: FIXED. B8(b) derives 255/63 = 4.05 and 63/15 = 4.20; the project asserts the measured ratios against these to 0.01.
 12. **project "Your turn" 2: V = 1e4 wall with the script's usual dt = 0.01 aliases** (V dt/2 = 50 rad;
     pass 1 measured slosh periods 0.33 and 0.41). Severity: low. Pass 2 (`box.py`): with V = 1e4 the
     answer also depends on the grid (0.430 to 0.448 for 1024 to 4096 points, dt from 1e-4 to
@@ -83,42 +83,42 @@ Examples 4.2 and 4.5 and Exercise B3 by number, so nothing was renumbered.
     `Grid(-1, 2, 1024)` the period is 0.461 to 0.464 for every dt from 1e-3 to 5e-5 and 512 to 4096
     points, against (1 + 2/kappa)^2 * 4/(3 pi) = 0.463. Fix: use V = 1e3, put the grid, dt and the
     expected number in the prompt, and pin the number with a reference run.
-    Status: pending.
+    Status: FIXED. Prompt rewritten for V = 1000 on Grid(-1, 2, 1024), dt = 2e-4, with the reason the old settings fail and the expected 0.46; a reference run now measures 0.462 over 6 periods and asserts |T - 0.46| < 0.005 and agreement with (1 + 2/kappa)^2 * 4/(3 pi) = 0.463 to 1%. Notes §7 updated to match.
 13. **notes §1: "He did not get it by guessing. He got it from the analogy".** Severity: low
     (history). Schrödinger's route was messier (a relativistic attempt first; the first paper
     used a variational argument on the Hamilton–Jacobi equation; the optical analogy is the
     second paper's justification). Fix: soften to "his guide was".
-    Status: pending.
+    Status: FIXED. §1 now reads "It was not a blind guess. His guide was the analogy ...".
 14. **solutions A5(b): "Theorem 3.4(4)"** is step 4 of the derivation, not a part of the theorem.
     Severity: low. Fix wording.
-    Status: pending.
+    Status: FIXED. A5(b) cites step 4 of Theorem 3.4's derivation.
 15. **project Part 11 comment "energy error ratio"** on the B8 block: it is the state error.
     Severity: low. Fix comment.
-    Status: pending.
+    Status: FIXED. Comment now says state error.
 16. **notes §3.3: "§3.6 proves it for any Q(p)".** Severity: low. §3.6 shows the operator form
     equals the |Phi|^2 average, given that |Phi|^2 is the momentum density (itself motivated, not
     proved). Fix wording.
-    Status: pending.
+    Status: FIXED. §3.3 now says §3.6 shows agreement with the |Phi|^2 average for any power of p.
 17. **notes §7 item (8): the 13.2% vs 13.1% gap is not explained.** Severity: low. It is grid
     resolution of the sharp step (dx = 0.12): with 16384 points I get 13.11% (dt = 0.02) and 13.10%
     (dt = 0.005); the plane-wave average is 13.10%. (Pass 2 reproduced 0.13215, 0.13112, 0.13104.)
     Fix: say so.
-    Status: pending.
+    Status: FIXED. §7 item (8) explains the gap; Part 8 now also runs the 16384-point grid and asserts 0.1311 within 2e-4 of the plane-wave average (adds 1.8 s).
 18. **Theorem 3.8(b),(c) with a nonzero mean (x-hat = i hbar d/dp) is never checked by the
     project.** Severity: low. Fix: add a SymPy check.
-    Status: pending (pass 1 added it to Part 2; re-verifying).
+    Status: FIXED by pass 1 (Part 2: for a Gaussian with symbolic x_0, p_0, int|Phi|^2 = 1, int p|Phi|^2 = p_0, int Phi*(i hbar d/dp)Phi = x_0). Pass 2 read the code and confirmed it tests (3.17)–(3.19); notes §7 now lists it.
 19. **solutions B6(c): "a very narrow packet leaves the classical orbit sooner" is asserted with no
     number.** Severity: low. I ran a = 0.1: the time is 0.33, below a = 0.3's 0.56 (and a = 0.2 gives
     0.48, a = 0.5 gives 0.47), so the claim is true and the optimum sits near a = 0.3. (Pass 2:
     0.325, 0.475, 0.555, 0.465 on the dt = 0.005 grid; a = 0.35 gives 0.565.) Fix: add the a = 0.1
     run to the project and quote it.
-    Status: pending.
+    Status: FIXED. a = 0.1 added to Part 11's loop (0.325, asserted below a = 0.3's 0.555); solution B6(c) quotes it against (b)'s 1.83 and gives the times to the step (0.555, 0.300, 0.200).
 20. **project: `np.trapezoid` needs NumPy >= 2.0.** Severity: low. Fix: fall back to `np.trapz`.
-    Status: pending.
+    Status: FIXED. `trapz = getattr(np, "trapezoid", None) or np.trapz`.
 21. **notes §3.4: LA-8 cross-reference.** Severity: low. "Real eigenvalues and orthogonal
     eigenvectors" are LA-8 Theorems 3.9 and 3.10; Theorem 3.12 is the spectral theorem built on them.
     Fix: name all three.
-    Status: pending.
+    Status: FIXED. §3.4 names LA-8 Theorems 3.9, 3.10 and 3.12.
 
 ### Added in pass 2
 
@@ -126,22 +126,22 @@ Examples 4.2 and 4.5 and Exercise B3 by number, so nothing was renumbered.
     simulation number that is false as written). 1.98 is the largest gap over 0 <= t <= 10, reached
     at t = 5.57; at t = 10 the gap is 0.43 (`quartic.py`). §3.4 words it correctly ("by up to 1.98
     within t = 10"). Fix: reword the example and pin the time of the maximum.
-    Status: pending.
+    Status: FIXED. Example 4.6 now says the gap peaks at 1.98 near t = 5.6 and is 0.43 at t = 10; Part 7 asserts both (5.57 within 0.02, 0.426 within 5e-3).
 23. **notes §7: "`project.py` (about 4 s)".** Severity: low. It takes about 10 s since the
     Theorem 3.8 SymPy check went in. Fix: update, and list that check among Part 2's contents.
-    Status: pending.
+    Status: FIXED. §7 says about 12 s (5 s SymPy) and lists the Theorem 3.8 check.
 24. **solutions header: "Every number below is printed or asserted in Part 11 (or the part named)".**
     Severity: low. B6(b)'s estimates 0.61, 0.26, 0.18 are not computed anywhere in the script, and
     A4(a) and B4(c) do not name the part that checks them. Fix: compute and assert B6(b)'s numbers,
     name the parts.
-    Status: pending.
+    Status: FIXED. B6(b)'s three estimates are computed and asserted; A4(a) and B4(c) numbers are asserted in Part 11; header reworded.
 25. **project Part 3 markdown: the brief asks for the splitting to be derived in a markdown cell;
     the cell only asserts that the dt^2 terms cancel.** Severity: low. Fix: add the two BCH lines
     (the full argument is solutions B8(a)).
-    Status: pending.
+    Status: FIXED. Part 3's markdown cell now carries the two-line BCH derivation and the order of the unsymmetric split.
 26. **project Part 7: the quartic run's energy drift (5.9e-5) is bounded only by `< 1e-4` together
     with the harmonic one, and (3.7)'s rounding-level check is `< 1e-11` against a quoted 1e-13.**
     Severity: low. Fix: tighten both, since the reworded §8 quotes the quartic drift.
-    Status: pending.
+    Status: FIXED. `e1 < 2e-12`; quartic drift asserted in (5e-5, 7e-5).
 
-Status: pass 2 in progress; fixes not yet applied.
+Status: pass 2 in progress; items 1–26 fixed, second read-through of the edited files under way.

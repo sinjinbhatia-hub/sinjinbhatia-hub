@@ -114,7 +114,7 @@ So $\rho(1)=\frac{\alpha(1-\alpha\beta-\beta^2)}{1-2\alpha\beta-\beta^2}$. For $
 
 ## C. Challenge
 
-**C1.** (a) A diffuse prior means $P_{1|0}^{-1}=0$. In information form (§3.10), $P_{1|1}^{-1}=0+Z^\top H^{-1}Z=1/1+1/4=1.25$, so the posterior variance is $0.80$. The mean is $a_{1|1}=P_{1|1}Z^\top H^{-1}y=0.8(y_1/1+y_2/4)=0.80y_1+0.20y_2$. The weights are in the ratio $4:1$ of the precisions, and the fused variance $0.8$ is below the better sensor's 1.
+**C1.** (a) A diffuse prior means $P_{1|0}^{-1}=0$. In information form (§3.10), $P_{1|1}^{-1}=0+Z^\top H^{-1}Z=1/1+1/4=1.25$, so the posterior variance is $0.80$. For the mean, write the update as $a_{1|1}=(I-K_1Z)a_{1|0}+K_1y$. Part (b) below shows $K_1=P_{1|1}Z^\top H^{-1}$, and then $I-K_1Z=P_{1|1}\big(P_{1|1}^{-1}-Z^\top H^{-1}Z\big)=P_{1|1}P_{1|0}^{-1}=0$ for the diffuse prior, so the prior mean drops out and $a_{1|1}=P_{1|1}Z^\top H^{-1}y=0.8(y_1/1+y_2/4)=0.80y_1+0.20y_2$. The weights are in the ratio $4:1$ of the precisions, and the fused variance $0.8$ is below the better sensor's 1.
 
 (b) Start from $P_{t|t}=P^--P^-Z^\top F^{-1}ZP^-$ with $P^-=P_{t|t-1}$ and $F=ZP^-Z^\top+H$:
 $$P_{t|t}Z^\top H^{-1}=P^-Z^\top H^{-1}-P^-Z^\top F^{-1}ZP^-Z^\top H^{-1}=P^-Z^\top F^{-1}\big[F-ZP^-Z^\top\big]H^{-1}=P^-Z^\top F^{-1}HH^{-1}=K_t.$$

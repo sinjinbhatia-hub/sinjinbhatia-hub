@@ -441,10 +441,15 @@ R_pred = quad(lambda k: wk(k) * R_plane(k), ks - 1, ks + 1, points=[np.sqrt(2 * 
 E_mean = 0.5 * (ks**2 + 1 / (4 * aS**2))
 assert abs(E_mean - 2.005) < 1e-12
 print(f"Step: <E> = {E_mean:.3f}; reflected probability {R_sim:.5f}; plane-wave average {R_pred:.5f}; R(k0) = {R_plane(ks):.5f}")
-# 13.2% vs 13.1% in §7. The 0.1% gap is the sharp step on a dx = 0.12 grid, not physics: with
-# 16384 points instead of 4096 the same run gives 0.1311 (and 0.1310 with dt = 0.005 as well).
+# 13.2% vs 13.1% in §7. The 0.1% gap is the sharp step on a dx = 0.12 grid, not physics: the same
+# run with four times as many points lands on the plane-wave average.
 assert abs(R_sim - 0.1322) < 5e-4 and abs(R_pred - 0.1310) < 1e-4
 assert abs(R_sim - R_pred) < 2e-3 and abs(R_plane(ks) - 1 / 9) < 1e-12
+gs4 = Grid(-250, 250, 16384)
+psiS4 = evolve(gs4, gaussian(gs4.x, -100, ks, aS), np.where(gs4.x > 0, V0, 0.0), 0.02, 5000)
+R_fine = np.sum(np.abs(psiS4[gs4.x < 0])**2) * gs4.dx
+print(f"Step on a 4x finer grid (dx = {gs4.dx:.3f}): reflected probability {R_fine:.5f}")
+assert abs(gs.dx - 0.122) < 1e-3 and abs(R_fine - 0.1311) < 2e-4 and abs(R_fine - R_pred) < 2e-4
 fig, ax = plt.subplots(figsize=(8, 3))
 ax.plot(gs.x, np.abs(psiS)**2); ax.axvspan(0, 250, color="0.9"); ax.set(xlabel="x", ylabel=r"$|\Psi|^2$",
                                                                         title=f"after the step: R = {R_sim:.3f}")
@@ -473,7 +478,7 @@ print(f"H-J at t = 3: relative residual with Q {r_q:.1e}; without Q {r_c:.3f}")
 sig2_ = 1 + 1.5**2                                   # sigma^2 at t = 3 for a = 1 (beta = 1.5)
 Sx_edge = 1.0 + 1.5 * 2 * np.sqrt(sig2_) / (2 * sig2_)
 r_c_exact = (1 / (4 * sig2_)) / (0.5 * Sx_edge**2 - 1 / (4 * sig2_))
-assert r_q < 1e-7 and abs(r_c - r_c_exact) < 1e-3 and abs(r_c - 0.048) < 1e-3
+assert 5e-9 < r_q < 5e-8 and abs(r_c - r_c_exact) < 1e-3 and abs(r_c - 0.048) < 1e-3
 
 # %% [markdown]
 # ## Part 10: Worked-example numbers in SI (Examples 4.3, 4.5)
@@ -599,8 +604,15 @@ t_est = [np.sqrt(0.1 / (3 * aw_**2)) for aw_ in (0.3, 1 / np.sqrt(2), 1.0)]
 assert np.allclose(t_est, [0.61, 0.26, 0.18], atol=5e-3)                             # B6(b)
 assert np.allclose([t_dev[aw_] for aw_ in (0.3, 1 / np.sqrt(2), 1.0)], [0.555, 0.300, 0.200], atol=0.006)
 assert abs(t_dev[0.1] - 0.325) < 0.006 and t_dev[0.1] < t_dev[0.3]                   # narrower is not always better
-# B7: virial for Example 4.6's state at t = 0: d<xp>/dt = 2<T> - <x V'> = 2(1/4) - 9/2 = -4
-print(f"B7: d<xp>/dt at t = 0 for Example 4.6 = {2*0.25 - (4 + 0.5):.1f} (classical -2 sin 2t)' = -4)")
+# A5(b): <Psi, x p Psi> = i hbar/2 for any real Psi (here Example 4.6's Gaussian centred at 2)
+xp_A5 = np.sum(np.conj(coh) * gh.x * (-1j) * gh.deriv(coh)) * gh.dx
+print(f"A5: <x p> for a real Gaussian = {xp_A5.real:.1e} + {xp_A5.imag:.6f} i (hbar)")
+assert abs(xp_A5 - 0.5j) < 1e-10
+# B7: virial for Example 4.6's state at t = 0: d<xp>/dt = 2<T> - <x V'> = 2(1/4) - 9/2 = -4, from the grid
+two_T, xVp = gh.p_stats(coh)[1], gh.mean_x(coh, lambda y: y * y)        # 2<T> = <p^2>/m, <x V'> = <x^2>
+print(f"B7: d<xp>/dt at t = 0 for Example 4.6 = 2<T> - <xV'> = {two_T:.4f} - {xVp:.4f} = {two_T - xVp:.4f} "
+      f"(classical (-2 sin 2t)' = -4)")
+assert abs(two_T - 0.5) < 1e-10 and abs(xVp - 4.5) < 1e-10
 # C1: uniform force in momentum space, Phi(k,t) = phi0(k - F t) exp(-i [k^3 - (k - F t)^3] / (6 m hbar F))
 F, tC = 0.1, 6.0
 phiC = (2 / np.pi)**0.25 * np.exp(-(g.k - F * tC)**2) * np.exp(-1j * (g.k**3 - (g.k - F * tC)**3) / (6 * F))

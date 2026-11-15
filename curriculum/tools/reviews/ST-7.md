@@ -88,7 +88,46 @@ Further findings:
 
 29. **[low] project.py: checkable claims with no check.** §3.8 "the Yule–Walker fit is always causal" (500 fits available in Part 3); §3.2 "divisor $n$ makes $\hat\Gamma_n$ PSD, divisor $n-h$ can give an indefinite matrix"; §3.14 "spectral period 8.69"; §3.11 "probability 0.68"; §3.12 the 12% for AR(1) pairs; §5 the ESS identity; solutions B5(c) "sd about 0.1", B7(c) ratios 0.72/0.69/0.73, C2(b) the error-correction identity, C3(b). Fix: add asserts (new random draws from a separate generator so the main stream and every quoted number are unchanged).
 
+30. **[low] notes.md conventions box.** "ACF", "PACF" and "MSE" are used throughout but never expanded (STYLE: define every symbol at first use; the box used "PACF" before any definition). Fix: expand all three in the box.
+
+31. **[low] notes.md §3.8, (3.26).** The asymptotic normality is stated for "a causal AR($p$)" with no condition on the noise, but the conventions box defines white noise as merely uncorrelated, and the heuristic that follows uses a martingale-difference property that uncorrelatedness does not give. Fix: "with iid shocks".
+
+32. **[low] notes.md Example 4.5.** "the ARMA's ACF starts higher (the MA term) and decays faster relative to $\rho(1)$" compares against two different AR(1)s without saying so (higher than the AR(1) with the same $\phi$; faster than the AR(1) with the same $\rho(1)$). Fix: spell out both comparisons.
+
 Checked and found correct (no action): all of §3's derivations step by step (Theorem 3.2, the Bartlett heuristic including the index-pairing arguments, (3.6)–(3.10), the cofactor expansion for (3.12), the left-eigenvector converse, the triangle, (3.15)–(3.16), Theorem 3.8, (3.19)–(3.22), (3.25), (3.28)–(3.31), the telescoping identity and (3.34), the orders of magnitude in Theorem 3.11, Theorem 3.12 and (3.37)); the DF and MacKinnon critical values quoted; every deterministic number in §4 and solutions.md (indep.py); equation tags (3.1)–(3.37) unique and every reference resolves; exercise and solution numbering A1–A6, B1–B8, C1–C3; template sections 0–10; §10 against the brief; brief topic list and project list. History (Yule 1927, Slutsky 1927 and the lottery numbers, Wold 1938, Box–Jenkins 1970, Granger–Newbold 1974, Dickey–Fuller 1979, Nelson–Plosser 1982 and the fourteen series, Engle–Granger 1987, the 2003 prize, Perron 1989, Levinson 1947, Box–Pierce 1970, Fuller 1976): all as I know them; the one attribution that was off is item 16. The brief has no REVIEW FOCUS section.
 
 ## Resolution
+
+Every fix was applied only after the problem was re-derived or recomputed (see the re-verification list above). After the last edit `MPLBACKEND=Agg timeout 300 python3 project.py` exits 0 in 23 s, twice with identical output; every line of the pre-fix log is unchanged (the new checks draw from a separate generator `rng2`), and the script now has 102 assert statements plus the `pin` helper.
+
+1. FIXED (interrupted pass; content checked against ST-8's conventions box, (3.3), (3.8)).
+2. FIXED (interrupted pass). Part 0 now asserts the spectral period 8.69, by ST-8 (3.11) and by a numerical argmax.
+3. FIXED (interrupted pass). Part 0 asserts the $(1-\phi)/(1+\phi)$ identity.
+4. FIXED. `pin(value, quoted, d)` added; every simulated number quoted in notes.md or solutions.md is pinned to its quoted precision: random-walk ACF 0.996/0.983/0.965/0.924 and $2/\sqrt n=0.045$; asymptotic sd 0.0612, sds 0.0622/0.0608, means within 0.012, 0.978, 0.988, 0.004; coverage within [0.92, 0.96]; 0.638/0.930; Ljung–Box 0.052 and power exactly 1; DF $-1.94$/$-2.89$/$-1.66$, 0.6827; power 0.059/0.082/0.129/0.34/0.873; $-1.772$, $-7.833$; 0.669/0.121/0.052; $-3.39$, 1.9993, 1.000, 0.149; B7 0.657/0.752/0.830/0.876, 0.049, 0.046.
+5. FIXED. Part 0 asserts Ex 4.2 $\rho(5..8)$, Ex 4.5 all $\gamma$, $\rho$ and 0.479, Ex 4.6 $P_5$, $\sqrt P$, half-width, both intervals and 0.945, Ex 4.7 the three terms, the pieces and $-3.62496$, Ex 4.8 all five levels.
+6. FIXED. `ar1_loglik_325` is (3.25) written literally; asserted against the 200-dimensional Toeplitz MVN (and against `ar_loglik_exact`) for an AR(1), with $\det\Gamma_n=\sigma^{2n}/(1-\phi^2)$ and the tridiagonal precision; the notes sentence now says which part checks what. Docstrings that cited (3.25) for the general AR($p$) now cite (3.24).
+7, 8, 9, 11, 12, 23, 25. FIXED (interrupted pass; content checked).
+10. FIXED. Sentence added to the conventions box listing the reused letters ($\alpha$, bare $\gamma$, $r$, $\omega$, $\varrho$, $\tau$); the (3.36) parenthetical was already in.
+13. FIXED. Both directions of linear dependence are treated.
+14. FIXED. "$1-c\,h/n$ with $c$ about 7 for the Part 1 path"; Part 1 prints $c$ and asserts it.
+15. FIXED. Clause added to Example 4.2 (exact AR(2) for kicks at the sampling instants, ARMA(2,1) with the same $\phi(z)$ for continuous forcing).
+16. FIXED. "Your turn" 2 is now "a Yule-style sunspot model … not Yule's own estimates"; notes §7 matches.
+17. FIXED.
+18. FIXED. "Rule of thumb … a trigger, not a verdict", with the $\phi=0.95$ counterexample ($\rho(10)=0.60$, asserted).
+19. FIXED. $z=1\mp0.5774i$ added; Part 11 asserts roots and eigenvalues of all three A2 models.
+20. FIXED.
+21. FIXED. 3 standard errors (largest deviation 2.01).
+22. FIXED. Part 11 asserts A1 (ρ, roots), A2, A3, A5, A6 ($Q$, both $p$-values, both critical values), B1 (formula and the four quoted values), B2, B3 (AR(2) and AR(3) coefficients by direct Toeplitz solves, $v_1..v_3$ two ways), B4 (ψ-weights, intervals), B5 (both roots; the "sd about 0.1" from Bartlett's sum), B6 (and the ratio identity of (c)), B8 (ψ-weights from the recursion, slope 4 = long-run variance), C3.
+24. FIXED. Over-differencing and airline-model asserts in Part 0.
+26. FIXED.
+27. FIXED.
+28. FIXED.
+29. FIXED. New asserts: all 500 Yule–Walker fits causal; $\hat\Gamma$ PSD with divisor $n$ and indefinite with divisor $n-h$ for $x=(1,2,4)$; 8.69; 0.6827; the AR(1)-pair fraction against its large-$n$ value $P(|Z|>2/\sqrt{5/3})=0.121$ (the one-line reason is now in §3.12); the ESS identity; B5(c); B7(c) ratios 0.72/0.69/0.73; the C2 error-correction identity on a simulated pair; C3(b); left skew of $n(\hat\phi-1)$ for C1(c).
+30. FIXED.
+31. FIXED.
+32. FIXED.
+
+Left as is, deliberately: project.py is 570 lines against STYLE's 150–400 guideline (it was 467 before; the additions are the asserts the pinning rule requires) and notes.md is about 9,000 words against 3,500–7,000 (a 12-hour module); the DF figure and print label "t(98)" although the regression with a constant has 97 degrees of freedom (both quantiles are $-1.661$).
+
+**Status: review complete — 32 findings (0 high, 5 medium, 27 low), all 32 fixed; project.py exits 0.**
 

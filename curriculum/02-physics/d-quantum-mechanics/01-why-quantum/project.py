@@ -99,6 +99,7 @@ b_wien = H * C / (KB * xw)
 print(f"Wien peak at 5000 K: {b_wien/T5*1e9:.1f} nm (x = {xw:.6f}, b = {b_wien:.4e} m K)")
 close(lam_peak, b_wien / T5, 1e-4, "numerical peak")
 pin(xw, 4.965114, 5e-7, "Wien x"); pin(b_wien, 2.8978e-3, 5e-8, "Wien b"); pin(b_wien / T5 * 1e9, 579.6, 0.05, "peak")
+pin(b_wien * 1e3, 2.898, 5e-4, "lambda_max T in mm K (notes 3.1)")
 # energy in Planck spectrum is finite: integral = (8 pi^5 k^4 / 15 h^3 c^3) T^4
 lg = np.linspace(20e-9, 200e-6, 400001)
 Uint = np.trapezoid(u_planck(lg, T5), lg) if hasattr(np, "trapezoid") else np.trapz(u_planck(lg, T5), lg)
@@ -127,6 +128,7 @@ pin(E400, 3.0996, 5e-5, "E(400 nm)"); pin(V400, 0.7996, 5e-5, "V_stop"); pin(lam
 pin(W_NA * EV / H, 5.56e14, 5e11, "f0"); pin(np.sqrt(2 * V400 * EV / ME), 5.30e5, 5e2, "v_max")
 # synthetic Millikan-style data: stopping potential vs frequency with 0.02 V noise
 lams = np.array([250, 280, 313, 334, 365, 405, 436, 480, 510]) * 1e-9
+assert lams.size == 9 and np.all(HC_EVNM / (lams * 1e9) > W_NA)      # nine wavelengths, all above threshold
 f = C / lams
 V = (H * f / EV - W_NA) + rng.normal(0, 0.02, f.size)
 slope, icpt = np.polyfit(f, V, 1)
@@ -246,6 +248,7 @@ print(f"Ex 4.4: lambda_C = {lamC*1e12:.4f} pm, lam' = {lamXp*1e12:.3f} pm, E = {
 close(lamC, PC["Compton wavelength"][0], 1e-8, "Compton wavelength")
 # Example 4.4 and the What-just-happened of notes 3.5, as quoted
 pin(lamC * 1e12, 2.4263, 5e-5, "h/mc"); pin(lamXp * 1e12, 73.496, 5e-4, "lam'")
+pin(6.626e-34 / (9.109e-31 * 2.998e8) * 1e12, 2.4263, 5e-5, "h/mc from the constants displayed in Example 4.4")
 pin(lamC / lamX * 100, 3.41, 5e-3, "fractional shift at 90 deg, %")
 pin([Ein / 1e3, Eout / 1e3], [17.445, 16.869], 5e-4, "photon energies, keV"); pin(Ein - Eout, 576, 0.5, "recoil KE, eV")
 pin(2 * lamC * 1e12, 4.85, 5e-3, "maximum shift, pm"); pin(lamC / 500e-9, 5e-6, 5e-7, "fractional shift at 500 nm")
@@ -365,7 +368,8 @@ for i_b in range(3):
         if i_b != j_b:
             assert np.allclose(np.abs(bases[i_b].conj().T @ bases[j_b])**2, 0.5)
 # Born probabilities sum to 1 for any state and any axis (Parseval, postulate 3), and <S_n> = sum a_i p_i
-for th, ph, a_, b_ in [(0.3, 1.1, 0.6, 0.8j), (2.0, 4.0, 1 / np.sqrt(3), np.sqrt(2 / 3) * np.exp(0.9j)), (1.2, 5.5, 1, 0)]:
+for th, ph, a_, b_ in [(0.3, 1.1, 0.6, 0.8j), (1.2, 5.5, 1, 0),
+                       (2.0, 4.0, 1 / np.sqrt(3), np.sqrt(2 / 3) * np.exp(0.9j))]:
     psi_t = np.array([a_, b_], complex)
     wn, Un = eigvecs(axis(th, ph))
     probs = np.abs(Un.conj().T @ psi_t)**2
@@ -618,7 +622,8 @@ print(f"uncertainty: 2000 random states, min margin {min(margins):.2e} (>= 0), "
 assert np.isclose(np.sqrt(var(SX, UP)), 0.5) and np.isclose(np.sqrt(var(SY, UP)), 0.5)
 assert np.isclose(np.sqrt(var(SX, UP) * var(SY, UP)), 0.5 * abs(UP.conj() @ SZ @ UP))
 # B6(c): |+x> also attains the bound, with both sides zero
-assert np.isclose(var(SX, (UP + DN) / np.sqrt(2)), 0) and np.isclose(((UP + DN) / np.sqrt(2)).conj() @ SZ @ (UP + DN) / np.sqrt(2), 0)
+plus_x = (UP + DN) / np.sqrt(2)
+assert np.isclose(var(SX, plus_x), 0) and np.isclose(plus_x.conj() @ SZ @ plus_x, 0)
 # expectation value from Born: sum a_i p_i = <psi|A|psi>
 w, U = eigvecs(axis(1.0, 2.0))
 psi = (UP + 2j * DN) / np.sqrt(5)
@@ -626,7 +631,6 @@ close(np.sum(w * np.abs(U.conj().T @ psi)**2), np.real(psi.conj() @ n_dot_S(axis
 
 # Larmor precession: H = w0 S_z, start in |+x>
 w0 = 2.0
-plus_x = (UP + DN) / np.sqrt(2)
 for t in np.linspace(0, 5, 11):
     Ut = expm(-1j * w0 * SZ * t)
     assert np.allclose(Ut.conj().T @ Ut, np.eye(2))
@@ -661,7 +665,8 @@ pin(G_B7 * 9.274e-24 / 1.0546e-34, 1.7608e11, 5e6, "B7 arithmetic as displayed i
 # 1. **Compton shift vs angle.** Plot lam'(theta) for Mo K-alpha, 0 to 180 degrees, and the electron's
 #    kinetic energy. (Reference below.) Where is the shift half its maximum?
 # 2. **Hydrogen-like ions.** Redo Part 2 for He+ (Z = 2): E_n = -Z^2 E_R/n^2, r_n = n^2 a0/Z. Show that the
-#    He+ n = 4 -> 3 line sits at 468.6 nm and that every *even*-upper-level He+ line n = 2k -> 4 coincides
+#    He+ n = 4 -> 3 line sits at 468.65 nm for infinite nuclear mass in vacuum (468.6 nm in air once the
+#    reduced mass is included) and that every *even*-upper-level He+ line n = 2k -> 4 coincides
 #    (infinite nuclear mass) with a Balmer line k -> 2. That coincidence is why Pickering's lines were first
 #    misassigned to hydrogen; the reduced-mass difference separates them.
 # 3. **Polarizers as Stern-Gerlach analyzers (EM-7 3.6).** A Jones vector is a 2-vector; a polarizer at angle
@@ -684,7 +689,9 @@ print(f"max Compton shift {2*lamC*1e12:.3f} pm; fractional shift at 500 nm {lamC
 # He+
 He43 = line(4, 3, Z=2)
 print(f"He+ 4->3 = {He43:.2f} nm; He+ 6->4 = {line(6, 4, Z=2):.3f} nm = H 3->2 {line(3, 2):.3f} nm")
-assert abs(He43 - 468.6) < 0.1
+pin(He43, 468.65, 5e-3, "He+ 4->3, infinite mass, vacuum")
+R_He = Rinf / (1 + ME / PC["alpha particle mass"][0])
+pin(line(4, 3, R_He, Z=2) / N_AIR, 468.6, 0.05, "He+ 4->3, reduced mass, air")
 for k in range(3, 7):
     assert np.isclose(line(2 * k, 4, Z=2), line(k, 2))
 # three polarizers
@@ -713,12 +720,14 @@ for lam_nm in (400, 700):
     print(f"  A1: {lam_nm} nm photon = {HC_EVNM/lam_nm:.3f} eV")
 E_radio = H * 1e6 / EV
 print(f"  A1: 1 MHz photon = {E_radio:.3e} eV; sodium threshold {lam_thr:.1f} nm")
-pin([HC_EVNM / 400, HC_EVNM / 700], [3.100, 1.771], 5e-4, "A1 photon energies"); pin(E_radio, 4.136e-9, 5e-13, "A1 radio photon")
-pin(E_radio / W_NA, 2e-9, 5e-10, "A1: fraction of W per radio photon"); pin(W_NA / E_radio, 5.6e8, 5e6, "A1: photons needed")
+pin([HC_EVNM / 400, HC_EVNM / 700], [3.100, 1.771], 5e-4, "A1 photon energies")
+pin(E_radio, 4.136e-9, 5e-13, "A1 radio photon"); pin(lam_thr, 539.1, 0.05, "A1 threshold")
+pin(E_radio / W_NA, 2e-9, 5e-10, "A1: fraction of W per radio photon")
+pin(W_NA / E_radio, 5.6e8, 5e6, "A1: photons needed")
 print(f"  A2: E2 = {-ER/4:.3f} eV, E3 = {-ER/9:.3f} eV, Lyman-alpha = {line(2, 1):.2f} nm, "
       f"Hbeta = {line(4, 2):.2f} nm")
 pin([-ER / 4, -ER / 9], [-3.401, -1.512], 5e-4, "A2 energies"); pin(line(2, 1), 121.50, 5e-3, "A2 Lyman-alpha")
-pin(line(4, 2), 486.01, 5e-3, "A2 H-beta"); pin(HC_EVNM / (ER / 4), 364.5, 0.05, "A2 ionization photon = Balmer limit")
+pin(line(4, 2), 486.01, 5e-3, "A2 H-beta"); pin(HC_EVNM / (ER / 4), 364.5, 0.05, "A2 ionization photon")
 lam_n = H / np.sqrt(2 * MN * KB * 300)
 print(f"  A5: kT(300 K) = {KB*300/EV:.5f} eV, neutron lambda = {lam_n*1e9:.4f} nm")
 pin(KB * 300, 4.142e-21, 5e-25, "A5 kT in J"); pin(KB * 300 / EV, 0.02585, 5e-6, "A5 kT in eV")
@@ -762,7 +771,8 @@ psi9 = (UP + 2j * DN) / np.sqrt(5)
 n9 = bloch(psi9)
 th9 = 2 * np.arccos(1 / np.sqrt(5))
 assert np.allclose(n9, [0, 0.8, -0.6]) and np.allclose(n9, axis(th9, np.pi / 2))
-pin(np.degrees(th9), 126.87, 5e-3, "B4(c) theta"); assert np.allclose(n9 / 2, [0, 0.4, -0.3])     # B9(a), units of hbar
+pin(np.degrees(th9), 126.87, 5e-3, "B4(c) theta")
+assert np.allclose(n9 / 2, [0, 0.4, -0.3])                  # B9(a): <S> in units of hbar
 plus_y, minus_y = (UP + 1j * DN) / np.sqrt(2), (UP - 1j * DN) / np.sqrt(2)
 py = abs(np.vdot(plus_y, psi9))**2, abs(np.vdot(minus_y, psi9))**2
 assert np.allclose(py, [0.9, 0.1]) and np.isclose(0.5 * (py[0] - py[1]), 0.4)

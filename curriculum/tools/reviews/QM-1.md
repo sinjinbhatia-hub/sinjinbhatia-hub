@@ -144,7 +144,12 @@ two code blocks in solutions.md (B8(b), C2(c)) were run and work. Imports are nu
 stdlib only. No banned phrases. Inbound references from other modules (QM-1 §1.4, §3.3, §3.8, §3.11, (3.13),
 Theorem 3.x, Proposition 3.7, Exercise B6, "Part 3") are untouched by the fixes: no label is renumbered.
 
-Totals: 31 findings, 0 HIGH, 9 MEDIUM (items 1, 2, 3, 4, 5, 11, 12, 14 and the code/prose split of 16), 22 LOW.
+34. **LOW (length, not an error).** notes.md is about 9,400 words (STYLE: 3,500–7,000) and project.py about 810
+    lines (STYLE: 150–400; it was 589 before this review, and the pins and new checks added about 220). exercises.md
+    has 9 B problems (TEMPLATE target 5–8; the total, 17, is inside STYLE's 12–18).
+
+Totals after both passes: 34 findings, 0 HIGH, 8 MEDIUM (items 1, 2, 3, 4, 5, 11, 12, 14), 26 LOW
+(items 32 and 33 were found while fixing and are listed in the resolution log).
 
 ## Resolution log
 
@@ -182,7 +187,47 @@ Totals: 31 findings, 0 HIGH, 9 MEDIUM (items 1, 2, 3, 4, 5, 11, 12, 14 and the c
 - 29 FIXED. Both headers now say the numbers are printed and asserted by project.py (Parts 1, 2, 3, 6, 8).
 - 32 (new, found by a pin) LOW (rounding). notes Example 4.1: "5.08e-4 J/m^3 per nm" is a double rounding of
   5.07496e5 J/m^4 (5.075e5 -> 5.08e5); to three figures it is 5.07e-4. FIXED in the notes and pinned.
+- 1 FIXED. `check()` requires an exact count when the predicted probability is 0 or 1.
+- 2 FIXED. Seeded numbers are pinned exactly: Example 4.2 (h = 6.611e-34, W = 2.287, within 0.3%), Example 4.6
+  (4946, 2423, 0.4899, 7505 -> 0.7505, sigmas 50 and 35), B5(d) (1874, 3752, sigmas 39 and 48), the C2 Monte
+  Carlo column (0.6670, 0.4990, 0.3337). Every new check that needs random numbers uses its own generator, so
+  the main stream, and with it every quoted number, is where it was (verified: the run prints the same values
+  as before the edits).
+- 3 FIXED. Every quoted value in Examples 4.1–4.5, §1.3, §3.3–3.5 and solutions A1–C3 is pinned to half a unit
+  in its last quoted digit with `pin()`; the loose range asserts are gone.
+- 4 FIXED. `recombined()` builds the analyzer from its two path amplitudes; for SGx and for 60 degrees the code
+  asserts completeness, that the output is still |up>, that the two path amplitudes to |down> cancel, that the
+  recorded-path probabilities add to 0.5 / 0.375, and that 0 of 10^4 atoms exit z- (exact).
+- 5 FIXED. Part 5 tests (3.16) with <t1|t2> = 0.6 e^{0.9 i} against the explicit joint state, asserts that the
+  wrong conjugate fails, that P = 2A^2[1 + r cos(2kx + delta)], visibility r, and the fringe shift -delta/2k;
+  also the unequal-slit visibility formula of item 27.
+- 6 FIXED. The 3000 sampled hits are checked: 2.5% near a dark fringe when amplitudes add, 25% with orthogonal
+  tags or classical probabilities (4-sigma binomial against the pattern's own integral).
+- 7 FIXED. Part 4 asserts P(+n'|n) = (1 + n.n')/2 = cos^2(gamma/2) and the projector identity on a 20 x 20 grid
+  of axis pairs; Part 6 asserts Theorem 3.3 for a non-diagonal H (unitarity, norm, Born sum, the Schrodinger
+  equation by finite difference) and that a non-Hermitian generator is not unitary.
+- 8 FIXED. Part 2 header: sections 3.3–3.6 and the right equation labels.
+- 9/23 FIXED. Code uses g = 2.0023 as the exercise states (checked against CODATA to 1e-5); 1.7608e11 rad/s,
+  35.68 ps and 28 GHz are pinned, as is the arithmetic displayed in the solution.
+- 10 FIXED. Part 5 x-label.
+- 30 FIXED. Asserts added for R = m e^4/(8 eps0^2 h^3 c), the standing-wave condition (SymPy), Parseval and
+  (3.12) for the Born probabilities, mutual unbiasedness of the x, y, z bases, the collapse states, the flat
+  classical Stern–Gerlach band, |up> saturating the spin uncertainty bound, and the conjugate-slot example of §8.
+- 33 (new) LOW. project.py "Your turn" 2 said the He+ 4->3 line "sits at 468.6 nm"; the formula the reader is
+  told to use gives 468.65 nm (infinite mass, vacuum), which is what the script prints. 468.6 nm is the line in
+  air with the reduced mass. FIXED: comment says both, both pinned.
+- notes §7 updated to describe the new checks (Parts 2–6, Part 8 "prints and pins").
+- 34 NOT FIXED: length guidelines, not errors. The brief's topic list (six experiments plus the postulates plus
+  spin-1/2) and project list are what make the notes and the script long; the script runs in 2 s. Cutting a B
+  exercise would remove content the notes point to (B3, B5, B6, B8 are marked essential in §6; B2, B4, B6, B7
+  and B8 are cited from §3) or the only practice on Compton kinematics (B1) and on expectation values (B9).
+
+Final check: `MPLBACKEND=Agg timeout 300 python3 project.py` exits 0 in about 2 s, twice in a row with identical
+output; 69 `pin()` calls and about 90 asserts. The seeded numbers printed today are the ones the prose quotes
+(4946, 2423, 0.4899, 7505, 1874, 3752; h = 6.611e-34, W = 2.287; C2 column 0.6670, 0.4990, 0.3337). Exercise and
+solution numbering match (17 = 17); equation tags (3.1)–(3.18) and Theorems 3.1–3.8 are unchanged; math
+delimiters balance in all three Markdown files; both code blocks in solutions.md run in the project namespace.
 
 ## Status
 
-Phase 1 complete (second pass); Phase 2 in progress.
+STATUS: DONE. 34 findings (0 high, 8 medium, 26 low); 33 fixed, 1 not fixed (item 34, length guidelines); project.py exits 0 with all asserts, including the new pins, passing.
